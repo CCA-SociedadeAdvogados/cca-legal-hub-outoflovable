@@ -50,20 +50,8 @@ export default function SSOCallback() {
         return;
       }
 
-      // Validate state matches stored value (CSRF protection)
-      const storedState = sessionStorage.getItem("sso_state");
-      if (storedState !== stateParam) {
-        console.error("[SSO Callback] State mismatch - possible CSRF attack");
-        setError({
-          code: "state_mismatch",
-          message: "Estado de autenticação inválido. Por favor, tente novamente.",
-        });
-        setState("error");
-        sessionStorage.removeItem("sso_state");
-        return;
-      }
-
-      // Clear stored state
+      // State validation is handled server-side by the Edge Function
+      // against the sso_states table in the database (CSRF protection)
       sessionStorage.removeItem("sso_state");
 
       try {
