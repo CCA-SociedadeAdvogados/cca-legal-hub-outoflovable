@@ -1,0 +1,392 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { BlobReader, ZipReader, TextWriter } from "https://deno.land/x/zipjs@v2.7.32/index.js";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const AI_MODELS = [
+  { model: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+  { model: "openai/gpt-5-mini", name: "GPT-5 Mini" },
+  { model: "google/gemini-3-flash-preview", name: "Gemini 3 Flash" },
+  { model: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+];
+
+async function callAIWithFallback(
+  apiKey: string,
+  messages: Array<{ role: string; content: any }>,
+  functionName: string
+): Promise<{ content: string; model: string }> {
+  let lastError: Error | null = null;
+
+  for (const { model, name } of AI_MODELS) {
+    try {
+      console.log(`[${functionName}] Trying ${name} (${model})...`);
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ model, messages }),
+      });
+
+      if (response.status === 429) {
+        console.warn(`[${functionName}] ${name} rate limited, trying next model...`);
+        lastError = new Error(`${name} rate limited`);
+        continue;
+      }
+
+      if (response.status === 402) {
+        console.warn(`[${functionName}] ${name} credits exhausted, trying next model...`);
+        lastError = new Error(`${name} credits exhausted`);
+        continue;
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.warn(`[${functionName}] ${name} failed (${response.status}): ${errorText}`);
+        lastError = new Error(`${name} error: ${response.status}`);
+        continue;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+
+      if (!content) {
+        console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
+        lastError = new Error(`${name} returned empty content`);
+        continue;
+      }
+
+      console.log(`[${functionName}] Success with ${name}`);
+      return { content, model: name };
+    } catch (error: any) {
+      console.warn(`[${functionName}] ${name} exception:`, error.message);
+      lastError = error;
+      continue;
+    }
+  }
+
+  throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const body = await req.json();
+    const { textContent, fileContent, fileName, mimeType } = body;
+
+    let contractText = textContent;
+
+    // If we received a file, we need to extract text from it
+    if (fileContent && !textContent) {
+      console.log("Processing file:", fileName, "Type:", mimeType);
+      
+      // For PDF files, use AI to extract and parse
+      if (mimeType === 'application/pdf' || fileName?.endsWith('.pdf')) {
+        contractText = await extractTextFromPDF(fileContent);
+      } else if (mimeType?.includes('word') || fileName?.endsWith('.doc') || fileName?.endsWith('.docx')) {
+        // Word documents - extract text from DOCX structure
+        contractText = await extractTextFromWord(fileContent, fileName);
+      } else if (mimeType === 'text/plain' || fileName?.endsWith('.txt')) {
+        // For text files, decode from base64
+        try {
+          contractText = atob(fileContent);
+        } catch {
+          throw new Error("Erro ao ler ficheiro de texto");
+        }
+      } else {
+        return new Response(
+          JSON.stringify({ error: "Formato de ficheiro não suportado. Use PDF, Word ou TXT." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    if (!contractText) {
+      return new Response(
+        JSON.stringify({ error: "Conteúdo do contrato é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not configured");
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    console.log("Parsing contract text, length:", contractText.length);
+    console.log("Contract text preview:", contractText.substring(0, 500));
+
+    const systemPrompt = `Você é um assistente jurídico sénior especializado em análise detalhada de contratos portugueses e europeus.
+Analise CUIDADOSAMENTE o texto do contrato fornecido e extraia TODAS as informações relevantes de forma estruturada e completa.
+IMPORTANTE: Leia o documento inteiro antes de responder. Não deixe campos em branco se a informação estiver disponível.
+
+Responda APENAS com um JSON válido, sem markdown ou texto adicional.
+
+O JSON deve ter esta estrutura exata:
+{
+  "titulo_contrato": "string - título completo do contrato como aparece no documento",
+  "tipo_contrato": "string - um de: nda, prestacao_servicos, fornecimento, saas, arrendamento, trabalho, licenciamento, parceria, consultoria, outro (escolha o mais adequado ao conteúdo)",
+  "objeto_resumido": "string - descrição detalhada do objeto do contrato, incluindo serviços/produtos específicos (máx 800 caracteres)",
+  
+  "parte_a_nome_legal": "string - nome legal completo da PRIMEIRA OUTORGANTE/CONTRATANTE (inclui forma jurídica: Lda, SA, etc.)",
+  "parte_a_nif": "string ou null - NIF/NIPC da primeira parte (9 dígitos em Portugal)",
+  "parte_a_morada": "string ou null - morada completa incluindo código postal e localidade",
+  "parte_a_representante": "string ou null - nome do representante legal que assina pelo primeiro outorgante",
+  "parte_a_cargo": "string ou null - cargo do representante (ex: Gerente, Administrador, CEO)",
+  
+  "parte_b_nome_legal": "string - nome legal completo da SEGUNDA OUTORGANTE/CONTRATADA",
+  "parte_b_nif": "string ou null - NIF/NIPC da segunda parte",
+  "parte_b_morada": "string ou null - morada completa incluindo código postal e localidade",
+  "parte_b_representante": "string ou null - nome do representante legal que assina pelo segundo outorgante",
+  "parte_b_cargo": "string ou null - cargo do representante",
+  
+  "data_assinatura": "string ou null - data de assinatura/celebração no formato YYYY-MM-DD",
+  "data_inicio_vigencia": "string ou null - data de início de vigência no formato YYYY-MM-DD (pode ser diferente da assinatura)",
+  "data_termo": "string ou null - data de término/fim no formato YYYY-MM-DD",
+  
+  "valor_total_estimado": "number ou null - valor total do contrato em euros (apenas número, sem símbolos)",
+  "valor_mensal": "number ou null - valor mensal se aplicável",
+  "moeda": "string - código ISO da moeda (EUR, USD, GBP, etc.)",
+  "iva_incluido": "boolean - true se os valores já incluem IVA",
+  "prazo_pagamento_dias": "number ou null - prazo de pagamento em dias após faturação",
+  "periodicidade_faturacao": "string ou null - mensal, trimestral, semestral, anual, por_marco, a_cabeca",
+  
+  "tipo_duracao": "string - prazo_determinado ou prazo_indeterminado",
+  "duracao_meses": "number ou null - duração total em meses se prazo determinado",
+  "tipo_renovacao": "string - sem_renovacao_automatica, renovacao_automatica ou renovacao_mediante_acordo",
+  "renovacao_periodo_meses": "number ou null - período de cada renovação em meses",
+  "aviso_denuncia_dias": "number ou null - dias de antecedência para denunciar/não renovar",
+  
+  "obrigacoes_parte_a": "string ou null - principais obrigações do primeiro outorgante (resumo)",
+  "obrigacoes_parte_b": "string ou null - principais obrigações do segundo outorgante (resumo)",
+  "sla_indicadores": "string ou null - SLAs ou indicadores de desempenho mencionados",
+  
+  "clausulas_importantes": ["array de strings - cláusulas chave do contrato com descrição breve"],
+  "clausulas_especiais": {
+    "confidencialidade": "boolean - existe cláusula de confidencialidade",
+    "nao_concorrencia": "boolean - existe cláusula de não concorrência",
+    "exclusividade": "boolean - existe cláusula de exclusividade",
+    "propriedade_intelectual": "boolean - menciona propriedade intelectual",
+    "protecao_dados": "boolean - menciona RGPD ou proteção de dados",
+    "subcontratacao": "boolean - permite subcontratação",
+    "penalidades": "boolean - prevê penalidades por incumprimento",
+    "resolucao_litigios": "string ou null - forma de resolução (tribunais, arbitragem, mediação)"
+  },
+  
+  "riscos_identificados": ["array de strings - potenciais riscos, lacunas ou pontos de atenção para revisão jurídica"],
+  "recomendacoes": ["array de strings - sugestões de melhorias ou cláusulas em falta"],
+  
+  "foro_competente": "string ou null - tribunal ou foro competente",
+  "lei_aplicavel": "string ou null - lei aplicável ao contrato (ex: Lei Portuguesa)",
+  
+  "sumario_executivo": "string - resumo executivo do contrato em 2-3 frases para leitura rápida",
+  "confianca": "number - nível de confiança da extração de 0 a 100 (baseado na qualidade do texto e clareza das informações)"
+}
+
+INSTRUÇÕES IMPORTANTES:
+1. Leia TODO o texto antes de preencher os campos
+2. Se a informação não existir claramente no texto, use null (não invente)
+3. Para datas, converta sempre para o formato YYYY-MM-DD
+4. Para valores monetários, extraia apenas o número (sem € ou símbolos)
+5. Identifique corretamente quem é Parte A (geralmente o contratante/cliente) e Parte B (prestador/fornecedor)
+6. Nas cláusulas importantes, seja específico sobre o conteúdo
+7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades`;
+
+    console.log("Calling AI with fallback...");
+
+    const { content } = await callAIWithFallback(
+      LOVABLE_API_KEY!,
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${contractText}` }
+      ],
+      "parse-contract"
+    );
+
+    console.log("AI response received, parsing JSON...");
+
+    // Try to extract JSON from the response
+    let parsedData;
+    try {
+      // Remove markdown code blocks if present (handles ```json, ``` json, ```\n, etc.)
+      let jsonStr = content.trim();
+      
+      // Strategy 1: Extract JSON from markdown code block
+      const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (codeBlockMatch) {
+        jsonStr = codeBlockMatch[1].trim();
+      } else {
+        // Strategy 2: Strip any leading/trailing ``` markers
+        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+      }
+      
+      // Strategy 3: Find the first { and last } to extract raw JSON
+      const firstBrace = jsonStr.indexOf('{');
+      const lastBrace = jsonStr.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+      }
+      
+      parsedData = JSON.parse(jsonStr);
+    } catch (parseError) {
+      console.error("Failed to parse AI response as JSON:", content.substring(0, 500));
+      throw new Error("Não foi possível processar a resposta da IA");
+    }
+
+    console.log("Contract parsed successfully");
+
+    return new Response(
+      JSON.stringify({ success: true, data: parsedData, extractedText: contractText }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error: any) {
+    console.error("Error in parse-contract function:", error);
+    return new Response(
+      JSON.stringify({ error: error.message || "Erro ao processar contrato" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+// Helper function to extract text from PDF using AI with vision
+async function extractTextFromPDF(base64Content: string): Promise<string> {
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  
+  console.log("Extracting text from PDF using AI with fallback...");
+  
+  const { content: extractedText } = await callAIWithFallback(
+    LOVABLE_API_KEY!,
+    [
+      { 
+        role: "user", 
+        content: [
+          {
+            type: "text",
+            text: "Extraia todo o texto deste documento de contrato PDF. Retorne apenas o texto completo do documento, preservando a estrutura e formatação original. Não adicione comentários ou interpretações."
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:application/pdf;base64,${base64Content}`
+            }
+          }
+        ]
+      }
+    ],
+    "parse-contract-pdf"
+  );
+
+  console.log("PDF text extracted, length:", extractedText.length);
+  return extractedText;
+}
+
+// Helper function to extract text from Word documents by parsing DOCX structure
+async function extractTextFromWord(base64Content: string, fileName: string): Promise<string> {
+  console.log("Extracting text from Word document:", fileName);
+  
+  try {
+    // Decode base64 to binary
+    const binaryString = atob(base64Content);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // Create a blob from the bytes
+    const blob = new Blob([bytes]);
+    
+    // Use zip.js to read the DOCX (which is a ZIP file)
+    const zipReader = new ZipReader(new BlobReader(blob));
+    const entries = await zipReader.getEntries();
+    
+    // Find the main document.xml file
+    const documentEntry = entries.find(entry => entry.filename === "word/document.xml");
+    
+    if (!documentEntry || !documentEntry.getData) {
+      throw new Error("Ficheiro Word inválido: document.xml não encontrado");
+    }
+    
+    // Extract the XML content
+    const textWriter = new TextWriter();
+    const xmlContent = await documentEntry.getData(textWriter);
+    
+    await zipReader.close();
+    
+    // Parse XML and extract text
+    const text = extractTextFromXml(xmlContent);
+    
+    if (!text || text.trim().length === 0) {
+      throw new Error("Não foi possível extrair texto do documento Word");
+    }
+    
+    console.log("Word text extracted, length:", text.length);
+    return text;
+    
+  } catch (error: any) {
+    console.error("Error extracting text from Word:", error);
+    
+    // If it's a .doc (old format), we can't parse it
+    if (fileName?.endsWith('.doc') && !fileName?.endsWith('.docx')) {
+      throw new Error("Ficheiros .doc (formato antigo) não são suportados. Por favor, converta para .docx ou PDF.");
+    }
+    
+    throw new Error("Não foi possível ler o ficheiro Word. Verifique se não está corrompido ou tente converter para PDF.");
+  }
+}
+
+// Extract text content from Word XML
+function extractTextFromXml(xml: string): string {
+  const textParts: string[] = [];
+  
+  // Match all text content within <w:t> tags
+  const textRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+  let match;
+  
+  while ((match = textRegex.exec(xml)) !== null) {
+    textParts.push(match[1]);
+  }
+  
+  // Also handle paragraph breaks
+  let result = xml;
+  
+  // Replace paragraph endings with newlines
+  result = result.replace(/<\/w:p>/g, '\n');
+  
+  // Extract all text from w:t tags
+  const allText: string[] = [];
+  const regex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
+  let m;
+  while ((m = regex.exec(result)) !== null) {
+    allText.push(m[1]);
+  }
+  
+  // Join with appropriate spacing
+  let finalText = '';
+  let prevWasNewline = false;
+  
+  for (const part of allText) {
+    if (part === '\n') {
+      if (!prevWasNewline) {
+        finalText += '\n';
+        prevWasNewline = true;
+      }
+    } else {
+      finalText += part;
+      prevWasNewline = false;
+    }
+  }
+  
+  // Clean up multiple newlines
+  finalText = finalText.replace(/\n{3,}/g, '\n\n');
+  
+  return finalText.trim();
+}

@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* CCA Law Firm Identity - Clean Professional Palette */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+
+    /* Primary - Coral CCA #FF7F41 */
+    --primary: 20 100% 63%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary - Neutro claro */
+    --secondary: 20 5% 96%;
+    --secondary-foreground: 0 0% 15%;
+
+    --muted: 20 5% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    /* Accent - Coral */
+    --accent: 20 100% 63%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 20 10% 88%;
+    --input: 20 10% 88%;
+    --ring: 20 100% 63%;
+
+    --radius: 0.5rem;
+
+    /* Risk Level Colors - Semantic, unchanged */
+    --risk-high: 0 84% 60%;
+    --risk-high-foreground: 0 0% 100%;
+    --risk-medium: 38 92% 50%;
+    --risk-medium-foreground: 0 0% 100%;
+    --risk-low: 142 71% 45%;
+    --risk-low-foreground: 0 0% 100%;
+
+    /* Status Colors */
+    --status-pending: 38 92% 50%;
+    --status-active: 20 100% 63%;
+    --status-completed: 142 71% 45%;
+    --status-expired: 0 72% 51%;
+
+    /* Sidebar - Coral background with white text */
+    --sidebar-background: 20 100% 63%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 20 100% 63%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 20 100% 50%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-ring: 0 0% 100%;
+
+    /* Custom Design Tokens */
+    --gradient-hero: linear-gradient(135deg, hsl(20 100% 63%) 0%, hsl(20 100% 55%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(20 5% 98%) 100%);
+    --gradient-sidebar: linear-gradient(180deg, hsl(20 100% 63%) 0%, hsl(20 90% 55%) 100%);
+    
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.08), 0 2px 4px -2px hsl(0 0% 0% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.05);
+    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+    --shadow-elevated: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
+
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 0 0% 5%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary - Coral maintained */
+    --primary: 20 100% 63%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 20 100% 63%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 20 100% 63%;
+
+    /* Sidebar dark - maintains coral */
+    --sidebar-background: 20 100% 63%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 20 100% 63%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 20 100% 50%;
+    --sidebar-border: 0 0% 100%;
+    --sidebar-ring: 0 0% 100%;
+
+    --gradient-sidebar: linear-gradient(180deg, hsl(20 100% 63%) 0%, hsl(20 90% 55%) 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Smooth theme transitions for all elements */
+  *, *::before, *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease, box-shadow 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .risk-badge-high {
+    @apply bg-risk-high text-risk-high-foreground;
+  }
+  
+  .risk-badge-medium {
+    @apply bg-risk-medium text-risk-medium-foreground;
+  }
+  
+  .risk-badge-low {
+    @apply bg-risk-low text-risk-low-foreground;
+  }
+
+  .status-pending {
+    @apply bg-status-pending/20 text-status-pending border-status-pending/30;
+  }
+
+  .status-active {
+    @apply bg-status-active/20 text-status-active border-status-active/30;
+  }
+
+  .status-completed {
+    @apply bg-status-completed/20 text-status-completed border-status-completed/30;
+  }
+
+  .card-elevated {
+    @apply bg-card rounded-lg border shadow-card transition-shadow duration-200 hover:shadow-md;
+  }
+
+  .glass-effect {
+    @apply bg-background/80 backdrop-blur-sm;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { 
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInRight {
+    from { 
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
