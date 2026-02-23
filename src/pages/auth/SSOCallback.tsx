@@ -70,7 +70,7 @@ export default function SSOCallback() {
 
         const result = await response.json();
 
-        if (!response.ok || result.error) {
+       if (!response.ok || result.error) {
           console.error("[SSO Callback] Edge function error:", result);
           setError({
             code: result.error || "callback_failed",
@@ -80,26 +80,30 @@ export default function SSOCallback() {
           return;
         }
 
-        // Check if we got a session
-        if (result.session) {
-          // Set the session in Supabase client
-          await supabase.auth.setSession({
-            access_token: result.session.access_token,
-            refresh_token: result.session.refresh_token,
-          });
+        // Usar action_link para estabelecer sessão
+        if (result.success && result.action_link) {
+          const actionUrl = new URL(result.action_link);
+          const token = actionUrl.searchParams.get("token");
+          const type = actionUrl.searchParams.get("type") || "magiclink";
 
-          // Invalidate all queries to refresh data
+          if (token) {
+            const { error: verifyError } = await supabase.auth.verifyOtp({
+              token_hash: token,
+              type: "magiclink",
+            });
+
+            if (verifyError) {
+              console.error("[SSO Callback] VerifyOtp error:", verifyError);
+              setError({
+                code: "session_error",
+                message: "Erro ao estabelecer sessão. Por favor, tente novamente.",
+              });
+              setState("error");
+              return;
+            }
+          }
+
           await queryClient.invalidateQueries();
-
-          setState("success");
-
-          // Redirect to home after short delay
-          setTimeout(() => {
-            navigate("/", { replace: true });
-          }, 1500);
-        } else if (result.success && result.user) {
-          // Legacy response without session - show success and redirect
-          // User will need to complete auth flow another way
           setState("success");
           setTimeout(() => {
             navigate("/", { replace: true });
@@ -111,69 +115,3 @@ export default function SSOCallback() {
           });
           setState("error");
         }
-      } catch (err) {
-        console.error("[SSO Callback] Exception:", err);
-        setError({
-          code: "network_error",
-          message: "Erro de comunicação. Por favor, verifique a sua ligação e tente novamente.",
-        });
-        setState("error");
-      }
-    };
-
-    processCallback();
-  }, [searchParams, navigate, queryClient]);
-
-  const handleRetry = () => {
-    navigate("/login", { replace: true });
-  };
-
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <img src={ccaLogo} alt="CCA" className="h-12 w-12 object-contain" />
-          </div>
-          <CardTitle className="text-xl font-serif">
-            {state === "processing" && "A processar autenticação..."}
-            {state === "success" && "Autenticação bem sucedida!"}
-            {state === "error" && "Erro na autenticação"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center gap-4">
-          {state === "processing" && (
-            <>
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground text-center">
-                A validar as suas credenciais SSO CCA...
-              </p>
-            </>
-          )}
-
-          {state === "success" && (
-            <>
-              <CheckCircle className="h-12 w-12 text-primary" />
-              <p className="text-muted-foreground text-center">
-                A redirecionar para a aplicação...
-              </p>
-            </>
-          )}
-
-          {state === "error" && error && (
-            <>
-              <AlertTriangle className="h-12 w-12 text-destructive" />
-              <div className="text-center space-y-2">
-                <p className="text-destructive font-medium">{error.message}</p>
-                <p className="text-xs text-muted-foreground">Código: {error.code}</p>
-              </div>
-              <Button onClick={handleRetry} className="mt-4">
-                Voltar ao Login
-              </Button>
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
