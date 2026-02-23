@@ -137,7 +137,7 @@ export default function Login() {
     try {
       // Call SSO start endpoint to get authorization URL
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/sso-cca/start`, {
+      const response = await fetch(`${supabaseUrl}/functions/v1/sso-cca/authorize`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -156,12 +156,12 @@ export default function Login() {
         return;
       }
 
-      if (data.authUrl && data.state) {
+      if (data.url) {
         // Store state in sessionStorage for CSRF validation on callback
         sessionStorage.setItem("sso_state", data.state);
         
         // Redirect to IdP
-        window.location.href = data.authUrl;
+        window.location.href = data.url;
       } else {
         toast.error("Resposta inválida do servidor SSO");
       }
