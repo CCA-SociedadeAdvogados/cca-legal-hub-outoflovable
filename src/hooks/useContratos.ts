@@ -27,7 +27,7 @@ export const useContratos = () => {
       // Use contratos_safe view for field-level security based on user role
       // Viewers see only contract metadata, editors/admins/owners see full details
       const { data, error } = await supabase
-        .from('contratos_safe' as 'contratos')
+        .from('contratos')
         .select('*', { count: 'exact' })
         .eq('arquivado', false)
         .order('created_at', { ascending: false })
@@ -187,7 +187,7 @@ export const useContrato = (id?: string) => {
     queryKey: ['contrato', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('contratos_safe' as 'contratos')
+        .from('contratos')
         .select('*')
         .eq('id', id!)
         .single();
