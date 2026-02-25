@@ -9,17 +9,15 @@ const corsHeaders = {
 };
 
 const AI_MODELS = [
-  { model: "google/gemini-2.5-flash",        name: "Gemini 2.5 Flash" },
-  { model: "google/gemini-2.0-flash",        name: "Gemini 2.0 Flash" },
-  { model: "google/gemini-2.5-flash-lite",   name: "Gemini 2.5 Flash Lite" },
-  { model: "openai/gpt-4o-mini",             name: "GPT-4o Mini" },
+  { model: "gemini-2.0-flash",      name: "Gemini 2.0 Flash" },
+  { model: "gemini-1.5-flash",      name: "Gemini 1.5 Flash" },
+  { model: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite" },
 ];
 
 // Models that support PDF/image documents
 const MULTIMODAL_MODELS = [
-  { model: "google/gemini-2.5-flash",      name: "Gemini 2.5 Flash" },
-  { model: "google/gemini-2.0-flash",      name: "Gemini 2.0 Flash" },
-  { model: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+  { model: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
+  { model: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
 ];
 
 async function callAIWithFallback(
@@ -35,7 +33,7 @@ async function callAIWithFallback(
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
@@ -93,9 +91,9 @@ serve(async (req) => {
     const body = await req.json();
     const { textContent, fileContent, fileName, mimeType, storagePath } = body;
 
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) {
-      throw new Error("OPENROUTER_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     let contractText = textContent as string | undefined;
@@ -148,7 +146,7 @@ serve(async (req) => {
 
       if (fileBytes) {
         if (resolvedMime === "application/pdf" || resolvedName?.endsWith(".pdf")) {
-          contractText = await extractTextFromPDF(fileBytes, OPENROUTER_API_KEY);
+          contractText = await extractTextFromPDF(fileBytes, GEMINI_API_KEY);
         } else if (
           resolvedMime?.includes("word") ||
           resolvedName?.endsWith(".docx") ||
@@ -253,7 +251,7 @@ INSTRUÇÕES IMPORTANTES:
 7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades`;
 
     const { content } = await callAIWithFallback(
-      OPENROUTER_API_KEY,
+      GEMINI_API_KEY,
       [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${contractText}` }

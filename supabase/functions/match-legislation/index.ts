@@ -7,8 +7,8 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY")!;
-const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
 
 interface ContractData {
   id: string;
@@ -107,14 +107,14 @@ Transferência Internacional: ${contrato.transferencia_internacional ? 'Sim' : '
     console.log(`Calling AI Gateway for contract ${contrato_id} with ${docsWithContent.length} documents`);
 
     // Call AI Gateway for matching
-    const aiResponse = await fetch(`${OPENROUTER_API_URL}/chat/completions`, {
+    const aiResponse = await fetch(`${GEMINI_API_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5-mini',
+        model: 'gemini-2.0-flash',
         messages: [
           {
             role: 'system',

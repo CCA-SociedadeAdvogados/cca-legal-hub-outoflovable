@@ -6,10 +6,9 @@ const corsHeaders = {
 };
 
 const AI_MODELS = [
-  { model: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash" },
-  { model: "openai/gpt-5-mini", name: "GPT-5 Mini" },
-  { model: "google/gemini-3-flash-preview", name: "Gemini 3 Flash" },
-  { model: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+  { model: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
+  { model: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
+  { model: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite" },
 ];
 
 async function callAIWithFallback(
@@ -23,7 +22,7 @@ async function callAIWithFallback(
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
@@ -92,9 +91,9 @@ serve(async (req) => {
   try {
     const { type, language = 'pt', data }: AnalysisRequest = await req.json();
 
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) {
-      throw new Error("OPENROUTER_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     const systemPrompt = getSystemPrompt(type, language);
@@ -174,7 +173,7 @@ serve(async (req) => {
     console.log(`Processing ${type} analysis in ${language}`);
 
     const { content } = await callAIWithFallback(
-      OPENROUTER_API_KEY!,
+      GEMINI_API_KEY!,
       messages,
       "analyze-document"
     );
