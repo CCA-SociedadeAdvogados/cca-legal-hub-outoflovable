@@ -32,3 +32,6 @@ pnpm-lock.yaml
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase CLI temp files
+supabase/.temp/
