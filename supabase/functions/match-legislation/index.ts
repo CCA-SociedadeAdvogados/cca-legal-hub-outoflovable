@@ -7,8 +7,8 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
-const LOVABLE_API_URL = "https://api.lovable.dev/v1";
+const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY")!;
+const OPENROUTER_API_URL = "https://openrouter.ai/api/v1";
 
 interface ContractData {
   id: string;
@@ -104,13 +104,13 @@ Transferência Internacional: ${contrato.transferencia_internacional ? 'Sim' : '
       `[${i}] ID: ${d.id}\nTítulo: ${d.title}\nFonte: ${d.source_key}\nExcerto: ${d.content_text?.slice(0, 500) || 'Sem conteúdo'}`
     ).join('\n\n');
 
-    console.log(`Calling Lovable AI Gateway for contract ${contrato_id} with ${docsWithContent.length} documents`);
+    console.log(`Calling AI Gateway for contract ${contrato_id} with ${docsWithContent.length} documents`);
 
-    // Call Lovable AI Gateway for matching
-    const aiResponse = await fetch(`${LOVABLE_API_URL}/chat/completions`, {
+    // Call AI Gateway for matching
+    const aiResponse = await fetch(`${OPENROUTER_API_URL}/chat/completions`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -142,7 +142,7 @@ Não incluas explicações fora do JSON.`
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error('Lovable AI API error:', aiResponse.status, errorText);
+      console.error('AI API error:', aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
         return new Response(

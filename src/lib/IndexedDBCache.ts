@@ -2,7 +2,7 @@
  * IndexedDB wrapper for persistent translation cache
  * Fully async to avoid blocking UI
  */
-const DB_NAME = 'lovable_translations';
+const DB_NAME = 'cca_translations';
 const STORE_NAME = 'cache';
 const DB_VERSION = 1;
 
