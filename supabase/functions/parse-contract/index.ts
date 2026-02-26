@@ -43,13 +43,15 @@ async function callAIWithFallback(
       });
 
       if (response.status === 429) {
-        console.warn(`[${functionName}] ${name} rate limited, trying next model...`);
+        const body429 = await response.text();
+        console.warn(`[${functionName}] ${name} 429 response body: ${body429}`);
         lastError = new Error(`${name} rate limited`);
         continue;
       }
 
       if (response.status === 402) {
-        console.warn(`[${functionName}] ${name} credits exhausted, trying next model...`);
+        const body402 = await response.text();
+        console.warn(`[${functionName}] ${name} 402 response body: ${body402}`);
         lastError = new Error(`${name} credits exhausted`);
         continue;
       }
