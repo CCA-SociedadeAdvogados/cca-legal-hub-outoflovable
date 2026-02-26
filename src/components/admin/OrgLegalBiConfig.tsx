@@ -54,8 +54,9 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
       queryClient.invalidateQueries({ queryKey: ["current-organization"] });
       toast.success("URL do LegalBi guardado com sucesso");
-    } catch {
-      toast.error("Erro ao guardar URL do LegalBi");
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message;
+      toast.error(msg ? `Erro ao guardar URL do LegalBi: ${msg}` : "Erro ao guardar URL do LegalBi");
     } finally {
       setIsSaving(false);
     }
