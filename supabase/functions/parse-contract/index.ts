@@ -28,6 +28,7 @@ async function callAIWithFallback(
 ): Promise<{ content: string; model: string }> {
   const models = modelsOverride ?? AI_MODELS;
   let lastError: Error | null = null;
+  let rateLimitedCount = 0;
 
   for (const { model, name } of models) {
     try {
@@ -46,6 +47,7 @@ async function callAIWithFallback(
         const body429 = await response.text();
         console.warn(`[${functionName}] ${name} 429 response body: ${body429}`);
         lastError = new Error(`${name} rate limited`);
+        rateLimitedCount++;
         continue;
       }
 
@@ -79,6 +81,14 @@ async function callAIWithFallback(
       lastError = error;
       continue;
     }
+  }
+
+  if (rateLimitedCount === models.length) {
+    const err = new Error(
+      "A quota gratuita da API Gemini foi excedida. Por favor, gere uma nova chave API em https://aistudio.google.com/apikey (use 'Create API key in new project') e actualize o secret GEMINI_API_KEY no Supabase."
+    );
+    (err as any).httpStatus = 429;
+    throw err;
   }
 
   throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
@@ -301,9 +311,10 @@ INSTRUÇÕES IMPORTANTES:
 
   } catch (error: any) {
     console.error("Error in parse-contract function:", error);
+    const httpStatus = error.httpStatus ?? 500;
     return new Response(
       JSON.stringify({ error: error.message || "Erro ao processar contrato" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: httpStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
