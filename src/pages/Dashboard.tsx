@@ -7,15 +7,11 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useTranslation } from 'react-i18next';
 import {
-  FileCheck,
-  AlertTriangle,
   Plus,
   ChevronRight,
-  Calendar,
-  Euro,
   Loader2,
+  FileCheck,
   FileText,
-  Clock,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TIPO_CONTRATO_LABELS } from '@/types/contracts';
@@ -73,26 +69,26 @@ export default function Dashboard() {
           <StatCard
             title={t('dashboard.totalContracts')}
             value={stats.totalContratos}
-            icon={FileText}
+            icon="📄"
             variant="primary"
           />
           <StatCard
             title={t('dashboard.activeContracts')}
             value={stats.contratosActivos}
-            icon={FileCheck}
+            icon="✅"
             variant="accent"
           />
           <StatCard
             title={t('dashboard.expiring90Days')}
             value={stats.contratosExpirar90Dias}
-            icon={Clock}
+            icon="⏰"
             variant={stats.contratosExpirar90Dias > 0 ? 'warning' : 'primary'}
           />
           <StatCard
             title={t('dashboard.totalValue')}
             value={formatCurrency(stats.valorTotalContratos)}
             subtitle={t('dashboard.inContracts')}
-            icon={Euro}
+            icon="💶"
             variant="primary"
           />
         </div>
@@ -100,8 +96,8 @@ export default function Dashboard() {
         {/* Alert Banners */}
         {stats.contratosExpirar30Dias > 0 && (
           <div className="flex items-center gap-4 p-4 rounded-xl border-l-4 border-l-risk-high border border-risk-high/20 bg-risk-high/5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-risk-high/15">
-              <AlertTriangle className="h-5 w-5 text-risk-high" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-risk-high/15 text-xl">
+              🚨
             </div>
             <div className="flex-1 flex items-center justify-between gap-4">
               <div>
@@ -122,8 +118,8 @@ export default function Dashboard() {
 
         {stats.contratosExpirar30Dias === 0 && stats.contratosExpirar60Dias > 0 && (
           <div className="flex items-center gap-4 p-4 rounded-xl border-l-4 border-l-risk-medium border border-risk-medium/20 bg-risk-medium/5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-risk-medium/15">
-              <Calendar className="h-5 w-5 text-risk-medium" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-risk-medium/15 text-xl">
+              ⏰
             </div>
             <div className="flex-1 flex items-center justify-between gap-4">
               <div>
@@ -251,8 +247,8 @@ export default function Dashboard() {
                     to={`/contratos/${contrato.id}`}
                     className="flex items-center gap-4 py-3 -mx-2 px-2 rounded-lg hover:bg-muted/30 transition-colors group"
                   >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-                      <FileCheck className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-base">
+                      📄
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">{contrato.titulo_contrato}</p>

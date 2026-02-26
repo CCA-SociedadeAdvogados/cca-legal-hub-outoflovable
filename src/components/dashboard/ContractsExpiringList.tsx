@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Calendar, AlertTriangle, AlertCircle, Eye, FileCheck, LucideIcon } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Contrato } from '@/hooks/useContratos';
@@ -32,19 +32,18 @@ const getDaysVariant = (days: number) => {
 interface ContractItemProps {
   contrato: Contrato;
   daysUntilExpiry: number | null;
-  icon: LucideIcon;
+  iconEmoji: string;
   iconBgClass: string;
-  iconColorClass: string;
 }
 
-function ContractItem({ contrato, daysUntilExpiry, icon: Icon, iconBgClass, iconColorClass }: ContractItemProps) {
+function ContractItem({ contrato, daysUntilExpiry, iconEmoji, iconBgClass }: ContractItemProps) {
   return (
     <Link
       to={`/contratos/${contrato.id}`}
       className="flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
     >
-      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', iconBgClass)}>
-        <Icon className={cn('h-5 w-5', iconColorClass)} />
+      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg leading-none', iconBgClass)}>
+        {iconEmoji}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate leading-tight">{contrato.titulo_contrato}</p>
@@ -106,7 +105,7 @@ export function ContractsExpiringList({
           <CardTitle className="text-base">{title}</CardTitle>
         </CardHeader>
         <CardContent className="text-center py-10 text-muted-foreground">
-          <Calendar className="h-10 w-10 mx-auto mb-3 opacity-40" />
+          <div className="text-4xl mb-3 opacity-40">📅</div>
           <p className="text-sm">Nenhum contrato a expirar nos próximos 90 dias</p>
         </CardContent>
       </Card>
@@ -128,7 +127,7 @@ export function ContractsExpiringList({
         {critical.length > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 px-1 mb-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-risk-high" />
+              <span className="text-sm">🚨</span>
               <span className="text-xs font-semibold text-risk-high uppercase tracking-wide">Crítico</span>
               <span className="text-xs text-muted-foreground ml-1">≤ 30 dias · {critical.length}</span>
             </div>
@@ -137,9 +136,8 @@ export function ContractsExpiringList({
                 key={c.id}
                 contrato={c}
                 daysUntilExpiry={getDays(c)}
-                icon={AlertTriangle}
+                iconEmoji="🚨"
                 iconBgClass="bg-risk-high/10"
-                iconColorClass="text-risk-high"
               />
             ))}
           </div>
@@ -148,7 +146,7 @@ export function ContractsExpiringList({
         {warning.length > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 px-1 mb-2">
-              <AlertCircle className="h-3.5 w-3.5 text-risk-medium" />
+              <span className="text-sm">⏰</span>
               <span className="text-xs font-semibold text-risk-medium uppercase tracking-wide">Atenção</span>
               <span className="text-xs text-muted-foreground ml-1">31–60 dias · {warning.length}</span>
             </div>
@@ -157,9 +155,8 @@ export function ContractsExpiringList({
                 key={c.id}
                 contrato={c}
                 daysUntilExpiry={getDays(c)}
-                icon={AlertCircle}
+                iconEmoji="⏰"
                 iconBgClass="bg-risk-medium/10"
-                iconColorClass="text-risk-medium"
               />
             ))}
           </div>
@@ -168,7 +165,7 @@ export function ContractsExpiringList({
         {watch.length > 0 && (
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5 px-1 mb-2">
-              <Eye className="h-3.5 w-3.5 text-risk-low" />
+              <span className="text-sm">📋</span>
               <span className="text-xs font-semibold text-risk-low uppercase tracking-wide">A Monitorar</span>
               <span className="text-xs text-muted-foreground ml-1">61–90 dias · {watch.length}</span>
             </div>
@@ -177,9 +174,8 @@ export function ContractsExpiringList({
                 key={c.id}
                 contrato={c}
                 daysUntilExpiry={getDays(c)}
-                icon={FileCheck}
+                iconEmoji="📋"
                 iconBgClass="bg-muted"
-                iconColorClass="text-muted-foreground"
               />
             ))}
           </div>

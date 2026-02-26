@@ -1,12 +1,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
 
 interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon: LucideIcon;
+  icon: string;
   trend?: {
     value: number;
     label: string;
@@ -15,7 +14,7 @@ interface StatCardProps {
   variant?: 'default' | 'primary' | 'accent' | 'warning' | 'danger';
 }
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 'default' }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon, trend, variant = 'default' }: StatCardProps) {
   const borderClass = {
     default: 'border-l-border',
     primary: 'border-l-primary',
@@ -24,12 +23,12 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 
     danger: 'border-l-risk-high',
   }[variant];
 
-  const iconClass = {
-    default: 'bg-muted text-muted-foreground',
-    primary: 'bg-primary/10 text-primary',
-    accent: 'bg-accent/10 text-accent',
-    warning: 'bg-risk-medium/10 text-risk-medium',
-    danger: 'bg-risk-high/10 text-risk-high',
+  const iconBgClass = {
+    default: 'bg-muted',
+    primary: 'bg-primary/10',
+    accent: 'bg-accent/10',
+    warning: 'bg-risk-medium/10',
+    danger: 'bg-risk-high/10',
   }[variant];
 
   return (
@@ -39,8 +38,8 @@ export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground leading-none pt-0.5">
             {title}
           </p>
-          <span className={cn('flex h-8 w-8 items-center justify-center rounded-lg shrink-0', iconClass)}>
-            <Icon className="h-4 w-4" />
+          <span className={cn('flex h-8 w-8 items-center justify-center rounded-lg shrink-0 text-base leading-none', iconBgClass)}>
+            {icon}
           </span>
         </div>
         <p className="text-2xl font-bold font-serif tracking-tight">{value}</p>

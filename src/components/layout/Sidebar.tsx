@@ -15,34 +15,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  LayoutDashboard,
-  FileText,
-  Scale,
-  AlertTriangle,
-  FileCheck,
-  Settings,
-  LogOut,
-  BookOpen,
-  FolderOpen,
-  Users,
-  Building2,
-  Library,
-  Crown,
   ChevronDown,
   ChevronRight,
-  Upload,
-  List,
-  Newspaper,
-  Receipt,
-  Home,
+  LogOut,
   ChevronsLeft,
   Moon,
   Sun,
-  Bell,
-  Calculator,
-  Briefcase,
-  UserCog,
-  BarChart3,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -51,7 +29,7 @@ interface SidebarProps {
 
 interface NavItemProps {
   to: string;
-  icon: React.ElementType;
+  icon: string;
   label: string;
   isActive: boolean;
   isCollapsed: boolean;
@@ -59,7 +37,7 @@ interface NavItemProps {
   isSubmenu?: boolean;
 }
 
-function NavItem({ to, icon: Icon, label, isActive, isCollapsed, badge, isSubmenu = false }: NavItemProps) {
+function NavItem({ to, icon, label, isActive, isCollapsed, badge, isSubmenu = false }: NavItemProps) {
   const content = (
     <Link
       to={to}
@@ -77,7 +55,9 @@ function NavItem({ to, icon: Icon, label, isActive, isCollapsed, badge, isSubmen
       )}
     >
       <div className="relative shrink-0">
-        <Icon className={cn(isSubmenu ? "h-4 w-4" : "h-5 w-5")} />
+        <span className={cn("flex items-center justify-center leading-none", isSubmenu ? "text-sm" : "text-base")}>
+          {icon}
+        </span>
         {badge !== undefined && badge > 0 && (
           <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
             {badge > 9 ? "9+" : badge}
@@ -117,7 +97,7 @@ export function Sidebar({ clientName }: SidebarProps) {
   const { resolvedTheme, toggleTheme } = useUserTheme();
   const badges = useSidebarBadges();
   const { legalHubProfile, isCCAUser, isOrgManager, isOrgUser } = useLegalHubProfile();
-  
+
   const [contractsExpanded, setContractsExpanded] = useState(
     location.pathname.startsWith("/contratos") || location.pathname === "/"
   );
@@ -131,7 +111,7 @@ export function Sidebar({ clientName }: SidebarProps) {
     navigate('/login');
   };
 
-  const isContractsActive = location.pathname.startsWith("/contratos") || 
+  const isContractsActive = location.pathname.startsWith("/contratos") ||
                             location.pathname === "/";
 
   const isAccountingActive = location.pathname.startsWith("/documentos");
@@ -145,17 +125,17 @@ export function Sidebar({ clientName }: SidebarProps) {
       style={{ background: "var(--gradient-sidebar)" }}
     >
       {/* Logo */}
-      <Link 
-        to="/home" 
+      <Link
+        to="/home"
         className={cn(
           "flex h-16 items-center gap-3 border-b border-sidebar-border cursor-pointer hover:bg-sidebar-accent/30 transition-colors duration-200",
           isCollapsed ? "justify-center px-2" : "px-6"
         )}
       >
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 overflow-hidden">
-          <img 
-            src={ccaLogo} 
-            alt="CCA" 
+          <img
+            src={ccaLogo}
+            alt="CCA"
             className="h-7 w-7 object-contain"
           />
         </div>
@@ -177,7 +157,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Home */}
         <NavItem
           to="/home"
-          icon={Home}
+          icon="🏠"
           label={t("nav.home")}
           isActive={location.pathname === "/home"}
           isCollapsed={isCollapsed}
@@ -186,7 +166,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Notificações */}
         <NavItem
           to="/notificacoes"
-          icon={Bell}
+          icon="🔔"
           label={t("common.notifications")}
           isActive={location.pathname === "/notificacoes"}
           isCollapsed={isCollapsed}
@@ -198,7 +178,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           {isCollapsed ? (
             <NavItem
               to="/contratos"
-              icon={FileCheck}
+              icon="📄"
               label={t("nav.contracts")}
               isActive={isContractsActive}
               isCollapsed={isCollapsed}
@@ -217,7 +197,7 @@ export function Sidebar({ clientName }: SidebarProps) {
               >
                 <div className="flex items-center gap-3">
                   <div className="relative shrink-0">
-                    <FileCheck className="h-5 w-5" />
+                    <span className="text-base leading-none">📄</span>
                     {badges.contracts > 0 && (
                       <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
                         {badges.contracts > 9 ? "9+" : badges.contracts}
@@ -232,12 +212,12 @@ export function Sidebar({ clientName }: SidebarProps) {
                   <ChevronRight className="h-4 w-4" />
                 )}
               </button>
-              
+
               {contractsExpanded && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
                   <NavItem
                     to="/contratos/visao-geral"
-                    icon={LayoutDashboard}
+                    icon="◼"
                     label={t("nav.contractsOverview")}
                     isActive={location.pathname === "/" || location.pathname === "/contratos/visao-geral"}
                     isCollapsed={false}
@@ -245,7 +225,7 @@ export function Sidebar({ clientName }: SidebarProps) {
                   />
                   <NavItem
                     to="/contratos"
-                    icon={List}
+                    icon="📋"
                     label={t("nav.contractsList")}
                     isActive={location.pathname === "/contratos"}
                     isCollapsed={false}
@@ -253,7 +233,7 @@ export function Sidebar({ clientName }: SidebarProps) {
                   />
                   <NavItem
                     to="/contratos/upload-massa"
-                    icon={Upload}
+                    icon="📤"
                     label={t("nav.contractsUpload")}
                     isActive={location.pathname === "/contratos/upload-massa"}
                     isCollapsed={false}
@@ -270,7 +250,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           {isCollapsed ? (
             <NavItem
               to="/documentos"
-              icon={Calculator}
+              icon="🧾"
               label={t("nav.accounting")}
               isActive={isAccountingActive}
               isCollapsed={isCollapsed}
@@ -287,7 +267,7 @@ export function Sidebar({ clientName }: SidebarProps) {
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <Calculator className="h-5 w-5" />
+                  <span className="text-base leading-none">🧾</span>
                   {t("nav.accounting")}
                 </div>
                 {accountingExpanded ? (
@@ -296,12 +276,12 @@ export function Sidebar({ clientName }: SidebarProps) {
                   <ChevronRight className="h-4 w-4" />
                 )}
               </button>
-              
+
               {accountingExpanded && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
                   <NavItem
                     to="/documentos"
-                    icon={FolderOpen}
+                    icon="📂"
                     label={t("nav.accountingDocuments")}
                     isActive={location.pathname === "/documentos" || location.pathname.startsWith("/documentos/")}
                     isCollapsed={false}
@@ -316,7 +296,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Legal Insights */}
         <NavItem
           to="/eventos"
-          icon={Scale}
+          icon="⚖️"
           label={t("nav.events")}
           isActive={location.pathname === "/eventos"}
           isCollapsed={isCollapsed}
@@ -325,7 +305,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Impactos */}
         <NavItem
           to="/impactos"
-          icon={AlertTriangle}
+          icon="⚠️"
           label={t("nav.impacts")}
           isActive={location.pathname === "/impactos"}
           isCollapsed={isCollapsed}
@@ -334,7 +314,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Legislação & Jurisprudência */}
         <NavItem
           to="/normativos"
-          icon={Library}
+          icon="📚"
           label={t("nav.normativos")}
           isActive={location.pathname.startsWith("/normativos")}
           isCollapsed={isCollapsed}
@@ -343,7 +323,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Novidades CCA */}
         <NavItem
           to="/novidades-cca"
-          icon={Newspaper}
+          icon="📰"
           label={t("nav.ccaNews")}
           isActive={location.pathname === "/novidades-cca"}
           isCollapsed={isCollapsed}
@@ -353,7 +333,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Políticas */}
         <NavItem
           to="/politicas"
-          icon={BookOpen}
+          icon="📖"
           label={t("nav.policies")}
           isActive={location.pathname === "/politicas"}
           isCollapsed={isCollapsed}
@@ -362,7 +342,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* Financeiro */}
         <NavItem
           to="/financeiro"
-          icon={Receipt}
+          icon="💶"
           label={t("nav.financial")}
           isActive={location.pathname === "/financeiro"}
           isCollapsed={isCollapsed}
@@ -371,19 +351,17 @@ export function Sidebar({ clientName }: SidebarProps) {
         {/* LegalBi */}
         <NavItem
           to="/legalbi"
-          icon={BarChart3}
+          icon="📊"
           label="LegalBi"
           isActive={location.pathname === "/legalbi"}
           isCollapsed={isCollapsed}
         />
 
-        {/* Contextual navigation by profile */}
-
         {/* O Meu Departamento — CCA users and Org Managers */}
         {(isCCAUser || isOrgManager) && (
           <NavItem
             to="/meu-departamento"
-            icon={Briefcase}
+            icon="💼"
             label="O Meu Departamento"
             isActive={location.pathname === "/meu-departamento"}
             isCollapsed={isCollapsed}
@@ -394,7 +372,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {(isOrgManager || isOrgUser) && (
           <NavItem
             to="/minha-organizacao"
-            icon={Building2}
+            icon="🏢"
             label="A Minha Organização"
             isActive={location.pathname === "/minha-organizacao"}
             isCollapsed={isCollapsed}
@@ -405,18 +383,18 @@ export function Sidebar({ clientName }: SidebarProps) {
         {isOrgManager && (
           <NavItem
             to="/utilizadores-org"
-            icon={UserCog}
+            icon="👥"
             label="Utilizadores"
             isActive={location.pathname === "/utilizadores-org"}
             isCollapsed={isCollapsed}
           />
         )}
 
-        {/* Organização — only for Admin or org users (not CCA SSO) */}
-        {(isPlatformAdmin) && (
+        {/* Organização — only for Admin */}
+        {isPlatformAdmin && (
           <NavItem
             to="/organizacao"
-            icon={Building2}
+            icon="🏢"
             label={t("nav.organization")}
             isActive={location.pathname === "/organizacao"}
             isCollapsed={isCollapsed}
@@ -462,16 +440,16 @@ export function Sidebar({ clientName }: SidebarProps) {
         {isPlatformAdmin && (
           <NavItem
             to="/admin"
-            icon={Crown}
+            icon="👑"
             label={t("nav.admin")}
             isActive={location.pathname === "/admin"}
             isCollapsed={isCollapsed}
           />
         )}
-        
+
         <NavItem
           to="/definicoes"
-          icon={Settings}
+          icon="⚙️"
           label={t("nav.settings")}
           isActive={location.pathname === "/definicoes"}
           isCollapsed={isCollapsed}
@@ -481,7 +459,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         {isCollapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
-              <button 
+              <button
                 onClick={handleSignOut}
                 className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
               >
@@ -491,7 +469,7 @@ export function Sidebar({ clientName }: SidebarProps) {
             <TooltipContent side="right">{t("common.logout")}</TooltipContent>
           </Tooltip>
         ) : (
-          <button 
+          <button
             onClick={handleSignOut}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
           >
