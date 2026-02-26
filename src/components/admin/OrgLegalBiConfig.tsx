@@ -34,7 +34,7 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
         .select("legalbi_url")
         .eq("id", organizationId)
         .single();
-      const url = (data as any)?.legalbi_url as string | null | undefined;
+      const url = data?.legalbi_url as string | null | undefined;
       setCurrentSavedUrl(url ?? null);
       setLegalbiUrl(url ?? "");
       setIsLoading(false);
@@ -47,14 +47,17 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
     try {
       const { error } = await supabase
         .from("organizations")
-        .update({ legalbi_url: legalbiUrl || null } as any)
-        .eq("id", organizationId);
+        .update({ legalbi_url: legalbiUrl || null })
+        .eq("id", organizationId)
+        .select()
+        .single();
       if (error) throw error;
       setCurrentSavedUrl(legalbiUrl || null);
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
       queryClient.invalidateQueries({ queryKey: ["current-organization"] });
       toast.success("URL do LegalBi guardado com sucesso");
     } catch (err: unknown) {
+      console.error("[OrgLegalBiConfig] save error:", err);
       const msg = (err as { message?: string })?.message;
       toast.error(msg ? `Erro ao guardar URL do LegalBi: ${msg}` : "Erro ao guardar URL do LegalBi");
     } finally {
