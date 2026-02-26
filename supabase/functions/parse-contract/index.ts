@@ -250,11 +250,21 @@ INSTRUÇÕES IMPORTANTES:
 6. Nas cláusulas importantes, seja específico sobre o conteúdo
 7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades`;
 
+    // Limitar o texto para evitar exceder os limites de tokens da API (≈ 60 000 chars ≈ 15 000 tokens)
+    const MAX_CHARS = 60000;
+    const truncatedText = contractText.length > MAX_CHARS
+      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado — apenas os primeiros 60 000 caracteres foram analisados]"
+      : contractText;
+
+    if (contractText.length > MAX_CHARS) {
+      console.warn(`Contract text truncated from ${contractText.length} to ${MAX_CHARS} chars`);
+    }
+
     const { content } = await callAIWithFallback(
       GEMINI_API_KEY,
       [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${contractText}` }
+        { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}` }
       ],
       "parse-contract"
     );
