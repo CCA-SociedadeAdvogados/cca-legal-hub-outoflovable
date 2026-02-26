@@ -9,52 +9,61 @@ const corsHeaders = {
 };
 
 const AI_MODELS = [
-  { model: "gemini-2.0-flash",      name: "Gemini 2.0 Flash" },
-  { model: "gemini-1.5-flash",      name: "Gemini 1.5 Flash" },
-  { model: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite" },
+  { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
+  { model: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6" },
 ];
 
-// Models that support PDF/image documents
+// Models that support PDF/document multimodal (Anthropic natively supports PDFs)
 const MULTIMODAL_MODELS = [
-  { model: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
-  { model: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
+  { model: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6" },
+  { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
 ];
 
 async function callAIWithFallback(
   apiKey: string,
-  messages: Array<{ role: string; content: any }>,
+  systemPrompt: string,
+  userContent: string | Array<any>,
   functionName: string,
   modelsOverride?: typeof AI_MODELS
 ): Promise<{ content: string; model: string }> {
   const models = modelsOverride ?? AI_MODELS;
   let lastError: Error | null = null;
-  let rateLimitedCount = 0;
 
   for (const { model, name } of models) {
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model, messages }),
+        body: JSON.stringify({
+          model,
+          max_tokens: 8096,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: userContent,
+            },
+          ],
+        }),
       });
 
       if (response.status === 429) {
-        const body429 = await response.text();
-        console.warn(`[${functionName}] ${name} 429 response body: ${body429}`);
+        const body = await response.text();
+        console.warn(`[${functionName}] ${name} rate limited: ${body}`);
         lastError = new Error(`${name} rate limited`);
-        rateLimitedCount++;
         continue;
       }
 
-      if (response.status === 402) {
-        const body402 = await response.text();
-        console.warn(`[${functionName}] ${name} 402 response body: ${body402}`);
-        lastError = new Error(`${name} credits exhausted`);
+      if (response.status === 529) {
+        const body = await response.text();
+        console.warn(`[${functionName}] ${name} overloaded: ${body}`);
+        lastError = new Error(`${name} overloaded`);
         continue;
       }
 
@@ -66,7 +75,7 @@ async function callAIWithFallback(
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+      const content = data.content?.[0]?.text;
 
       if (!content) {
         console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
@@ -83,14 +92,6 @@ async function callAIWithFallback(
     }
   }
 
-  if (rateLimitedCount === models.length) {
-    const err = new Error(
-      "A quota gratuita da API Gemini foi excedida. Por favor, gere uma nova chave API em https://aistudio.google.com/apikey (use 'Create API key in new project') e actualize o secret GEMINI_API_KEY no Supabase."
-    );
-    (err as any).httpStatus = 429;
-    throw err;
-  }
-
   throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
 }
 
@@ -103,9 +104,9 @@ serve(async (req) => {
     const body = await req.json();
     const { textContent, fileContent, fileName, mimeType, storagePath } = body;
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
     let contractText = textContent as string | undefined;
@@ -158,7 +159,7 @@ serve(async (req) => {
 
       if (fileBytes) {
         if (resolvedMime === "application/pdf" || resolvedName?.endsWith(".pdf")) {
-          contractText = await extractTextFromPDF(fileBytes, GEMINI_API_KEY);
+          contractText = await extractTextFromPDF(fileBytes, ANTHROPIC_API_KEY);
         } else if (
           resolvedMime?.includes("word") ||
           resolvedName?.endsWith(".docx") ||
@@ -273,11 +274,9 @@ INSTRUÇÕES IMPORTANTES:
     }
 
     const { content } = await callAIWithFallback(
-      GEMINI_API_KEY,
-      [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}` }
-      ],
+      ANTHROPIC_API_KEY,
+      systemPrompt,
+      `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`,
       "parse-contract"
     );
 
@@ -319,7 +318,7 @@ INSTRUÇÕES IMPORTANTES:
   }
 });
 
-// ── Extracção de texto de PDF via AI multimodal (Gemini suporta inline PDF) ──
+// ── Extracção de texto de PDF via Claude multimodal (suporte nativo a PDFs) ──
 async function extractTextFromPDF(fileBytes: Uint8Array, apiKey: string): Promise<string> {
   console.log("Extracting text from PDF, size:", fileBytes.length);
 
@@ -327,21 +326,19 @@ async function extractTextFromPDF(fileBytes: Uint8Array, apiKey: string): Promis
 
   const { content: extractedText } = await callAIWithFallback(
     apiKey,
+    "Extraia todo o texto do documento PDF fornecido. Retorne apenas o texto completo do documento, preservando a estrutura e formatação original. Não adicione comentários ou interpretações.",
     [
       {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Extraia todo o texto deste documento de contrato PDF. Retorne apenas o texto completo do documento, preservando a estrutura e formatação original. Não adicione comentários ou interpretações.",
-          },
-          {
-            type: "image_url",
-            image_url: {
-              url: `data:application/pdf;base64,${base64Content}`,
-            },
-          },
-        ],
+        type: "document",
+        source: {
+          type: "base64",
+          media_type: "application/pdf",
+          data: base64Content,
+        },
+      },
+      {
+        type: "text",
+        text: "Extraia todo o texto deste documento de contrato PDF.",
       },
     ],
     "parse-contract-pdf",
