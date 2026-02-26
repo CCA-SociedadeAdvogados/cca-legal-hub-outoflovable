@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Calendar, AlertTriangle, AlertCircle, Eye } from 'lucide-react';
+import { ChevronRight, Calendar, AlertTriangle, AlertCircle, Eye, FileCheck, LucideIcon } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Contrato } from '@/hooks/useContratos';
@@ -32,16 +32,20 @@ const getDaysVariant = (days: number) => {
 interface ContractItemProps {
   contrato: Contrato;
   daysUntilExpiry: number | null;
-  accentClass: string;
+  icon: LucideIcon;
+  iconBgClass: string;
+  iconColorClass: string;
 }
 
-function ContractItem({ contrato, daysUntilExpiry, accentClass }: ContractItemProps) {
+function ContractItem({ contrato, daysUntilExpiry, icon: Icon, iconBgClass, iconColorClass }: ContractItemProps) {
   return (
     <Link
       to={`/contratos/${contrato.id}`}
       className="flex items-center gap-3 px-3 py-2.5 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
     >
-      <div className={cn('w-0.5 h-9 rounded-full shrink-0', accentClass)} />
+      <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg', iconBgClass)}>
+        <Icon className={cn('h-5 w-5', iconColorClass)} />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm truncate leading-tight">{contrato.titulo_contrato}</p>
         <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -133,7 +137,9 @@ export function ContractsExpiringList({
                 key={c.id}
                 contrato={c}
                 daysUntilExpiry={getDays(c)}
-                accentClass="bg-risk-high"
+                icon={AlertTriangle}
+                iconBgClass="bg-risk-high/10"
+                iconColorClass="text-risk-high"
               />
             ))}
           </div>
@@ -151,7 +157,9 @@ export function ContractsExpiringList({
                 key={c.id}
                 contrato={c}
                 daysUntilExpiry={getDays(c)}
-                accentClass="bg-risk-medium"
+                icon={AlertCircle}
+                iconBgClass="bg-risk-medium/10"
+                iconColorClass="text-risk-medium"
               />
             ))}
           </div>
@@ -169,7 +177,9 @@ export function ContractsExpiringList({
                 key={c.id}
                 contrato={c}
                 daysUntilExpiry={getDays(c)}
-                accentClass="bg-risk-low"
+                icon={FileCheck}
+                iconBgClass="bg-muted"
+                iconColorClass="text-muted-foreground"
               />
             ))}
           </div>
