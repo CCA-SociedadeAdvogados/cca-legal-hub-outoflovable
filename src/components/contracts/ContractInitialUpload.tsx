@@ -145,7 +145,8 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         setProcessingStep('uploading');
         setProgress(15);
 
-        const tempPath = `temp/${crypto.randomUUID()}_${file.name}`;
+        const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+        const tempPath = `temp/${crypto.randomUUID()}_${safeName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('contratos')
