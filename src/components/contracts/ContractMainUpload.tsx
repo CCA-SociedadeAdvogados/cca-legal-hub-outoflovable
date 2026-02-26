@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAnexos } from '@/hooks/useAnexos';
+import { useToast } from '@/hooks/use-toast';
 import { Upload, FileText, Trash2, Download, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -27,7 +28,8 @@ function formatFileSize(bytes: number | null): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function ContractMainUpload({ contratoId, storagePath }: ContractMainUploadProps) {
+export function ContractMainUpload({ contratoId, storagePath: _storagePath }: ContractMainUploadProps) {
+  const { toast } = useToast();
   const { anexos, isLoading, uploadAnexo, deleteAnexo, downloadAnexo } = useAnexos(contratoId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -52,6 +54,11 @@ export function ContractMainUpload({ contratoId, storagePath }: ContractMainUplo
 
   const handleUpload = async (file: File) => {
     if (!isValidFile(file)) {
+      toast({
+        title: 'Formato não suportado',
+        description: 'Apenas são aceites ficheiros PDF, DOC ou DOCX.',
+        variant: 'destructive',
+      });
       return;
     }
 

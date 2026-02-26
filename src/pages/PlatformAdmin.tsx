@@ -135,6 +135,7 @@ export default function PlatformAdmin() {
   const [newOrgName, setNewOrgName] = useState("");
   const [newOrgSlug, setNewOrgSlug] = useState("");
   const [newOrgSectors, setNewOrgSectors] = useState<string[]>([]);
+  const [newOrgLegalBiUrl, setNewOrgLegalBiUrl] = useState("");
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<{ id: string; name: string; slug: string; industry_sectors?: string[] | null } | null>(null);
   const [editOrgName, setEditOrgName] = useState("");
@@ -400,6 +401,7 @@ export default function PlatformAdmin() {
         name: newOrgName.trim(),
         slug: newOrgSlug.trim().toLowerCase().replace(/\s+/g, "-"),
         industrySectors: newOrgSectors,
+        legalbiUrl: newOrgLegalBiUrl.trim() || undefined,
       });
       toast({
         title: t("common.success"),
@@ -408,6 +410,7 @@ export default function PlatformAdmin() {
       setNewOrgName("");
       setNewOrgSlug("");
       setNewOrgSectors([]);
+      setNewOrgLegalBiUrl("");
       setIsCreateOrgOpen(false);
     } catch (error: unknown) {
       toast({
@@ -943,6 +946,18 @@ export default function PlatformAdmin() {
                           selectedSectors={newOrgSectors}
                           onSectorsChange={setNewOrgSectors}
                         />
+                        <div className="grid gap-2">
+                          <Label htmlFor="org-legalbi-url">URL LegalBI</Label>
+                          <Input
+                            id="org-legalbi-url"
+                            value={newOrgLegalBiUrl}
+                            onChange={(e) => setNewOrgLegalBiUrl(e.target.value)}
+                            placeholder="https://bi.cca.law/..."
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Opcional. Pode ser configurado/alterado posteriormente através da edição.
+                          </p>
+                        </div>
                         {/* SharePoint will be configured after org creation via Edit */}
                         <p className="text-xs text-muted-foreground italic">
                           A configuração SharePoint pode ser adicionada após criar a organização, através da edição.

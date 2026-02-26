@@ -531,7 +531,7 @@ export default function ContratoForm() {
         try {
           const draftPayload: any = {
             contrato_id: savedId,
-            source: 'lovable_ai',
+            source: 'ai_extraction',
             status: 'provisional',
             extraction_data: {
               ...data,
@@ -571,7 +571,7 @@ export default function ContratoForm() {
         try {
           const draftPayload: any = {
             contrato_id: savedId,
-            source: 'lovable_ai',
+            source: 'ai_extraction',
             status: 'provisional',
             extraction_data: {
               ...data,

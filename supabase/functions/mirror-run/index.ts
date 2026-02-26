@@ -27,7 +27,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const BUCKET = "legal-mirror";
 const MAX_PER_RUN = 30;
 const MAX_DEPTH = 3;
-const USER_AGENT = "LegalMirrorBot/1.0 (+https://lovable.dev)";
+const USER_AGENT = "LegalMirrorBot/1.0 (+https://cca.pt)";
 
 function normalizeUrl(url: string): string {
   try {

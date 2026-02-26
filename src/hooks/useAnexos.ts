@@ -84,15 +84,17 @@ export const useAnexos = (contratoId: string) => {
 
   const deleteAnexo = useMutation({
     mutationFn: async (anexo: Anexo) => {
-      // Extract file path from URL
-      const urlParts = anexo.url_ficheiro.split('/contratos/');
-      if (urlParts.length > 1) {
-        const filePath = urlParts[1];
-        // Delete from storage
+      // url_ficheiro stores the storage path directly (e.g. "contratoId/timestamp_file.pdf")
+      // For legacy records that stored the full URL, extract the path after '/contratos/'
+      let filePath = anexo.url_ficheiro;
+      if (filePath.includes('/contratos/')) {
+        filePath = filePath.split('/contratos/')[1];
+      }
+
+      if (filePath) {
         const { error: storageError } = await supabase.storage
           .from('contratos')
           .remove([filePath]);
-        
         if (storageError) {
           console.error('Storage delete error:', storageError);
         }

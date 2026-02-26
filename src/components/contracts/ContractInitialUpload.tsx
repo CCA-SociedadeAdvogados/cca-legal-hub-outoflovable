@@ -63,6 +63,13 @@ interface ContractInitialUploadProps {
 
 type ProcessingStep = 'idle' | 'uploading' | 'extracting' | 'parsing' | 'complete' | 'error';
 
+const ACCEPTED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+];
+
 export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractInitialUploadProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -73,103 +80,110 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
   const [progress, setProgress] = useState(0);
 
   const isValidFile = (file: File) => {
-    const isPdf = file.type === 'application/pdf' || file.name.endsWith('.pdf');
-    const isTxt = file.type === 'text/plain' || file.name.endsWith('.txt');
-    const isWord = file.type?.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
-    return isPdf || isTxt || isWord;
-  };
-
-  const readFileAsText = async (file: File): Promise<string> => {
-    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
-      return await file.text();
-    }
-    
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
+    const byMime = ACCEPTED_MIME_TYPES.includes(file.type);
+    const byExt =
+      file.name.endsWith('.pdf') ||
+      file.name.endsWith('.doc') ||
+      file.name.endsWith('.docx') ||
+      file.name.endsWith('.txt');
+    return byMime || byExt;
   };
 
   const getStepMessage = (step: ProcessingStep) => {
     switch (step) {
-      case 'uploading': return 'A carregar ficheiro...';
-      case 'extracting': return 'A extrair texto do documento...';
-      case 'parsing': return 'A analisar dados do contrato com IA...';
-      case 'complete': return 'Extracção completa!';
-      case 'error': return 'Erro no processamento';
-      default: return '';
+      case 'uploading':  return 'A carregar ficheiro…';
+      case 'extracting': return 'A extrair texto do documento…';
+      case 'parsing':    return 'A analisar dados do contrato com IA…';
+      case 'complete':   return 'Extracção completa!';
+      case 'error':      return 'Erro no processamento';
+      default:           return '';
     }
   };
 
   const processFile = async (file: File) => {
     if (!isValidFile(file)) {
-      setError('Formato de ficheiro não suportado. Use PDF, Word ou TXT.');
+      setError('Formato de ficheiro não suportado. Use PDF, Word (.docx) ou TXT.');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      setError('O ficheiro é demasiado grande. Máximo 10MB.');
+      setError('O ficheiro é demasiado grande. Máximo 10 MB.');
       return;
     }
 
     setSelectedFile(file);
     setError(null);
-    setProcessingStep('uploading');
-    setProgress(15);
+
+    const isTxt = file.type === 'text/plain' || file.name.endsWith('.txt');
 
     try {
-      // Step 1: Read file
-      setProcessingStep('extracting');
-      setProgress(40);
-      const isTextFile = file.type === 'text/plain' || file.name.endsWith('.txt');
-      const content = await readFileAsText(file);
+      if (isTxt) {
+        // ── Ficheiros de texto: leitura directa, sem storage ──────────────
+        setProcessingStep('extracting');
+        setProgress(30);
 
-      // Step 2: Parse contract with AI (Lovable parse-contract)
-      setProcessingStep('parsing');
-      setProgress(75);
-      
-      const { data: parseData, error: parseError } = await supabase.functions.invoke('parse-contract', {
-        body: isTextFile 
-          ? { textContent: content }
-          : { fileContent: content, fileName: file.name, mimeType: file.type }
-      });
+        const textContent = await file.text();
 
-      if (parseError) {
-        throw new Error(parseError.message);
+        setProcessingStep('parsing');
+        setProgress(70);
+
+        const { data: parseData, error: parseError } = await supabase.functions.invoke('parse-contract', {
+          body: { textContent },
+        });
+
+        if (parseError) throw new Error(parseError.message);
+        if (parseData?.error) throw new Error(parseData.error);
+
+        const extractedData = parseData?.data;
+        if (!extractedData) throw new Error('Não foi possível extrair dados do contrato');
+
+        await finishExtraction(extractedData, parseData?.extractedText ?? textContent, file);
+
+      } else {
+        // ── PDF / Word: upload para storage temp, depois edge function ────
+        // Evita enviar ficheiros grandes no corpo JSON (limite edge function)
+        setProcessingStep('uploading');
+        setProgress(15);
+
+        const tempPath = `temp/${crypto.randomUUID()}_${file.name}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('contratos')
+          .upload(tempPath, file, { upsert: false });
+
+        if (uploadError) {
+          throw new Error(`Erro ao carregar ficheiro: ${uploadError.message}`);
+        }
+
+        setProcessingStep('extracting');
+        setProgress(50);
+
+        let parseData: any = null;
+        let parseError: any = null;
+
+        try {
+          const result = await supabase.functions.invoke('parse-contract', {
+            body: { storagePath: tempPath, fileName: file.name, mimeType: file.type },
+          });
+          parseData = result.data;
+          parseError = result.error;
+        } finally {
+          // Limpar ficheiro temporário (melhor-esforço)
+          supabase.storage.from('contratos').remove([tempPath]).catch(() => {});
+        }
+
+        setProcessingStep('parsing');
+        setProgress(80);
+
+        if (parseError) throw new Error(parseError.message);
+        if (parseData?.error) throw new Error(parseData.error);
+
+        const extractedData = parseData?.data;
+        if (!extractedData) throw new Error('Não foi possível extrair dados do contrato');
+
+        await finishExtraction(extractedData, parseData?.extractedText ?? '', file);
       }
 
-      if (parseData?.error) {
-        throw new Error(parseData.error);
-      }
-
-      const extractedData = parseData?.data;
-      const extractedText = parseData?.extractedText || '';
-
-      if (!extractedData) {
-        throw new Error('Não foi possível extrair dados do contrato');
-      }
-
-      // Step 3: Complete — análise de risco será feita pelo agente externo após criação do contrato
-      setProcessingStep('complete');
-      setProgress(100);
-
-      const confidenceDisplay = extractedData.confianca ? `${extractedData.confianca}%` : 'N/A';
-
-      toast({
-        title: 'Extracção completa',
-        description: `Confiança: ${confidenceDisplay} — A análise de risco será feita pelo CCA.`,
-      });
-
-      // Small delay to show complete state
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      onDataExtracted(extractedData, file, extractedText);
-      
     } catch (err: any) {
       console.error('Error processing file:', err);
       setProcessingStep('error');
@@ -182,11 +196,27 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
     }
   };
 
+  const finishExtraction = async (
+    extractedData: ExtractedContractData,
+    extractedText: string,
+    file: File,
+  ) => {
+    setProcessingStep('complete');
+    setProgress(100);
+
+    const confidenceDisplay = extractedData.confianca ? `${extractedData.confianca}%` : 'N/A';
+    toast({
+      title: 'Extracção completa',
+      description: `Confiança: ${confidenceDisplay} — A análise de risco será feita pelo CCA.`,
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    onDataExtracted(extractedData, file, extractedText);
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      processFile(file);
-    }
+    if (file) processFile(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -205,11 +235,8 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
     const file = e.dataTransfer.files?.[0];
-    if (file && processingStep === 'idle') {
-      processFile(file);
-    }
+    if (file && processingStep === 'idle') processFile(file);
   };
 
   const handleRetry = () => {
@@ -250,8 +277,8 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
             processingStep === 'idle' ? 'cursor-pointer' : 'cursor-default'
           } ${
-            isDragging 
-              ? 'border-primary bg-primary/10 scale-[1.02]' 
+            isDragging
+              ? 'border-primary bg-primary/10 scale-[1.02]'
               : processingStep === 'error'
                 ? 'border-destructive/50'
                 : processingStep === 'complete'
@@ -264,9 +291,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
               <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin" />
               <div>
                 <p className="font-medium">{getStepMessage(processingStep)}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedFile?.name}
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">{selectedFile?.name}</p>
               </div>
               <Progress value={progress} className="max-w-xs mx-auto" />
             </div>
@@ -275,9 +300,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
               <CheckCircle2 className="h-12 w-12 mx-auto text-green-500" />
               <div>
                 <p className="font-medium text-green-600">Extracção completa!</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  A redirecionar para o formulário...
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">A redirecionar para o formulário…</p>
               </div>
             </div>
           ) : processingStep === 'error' ? (
@@ -307,7 +330,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
                   {isDragging ? 'Largue o ficheiro aqui' : 'Arraste o contrato ou clique para selecionar'}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  PDF, Word ou TXT (máx. 10MB)
+                  PDF, Word (.docx) ou TXT (máx. 10 MB)
                 </p>
               </div>
             </div>
@@ -315,8 +338,8 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         </div>
 
         <div className="mt-6 flex justify-center">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={onSkip}
             disabled={isProcessing}
           >

@@ -177,7 +177,7 @@ serve(async (req) => {
         table_name: "contract_extractions",
         record_id: contract_id,
         user_id: "00000000-0000-0000-0000-000000000000",
-        old_data: { source: "lovable_ai", fields: Object.fromEntries(Object.entries(diff).map(([k, v]: [string, any]) => [k, v.draft])) },
+        old_data: { source: "ai_extraction", fields: Object.fromEntries(Object.entries(diff).map(([k, v]: [string, any]) => [k, v.draft])) },
         new_data: { source: "cca_agent", fields: Object.fromEntries(Object.entries(diff).map(([k, v]: [string, any]) => [k, v.canonical])) },
         metadata: { diff_count: Object.keys(diff).length, critical_fields: Object.keys(diff) },
       }).catch((e) => console.warn("Audit log insert failed:", e));

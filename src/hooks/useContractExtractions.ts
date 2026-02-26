@@ -45,7 +45,7 @@ export type ValidationStatus = 'none' | 'draft_only' | 'validating' | 'validated
 export interface ContractExtraction {
   id: string;
   contrato_id: string;
-  source: 'lovable_ai' | 'cca_agent';
+  source: 'ai_extraction' | 'cca_agent';
   status: 'provisional' | 'validated' | 'needs_review' | 'failed';
   extraction_data: ExtractionData;
   confidence: number | null;
@@ -82,7 +82,7 @@ export function useContractExtractions(contratoId?: string) {
     enabled: !!user && !!contratoId,
   });
 
-  const draft = extractions?.find(e => e.source === 'lovable_ai') || null;
+  const draft = extractions?.find(e => e.source === 'ai_extraction') || null;
   const canonical = extractions?.find(e => e.source === 'cca_agent') || null;
   const activeExtraction = (canonical && canonical.status !== 'failed') ? canonical : draft;
 
@@ -99,7 +99,7 @@ export function useContractExtractions(contratoId?: string) {
     mutationFn: async (params: { extractionData: ExtractionData; confidence?: number; evidence?: any[] }) => {
       const payload: any = {
         contrato_id: contratoId,
-        source: 'lovable_ai',
+        source: 'ai_extraction',
         status: 'provisional',
         extraction_data: params.extractionData,
         confidence: params.confidence ?? null,
