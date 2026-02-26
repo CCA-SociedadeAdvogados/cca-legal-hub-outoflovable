@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { encode as encodeBase64 } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { BlobReader, ZipReader, TextWriter } from "https://deno.land/x/zipjs@v2.7.32/index.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as pdfjs from "https://esm.sh/pdfjs-dist@4.0.379";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,20 +9,13 @@ const corsHeaders = {
 };
 
 const AI_MODELS = [
-  { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
-  { model: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6" },
-];
-
-// Models that support PDF/document multimodal (Anthropic natively supports PDFs)
-const MULTIMODAL_MODELS = [
-  { model: "claude-sonnet-4-6",         name: "Claude Sonnet 4.6" },
-  { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
+  { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
+  { model: "llama-3.1-8b-instant",    name: "Llama 3.1 8B" },
 ];
 
 async function callAIWithFallback(
   apiKey: string,
-  systemPrompt: string,
-  userContent: string | Array<any>,
+  messages: Array<{ role: string; content: string }>,
   functionName: string,
   modelsOverride?: typeof AI_MODELS
 ): Promise<{ content: string; model: string }> {
@@ -33,37 +26,19 @@ async function callAIWithFallback(
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
+          "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model,
-          max_tokens: 8096,
-          system: systemPrompt,
-          messages: [
-            {
-              role: "user",
-              content: userContent,
-            },
-          ],
-        }),
+        body: JSON.stringify({ model, messages }),
       });
 
       if (response.status === 429) {
         const body = await response.text();
         console.warn(`[${functionName}] ${name} rate limited: ${body}`);
         lastError = new Error(`${name} rate limited`);
-        continue;
-      }
-
-      if (response.status === 529) {
-        const body = await response.text();
-        console.warn(`[${functionName}] ${name} overloaded: ${body}`);
-        lastError = new Error(`${name} overloaded`);
         continue;
       }
 
@@ -75,7 +50,7 @@ async function callAIWithFallback(
       }
 
       const data = await response.json();
-      const content = data.content?.[0]?.text;
+      const content = data.choices?.[0]?.message?.content;
 
       if (!content) {
         console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
@@ -104,9 +79,9 @@ serve(async (req) => {
     const body = await req.json();
     const { textContent, fileContent, fileName, mimeType, storagePath } = body;
 
-    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-    if (!ANTHROPIC_API_KEY) {
-      throw new Error("ANTHROPIC_API_KEY is not configured");
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    if (!GROQ_API_KEY) {
+      throw new Error("GROQ_API_KEY is not configured");
     }
 
     let contractText = textContent as string | undefined;
@@ -118,7 +93,6 @@ serve(async (req) => {
       let resolvedName = fileName as string | undefined;
 
       if (storagePath) {
-        // Novo fluxo: descarregar o ficheiro do Supabase Storage
         console.log("Downloading file from storage:", storagePath);
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -135,7 +109,6 @@ serve(async (req) => {
         const arrayBuffer = await blob.arrayBuffer();
         fileBytes = new Uint8Array(arrayBuffer);
 
-        // Inferir MIME type a partir do nome se não vier no pedido
         if (!resolvedMime) {
           const lower = (resolvedName ?? storagePath).toLowerCase();
           if (lower.endsWith(".pdf"))  resolvedMime = "application/pdf";
@@ -148,7 +121,6 @@ serve(async (req) => {
         }
 
       } else if (fileContent) {
-        // Fluxo legado: base64 no corpo do pedido
         console.log("Processing file from base64:", resolvedName, "Type:", resolvedMime);
         const binaryStr = atob(fileContent as string);
         fileBytes = new Uint8Array(binaryStr.length);
@@ -159,7 +131,7 @@ serve(async (req) => {
 
       if (fileBytes) {
         if (resolvedMime === "application/pdf" || resolvedName?.endsWith(".pdf")) {
-          contractText = await extractTextFromPDF(fileBytes, ANTHROPIC_API_KEY);
+          contractText = await extractTextFromPDF(fileBytes);
         } else if (
           resolvedMime?.includes("word") ||
           resolvedName?.endsWith(".docx") ||
@@ -274,9 +246,11 @@ INSTRUÇÕES IMPORTANTES:
     }
 
     const { content } = await callAIWithFallback(
-      ANTHROPIC_API_KEY,
-      systemPrompt,
-      `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`,
+      GROQ_API_KEY,
+      [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}` }
+      ],
       "parse-contract"
     );
 
@@ -318,35 +292,33 @@ INSTRUÇÕES IMPORTANTES:
   }
 });
 
-// ── Extracção de texto de PDF via Claude multimodal (suporte nativo a PDFs) ──
-async function extractTextFromPDF(fileBytes: Uint8Array, apiKey: string): Promise<string> {
+// ── Extracção de texto de PDF via pdfjs-dist (sem IA, sem custos) ─────────
+async function extractTextFromPDF(fileBytes: Uint8Array): Promise<string> {
   console.log("Extracting text from PDF, size:", fileBytes.length);
 
-  const base64Content = encodeBase64(fileBytes);
+  // Desactivar worker (necessário em ambientes edge/serverless)
+  (pdfjs as any).GlobalWorkerOptions.workerSrc = "";
 
-  const { content: extractedText } = await callAIWithFallback(
-    apiKey,
-    "Extraia todo o texto do documento PDF fornecido. Retorne apenas o texto completo do documento, preservando a estrutura e formatação original. Não adicione comentários ou interpretações.",
-    [
-      {
-        type: "document",
-        source: {
-          type: "base64",
-          media_type: "application/pdf",
-          data: base64Content,
-        },
-      },
-      {
-        type: "text",
-        text: "Extraia todo o texto deste documento de contrato PDF.",
-      },
-    ],
-    "parse-contract-pdf",
-    MULTIMODAL_MODELS
-  );
+  const pdf = await (pdfjs as any).getDocument({ data: fileBytes }).promise;
+  const pages: string[] = [];
 
-  console.log("PDF text extracted, length:", extractedText.length);
-  return extractedText;
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item: any) => item.str)
+      .join(" ");
+    pages.push(pageText);
+  }
+
+  const fullText = pages.join("\n\n");
+
+  if (!fullText || fullText.trim().length === 0) {
+    throw new Error("Não foi possível extrair texto do PDF. O ficheiro pode ser uma imagem digitalizada — tente converter para Word ou TXT.");
+  }
+
+  console.log("PDF text extracted, length:", fullText.length);
+  return fullText;
 }
 
 // ── Extracção de texto de Word (.docx) via zip.js ─────────────────────────
@@ -396,10 +368,8 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
 
 // ── Parseamento XML do documento Word ─────────────────────────────────────
 function extractTextFromXml(xml: string): string {
-  // Substituir fins de parágrafo por newline
   const withBreaks = xml.replace(/<\/w:p>/g, "\n");
 
-  // Extrair conteúdo de todas as tags <w:t>
   const allText: string[] = [];
   const regex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
   let m: RegExpExecArray | null;
@@ -407,7 +377,6 @@ function extractTextFromXml(xml: string): string {
     allText.push(m[1]);
   }
 
-  // Descodificar entidades XML básicas
   const decode = (s: string) =>
     s.replace(/&amp;/g, "&")
      .replace(/&lt;/g,  "<")
@@ -417,6 +386,5 @@ function extractTextFromXml(xml: string): string {
 
   const finalText = allText.map(decode).join("");
 
-  // Normalizar newlines múltiplos
   return finalText.replace(/\n{3,}/g, "\n\n").trim();
 }
