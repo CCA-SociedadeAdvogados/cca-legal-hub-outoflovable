@@ -1139,5 +1139,92 @@
     "deleteError": "Erro ao remover configuração",
     "syncSuccess": "Sincronização concluída: {{added}} novos, {{updated}} atualizados, {{deleted}} removidos",
     "syncError": "Erro na sincronização: {{message}}"
+  },
+  "businessCentral": {
+    "title": "Conta Corrente — Business Central",
+    "connectedTo": "{{company}} · última sync: {{date}}",
+    "neverSynced": "Nunca sincronizado",
+    "notConfigured": {
+      "title": "Integração não configurada",
+      "description": "A integração com o Business Central ainda não está ativa. Configure-a nas Definições para visualizar a conta corrente dos clientes.",
+      "goToSettings": "Ir para Definições"
+    },
+    "configSaved": "Configuração Business Central guardada",
+    "configError": "Erro ao guardar configuração",
+    "configDeleted": "Integração Business Central removida",
+    "deleteError": "Erro ao remover integração",
+    "status": {
+      "synced": "Sincronizado",
+      "error": "Erro",
+      "syncing": "A sincronizar...",
+      "pending": "Pendente"
+    },
+    "searchCustomer": "Pesquisar cliente por nome, número ou NIF...",
+    "noCustomersFound": "Nenhum cliente encontrado",
+    "refresh": "Atualizar lista",
+    "customer": {
+      "number": "Nº Cliente",
+      "openBalance": "Saldo em aberto",
+      "overdueBalance": "Vencido"
+    },
+    "filter": {
+      "all": "Todos",
+      "open": "Em aberto",
+      "closed": "Liquidados"
+    },
+    "ledger": {
+      "postingDate": "Data Lanç.",
+      "documentType": "Tipo Doc.",
+      "documentNumber": "Nº Doc.",
+      "description": "Descrição",
+      "amount": "Montante",
+      "remainingAmount": "M. Restante",
+      "dueDate": "Vencimento",
+      "status": "Estado",
+      "settled": "Liquidado",
+      "overdue": "Vencido",
+      "open": "Em aberto",
+      "noEntries": "Sem lançamentos para este cliente",
+      "count": "{{count}} lançamento(s)",
+      "totalOpen": "Total em aberto"
+    },
+    "searchHint": "Pesquise e selecione um cliente para ver a sua conta corrente",
+    "settings": {
+      "infoTitle": "Integração Business Central",
+      "infoDesc": "A API do Business Central está na rede interna da empresa e não é diretamente acessível pela cloud. É necessário instalar e executar o agente de sincronização local na rede da empresa.",
+      "agentDesc": "O agente local lê os dados do BC (customers, Account, arq_ledger) e sincroniza para esta plataforma via chave de serviço Supabase. Pode ser agendado a qualquer intervalo.",
+      "configTitle": "Configuração Business Central",
+      "configDesc": "Defina o URL do servidor BC e o GUID da empresa para esta organização.",
+      "bcUrl": "URL do Servidor BC",
+      "bcUrlHelp": "URL base do servidor Business Central on-premises. Ex: http://10.110.250.30:2053/BC140WS",
+      "companyGuid": "GUID da Empresa",
+      "companyGuidHelp": "GUID único da empresa no BC. Encontre-o no URL da API: /companies({GUID})",
+      "companyName": "Nome da Empresa (opcional)",
+      "connected": "Ligado a:",
+      "lastSync": "Última sincronização:",
+      "enabled": "Integração ativa",
+      "enabledDesc": "Ativar ou desativar a visualização dos dados BC nesta organização",
+      "save": "Guardar Configuração",
+      "syncTitle": "Estado da Sincronização",
+      "syncStatus": "Estado:",
+      "customers": "Clientes",
+      "accounts": "Contas",
+      "ledgerEntries": "Lançamentos",
+      "agentTitle": "Agente de sincronização local",
+      "agentInstructions": "Para sincronizar dados, execute o agente local na rede interna da empresa:",
+      "recentLogs": "Histórico recente",
+      "dangerTitle": "Zona de Perigo",
+      "removeIntegration": "Remover integração Business Central",
+      "removeDesc": "Remove a configuração e todos os dados sincronizados (clientes, contas e lançamentos).",
+      "removeButton": "Remover",
+      "confirmTitle": "Tem a certeza?",
+      "confirmDesc": "Esta ação irá remover a configuração do Business Central e todos os dados sincronizados (clientes, contas e lançamentos). Os dados no Business Central não serão afetados.",
+      "confirmButton": "Sim, remover"
+    },
+    "admin": {
+      "title": "Business Central",
+      "active": "Ativo",
+      "inactive": "Inativo"
+    }
   }
 }

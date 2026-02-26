@@ -20,6 +20,7 @@ import {
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
 import { SharePointDocumentsBrowser } from "@/components/sharepoint/SharePointDocumentsBrowser";
+import { BCContaCorrente } from "@/components/financeiro/BCContaCorrente";
 
 const statusColors: Record<AccountStatus, string> = {
   regularizado: "bg-risk-low/20 text-risk-low border-risk-low/30",
@@ -437,6 +438,9 @@ export default function Financeiro() {
             )}
           </CardContent>
         </Card>
+
+        {/* Conta Corrente Business Central */}
+        <BCContaCorrente />
 
         {/* SharePoint Documents */}
         <SharePointDocumentsBrowser />

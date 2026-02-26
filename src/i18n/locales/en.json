@@ -1139,5 +1139,92 @@
     "deleteError": "Error removing configuration",
     "syncSuccess": "Sync completed: {{added}} new, {{updated}} updated, {{deleted}} deleted",
     "syncError": "Sync error: {{message}}"
+  },
+  "businessCentral": {
+    "title": "Account Statement — Business Central",
+    "connectedTo": "{{company}} · last sync: {{date}}",
+    "neverSynced": "Never synced",
+    "notConfigured": {
+      "title": "Integration not configured",
+      "description": "The Business Central integration is not yet active. Configure it in Settings to view customer account statements.",
+      "goToSettings": "Go to Settings"
+    },
+    "configSaved": "Business Central configuration saved",
+    "configError": "Error saving configuration",
+    "configDeleted": "Business Central integration removed",
+    "deleteError": "Error removing integration",
+    "status": {
+      "synced": "Synced",
+      "error": "Error",
+      "syncing": "Syncing...",
+      "pending": "Pending"
+    },
+    "searchCustomer": "Search customer by name, number or VAT...",
+    "noCustomersFound": "No customers found",
+    "refresh": "Refresh list",
+    "customer": {
+      "number": "Customer No.",
+      "openBalance": "Open balance",
+      "overdueBalance": "Overdue"
+    },
+    "filter": {
+      "all": "All",
+      "open": "Open",
+      "closed": "Settled"
+    },
+    "ledger": {
+      "postingDate": "Posting Date",
+      "documentType": "Doc. Type",
+      "documentNumber": "Doc. No.",
+      "description": "Description",
+      "amount": "Amount",
+      "remainingAmount": "Remaining",
+      "dueDate": "Due Date",
+      "status": "Status",
+      "settled": "Settled",
+      "overdue": "Overdue",
+      "open": "Open",
+      "noEntries": "No entries for this customer",
+      "count": "{{count}} entry(ies)",
+      "totalOpen": "Total open"
+    },
+    "searchHint": "Search and select a customer to view their account statement",
+    "settings": {
+      "infoTitle": "Business Central Integration",
+      "infoDesc": "The Business Central API is on the company's internal network and is not directly accessible from the cloud. You need to install and run the local sync agent on the company network.",
+      "agentDesc": "The local agent reads BC data (customers, Account, arq_ledger) and syncs to this platform via Supabase service key. It can be scheduled at any interval.",
+      "configTitle": "Business Central Configuration",
+      "configDesc": "Set the BC server URL and company GUID for this organization.",
+      "bcUrl": "BC Server URL",
+      "bcUrlHelp": "Base URL of the on-premises Business Central server. Ex: http://10.110.250.30:2053/BC140WS",
+      "companyGuid": "Company GUID",
+      "companyGuidHelp": "Unique company GUID in BC. Find it in the API URL: /companies({GUID})",
+      "companyName": "Company Name (optional)",
+      "connected": "Connected to:",
+      "lastSync": "Last sync:",
+      "enabled": "Integration active",
+      "enabledDesc": "Enable or disable BC data display for this organization",
+      "save": "Save Configuration",
+      "syncTitle": "Sync Status",
+      "syncStatus": "Status:",
+      "customers": "Customers",
+      "accounts": "Accounts",
+      "ledgerEntries": "Entries",
+      "agentTitle": "Local sync agent",
+      "agentInstructions": "To sync data, run the local agent on the company's internal network:",
+      "recentLogs": "Recent history",
+      "dangerTitle": "Danger Zone",
+      "removeIntegration": "Remove Business Central integration",
+      "removeDesc": "Removes the configuration and all synced data (customers, accounts and entries).",
+      "removeButton": "Remove",
+      "confirmTitle": "Are you sure?",
+      "confirmDesc": "This action will remove the Business Central configuration and all synced data (customers, accounts and entries). Data in Business Central will not be affected.",
+      "confirmButton": "Yes, remove"
+    },
+    "admin": {
+      "title": "Business Central",
+      "active": "Active",
+      "inactive": "Inactive"
+    }
   }
 }

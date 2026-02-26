@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { BusinessCentralSettings } from "@/components/settings/BusinessCentralSettings";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import {
   Settings,
@@ -25,6 +26,7 @@ import {
   CheckCircle,
   Loader2,
   Lock,
+  Building2,
 } from "lucide-react";
 
 interface SignatureProvider {
@@ -211,6 +213,10 @@ export default function Definicoes() {
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">{t('settings.tabs.notifications')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="business-central" className="gap-2">
+              <Building2 className="h-4 w-4" />
+              <span className="hidden sm:inline">{t('settings.tabs.businessCentral', 'Business Central')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -684,6 +690,10 @@ export default function Definicoes() {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="business-central" className="space-y-6">
+            <BusinessCentralSettings />
           </TabsContent>
 
         </Tabs>

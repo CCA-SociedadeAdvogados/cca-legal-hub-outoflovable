@@ -1,0 +1,17 @@
+{
+  "name": "bc-sync-agent",
+  "version": "1.0.0",
+  "description": "Business Central to Supabase sync agent for CCA Legal Hub",
+  "main": "sync.js",
+  "scripts": {
+    "start": "node sync.js",
+    "dry-run": "node sync.js --dry-run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
