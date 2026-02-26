@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
 import type { TablesInsert } from "@/integrations/supabase/types";
+import { safeFileName } from "@/lib/utils";
 
 const BUCKET = "contratos";
 const MAX_FILES = 10;
@@ -54,9 +55,7 @@ function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function safeFileName(name: string) {
-  return name.replace(/[^\w.\-]+/g, "_");
-}
+// safeFileName is now imported from @/lib/utils
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;

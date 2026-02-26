@@ -5,6 +5,7 @@ import { Upload, FileText, Loader2, Sparkles, AlertCircle, CheckCircle2 } from '
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { safeFileName } from '@/lib/utils';
 
 interface ExtractedContractData {
   titulo_contrato?: string;
@@ -145,7 +146,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         setProcessingStep('uploading');
         setProgress(15);
 
-        const tempPath = `temp/${crypto.randomUUID()}_${file.name}`;
+        const tempPath = `temp/${crypto.randomUUID()}_${safeFileName(file.name)}`;
 
         const { error: uploadError } = await supabase.storage
           .from('contratos')

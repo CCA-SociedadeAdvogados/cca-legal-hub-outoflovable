@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { safeFileName } from '@/lib/utils';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 
 export type Anexo = Tables<'anexos_contrato'>;
@@ -38,7 +39,7 @@ export const useAnexos = (contratoId: string) => {
     }) => {
       // Generate unique file path
       const fileExt = file.name.split('.').pop();
-      const fileName = `${contratoId}/${Date.now()}_${file.name}`;
+      const fileName = `${contratoId}/${Date.now()}_${safeFileName(file.name)}`;
       
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
