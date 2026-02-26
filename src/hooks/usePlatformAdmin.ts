@@ -196,10 +196,10 @@ export function usePlatformAdmin() {
   });
 
   const createOrganization = useMutation({
-    mutationFn: async ({ name, slug, industrySectors }: { name: string; slug: string; industrySectors?: string[] }) => {
+    mutationFn: async ({ name, slug, industrySectors, legalbiUrl }: { name: string; slug: string; industrySectors?: string[]; legalbiUrl?: string }) => {
       const { data, error } = await supabase
         .from("organizations")
-        .insert({ name, slug, industry_sectors: industrySectors || [] })
+        .insert({ name, slug, industry_sectors: industrySectors || [], legalbi_url: legalbiUrl || null })
         .select()
         .single();
       if (error) throw error;
