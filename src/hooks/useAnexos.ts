@@ -36,9 +36,9 @@ export const useAnexos = (contratoId: string) => {
       tipoAnexo: 'pdf_principal' | 'anexo' | 'adenda' | 'outro';
       descricao?: string;
     }) => {
-      // Generate unique file path
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${contratoId}/${Date.now()}_${file.name}`;
+      // Generate unique file path (sanitize to remove accented/special chars)
+      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+      const fileName = `${contratoId}/${Date.now()}_${safeName}`;
       
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
