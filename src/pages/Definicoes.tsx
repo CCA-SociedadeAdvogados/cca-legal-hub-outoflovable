@@ -14,6 +14,7 @@ import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Settings,
   Pen,
@@ -25,6 +26,8 @@ import {
   CheckCircle,
   Loader2,
   Lock,
+  RefreshCw,
+  Link2,
 } from "lucide-react";
 
 interface SignatureProvider {
@@ -54,6 +57,26 @@ export default function Definicoes() {
   const { settings, isLoading: isLoadingSettings, updateSettings, isUpdating } = useOrganizationSettings();
   const { isPlatformAdmin } = usePlatformAdmin();
   const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncResult, setLastSyncResult] = useState<{ upserted?: number; error?: string } | null>(null);
+
+  const handleBcSync = async () => {
+    setIsSyncing(true);
+    setLastSyncResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("bc-sync");
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLastSyncResult({ upserted: data.upserted });
+      toast.success(data.message ?? `${data.upserted} clientes sincronizados`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setLastSyncResult({ error: message });
+      toast.error(`Erro na sincronização: ${message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
   const [aiSettings, setAiSettings] = useState({
     autoAnalyze: true,
     notifyImpacts: true,
@@ -211,6 +234,10 @@ export default function Definicoes() {
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">{t('settings.tabs.notifications')}</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="gap-2">
+              <Link2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Integrações</span>
             </TabsTrigger>
           </TabsList>
 
@@ -682,6 +709,70 @@ export default function Definicoes() {
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t('settings.saveSettings')}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Integrations */}
+          <TabsContent value="integrations" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Link2 className="h-5 w-5" />
+                  Business Central
+                </CardTitle>
+                <CardDescription>
+                  Sincroniza clientes do Microsoft Business Central para a tabela <code className="text-xs bg-muted px-1 py-0.5 rounded">bc_customers</code> no Supabase.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-sm">Sincronização manual de clientes</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Chama a API BC, faz upsert de todos os clientes e termina. Corre uma vez por clique.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleBcSync}
+                      disabled={isSyncing}
+                      className="shrink-0"
+                    >
+                      {isSyncing ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                      )}
+                      {isSyncing ? "A sincronizar…" : "Sincronizar agora"}
+                    </Button>
+                  </div>
+
+                  {lastSyncResult && (
+                    <div className={`flex items-center gap-2 text-sm rounded-md px-3 py-2 ${lastSyncResult.error ? "bg-destructive/10 text-destructive" : "bg-green-50 text-green-700"}`}>
+                      {lastSyncResult.error ? (
+                        <span>Erro: {lastSyncResult.error}</span>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 shrink-0" />
+                          <span>{lastSyncResult.upserted} clientes sincronizados com sucesso</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-lg border border-dashed p-4 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Variáveis de ambiente necessárias</p>
+                  <p className="text-xs text-muted-foreground">
+                    Configura os seguintes secrets no painel Supabase → Edge Functions → bc-sync → Secrets:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-2">
+                    {["BC_USERNAME", "BC_PASSWORD", "BC_BASE_URL", "BC_COMPANY_GUID"].map((v) => (
+                      <code key={v} className="text-xs bg-muted px-2 py-1 rounded block">{v}</code>
+                    ))}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
