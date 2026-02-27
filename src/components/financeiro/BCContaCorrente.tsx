@@ -91,7 +91,7 @@ export function BCContaCorrente() {
     (c.nif && c.nif.includes(search))
   );
 
-  const totalBalance = ledgerEntries
+  const totalBalance = selectedCustomer?.balance ?? ledgerEntries
     .filter((e) => e.is_open)
     .reduce((sum, e) => sum + (e.remaining_amount || 0), 0);
 

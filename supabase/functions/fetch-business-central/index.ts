@@ -12,10 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const supabase = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
     const body = await req.json();
     const { action, organization_id } = body;
@@ -24,6 +23,47 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "organization_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ─── Authentication & Authorization ───────────────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: membership } = await supabase
+      .from("users")
+      .select("id, role")
+      .eq("id", user.id)
+      .eq("organization_id", organization_id)
+      .maybeSingle();
+
+    if (!membership) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (["save_config", "delete_config"].includes(action) && !["admin", "superadmin", "owner"].includes(membership.role)) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: admin role required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -163,8 +203,9 @@ serve(async (req) => {
         .range(offset, offset + limit - 1);
 
       if (search) {
+        const sanitized = search.replace(/[,.*()]/g, "");
         query = query.or(
-          `display_name.ilike.%${search}%,bc_number.ilike.%${search}%,nif.ilike.%${search}%`
+          `display_name.ilike.%${sanitized}%,bc_number.ilike.%${sanitized}%,nif.ilike.%${sanitized}%`
         );
       }
 
