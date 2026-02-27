@@ -1,0 +1,16 @@
+{
+  "name": "bc-sync",
+  "version": "1.0.0",
+  "description": "Sync clientes do Business Central para Supabase",
+  "main": "sync.js",
+  "scripts": {
+    "start": "node sync.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.3",
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
