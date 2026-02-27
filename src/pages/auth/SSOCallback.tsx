@@ -64,65 +64,23 @@ export default function SSOCallback() {
           return;
         }
 
-        if (result.success && result.action_link) {
-          // Extrair token — pode estar nos query params ou no hash
-          const actionUrl = new URL(result.action_link);
-          
-          // Tentar query params primeiro
-          let token = actionUrl.searchParams.get("token");
-          
-          // Se não encontrar, tentar no hash
-          if (!token && actionUrl.hash) {
-            const hashParams = new URLSearchParams(actionUrl.hash.replace("#", ""));
-            token = hashParams.get("access_token");
-            
-            if (token) {
-              // Temos access_token e refresh_token directamente no hash
-              const refreshToken = hashParams.get("refresh_token") || "";
-              const { error: sessionError } = await supabase.auth.setSession({
-                access_token: token,
-                refresh_token: refreshToken,
-              });
+        if (result.success && result.session) {
+          // Edge Function returns tokens directly — establish session
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: result.session.access_token,
+            refresh_token: result.session.refresh_token,
+          });
 
-              if (sessionError) {
-                console.error("[SSO] setSession error:", sessionError);
-                setError({ code: "session_error", message: "Erro ao estabelecer sessão." });
-                setState("error");
-                return;
-              }
-
-              await queryClient.invalidateQueries();
-              setState("success");
-              setTimeout(() => navigate("/", { replace: true }), 1500);
-              return;
-            }
-          }
-
-          // Usar token_hash com verifyOtp
-          if (token) {
-            const { error: verifyError } = await supabase.auth.verifyOtp({
-              token_hash: token,
-              type: "magiclink",
-            });
-
-            if (verifyError) {
-              console.error("[SSO] verifyOtp error:", verifyError);
-              setError({ code: "session_error", message: "Erro ao verificar token. Por favor, tente novamente." });
-              setState("error");
-              return;
-            }
-
-            await queryClient.invalidateQueries();
-            setState("success");
-            setTimeout(() => navigate("/", { replace: true }), 1500);
+          if (sessionError) {
+            console.error("[SSO] setSession error:", sessionError);
+            setError({ code: "session_error", message: "Erro ao estabelecer sessão." });
+            setState("error");
             return;
           }
 
-          // Se chegou aqui, não encontrou token
-          console.error("[SSO] No token found in action_link:", result.action_link);
-          setError({ code: "no_token", message: "Token de sessão não encontrado." });
-          setState("error");
-
+          await queryClient.invalidateQueries();
+          setState("success");
+          setTimeout(() => navigate("/", { replace: true }), 1500);
         } else {
           setError({ code: "no_session", message: "Não foi possível estabelecer a sessão. Por favor, tente novamente." });
           setState("error");
