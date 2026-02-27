@@ -38,7 +38,11 @@ export const useAnexos = (contratoId: string) => {
     }) => {
       // Generate unique file path
       const fileExt = file.name.split('.').pop();
-      const fileName = `${contratoId}/${Date.now()}_${file.name}`;
+      const sanitizedName = file.name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-zA-Z0-9.\-_]/g, '_');
+      const fileName = `${contratoId}/${Date.now()}_${sanitizedName}`;
       
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
