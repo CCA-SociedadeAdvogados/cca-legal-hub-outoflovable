@@ -136,8 +136,11 @@ Deno.serve(async (req) => {
 
   const url = new URL(req.url);
   const path = url.pathname;
+  // Support both sub-path routing (/start, /callback) and query-param routing (?action=start)
+  // Query params are more reliable across different Supabase proxy configurations
+  const action = url.searchParams.get("action") || "";
 
-  console.log(`[SSO-CCA] Request to: ${path}`);
+  console.log(`[SSO-CCA] Request to: ${path} (action=${action || "none"})`);
 
   // Create Supabase client with service role for all operations
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -160,7 +163,7 @@ Deno.serve(async (req) => {
     }
 
     // Route: /start - Initiate SSO flow
-    if (path.endsWith("/start")) {
+    if (path.endsWith("/start") || action === "start") {
       console.log("[SSO-CCA] Starting SSO flow");
 
       // Generate secure state and store in database for persistence
@@ -192,7 +195,7 @@ Deno.serve(async (req) => {
     }
 
     // Route: /callback - Handle SSO callback
-    if (path.endsWith("/callback")) {
+    if (path.endsWith("/callback") || action === "callback") {
       const code = url.searchParams.get("code");
       const state = url.searchParams.get("state");
       const error = url.searchParams.get("error");
@@ -630,7 +633,7 @@ Deno.serve(async (req) => {
     }
 
     // Route: /status - Check SSO configuration status
-    if (path.endsWith("/status")) {
+    if (path.endsWith("/status") || action === "status") {
       return new Response(
         JSON.stringify({
           configured: !!(SSO_CONFIG.clientId && SSO_CONFIG.issuerUrl),
