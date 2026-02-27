@@ -45,7 +45,7 @@ export default function SSOCallback() {
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const response = await fetch(
-          `${supabaseUrl}/functions/v1/sso-cca/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(stateParam)}`,
+          `${supabaseUrl}/functions/v1/sso-cca?action=callback&code=${encodeURIComponent(code)}&state=${encodeURIComponent(stateParam)}`,
           {
             method: "GET",
             headers: {
