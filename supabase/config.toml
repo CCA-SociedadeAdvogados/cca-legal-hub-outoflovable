@@ -59,3 +59,6 @@ verify_jwt = false
 
 [functions.triage-contract]
 verify_jwt = false
+
+[functions.fetch-business-central]
+verify_jwt = false

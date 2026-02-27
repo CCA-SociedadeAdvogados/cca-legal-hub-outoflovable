@@ -63,6 +63,7 @@ import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
 import { DepartmentsConfig } from "@/components/admin/DepartmentsConfig";
 import { OrgSharePointConfig } from "@/components/admin/OrgSharePointConfig";
 import { OrgLegalBiConfig } from "@/components/admin/OrgLegalBiConfig";
+import { OrgBusinessCentralConfig } from "@/components/admin/OrgBusinessCentralConfig";
 import {
   Building2,
   FileCheck,
@@ -1125,6 +1126,7 @@ export default function PlatformAdmin() {
                   />
                   <OrgSharePointConfig organizationId={editingOrg?.id || null} />
                   <OrgLegalBiConfig organizationId={editingOrg?.id || null} />
+                  <OrgBusinessCentralConfig organizationId={editingOrg?.id || null} />
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsEditOrgOpen(false)}>
