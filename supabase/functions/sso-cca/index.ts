@@ -496,11 +496,19 @@ Deno.serve(async (req) => {
       const CCA_TESTE_ORG_ID = "e33bf0c9-71b9-491b-8054-d4c88d8bb4ee";
 
       // ── Step 1: Check sso_admin_emails table (highest priority) ──────────────
-      const { data: emailAdminConfig } = await supabase
+      const { data: emailAdminConfig, error: emailAdminError } = await supabase
         .from("sso_admin_emails")
         .select("role")
         .eq("email", email)
         .maybeSingle();
+
+      // If the table doesn't exist yet (migration not applied), skip email admin check
+      const emailTableExists = !emailAdminError || emailAdminError.code !== "42P01";
+      if (emailAdminError && emailAdminError.code === "42P01") {
+        console.log("[SSO-CCA] sso_admin_emails table not found — skipping email admin check");
+      } else if (emailAdminError) {
+        console.error("[SSO-CCA] Error querying sso_admin_emails:", emailAdminError.message);
+      }
 
       // ── Step 2: Determine role ─────────────────────────────────────────────
       const adminGroupId = Deno.env.get("CCA_SSO_GROUP_ADMIN") || "";
@@ -581,8 +589,10 @@ Deno.serve(async (req) => {
         } else {
           console.log(`[SSO-CCA] User added/confirmed in platform_admins (source: ${roleSource})`);
         }
-      } else {
-        // Remove from platform_admins, protecting demo_user
+      } else if (emailTableExists) {
+        // Only remove from platform_admins when we have a confirmed result from sso_admin_emails.
+        // If the table didn't exist (emailTableExists=false), we skip the delete to avoid wiping
+        // manually-inserted admin records when the migration hasn't been applied yet.
         const { error: paError } = await supabase
           .from("platform_admins")
           .delete()
@@ -593,6 +603,8 @@ Deno.serve(async (req) => {
         } else {
           console.log(`[SSO-CCA] User not in admin list — removed from platform_admins`);
         }
+      } else {
+        console.log(`[SSO-CCA] sso_admin_emails table unavailable — skipping platform_admins sync to preserve manually-set admins`);
       }
 
       console.log(`[SSO-CCA] Assigning user to CCA_Teste organization via RPC with role: ${assignedRole}`);
