@@ -44,13 +44,15 @@ export default function SSOCallback() {
 
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const response = await fetch(
           `${supabaseUrl}/functions/v1/sso-cca/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(stateParam)}`,
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              "apikey": anonKey,
+              "Authorization": `Bearer ${anonKey}`,
             },
           }
         );
