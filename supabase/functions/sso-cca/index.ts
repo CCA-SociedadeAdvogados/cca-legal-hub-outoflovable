@@ -495,16 +495,29 @@ Deno.serve(async (req) => {
       // This bypasses RLS policies that would otherwise block the insert
       const CCA_TESTE_ORG_ID = "e33bf0c9-71b9-491b-8054-d4c88d8bb4ee";
 
-      // Determine role based on Microsoft security groups in the ID token
-      // Groups are provided as GUIDs in the 'groups' claim
-      // CCA_SSO_GROUP_ADMIN and CCA_SSO_GROUP_MANAGER secrets hold the group GUIDs
+      // ── Step 1: Check sso_admin_emails table (highest priority) ──────────────
+      const { data: emailAdminConfig, error: emailAdminError } = await supabase
+        .from("sso_admin_emails")
+        .select("role")
+        .eq("email", email)
+        .maybeSingle();
+
+      // If the table doesn't exist yet (migration not applied), skip email admin check
+      const emailTableExists = !emailAdminError || emailAdminError.code !== "42P01";
+      if (emailAdminError && emailAdminError.code === "42P01") {
+        console.log("[SSO-CCA] sso_admin_emails table not found — skipping email admin check");
+      } else if (emailAdminError) {
+        console.error("[SSO-CCA] Error querying sso_admin_emails:", emailAdminError.message);
+      }
+
+      // ── Step 2: Determine role ─────────────────────────────────────────────
       const adminGroupId = Deno.env.get("CCA_SSO_GROUP_ADMIN") || "";
       const managerGroupId = Deno.env.get("CCA_SSO_GROUP_MANAGER") || "";
-      
+
       // Handle Microsoft Entra groups claim overflow (~200+ groups)
       // When overflow occurs, 'groups' is absent and '_claim_names' is present
       let userGroups: string[] = [];
-      
+
       if (Array.isArray(userInfo.groups) && userInfo.groups.length > 0) {
         userGroups = userInfo.groups as string[];
         console.log(`[SSO-CCA] User groups from token claim: ${userGroups.length} groups`);
@@ -521,7 +534,7 @@ Deno.serve(async (req) => {
               },
             }
           );
-          
+
           if (graphResponse.ok) {
             const graphData = await graphResponse.json();
             userGroups = (graphData.value || []).map((g: { id: string }) => g.id);
@@ -539,21 +552,34 @@ Deno.serve(async (req) => {
       console.log(`[SSO-CCA] Final user groups for role mapping: ${JSON.stringify(userGroups.slice(0, 10))}${userGroups.length > 10 ? `... (${userGroups.length} total)` : ""}`);
 
       let assignedRole = "editor"; // default role for all CCA SSO users
-      if (adminGroupId && userGroups.includes(adminGroupId)) {
+      let roleSource = "default";
+
+      if (emailAdminConfig) {
+        // Email table takes priority over group membership
+        assignedRole = emailAdminConfig.role;
+        roleSource = "sso_admin_emails";
+        console.log(`[SSO-CCA] Role from sso_admin_emails: ${assignedRole}`);
+      } else if (adminGroupId && userGroups.includes(adminGroupId)) {
         assignedRole = "admin";
+        roleSource = "entra_admin_group";
         console.log(`[SSO-CCA] User is in LegalHub_Admin group → role: admin`);
       } else if (managerGroupId && userGroups.includes(managerGroupId)) {
         assignedRole = "admin";
+        roleSource = "entra_manager_group";
         console.log(`[SSO-CCA] User is in LegalHub_Manager group → role: admin`);
       } else {
-        console.log(`[SSO-CCA] User not in specific groups → default role: editor`);
+        console.log(`[SSO-CCA] User not in specific groups and not in sso_admin_emails → default role: editor`);
       }
-      
-      // Sync platform_admins based on LegalHub_Admin group membership
-      const DEMO_USER_ID = "1f7308ec-f9be-4a6a-96d5-b8ec4c98527b";
-      const isAdminGroup = adminGroupId && userGroups.includes(adminGroupId);
 
-      if (isAdminGroup) {
+      console.log(`[SSO-CCA] Final role: ${assignedRole} (source: ${roleSource})`);
+
+      // ── Step 3: Sync platform_admins ──────────────────────────────────────
+      const DEMO_USER_ID = "1f7308ec-f9be-4a6a-96d5-b8ec4c98527b";
+      const isPlatformAdmin =
+        (emailAdminConfig && emailAdminConfig.role === "admin") ||
+        (adminGroupId && userGroups.includes(adminGroupId));
+
+      if (isPlatformAdmin) {
         // Upsert into platform_admins — idempotent, safe to call on every login
         const { error: paError } = await supabase
           .from("platform_admins")
@@ -561,10 +587,12 @@ Deno.serve(async (req) => {
         if (paError) {
           console.error(`[SSO-CCA] Failed to upsert platform_admins:`, paError.message);
         } else {
-          console.log(`[SSO-CCA] User added/confirmed in platform_admins (LegalHub_Admin group)`);
+          console.log(`[SSO-CCA] User added/confirmed in platform_admins (source: ${roleSource})`);
         }
-      } else {
-        // Remove from platform_admins (group revoked in Entra), protecting demo_user
+      } else if (emailTableExists) {
+        // Only remove from platform_admins when we have a confirmed result from sso_admin_emails.
+        // If the table didn't exist (emailTableExists=false), we skip the delete to avoid wiping
+        // manually-inserted admin records when the migration hasn't been applied yet.
         const { error: paError } = await supabase
           .from("platform_admins")
           .delete()
@@ -573,8 +601,10 @@ Deno.serve(async (req) => {
         if (paError) {
           console.error(`[SSO-CCA] Failed to remove from platform_admins:`, paError.message);
         } else {
-          console.log(`[SSO-CCA] User removed from platform_admins (not in LegalHub_Admin group)`);
+          console.log(`[SSO-CCA] User not in admin list — removed from platform_admins`);
         }
+      } else {
+        console.log(`[SSO-CCA] sso_admin_emails table unavailable — skipping platform_admins sync to preserve manually-set admins`);
       }
 
       console.log(`[SSO-CCA] Assigning user to CCA_Teste organization via RPC with role: ${assignedRole}`);
