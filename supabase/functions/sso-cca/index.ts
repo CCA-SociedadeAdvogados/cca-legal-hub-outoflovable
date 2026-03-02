@@ -10,8 +10,9 @@ const corsHeaders = {
 const SSO_CONFIG = {
   clientId: Deno.env.get("CCA_SSO_CLIENT_ID") || "",
   clientSecret: Deno.env.get("CCA_SSO_CLIENT_SECRET") || "",
-  issuerUrl: Deno.env.get("CCA_SSO_ISSUER_URL") || "",
-  redirectUrl: Deno.env.get("CCA_SSO_REDIRECT_URL") || "",
+  // Trim trailing slash to prevent double-slash in endpoint URLs (e.g. //authorize, //token)
+  issuerUrl: (Deno.env.get("CCA_SSO_ISSUER_URL") || "").replace(/\/$/, ""),
+  redirectUrl: (Deno.env.get("CCA_SSO_REDIRECT_URL") || "").trim(),
   allowedDomains: (Deno.env.get("CCA_SSO_ALLOWED_DOMAINS") || "cca.pt,cca-law.com").split(",").map(d => d.trim().toLowerCase()),
   defaultRole: "viewer",
 };
@@ -67,8 +68,9 @@ async function generateAndStoreState(supabase: any): Promise<{ state: string; no
 }
 
 // Validate and consume state (one-time use) - prevents replay attacks
+// Returns the stored nonce so the caller can validate it against the ID token claim
 // deno-lint-ignore no-explicit-any
-async function validateAndConsumeState(supabase: any, state: string): Promise<{ valid: boolean; error?: string }> {
+async function validateAndConsumeState(supabase: any, state: string): Promise<{ valid: boolean; nonce?: string; error?: string }> {
   // Delete and return the state atomically - ensures one-time use
   const { data, error } = await supabase
     .from("sso_states")
@@ -77,17 +79,17 @@ async function validateAndConsumeState(supabase: any, state: string): Promise<{ 
     .gt("expires_at", new Date().toISOString())
     .select()
     .maybeSingle();
-  
+
   if (error) {
     console.error("[SSO-CCA] Database error validating state:", error.message);
     return { valid: false, error: "state_validation_error" };
   }
-  
+
   if (!data) {
     return { valid: false, error: "state_not_found_or_expired" };
   }
-  
-  return { valid: true };
+
+  return { valid: true, nonce: data.nonce as string | undefined };
 }
 
 // Validation helpers
@@ -101,9 +103,10 @@ function validateCode(code: unknown): { valid: boolean; error?: string } {
   if (code.length > MAX_CODE_LENGTH) {
     return { valid: false, error: "code_too_long" };
   }
-  // OAuth codes should be alphanumeric with some special chars
-  // OAuth codes may contain alphanumeric and URL-safe special chars (including +, /, =, ~)
-  if (!/^[a-zA-Z0-9._\-+/=~]+$/.test(code)) {
+  // OAuth 2.0 authorization codes (RFC 6749) may contain any printable ASCII character (VSCHAR).
+  // The previous restrictive regex rejected valid codes from some providers (e.g. codes with '!', '*', '@').
+  // Allow all printable ASCII (0x21 '!' through 0x7E '~') — the code is URL-encoded before use so no injection risk.
+  if (!/^[\x21-\x7E]+$/.test(code)) {
     return { valid: false, error: "code_invalid_format" };
   }
   return { valid: true };
@@ -174,17 +177,19 @@ Deno.serve(async (req) => {
     if (path.endsWith("/start")) {
       console.log("[SSO-CCA] Starting SSO flow");
 
-      // Generate secure state and store in database for persistence
-      const { state } = await generateAndStoreState(supabase);
-      
+      // Generate secure state + nonce and store in database for persistence
+      const { state, nonce } = await generateAndStoreState(supabase);
+
       // Build OIDC authorization URL
       // Include GroupMember.Read.All so Microsoft includes groups claim in the ID token
+      // nonce is required by OIDC spec to prevent replay attacks via ID token
       const authParams = new URLSearchParams({
         client_id: SSO_CONFIG.clientId,
         redirect_uri: SSO_CONFIG.redirectUrl,
         response_type: "code",
         scope: "openid email profile GroupMember.Read.All",
         state: state,
+        nonce: nonce,
       });
 
       const authUrl = `${SSO_CONFIG.issuerUrl}/authorize?${authParams.toString()}`;
@@ -242,6 +247,7 @@ Deno.serve(async (req) => {
       }
 
       // Validate state against database (CSRF protection + one-time use)
+      // Also retrieves stored nonce for later validation against the ID token claim
       const storedStateValidation = await validateAndConsumeState(supabase, state!);
       if (!storedStateValidation.valid) {
         console.error(`[SSO-CCA] State validation failed: ${storedStateValidation.error}`);
@@ -338,6 +344,25 @@ Deno.serve(async (req) => {
       }
 
       console.log("[SSO-CCA] User info extracted from ID token");
+
+      // Validate nonce (OIDC replay attack prevention)
+      // If the IdP returned a nonce claim in the ID token, it must match what we sent.
+      // Skip validation if the IdP omitted the nonce claim (not all providers echo it back).
+      const storedNonce = storedStateValidation.nonce;
+      const tokenNonce = userInfo.nonce as string | undefined;
+      if (storedNonce && tokenNonce && tokenNonce !== storedNonce) {
+        console.error("[SSO-CCA] Nonce mismatch — potential ID token replay attack");
+        return new Response(
+          JSON.stringify({
+            error: "nonce_mismatch",
+            message: "Falha na validação de segurança da autenticação",
+          }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
 
       // Extract email (Microsoft Entra ID uses different claims)
       const email = (userInfo.email || userInfo.preferred_username || userInfo.upn) as string | undefined;
