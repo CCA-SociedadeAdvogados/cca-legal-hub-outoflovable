@@ -204,7 +204,7 @@ async function sha256(data: ArrayBuffer): Promise<string> {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -443,7 +443,7 @@ Deno.serve(async (req) => {
       results,
       message: `Processed ${results.processed} URLs, ${results.documents} documents saved, ${results.newUrls} new URLs discovered`
     }), {
-      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
@@ -453,7 +453,7 @@ Deno.serve(async (req) => {
       error: String(error) 
     }), {
       status: 500,
-      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });

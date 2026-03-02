@@ -47,7 +47,7 @@ const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
@@ -55,7 +55,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "method_not_allowed" }),
       {
         status: 405,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "invalid_json" }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "invalid_request_body" }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: emailValidation.error }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: actionValidation.error }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
               max_attempts: MAX_LOGIN_ATTEMPTS,
             }),
             {
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
               }),
               {
                 status: 423,
-                headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
               }
             );
           } else {
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
             max_attempts: MAX_LOGIN_ATTEMPTS,
           }),
           {
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
             JSON.stringify({ error: "success_must_be_boolean" }),
             {
               status: 400,
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
           return new Response(
             JSON.stringify({ recorded: true }),
             {
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -235,7 +235,7 @@ Deno.serve(async (req) => {
               attempts_reset: true,
             }),
             {
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         } else {
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
               locked_until: updates.locked_until || null,
             }),
             {
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ reset: true }),
           {
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -311,7 +311,7 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: "unknown_action" }),
           {
             status: 400,
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
     }
@@ -325,7 +325,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

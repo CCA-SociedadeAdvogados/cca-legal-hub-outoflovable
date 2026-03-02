@@ -12,7 +12,7 @@ const DELETION_GRACE_PERIOD_DAYS = 7;
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
@@ -20,7 +20,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "method_not_allowed" }),
       {
         status: 405,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "unauthorized", message: "Token de autenticação necessário." }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "unauthorized", message: "Sessão inválida ou expirada." }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "invalid_json" }),
         {
           status: 400,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
             JSON.stringify({ error: "password_required", message: "Por favor, confirme a sua palavra-passe." }),
             {
               status: 400,
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
             JSON.stringify({ error: "password_invalid", message: "Palavra-passe incorreta." }),
             {
               status: 401,
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -160,7 +160,7 @@ Deno.serve(async (req) => {
             message: `O pedido de eliminação foi registado. A sua conta será eliminada em ${DELETION_GRACE_PERIOD_DAYS} dias. Pode cancelar este pedido durante este período.`,
           }),
           {
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
             JSON.stringify({ error: "request_id_required" }),
             {
               status: 400,
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -190,7 +190,7 @@ Deno.serve(async (req) => {
             JSON.stringify({ error: "request_not_found", message: "Pedido não encontrado ou já processado." }),
             {
               status: 404,
-              headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
             }
           );
         }
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
             message: "O pedido de eliminação foi cancelado com sucesso.",
           }),
           {
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -239,7 +239,7 @@ Deno.serve(async (req) => {
             has_pending: requests?.some(r => r.status === "pending") || false,
           }),
           {
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -249,7 +249,7 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: "not_implemented", message: "Execução automática via cron job." }),
           {
             status: 501,
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
       }
@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
           JSON.stringify({ error: "invalid_action" }),
           {
             status: 400,
-            headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           }
         );
     }
@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

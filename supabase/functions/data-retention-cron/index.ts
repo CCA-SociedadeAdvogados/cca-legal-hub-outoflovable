@@ -12,7 +12,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   // Only allow POST requests (from cron)
@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "method_not_allowed" }),
       {
         status: 405,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       console.error("[Data-Retention-Cron] Unauthorized access attempt");
       return new Response(
         JSON.stringify({ error: "Unauthorized - Cron secret or platform admin access required" }),
-        { status: 401, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify(results),
       {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
 
@@ -273,7 +273,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

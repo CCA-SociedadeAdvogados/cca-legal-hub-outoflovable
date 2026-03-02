@@ -11,7 +11,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "method_not_allowed" }),
       {
         status: 405,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "unauthorized", message: "Token de autenticação necessário." }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "unauthorized", message: "Sessão inválida ou expirada." }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
       JSON.stringify(exportData, null, 2),
       {
         headers: { 
-          ...getCorsHeaders(req), 
+          ...corsHeaders, 
           "Content-Type": "application/json",
           "Content-Disposition": `attachment; filename="my-data-export-${new Date().toISOString().split("T")[0]}.json"`,
         },
@@ -231,7 +231,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }

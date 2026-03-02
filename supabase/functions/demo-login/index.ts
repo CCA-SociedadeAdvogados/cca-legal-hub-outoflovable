@@ -189,7 +189,7 @@ function getClientIP(req: Request): string {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "method_not_allowed" }),
       {
         status: 405,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 403,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 500,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
     }
@@ -250,7 +250,7 @@ Deno.serve(async (req) => {
         {
           status: 429,
           headers: { 
-            ...getCorsHeaders(req), 
+            ...corsHeaders, 
             "Content-Type": "application/json",
             "Retry-After": String(rateLimit.retryAfter)
           },
@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 401,
-          headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
     }
@@ -320,7 +320,7 @@ Deno.serve(async (req) => {
         message: "Sessão demo iniciada com sucesso."
       }),
       {
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
 
@@ -333,7 +333,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
