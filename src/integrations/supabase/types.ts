@@ -2769,6 +2769,33 @@ export type Database = {
           },
         ]
       }
+      sso_admin_emails: {
+        Row: {
+          id: string
+          email: string
+          role: "admin" | "editor"
+          notes: string | null
+          added_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          role?: "admin" | "editor"
+          notes?: string | null
+          added_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          role?: "admin" | "editor"
+          notes?: string | null
+          added_by?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       sso_states: {
         Row: {
           created_at: string
