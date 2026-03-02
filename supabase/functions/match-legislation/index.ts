@@ -31,7 +31,7 @@ interface LegalDocument {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     if (!contrato_id) {
       return new Response(
         JSON.stringify({ error: 'contrato_id is required' }),
-        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       console.error('Contract fetch error:', contratoError);
       return new Response(
         JSON.stringify({ error: 'Contract not found' }),
-        { status: 404, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
       console.log('No legal documents available');
       return new Response(
         JSON.stringify({ matches: [], message: 'No legal documents available for matching' }),
-        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -147,13 +147,13 @@ Não incluas explicações fora do JSON.`
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { status: 429, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
       
       return new Response(
         JSON.stringify({ error: 'AI service unavailable' }),
-        { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -224,14 +224,14 @@ Não incluas explicações fora do JSON.`
         matches: savedMatches,
         total_analyzed: docsWithContent.length
       }),
-      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
     console.error('Match legislation error:', error);
     return new Response(
       JSON.stringify({ error: String(error) }),
-      { status: 500, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
@@ -129,15 +130,19 @@ function validateStateFormat(state: unknown): { valid: boolean; error?: string }
 }
 
 Deno.serve(async (req) => {
+  console.log(`[SSO-CCA] === Function invoked === method=${req.method} url=${req.url}`);
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    console.log("[SSO-CCA] CORS preflight - returning 204");
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   const url = new URL(req.url);
   const path = url.pathname;
 
-  console.log(`[SSO-CCA] Request to: ${path}`);
+  console.log(`[SSO-CCA] Parsed path: "${path}" | method: ${req.method}`);
+  console.log(`[SSO-CCA] Config check: clientId=${SSO_CONFIG.clientId ? "SET" : "MISSING"}, issuerUrl=${SSO_CONFIG.issuerUrl ? "SET" : "MISSING"}, redirectUrl=${SSO_CONFIG.redirectUrl ? "SET" : "MISSING"}, clientSecret=${SSO_CONFIG.clientSecret ? "SET" : "MISSING"}`);
 
   // Create Supabase client with service role for all operations
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -145,12 +150,18 @@ Deno.serve(async (req) => {
   try {
     // Check if SSO is configured
     if (!SSO_CONFIG.clientId || !SSO_CONFIG.issuerUrl) {
-      console.log("[SSO-CCA] SSO not configured - missing client ID or issuer URL");
+      console.error("[SSO-CCA] SSO NOT CONFIGURED - missing client ID or issuer URL. Set CCA_SSO_CLIENT_ID and CCA_SSO_ISSUER_URL secrets.");
       return new Response(
         JSON.stringify({
           error: "SSO not configured",
           message: "SSO CCA ainda não está configurado. Por favor, configure as credenciais do IdP.",
           configured: false,
+          debug: {
+            hasClientId: !!SSO_CONFIG.clientId,
+            hasIssuerUrl: !!SSO_CONFIG.issuerUrl,
+            hasClientSecret: !!SSO_CONFIG.clientSecret,
+            hasRedirectUrl: !!SSO_CONFIG.redirectUrl,
+          },
         }),
         {
           status: 503,
@@ -643,8 +654,14 @@ Deno.serve(async (req) => {
     }
 
     // Unknown route
+    console.error(`[SSO-CCA] Unknown route: "${path}" — valid routes: /start, /callback, /status`);
     return new Response(
-      JSON.stringify({ error: "not_found", message: "Endpoint não encontrado" }),
+      JSON.stringify({
+        error: "not_found",
+        message: "Endpoint não encontrado",
+        receivedPath: path,
+        validRoutes: ["/start", "/callback", "/status"],
+      }),
       {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -652,7 +669,10 @@ Deno.serve(async (req) => {
     );
 
   } catch (error: unknown) {
-    console.error(`[SSO-CCA] Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error(`[SSO-CCA] Unhandled error: ${errorMsg}`);
+    if (errorStack) console.error(`[SSO-CCA] Stack: ${errorStack}`);
     return new Response(
       JSON.stringify({
         error: "internal_error",

@@ -7,7 +7,7 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: getCorsHeaders(req) });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       console.error('[Sync-Demo-Password] Missing authorization header');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
       console.error('[Sync-Demo-Password] Auth error:', authError?.message);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
       console.error('[Sync-Demo-Password] Caller is not platform admin:', caller.id);
       return new Response(
         JSON.stringify({ error: 'Forbidden - Platform admin access required' }),
-        { status: 403, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         error: 'Demo credentials not configured' 
       }), {
         status: 400,
-        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -74,7 +74,7 @@ Deno.serve(async (req) => {
       console.error('Error listing users:', listError);
       return new Response(JSON.stringify({ error: listError.message }), {
         status: 500,
-        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
         error: 'Demo user not found' 
       }), {
         status: 404,
-        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
       console.error('Error updating password:', updateError);
       return new Response(JSON.stringify({ error: updateError.message }), {
         status: 500,
-        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
       message: 'Demo password synced successfully'
     }), {
       status: 200,
-      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error: unknown) {
@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
     const message = error instanceof Error ? error.message : 'Unknown error';
     return new Response(JSON.stringify({ error: message }), {
       status: 500,
-      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
