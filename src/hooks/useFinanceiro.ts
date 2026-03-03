@@ -263,6 +263,19 @@ export function useFinanceiro() {
   // Mutação para sincronizar Base Nav do SharePoint
   const syncNavFromSharePoint = useMutation({
     mutationFn: async () => {
+      // Pre-flight: check SharePoint is configured for this org
+      const { data: spConfig } = await supabase
+        .from("sharepoint_config")
+        .select("id")
+        .eq("organization_id", organizationId!)
+        .maybeSingle();
+
+      if (!spConfig) {
+        throw new Error(
+          "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
+        );
+      }
+
       const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
         body: { organization_id: organizationId },
       });
