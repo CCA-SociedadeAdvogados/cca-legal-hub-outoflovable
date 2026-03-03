@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import {
-  CreditCard, AlertTriangle, CheckCircle, Clock,
+  Receipt, CreditCard, AlertTriangle, CheckCircle, Clock,
   Building2, User, Calendar,
   Settings, RefreshCw
 } from "lucide-react";
