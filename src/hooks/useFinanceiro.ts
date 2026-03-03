@@ -45,6 +45,15 @@ export interface NavCache {
   synced_at: string | null;
 }
 
+export interface NavItem {
+  id: string;
+  jvris_id: string;
+  numero_documento: string | null;
+  valor: number | null;
+  data_vencimento: string | null;
+  synced_at: string | null;
+}
+
 export type AccountStatus = "regularizado" | "pendente" | "em_incumprimento";
 
 export interface AccountSummary {
@@ -128,6 +137,22 @@ export function useFinanceiro() {
     enabled: !!orgInfo?.jvris_id,
   });
 
+  // Buscar linhas individuais (faturas) do cache Base Nav
+  const { data: navItems = [] } = useQuery({
+    queryKey: ["financeiro-nav-items", orgInfo?.jvris_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_nav_items")
+        .select("*")
+        .eq("jvris_id", orgInfo!.jvris_id!)
+        .order("data_vencimento", { ascending: true });
+
+      if (error) throw error;
+      return (data as NavItem[]) || [];
+    },
+    enabled: !!orgInfo?.jvris_id,
+  });
+
   // Buscar faturas
   const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery({
     queryKey: ["invoices", organizationId],
@@ -165,6 +190,25 @@ export function useFinanceiro() {
   const tipoCliente = orgInfo?.tipo_cliente || "pessoa_coletiva";
   const prazoPagamentoDias = orgInfo?.prazo_pagamento_dias || 30;
 
+  // Derive overdue / pending counts from navItems (Excel child rows)
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const navItemsVencidas = navItems.filter((item) => {
+    if (!item.data_vencimento) return false;
+    const d = new Date(item.data_vencimento);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() < hoje.getTime();
+  });
+  const navItemsEmAberto = navItems.filter((item) => {
+    if (!item.data_vencimento) return true; // no date = still open
+    const d = new Date(item.data_vencimento);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() >= hoje.getTime();
+  });
+
+  const hasNavData = navItems.length > 0 || (navCache?.valor_pendente != null && navCache.valor_pendente > 0);
+
   const accountSummary: AccountSummary = {
     status: calculateAccountStatusFromNav(navCache ?? null),
     tipoCliente,
@@ -174,10 +218,10 @@ export function useFinanceiro() {
       : invoices
           .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
           .reduce((sum, f) => sum + Number(f.valor), 0),
-    totalFaturas: invoices.length,
-    faturasEmAberto: invoices.filter((f) => f.estado === "em_aberto").length,
-    faturasVencidas: invoices.filter((f) => f.estado === "vencida").length,
-    faturasPagas: invoices.filter((f) => f.estado === "paga").length,
+    totalFaturas: hasNavData ? navItems.length : invoices.length,
+    faturasEmAberto: hasNavData ? navItemsEmAberto.length : invoices.filter((f) => f.estado === "em_aberto").length,
+    faturasVencidas: hasNavData ? navItemsVencidas.length : invoices.filter((f) => f.estado === "vencida").length,
+    faturasPagas: hasNavData ? 0 : invoices.filter((f) => f.estado === "paga").length,
     proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
   };
 
@@ -300,8 +344,9 @@ export function useFinanceiro() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
       queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
-      toast.success(`Base Nav sincronizada: ${data?.synced ?? 0} registos atualizados`);
+      toast.success(`Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`);
     },
     onError: (error) => {
       toast.error("Erro ao sincronizar Base Nav: " + error.message);
@@ -337,6 +382,7 @@ export function useFinanceiro() {
     folders,
     accountSummary,
     navCache: navCache ?? null,
+    navItems,
     jvrisId: orgInfo?.jvris_id ?? null,
     organizationId,
     isLoading: isLoadingInvoices || isLoadingFolders,

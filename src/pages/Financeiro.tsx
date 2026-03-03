@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   Receipt, CreditCard, AlertTriangle, CheckCircle, Clock,
   Building2, User, Calendar,
@@ -34,6 +36,7 @@ export default function Financeiro() {
   const {
     accountSummary,
     navCache,
+    navItems,
     isLoading,
     isPlatformAdmin,
     updateOrganizationFinancial,
@@ -50,6 +53,15 @@ export default function Financeiro() {
   });
 
   const dateLocale = i18n.language === 'pt' ? pt : enUS;
+
+  const isOverdue = (dateStr: string | null): boolean => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    d.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return d.getTime() < today.getTime();
+  };
 
   const getStatusLabel = (status: AccountStatus) => {
     const labels: Record<AccountStatus, string> = {
@@ -161,44 +173,96 @@ export default function Financeiro() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-muted rounded-lg">
-                  <Receipt className="h-5 w-5 text-muted-foreground" />
+            {navItems.length > 0 ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <span>{t('financial.pendingInvoices')}: <strong className="text-foreground">{navItems.length}</strong></span>
+                  {accountSummary.faturasVencidas > 0 && (
+                    <span className="text-destructive">{accountSummary.faturasVencidas} {t('financial.overdue')}</span>
+                  )}
+                  {accountSummary.faturasEmAberto > 0 && (
+                    <span className="text-primary">{accountSummary.faturasEmAberto} {t('financial.withinTerm')}</span>
+                  )}
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('financial.totalInvoices')}</p>
-                  <p className="text-lg font-semibold">{accountSummary.totalFaturas}</p>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('financial.invoiceNumber')}</TableHead>
+                      <TableHead>{t('financial.dueDate')}</TableHead>
+                      <TableHead className="text-right">{t('financial.amount')}</TableHead>
+                      <TableHead>{t('financial.invoiceStatus')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {navItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-mono text-sm">
+                          {item.numero_documento || "—"}
+                        </TableCell>
+                        <TableCell>
+                          {item.data_vencimento
+                            ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {item.valor != null ? formatCurrency(item.valor) : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {item.data_vencimento && isOverdue(item.data_vencimento) ? (
+                            <Badge variant="destructive" className="text-xs">
+                              {t('financial.overdue')}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              {t('financial.withinTerm')}
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Receipt className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('financial.totalInvoices')}</p>
+                    <p className="text-lg font-semibold">{accountSummary.totalFaturas}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <CreditCard className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('financial.openAmount')}</p>
+                    <p className="text-lg font-semibold">{accountSummary.faturasEmAberto}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-destructive/20 rounded-lg">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('financial.overdueCount')}</p>
+                    <p className="text-lg font-semibold">{accountSummary.faturasVencidas}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-risk-low/20 rounded-lg">
+                    <CheckCircle className="h-5 w-5 text-risk-low" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{t('financial.paidCount')}</p>
+                    <p className="text-lg font-semibold">{accountSummary.faturasPagas}</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('financial.openAmount')}</p>
-                  <p className="text-lg font-semibold">{accountSummary.faturasEmAberto}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-destructive/20 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('financial.overdueCount')}</p>
-                  <p className="text-lg font-semibold">{accountSummary.faturasVencidas}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-risk-low/20 rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-risk-low" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('financial.paidCount')}</p>
-                  <p className="text-lg font-semibold">{accountSummary.faturasPagas}</p>
-                </div>
-              </div>
-            </div>
+            )}
             {accountSummary.proximoVencimento && (
               <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm">
                 <Calendar className="h-4 w-4 text-muted-foreground" />

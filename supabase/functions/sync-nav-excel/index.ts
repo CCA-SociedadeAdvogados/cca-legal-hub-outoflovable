@@ -313,67 +313,176 @@ serve(async (req) => {
       });
     }
 
-    // Map rows to cache records
-    const records: Array<{
+    // ── Column candidate lists ──────────────────────────────────
+    const ID_CANDIDATES = [
+      "jvris_id", "id_jvris", "id", "cliente_id", "codigo_cliente",
+      "cod_cliente", "numero_cliente", "client_id",
+    ];
+    const VALOR_CANDIDATES = [
+      "valor_pendente", "valor pendente", "saldo_pendente", "saldo pendente",
+      "total_pendente", "total pendente", "divida", "dívida", "amount",
+      "soma_de_valor_pendente", "soma de valor pendente", "soma valor pendente",
+      "valor", "montante",
+    ];
+    const DATE_CANDIDATES = [
+      "data_vencimento", "data vencimento", "vencimento", "due_date",
+      "data_limite", "prazo", "expiry_date",
+      "data_de_vencimento", "data de vencimento",
+    ];
+    const NUMERO_CANDIDATES = [
+      "numero_documento", "numero documento", "nº doc", "nº documento",
+      "numero_fatura", "numero fatura", "nº fatura",
+      "documento", "fatura", "invoice_number", "doc_number",
+      "referencia", "reference", "numero", "nº",
+    ];
+
+    // ── Group rows into parent (Client ID) + children (invoices) ─
+    type ClientGroup = {
+      parentRow: Record<string, unknown>;
+      valorPendente: number | null;
+      children: Array<{
+        row: Record<string, unknown>;
+        numero: string | null;
+        valor: number | null;
+        dataVencimento: string | null;
+      }>;
+    };
+
+    const groups = new Map<string, ClientGroup>();
+    let currentJvrisId: string | null = null;
+
+    for (const row of rows) {
+      const rawId = findValue(row, ID_CANDIDATES);
+
+      if (rawId) {
+        // ── Parent row: has a Client ID ──
+        const jvrisId = String(rawId).trim();
+        if (!jvrisId) continue;
+
+        currentJvrisId = jvrisId;
+
+        const rawValor = findValue(row, VALOR_CANDIDATES);
+        const vp = rawValor != null
+          ? parseFloat(String(rawValor).replace(",", "."))
+          : null;
+
+        groups.set(jvrisId, {
+          parentRow: row as Record<string, unknown>,
+          valorPendente: (vp !== null && !isNaN(vp)) ? vp : null,
+          children: [],
+        });
+      } else if (currentJvrisId && groups.has(currentJvrisId)) {
+        // ── Child row: no Client ID → invoice line of current parent ──
+        const rawNumero = findValue(row, NUMERO_CANDIDATES);
+        const rawValor = findValue(row, VALOR_CANDIDATES);
+        const rawData  = findValue(row, DATE_CANDIDATES);
+
+        const numero = rawNumero ? String(rawNumero).trim() : null;
+        const valor  = rawValor != null
+          ? parseFloat(String(rawValor).replace(",", "."))
+          : null;
+        const dataVencimento = resolveDate(rawData);
+
+        // Only keep rows with meaningful data
+        if (numero || dataVencimento || (valor !== null && !isNaN(valor))) {
+          groups.get(currentJvrisId)!.children.push({
+            row: row as Record<string, unknown>,
+            numero,
+            valor: (valor !== null && !isNaN(valor)) ? valor : null,
+            dataVencimento,
+          });
+        }
+      }
+    }
+
+    if (groups.size === 0) {
+      return new Response(
+        JSON.stringify({ error: "Nenhuma linha válida encontrada. Verifique os nomes das colunas (Client ID obrigatório)." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Build cache + item records ───────────────────────────────
+    const now = new Date().toISOString();
+    const cacheRecords: Array<{
       jvris_id: string;
       valor_pendente: number | null;
       data_vencimento: string | null;
       raw_row: Record<string, unknown>;
       synced_at: string;
     }> = [];
+    const itemRecords: Array<{
+      jvris_id: string;
+      numero_documento: string | null;
+      valor: number | null;
+      data_vencimento: string | null;
+      raw_row: Record<string, unknown>;
+      synced_at: string;
+    }> = [];
 
-    for (const row of rows) {
-      const rawId = findValue(row, [
-        "jvris_id", "id_jvris", "id", "cliente_id", "codigo_cliente",
-        "cod_cliente", "numero_cliente", "client_id",
-      ]);
+    for (const [jvrisId, group] of groups) {
+      // Oldest due date across child invoices (worst case for status)
+      let oldestDate: string | null = null;
+      for (const child of group.children) {
+        if (child.dataVencimento) {
+          if (!oldestDate || child.dataVencimento < oldestDate) {
+            oldestDate = child.dataVencimento;
+          }
+        }
+      }
 
-      if (!rawId) continue;
-      const jvrisId = String(rawId).trim();
-      if (!jvrisId) continue;
-
-      const rawValor = findValue(row, [
-        "valor_pendente", "valor pendente", "saldo_pendente", "saldo pendente",
-        "total_pendente", "total pendente", "divida", "dívida", "amount",
-        "soma_de_valor_pendente", "soma de valor pendente", "soma valor pendente",
-      ]);
-      const valorPendente =
-        rawValor !== null && rawValor !== undefined
-          ? parseFloat(String(rawValor).replace(",", "."))
-          : null;
-
-      const rawData = findValue(row, [
-        "data_vencimento", "data vencimento", "vencimento", "due_date",
-        "data_limite", "prazo", "expiry_date",
-        "data_de_vencimento", "data de vencimento",
-      ]);
-      const dataVencimento = resolveDate(rawData);
-
-      records.push({
+      cacheRecords.push({
         jvris_id: jvrisId,
-        valor_pendente: isNaN(valorPendente as number) ? null : valorPendente,
-        data_vencimento: dataVencimento,
-        raw_row: row as Record<string, unknown>,
-        synced_at: new Date().toISOString(),
+        valor_pendente: group.valorPendente,
+        data_vencimento: oldestDate,
+        raw_row: group.parentRow,
+        synced_at: now,
       });
+
+      for (const child of group.children) {
+        itemRecords.push({
+          jvris_id: jvrisId,
+          numero_documento: child.numero,
+          valor: child.valor,
+          data_vencimento: child.dataVencimento,
+          raw_row: child.row,
+          synced_at: now,
+        });
+      }
     }
 
-    if (records.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "Nenhuma linha válida encontrada. Verifique os nomes das colunas (jvris_id obrigatório)." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Upsert in batch
+    // ── Persist to database ──────────────────────────────────────
+    // 1. Upsert parent cache records
     const { error: upsertError } = await supabaseAdmin
       .from("financeiro_nav_cache")
-      .upsert(records, { onConflict: "jvris_id" });
-
+      .upsert(cacheRecords, { onConflict: "jvris_id" });
     if (upsertError) throw upsertError;
 
+    // 2. Replace child items: delete old → insert new
+    const syncedIds = cacheRecords.map((r) => r.jvris_id);
+    const { error: deleteError } = await supabaseAdmin
+      .from("financeiro_nav_items")
+      .delete()
+      .in("jvris_id", syncedIds);
+    if (deleteError) throw deleteError;
+
+    if (itemRecords.length > 0) {
+      const { error: insertError } = await supabaseAdmin
+        .from("financeiro_nav_items")
+        .insert(itemRecords);
+      if (insertError) throw insertError;
+    }
+
+    const totalItems = itemRecords.length;
+    console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
+
     return new Response(
-      JSON.stringify({ success: true, synced: records.length, file: baseNavFile.name }),
+      JSON.stringify({
+        success: true,
+        synced: cacheRecords.length,
+        items: totalItems,
+        file: baseNavFile.name,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
