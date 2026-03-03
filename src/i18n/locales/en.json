@@ -986,7 +986,8 @@
     "syncNav": "Update / Sync",
     "syncingNav": "Syncing...",
     "noNavDataSync": "No synced data. Click 'Update / Sync' to synchronize from SharePoint.",
-    "noNavDataConfigJvris": "Configure the Jvris ID in organization settings to link Base Nav data."
+    "noNavDataConfigJvris": "Configure the Jvris ID in organization settings to link Base Nav data.",
+    "lastSync": "Last sync"
   },
   "platformAdmin": {
     "impersonation": {
