@@ -266,7 +266,18 @@ export function useFinanceiro() {
       const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
         body: { organization_id: organizationId },
       });
-      if (error) throw error;
+      if (error) {
+        // Extract real error message from edge function response body
+        let msg = error.message;
+        try {
+          const ctx = (error as any).context;
+          if (ctx instanceof Response) {
+            const body = await ctx.json();
+            if (body?.error) msg = body.error;
+          }
+        } catch { /* keep generic message */ }
+        throw new Error(msg);
+      }
       return data;
     },
     onSuccess: (data) => {
