@@ -12,6 +12,7 @@ import {
   Building2, User, Calendar,
   Settings, RefreshCw
 } from "lucide-react";
+import { SharePointDocumentsBrowser } from "@/components/sharepoint/SharePointDocumentsBrowser";
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
 
@@ -249,6 +250,9 @@ export default function Financeiro() {
               )}
             </CardContent>
           </Card>
+
+        {/* Arquivo SharePoint */}
+        <SharePointDocumentsBrowser />
 
       </div>
 
