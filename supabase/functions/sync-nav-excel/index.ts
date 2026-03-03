@@ -89,27 +89,52 @@ async function getDriveId(accessToken: string, siteId: string): Promise<string> 
   return data.id;
 }
 
-// Search for the "Base Nav" Excel file in the SharePoint drive
-async function findBaseNavFile(
+// List all drives (document libraries) for a SharePoint site
+async function listAllDrives(accessToken: string, siteId: string): Promise<Array<{ id: string; name: string }>> {
+  const response = await fetch(
+    `https://graph.microsoft.com/v1.0/sites/${siteId}/drives`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+
+  if (!response.ok) {
+    console.error("Failed to list drives:", await response.text());
+    return [];
+  }
+
+  const data = await response.json();
+  return (data.value || []).map((d: { id: string; name: string }) => ({ id: d.id, name: d.name }));
+}
+
+// Search for "Base Nav" Excel file in a specific drive, returns null if not found
+async function searchBaseNavInDrive(
   accessToken: string,
   driveId: string,
-): Promise<{ id: string; name: string }> {
+): Promise<{ id: string; name: string } | null> {
+  // Try search API first
   const searchUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/search(q='Base Nav')`;
-  console.log(`Searching for Base Nav file: ${searchUrl}`);
+  console.log(`Searching for Base Nav file in drive ${driveId}: ${searchUrl}`);
 
   const response = await fetch(searchUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("Search error:", error);
-    throw new Error(`Failed to search for Base Nav file: ${response.status}`);
-  }
+  let items: Array<{ id: string; name: string; file?: { mimeType: string }; lastModifiedDateTime?: string }> = [];
 
-  const data = await response.json();
-  const items: Array<{ id: string; name: string; file?: { mimeType: string }; lastModifiedDateTime?: string }> =
-    data.value || [];
+  if (response.ok) {
+    const data = await response.json();
+    items = data.value || [];
+  } else {
+    console.warn(`Search API failed for drive ${driveId}, trying children listing...`);
+    // Fallback: list root children directly
+    const childrenUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`;
+    const childrenResp = await fetch(childrenUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (childrenResp.ok) {
+      const childrenData = await childrenResp.json();
+      items = childrenData.value || [];
+    }
+  }
 
   // Filter to Excel files whose name contains "Base Nav" (case-insensitive)
   const excelFiles = items.filter((item) => {
@@ -119,12 +144,7 @@ async function findBaseNavFile(
     return nameLower.endsWith(".xlsx") || nameLower.endsWith(".xls") || nameLower.endsWith(".csv");
   });
 
-  if (excelFiles.length === 0) {
-    throw new Error(
-      'Ficheiro "Base Nav" não encontrado no SharePoint. ' +
-      "Verifique que existe um ficheiro Excel com o nome \"Base Nav\" na biblioteca de documentos."
-    );
-  }
+  if (excelFiles.length === 0) return null;
 
   // If multiple matches, pick the most recently modified
   excelFiles.sort((a, b) => {
@@ -136,6 +156,35 @@ async function findBaseNavFile(
   const chosen = excelFiles[0];
   console.log(`Found Base Nav file: id=${chosen.id}, name=${chosen.name}`);
   return { id: chosen.id, name: chosen.name };
+}
+
+// Search for the "Base Nav" Excel file across all drives of the site
+async function findBaseNavFile(
+  accessToken: string,
+  siteId: string,
+  primaryDriveId: string,
+): Promise<{ driveId: string; id: string; name: string }> {
+  // 1. Try the primary (configured) drive first
+  console.log(`Searching primary drive: ${primaryDriveId}`);
+  const result = await searchBaseNavInDrive(accessToken, primaryDriveId);
+  if (result) return { driveId: primaryDriveId, ...result };
+
+  // 2. If not found, try all other drives of the site
+  console.log("Base Nav not found in primary drive, searching all drives...");
+  const allDrives = await listAllDrives(accessToken, siteId);
+  console.log(`Found ${allDrives.length} drives: ${allDrives.map(d => d.name).join(", ")}`);
+
+  for (const drive of allDrives) {
+    if (drive.id === primaryDriveId) continue; // skip already searched
+    console.log(`Searching drive "${drive.name}" (${drive.id})...`);
+    const found = await searchBaseNavInDrive(accessToken, drive.id);
+    if (found) return { driveId: drive.id, ...found };
+  }
+
+  throw new Error(
+    'Ficheiro "Base Nav" não encontrado em nenhuma biblioteca do SharePoint. ' +
+    'Verifique que existe um ficheiro Excel com "Base Nav" no nome.'
+  );
 }
 
 // Download a file's content from SharePoint
@@ -244,17 +293,17 @@ serve(async (req) => {
     // Authenticate with Microsoft Graph
     const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
 
-    // Resolve drive ID
-    let driveId = spConfig.drive_id;
-    if (!driveId) {
-      driveId = await getDriveId(accessToken, spConfig.site_id);
+    // Resolve primary drive ID
+    let primaryDriveId = spConfig.drive_id;
+    if (!primaryDriveId) {
+      primaryDriveId = await getDriveId(accessToken, spConfig.site_id);
     }
 
-    // Find the "Base Nav" Excel file in SharePoint
-    const baseNavFile = await findBaseNavFile(accessToken, driveId);
+    // Find the "Base Nav" Excel file across all drives
+    const baseNavFile = await findBaseNavFile(accessToken, spConfig.site_id, primaryDriveId);
 
-    // Download the file content
-    const arrayBuffer = await downloadFileContent(accessToken, driveId, baseNavFile.id);
+    // Download the file content (using the drive where the file was found)
+    const arrayBuffer = await downloadFileContent(accessToken, baseNavFile.driveId, baseNavFile.id);
 
     // Parse the Excel file
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
