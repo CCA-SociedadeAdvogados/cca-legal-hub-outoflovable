@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // Heavy libraries (pdfjs-dist, zip.js) are imported dynamically inside their
 // respective extraction functions to avoid crashing the entire edge function
@@ -71,7 +70,9 @@ async function callAIWithFallback(
   throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  console.log(`[parse-contract] ${req.method} request received`);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
