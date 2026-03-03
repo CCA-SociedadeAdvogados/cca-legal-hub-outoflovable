@@ -980,7 +980,13 @@
     "saving": "Saving...",
     "deleteInvoice": "Delete Invoice",
     "deleteInvoiceConfirmation": "Are you sure you want to delete this invoice? This action cannot be undone.",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "pending": "Pending",
+    "inDefault": "In Default",
+    "syncNav": "Update / Sync",
+    "syncingNav": "Syncing...",
+    "noNavDataSync": "No synced data. Click 'Update / Sync' to synchronize from SharePoint.",
+    "noNavDataConfigJvris": "Configure the Jvris ID in organization settings to link Base Nav data."
   },
   "platformAdmin": {
     "impersonation": {

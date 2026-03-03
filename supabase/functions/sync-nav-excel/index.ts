@@ -8,7 +8,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Normaliza nomes de coluna removendo acentos, espaços e maiúsculas
+// ── Utility: column name normalization ──────────────────────────
+
 function normalizeKey(key: string): string {
   return key
     .toLowerCase()
@@ -19,7 +20,6 @@ function normalizeKey(key: string): string {
     .replace(/^_|_$/g, "");
 }
 
-// Tenta vários nomes possíveis para uma coluna
 function findValue(row: Record<string, unknown>, candidates: string[]): unknown {
   const normalized = Object.fromEntries(
     Object.entries(row).map(([k, v]) => [normalizeKey(k), v])
@@ -31,27 +31,132 @@ function findValue(row: Record<string, unknown>, candidates: string[]): unknown 
   return null;
 }
 
-// Converte número serial do Excel para data ISO
 function excelSerialToDate(serial: number): string | null {
   if (!serial || isNaN(serial)) return null;
-  // Excel usa 1900-01-01 como dia 1 (com bug do ano bissexto de 1900)
   const date = new Date((serial - 25569) * 86400 * 1000);
   return date.toISOString().split("T")[0];
 }
 
-// Resolve data de vários formatos possíveis
 function resolveDate(raw: unknown): string | null {
   if (!raw) return null;
   if (typeof raw === "number") return excelSerialToDate(raw);
   if (typeof raw === "string") {
-    // Formato PT: dd/mm/yyyy
     const ptMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (ptMatch) return `${ptMatch[3]}-${ptMatch[2].padStart(2, "0")}-${ptMatch[1].padStart(2, "0")}`;
-    // ISO yyyy-mm-dd
     if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
   }
   return null;
 }
+
+// ── Microsoft Graph API helpers ─────────────────────────────────
+
+async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
+  const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+  const params = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    scope: "https://graph.microsoft.com/.default",
+    grant_type: "client_credentials",
+  });
+
+  const response = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Token error:", error);
+    throw new Error(`Failed to get access token: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+async function getDriveId(accessToken: string, siteId: string): Promise<string> {
+  const response = await fetch(
+    `https://graph.microsoft.com/v1.0/sites/${siteId}/drive`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to get drive: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.id;
+}
+
+// Search for the "Base Nav" Excel file in the SharePoint drive
+async function findBaseNavFile(
+  accessToken: string,
+  driveId: string,
+): Promise<{ id: string; name: string }> {
+  const searchUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/search(q='Base Nav')`;
+  console.log(`Searching for Base Nav file: ${searchUrl}`);
+
+  const response = await fetch(searchUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Search error:", error);
+    throw new Error(`Failed to search for Base Nav file: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const items: Array<{ id: string; name: string; file?: { mimeType: string }; lastModifiedDateTime?: string }> =
+    data.value || [];
+
+  // Filter to Excel files whose name contains "Base Nav" (case-insensitive)
+  const excelFiles = items.filter((item) => {
+    if (!item.file) return false;
+    const nameLower = item.name.toLowerCase();
+    if (!nameLower.includes("base nav")) return false;
+    return nameLower.endsWith(".xlsx") || nameLower.endsWith(".xls") || nameLower.endsWith(".csv");
+  });
+
+  if (excelFiles.length === 0) {
+    throw new Error(
+      'Ficheiro "Base Nav" não encontrado no SharePoint. ' +
+      "Verifique que existe um ficheiro Excel com o nome \"Base Nav\" na biblioteca de documentos."
+    );
+  }
+
+  // If multiple matches, pick the most recently modified
+  excelFiles.sort((a, b) => {
+    const dateA = a.lastModifiedDateTime ? new Date(a.lastModifiedDateTime).getTime() : 0;
+    const dateB = b.lastModifiedDateTime ? new Date(b.lastModifiedDateTime).getTime() : 0;
+    return dateB - dateA;
+  });
+
+  const chosen = excelFiles[0];
+  console.log(`Found Base Nav file: id=${chosen.id}, name=${chosen.name}`);
+  return { id: chosen.id, name: chosen.name };
+}
+
+// Download a file's content from SharePoint
+async function downloadFileContent(accessToken: string, driveId: string, fileId: string): Promise<ArrayBuffer> {
+  const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/content`;
+  console.log(`Downloading file content: ${url}`);
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Download error:", error);
+    throw new Error(`Failed to download file: ${response.status}`);
+  }
+
+  return response.arrayBuffer();
+}
+
+// ── Main handler ────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -59,7 +164,7 @@ serve(async (req) => {
   }
 
   try {
-    // Validar autenticação - apenas platform admins
+    // Validate authentication
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -87,7 +192,7 @@ serve(async (req) => {
       });
     }
 
-    // Verificar se é platform admin
+    // Verify platform admin
     const { data: adminRecord } = await supabaseAdmin
       .from("platform_admins")
       .select("id")
@@ -101,38 +206,70 @@ serve(async (req) => {
       });
     }
 
-    // Ler o ficheiro do FormData
-    const contentType = req.headers.get("content-type") ?? "";
-    if (!contentType.includes("multipart/form-data")) {
-      return new Response(JSON.stringify({ error: "Expected multipart/form-data" }), {
+    // Read JSON body with organization_id
+    const body = await req.json();
+    const { organization_id } = body;
+
+    if (!organization_id) {
+      return new Response(JSON.stringify({ error: "organization_id is required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const form = await req.formData();
-    const file = form.get("file") as File | null;
-    if (!file) {
-      return new Response(JSON.stringify({ error: "No file provided" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    // Get SharePoint config for this organization
+    const { data: spConfig, error: spError } = await supabaseAdmin
+      .from("sharepoint_config")
+      .select("*")
+      .eq("organization_id", organization_id)
+      .maybeSingle();
+
+    if (spError) throw spError;
+    if (!spConfig) {
+      return new Response(
+        JSON.stringify({ error: "SharePoint não configurado para esta organização." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const arrayBuffer = await file.arrayBuffer();
+    // Get SharePoint credentials
+    const tenantId = Deno.env.get("SHAREPOINT_TENANT_ID");
+    const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
+    const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
+
+    if (!tenantId || !clientId || !clientSecret) {
+      throw new Error("Credenciais SharePoint não configuradas no servidor.");
+    }
+
+    // Authenticate with Microsoft Graph
+    const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
+
+    // Resolve drive ID
+    let driveId = spConfig.drive_id;
+    if (!driveId) {
+      driveId = await getDriveId(accessToken, spConfig.site_id);
+    }
+
+    // Find the "Base Nav" Excel file in SharePoint
+    const baseNavFile = await findBaseNavFile(accessToken, driveId);
+
+    // Download the file content
+    const arrayBuffer = await downloadFileContent(accessToken, driveId, baseNavFile.id);
+
+    // Parse the Excel file
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
     if (rows.length === 0) {
-      return new Response(JSON.stringify({ error: "Empty spreadsheet" }), {
+      return new Response(JSON.stringify({ error: "Folha de cálculo vazia." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Mapear linhas para registos do cache
+    // Map rows to cache records
     const records: Array<{
       jvris_id: string;
       valor_pendente: number | null;
@@ -177,12 +314,12 @@ serve(async (req) => {
 
     if (records.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No valid rows found. Check column names (jvris_id required)." }),
+        JSON.stringify({ error: "Nenhuma linha válida encontrada. Verifique os nomes das colunas (jvris_id obrigatório)." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Upsert em lote
+    // Upsert in batch
     const { error: upsertError } = await supabaseAdmin
       .from("financeiro_nav_cache")
       .upsert(records, { onConflict: "jvris_id" });
@@ -190,7 +327,7 @@ serve(async (req) => {
     if (upsertError) throw upsertError;
 
     return new Response(
-      JSON.stringify({ success: true, synced: records.length }),
+      JSON.stringify({ success: true, synced: records.length, file: baseNavFile.name }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

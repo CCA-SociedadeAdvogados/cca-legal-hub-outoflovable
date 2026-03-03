@@ -15,22 +15,21 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
   Receipt, CreditCard, AlertTriangle, CheckCircle, Clock,
   Download, Eye, Building2, User, Calendar,
-  Plus, MoreHorizontal, Settings, Trash2, RefreshCw, Upload
+  Plus, MoreHorizontal, Settings, Trash2, RefreshCw
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
-import { SharePointDocumentsBrowser } from "@/components/sharepoint/SharePointDocumentsBrowser";
 
 const statusColors: Record<AccountStatus, string> = {
   regularizado: "bg-risk-low/20 text-risk-low border-risk-low/30",
-  atencao: "bg-risk-medium/20 text-risk-medium border-risk-medium/30",
-  em_atraso: "bg-destructive/20 text-destructive border-destructive/30",
+  pendente: "bg-risk-medium/20 text-risk-medium border-risk-medium/30",
+  em_incumprimento: "bg-destructive/20 text-destructive border-destructive/30",
 };
 
 const statusIcons: Record<AccountStatus, React.ReactNode> = {
   regularizado: <CheckCircle className="h-5 w-5" />,
-  atencao: <AlertTriangle className="h-5 w-5" />,
-  em_atraso: <Clock className="h-5 w-5" />,
+  pendente: <AlertTriangle className="h-5 w-5" />,
+  em_incumprimento: <Clock className="h-5 w-5" />,
 };
 
 const invoiceStatusColors: Record<string, string> = {
@@ -53,7 +52,8 @@ export default function Financeiro() {
     createInvoice,
     updateInvoiceStatus,
     deleteInvoice,
-    updateOrganizationFinancial
+    updateOrganizationFinancial,
+    syncNavFromSharePoint
   } = useFinanceiro();
   
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,19 +82,15 @@ export default function Financeiro() {
   const [configForm, setConfigForm] = useState({
     tipo_cliente: accountSummary.tipoCliente,
     prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
-    jvris_id: jvrisId ?? "",
   });
-
-  // Nav Excel upload state
-  const [navUploading, setNavUploading] = useState(false);
 
   const dateLocale = i18n.language === 'pt' ? pt : enUS;
 
   const getStatusLabel = (status: AccountStatus) => {
     const labels: Record<AccountStatus, string> = {
       regularizado: t('financial.regularized'),
-      atencao: t('financial.attention'),
-      em_atraso: t('financial.overdue'),
+      pendente: t('financial.pending'),
+      em_incumprimento: t('financial.inDefault'),
     };
     return labels[status];
   };
@@ -158,37 +154,9 @@ export default function Financeiro() {
     updateOrganizationFinancial.mutate({
       tipo_cliente: configForm.tipo_cliente as "pessoa_individual" | "pessoa_coletiva",
       prazo_pagamento_dias: parseInt(configForm.prazo_pagamento_dias),
-      jvris_id: configForm.jvris_id.trim() || null,
     }, {
       onSuccess: () => setConfigDialogOpen(false)
     });
-  };
-
-  const handleNavExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setNavUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const { supabase: sb } = await import("@/integrations/supabase/client");
-      const { data, error } = await sb.functions.invoke("sync-nav-excel", {
-        body: formData,
-      });
-
-      if (error) throw error;
-      const { default: toast } = await import("sonner");
-      toast.success(`Base Nav sincronizada: ${data?.synced ?? 0} registos atualizados`);
-    } catch (err: unknown) {
-      const { default: toast } = await import("sonner");
-      const message = err instanceof Error ? err.message : "Erro desconhecido";
-      toast.error("Erro ao sincronizar Base Nav: " + message);
-    } finally {
-      setNavUploading(false);
-      e.target.value = "";
-    }
   };
 
   const handleDeleteInvoice = () => {
@@ -225,7 +193,6 @@ export default function Financeiro() {
               setConfigForm({
                 tipo_cliente: accountSummary.tipoCliente,
                 prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
-                jvris_id: jvrisId ?? "",
               });
               setConfigDialogOpen(true);
             }}>
@@ -327,25 +294,15 @@ export default function Financeiro() {
                   Base Nav (Jvris)
                 </CardTitle>
                 {isPlatformAdmin && (
-                  <label className="cursor-pointer">
-                    <Button asChild variant="outline" size="sm" disabled={navUploading}>
-                      <span>
-                        {navUploading ? (
-                          <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
-                        ) : (
-                          <Upload className="mr-2 h-3 w-3" />
-                        )}
-                        {navUploading ? "A sincronizar..." : "Importar Excel"}
-                      </span>
-                    </Button>
-                    <input
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      className="hidden"
-                      onChange={handleNavExcelUpload}
-                      disabled={navUploading}
-                    />
-                  </label>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={syncNavFromSharePoint.isPending}
+                    onClick={() => syncNavFromSharePoint.mutate()}
+                  >
+                    <RefreshCw className={`mr-2 h-3 w-3 ${syncNavFromSharePoint.isPending ? "animate-spin" : ""}`} />
+                    {syncNavFromSharePoint.isPending ? t('financial.syncingNav') : t('financial.syncNav')}
+                  </Button>
                 )}
               </div>
             </CardHeader>
@@ -381,8 +338,8 @@ export default function Financeiro() {
               ) : (
                 <p className="text-sm text-muted-foreground">
                   {jvrisId
-                    ? "Sem dados sincronizados. Importe o ficheiro Excel Base Nav."
-                    : "Configure o ID Jvris da organização para ligar os dados Base Nav."}
+                    ? t('financial.noNavDataSync')
+                    : t('financial.noNavDataConfigJvris')}
                 </p>
               )}
             </CardContent>
@@ -545,8 +502,6 @@ export default function Financeiro() {
           </CardContent>
         </Card>
 
-        {/* SharePoint Documents */}
-        <SharePointDocumentsBrowser />
       </div>
 
       {/* Dialog: Nova Fatura */}
@@ -681,17 +636,6 @@ export default function Financeiro() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>ID Jvris</Label>
-              <Input
-                placeholder="ex: CCA-001"
-                value={configForm.jvris_id}
-                onChange={(e) => setConfigForm({ ...configForm, jvris_id: e.target.value })}
-              />
-              <p className="text-xs text-muted-foreground">
-                Identificador único no sistema Jvris para ligar os dados Base Nav.
-              </p>
-            </div>
             <div className="space-y-2">
               <Label>{t('financial.clientType')}</Label>
               <Select 
