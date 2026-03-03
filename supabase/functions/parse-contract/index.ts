@@ -71,7 +71,7 @@ async function callAIWithFallback(
 }
 
 Deno.serve(async (req) => {
-  console.log(`[parse-contract] ${req.method} request received`);
+  console.log(`[parse-contract] v3 – verify_jwt=false – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
