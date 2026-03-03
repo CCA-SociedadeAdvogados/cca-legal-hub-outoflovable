@@ -147,7 +147,11 @@ export function useFinanceiro() {
         .eq("jvris_id", orgInfo!.jvris_id!)
         .order("data_vencimento", { ascending: true });
 
-      if (error) throw error;
+      // Return [] if table doesn't exist yet (migration pending)
+      if (error) {
+        console.warn("financeiro_nav_items query failed (table may not exist):", error.message);
+        return [];
+      }
       return (data as NavItem[]) || [];
     },
     enabled: !!orgInfo?.jvris_id,
@@ -326,17 +330,28 @@ export function useFinanceiro() {
         body: { organization_id: organizationId },
       });
       if (error) {
-        // Extract real error message from edge function response body
-        let msg = error.message;
+        // Extract real error message — context can be a string, parsed object, or Response
+        let msg = error.message || String(error);
         try {
           const ctx = (error as any).context;
-          if (ctx && typeof ctx.json === 'function') {
-            const body = await ctx.json();
-            if (body?.error) msg = body.error;
-          } else if (ctx?.error) {
-            msg = ctx.error;
+          if (typeof ctx === 'string') {
+            try {
+              const parsed = JSON.parse(ctx);
+              msg = parsed.error || parsed.message || ctx;
+            } catch {
+              msg = ctx;
+            }
+          } else if (ctx && typeof ctx === 'object') {
+            if (typeof ctx.json === 'function') {
+              const body = await ctx.json();
+              msg = body?.error || body?.message || msg;
+            } else {
+              msg = ctx.error || ctx.message || msg;
+            }
           }
         } catch { /* keep generic message */ }
+        // Ensure msg is always a string
+        if (typeof msg !== 'string') msg = JSON.stringify(msg);
         console.error("[sync-nav-excel]", msg);
         throw new Error(msg);
       }

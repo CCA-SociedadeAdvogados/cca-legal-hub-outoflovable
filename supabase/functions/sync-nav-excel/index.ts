@@ -458,22 +458,29 @@ serve(async (req) => {
       .upsert(cacheRecords, { onConflict: "jvris_id" });
     if (upsertError) throw upsertError;
 
-    // 2. Replace child items: delete old → insert new
-    const syncedIds = cacheRecords.map((r) => r.jvris_id);
-    const { error: deleteError } = await supabaseAdmin
-      .from("financeiro_nav_items")
-      .delete()
-      .in("jvris_id", syncedIds);
-    if (deleteError) throw deleteError;
-
-    if (itemRecords.length > 0) {
-      const { error: insertError } = await supabaseAdmin
+    // 2. Replace child items: delete old → insert new (non-fatal if table missing)
+    let totalItems = 0;
+    try {
+      const syncedIds = cacheRecords.map((r) => r.jvris_id);
+      const { error: deleteError } = await supabaseAdmin
         .from("financeiro_nav_items")
-        .insert(itemRecords);
-      if (insertError) throw insertError;
+        .delete()
+        .in("jvris_id", syncedIds);
+      if (deleteError) {
+        console.warn("Could not delete old nav items (table may not exist yet):", deleteError.message);
+      } else if (itemRecords.length > 0) {
+        const { error: insertError } = await supabaseAdmin
+          .from("financeiro_nav_items")
+          .insert(itemRecords);
+        if (insertError) {
+          console.warn("Could not insert nav items:", insertError.message);
+        } else {
+          totalItems = itemRecords.length;
+        }
+      }
+    } catch (itemErr) {
+      console.warn("Nav items sync skipped (table may not exist):", itemErr);
     }
-
-    const totalItems = itemRecords.length;
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
     return new Response(
