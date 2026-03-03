@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { BlobReader, ZipReader, TextWriter } from "https://deno.land/x/zipjs@v2.7.32/index.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as pdfjs from "https://esm.sh/pdfjs-dist@4.0.379/build/pdf.min.mjs";
+// Heavy libraries (pdfjs-dist, zip.js) are imported dynamically inside their
+// respective extraction functions to avoid crashing the entire edge function
+// when a module fails to load in certain Deno runtime versions.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -296,10 +297,20 @@ INSTRUÇÕES IMPORTANTES:
 async function extractTextFromPDF(fileBytes: Uint8Array): Promise<string> {
   console.log("Extracting text from PDF, size:", fileBytes.length);
 
-  // Desactivar worker (necessário em ambientes edge/serverless)
-  (pdfjs as any).GlobalWorkerOptions.workerSrc = "";
+  let pdfjs: any;
+  try {
+    pdfjs = await import("https://esm.sh/pdfjs-dist@4.0.379/build/pdf.min.mjs");
+  } catch (importErr: any) {
+    console.error("Failed to import pdfjs-dist:", importErr.message);
+    throw new Error(
+      "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt e voltar a carregar."
+    );
+  }
 
-  const pdf = await (pdfjs as any).getDocument({ data: fileBytes }).promise;
+  // Desactivar worker (necessário em ambientes edge/serverless)
+  pdfjs.GlobalWorkerOptions.workerSrc = "";
+
+  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
   const pages: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -326,6 +337,10 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
   console.log("Extracting text from Word document:", fileName);
 
   try {
+    const { BlobReader, ZipReader, TextWriter } = await import(
+      "https://deno.land/x/zipjs@v2.7.32/index.js"
+    );
+
     const blob = new Blob([fileBytes]);
     const zipReader = new ZipReader(new BlobReader(blob));
     const entries = await zipReader.getEntries();
