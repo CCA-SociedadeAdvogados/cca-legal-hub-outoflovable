@@ -131,7 +131,16 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
           body: { textContent },
         });
 
-        if (parseError) throw new Error(parseError.message);
+        if (parseError) {
+          let errorMessage = parseError.message;
+          try {
+            if (parseError.context && typeof parseError.context.json === 'function') {
+              const body = await parseError.context.json();
+              if (body?.error) errorMessage = body.error;
+            }
+          } catch { /* use original message */ }
+          throw new Error(errorMessage);
+        }
         if (parseData?.error) throw new Error(parseData.error);
 
         const extractedData = parseData?.data;
@@ -179,7 +188,16 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         setProcessingStep('parsing');
         setProgress(80);
 
-        if (parseError) throw new Error(parseError.message);
+        if (parseError) {
+          let errorMessage = parseError.message;
+          try {
+            if (parseError.context && typeof parseError.context.json === 'function') {
+              const body = await parseError.context.json();
+              if (body?.error) errorMessage = body.error;
+            }
+          } catch { /* use original message */ }
+          throw new Error(errorMessage);
+        }
         if (parseData?.error) throw new Error(parseData.error);
 
         const extractedData = parseData?.data;

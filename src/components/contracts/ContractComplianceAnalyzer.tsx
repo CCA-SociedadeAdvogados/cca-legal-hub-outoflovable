@@ -169,14 +169,24 @@ export function ContractComplianceAnalyzer({
       });
 
       const { data, error } = await supabase.functions.invoke('parse-contract', {
-        body: { 
-          fileContent: base64Content, 
-          fileName: file.name, 
-          mimeType: file.type 
+        body: {
+          fileContent: base64Content,
+          fileName: file.name,
+          mimeType: file.type
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract actual error message from edge function response
+        let errorMessage = error.message;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          }
+        } catch { /* use original message */ }
+        throw new Error(errorMessage);
+      }
       if (data?.error) throw new Error(data.error);
 
       if (data?.extractedText) {
@@ -223,7 +233,17 @@ export function ContractComplianceAnalyzer({
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        // Extract actual error message from edge function response
+        let errorMessage = error.message;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          }
+        } catch { /* use original message */ }
+        throw new Error(errorMessage);
+      }
       if (data.error) throw new Error(data.error);
 
       const result = data.data as ComplianceResult;
