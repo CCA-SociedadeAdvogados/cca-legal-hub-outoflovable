@@ -19,4 +19,4 @@ CREATE POLICY "Authenticated users can read nav cache"
     ON public.financeiro_nav_cache FOR SELECT USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Service role can manage nav cache"
-    ON public.financeiro_nav_cache FOR ALL USING (true) WITH CHECK (true);
+    ON public.financeiro_nav_cache FOR ALL TO service_role USING (true) WITH CHECK (true);
