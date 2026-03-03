@@ -34,6 +34,15 @@ export interface ClientFolder {
 export interface OrganizationFinancialInfo {
   tipo_cliente: "pessoa_individual" | "pessoa_coletiva";
   prazo_pagamento_dias: number;
+  jvris_id: string | null;
+}
+
+export interface NavCache {
+  id: string;
+  jvris_id: string;
+  valor_pendente: number | null;
+  data_vencimento: string | null;
+  synced_at: string | null;
 }
 
 export type AccountStatus = "regularizado" | "atencao" | "em_atraso";
@@ -164,7 +173,7 @@ export function useFinanceiro() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations")
-        .select("tipo_cliente, prazo_pagamento_dias")
+        .select("tipo_cliente, prazo_pagamento_dias, jvris_id")
         .eq("id", organizationId)
         .single();
 
@@ -172,6 +181,22 @@ export function useFinanceiro() {
       return data as OrganizationFinancialInfo;
     },
     enabled: !!organizationId,
+  });
+
+  // Buscar dados do cache Base Nav (via jvris_id da organização)
+  const { data: navCache } = useQuery({
+    queryKey: ["financeiro-nav-cache", orgInfo?.jvris_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_nav_cache")
+        .select("*")
+        .eq("jvris_id", orgInfo!.jvris_id!)
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error;
+      return (data as NavCache) || null;
+    },
+    enabled: !!orgInfo?.jvris_id,
   });
 
   // Buscar faturas
@@ -289,6 +314,7 @@ export function useFinanceiro() {
     mutationFn: async (data: {
       tipo_cliente: "pessoa_individual" | "pessoa_coletiva";
       prazo_pagamento_dias: number;
+      jvris_id?: string | null;
     }) => {
       const { error } = await supabase
         .from("organizations")
@@ -334,6 +360,8 @@ export function useFinanceiro() {
     invoices,
     folders,
     accountSummary,
+    navCache: navCache ?? null,
+    jvrisId: orgInfo?.jvris_id ?? null,
     organizationId,
     isLoading: isLoadingInvoices || isLoadingFolders,
     isPlatformAdmin,

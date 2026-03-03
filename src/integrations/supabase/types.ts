@@ -1976,6 +1976,33 @@ export type Database = {
           },
         ]
       }
+      financeiro_nav_cache: {
+        Row: {
+          data_vencimento: string | null
+          id: string
+          jvris_id: string
+          raw_row: Json | null
+          synced_at: string | null
+          valor_pendente: number | null
+        }
+        Insert: {
+          data_vencimento?: string | null
+          id?: string
+          jvris_id: string
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor_pendente?: number | null
+        }
+        Update: {
+          data_vencimento?: string | null
+          id?: string
+          jvris_id?: string
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor_pendente?: number | null
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           created_at: string | null
@@ -2250,6 +2277,7 @@ export type Database = {
           custom_branding: Json | null
           id: string
           industry_sectors: string[] | null
+          jvris_id: string | null
           lawyer_name: string | null
           lawyer_photo_url: string | null
           legalbi_url: string | null
@@ -2267,6 +2295,7 @@ export type Database = {
           custom_branding?: Json | null
           id?: string
           industry_sectors?: string[] | null
+          jvris_id?: string | null
           lawyer_name?: string | null
           lawyer_photo_url?: string | null
           legalbi_url?: string | null
@@ -2284,6 +2313,7 @@ export type Database = {
           custom_branding?: Json | null
           id?: string
           industry_sectors?: string[] | null
+          jvris_id?: string | null
           lawyer_name?: string | null
           lawyer_photo_url?: string | null
           legalbi_url?: string | null
