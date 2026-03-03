@@ -57,5 +57,8 @@ verify_jwt = false
 [functions.sync-sharepoint]
 verify_jwt = false
 
+[functions.sync-nav-excel]
+verify_jwt = false
+
 [functions.triage-contract]
 verify_jwt = false
