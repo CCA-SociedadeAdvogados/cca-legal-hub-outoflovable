@@ -12,10 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { 
-  Receipt, CreditCard, AlertTriangle, CheckCircle, Clock, 
+import {
+  Receipt, CreditCard, AlertTriangle, CheckCircle, Clock,
   Download, Eye, Building2, User, Calendar,
-  Plus, MoreHorizontal, Settings, Trash2
+  Plus, MoreHorizontal, Settings, Trash2, RefreshCw, Upload
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
@@ -42,11 +42,13 @@ const invoiceStatusColors: Record<string, string> = {
 
 export default function Financeiro() {
   const { t, i18n } = useTranslation();
-  const { 
-    invoices, 
-    accountSummary, 
+  const {
+    invoices,
+    accountSummary,
+    navCache,
+    jvrisId,
     organizationId,
-    isLoading, 
+    isLoading,
     isPlatformAdmin,
     createInvoice,
     updateInvoiceStatus,
@@ -80,7 +82,11 @@ export default function Financeiro() {
   const [configForm, setConfigForm] = useState({
     tipo_cliente: accountSummary.tipoCliente,
     prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
+    jvris_id: jvrisId ?? "",
   });
+
+  // Nav Excel upload state
+  const [navUploading, setNavUploading] = useState(false);
 
   const dateLocale = i18n.language === 'pt' ? pt : enUS;
 
@@ -152,9 +158,37 @@ export default function Financeiro() {
     updateOrganizationFinancial.mutate({
       tipo_cliente: configForm.tipo_cliente as "pessoa_individual" | "pessoa_coletiva",
       prazo_pagamento_dias: parseInt(configForm.prazo_pagamento_dias),
+      jvris_id: configForm.jvris_id.trim() || null,
     }, {
       onSuccess: () => setConfigDialogOpen(false)
     });
+  };
+
+  const handleNavExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setNavUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { supabase: sb } = await import("@/integrations/supabase/client");
+      const { data, error } = await sb.functions.invoke("sync-nav-excel", {
+        body: formData,
+      });
+
+      if (error) throw error;
+      const { default: toast } = await import("sonner");
+      toast.success(`Base Nav sincronizada: ${data?.synced ?? 0} registos atualizados`);
+    } catch (err: unknown) {
+      const { default: toast } = await import("sonner");
+      const message = err instanceof Error ? err.message : "Erro desconhecido";
+      toast.error("Erro ao sincronizar Base Nav: " + message);
+    } finally {
+      setNavUploading(false);
+      e.target.value = "";
+    }
   };
 
   const handleDeleteInvoice = () => {
@@ -191,6 +225,7 @@ export default function Financeiro() {
               setConfigForm({
                 tipo_cliente: accountSummary.tipoCliente,
                 prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
+                jvris_id: jvrisId ?? "",
               });
               setConfigDialogOpen(true);
             }}>
@@ -281,6 +316,78 @@ export default function Financeiro() {
             )}
           </CardContent>
         </Card>
+
+        {/* Base Nav (Jvris) */}
+        {(jvrisId || isPlatformAdmin) && (
+          <Card className="border border-muted">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                  Base Nav (Jvris)
+                </CardTitle>
+                {isPlatformAdmin && (
+                  <label className="cursor-pointer">
+                    <Button asChild variant="outline" size="sm" disabled={navUploading}>
+                      <span>
+                        {navUploading ? (
+                          <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
+                        ) : (
+                          <Upload className="mr-2 h-3 w-3" />
+                        )}
+                        {navUploading ? "A sincronizar..." : "Importar Excel"}
+                      </span>
+                    </Button>
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={handleNavExcelUpload}
+                      disabled={navUploading}
+                    />
+                  </label>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {navCache ? (
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground">ID Jvris</p>
+                    <p className="font-mono font-medium">{navCache.jvris_id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor Pendente</p>
+                    <p className="text-lg font-semibold">
+                      {navCache.valor_pendente != null
+                        ? formatCurrency(navCache.valor_pendente)
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Data de Vencimento</p>
+                    <p className="font-medium">
+                      {navCache.data_vencimento
+                        ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
+                        : "—"}
+                    </p>
+                  </div>
+                  {navCache.synced_at && (
+                    <p className="text-xs text-muted-foreground md:col-span-3">
+                      Último sync: {format(new Date(navCache.synced_at), "dd/MM/yyyy HH:mm")}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {jvrisId
+                    ? "Sem dados sincronizados. Importe o ficheiro Excel Base Nav."
+                    : "Configure o ID Jvris da organização para ligar os dados Base Nav."}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Faturas */}
         <Card>
@@ -574,6 +681,17 @@ export default function Financeiro() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>ID Jvris</Label>
+              <Input
+                placeholder="ex: CCA-001"
+                value={configForm.jvris_id}
+                onChange={(e) => setConfigForm({ ...configForm, jvris_id: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Identificador único no sistema Jvris para ligar os dados Base Nav.
+              </p>
+            </div>
             <div className="space-y-2">
               <Label>{t('financial.clientType')}</Label>
               <Select 
