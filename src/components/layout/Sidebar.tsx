@@ -43,6 +43,7 @@ import {
   Briefcase,
   UserCog,
   BarChart3,
+  Lock,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -174,7 +175,7 @@ export function Sidebar({ clientName }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-hide px-3 py-4">
-        {/* Home */}
+        {/* 1. Início */}
         <NavItem
           to="/home"
           icon={Home}
@@ -183,7 +184,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* Notificações */}
+        {/* 2. Notificações */}
         <NavItem
           to="/notificacoes"
           icon={Bell}
@@ -193,7 +194,25 @@ export function Sidebar({ clientName }: SidebarProps) {
           badge={badges.notifications}
         />
 
-        {/* Contratos with submenu */}
+        {/* 3. Minha Conta Corrente CCA (was Financeiro) */}
+        <NavItem
+          to="/financeiro"
+          icon={Receipt}
+          label={t("nav.financial")}
+          isActive={location.pathname === "/financeiro"}
+          isCollapsed={isCollapsed}
+        />
+
+        {/* 4. Legal Tracker (was LegalBi) */}
+        <NavItem
+          to="/legalbi"
+          icon={BarChart3}
+          label={t("nav.legalbi")}
+          isActive={location.pathname === "/legalbi"}
+          isCollapsed={isCollapsed}
+        />
+
+        {/* 5. Meus Contratos (was Contratos) with submenu */}
         <div>
           {isCollapsed ? (
             <NavItem
@@ -232,7 +251,7 @@ export function Sidebar({ clientName }: SidebarProps) {
                   <ChevronRight className="h-4 w-4" />
                 )}
               </button>
-              
+
               {contractsExpanded && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
                   <NavItem
@@ -265,7 +284,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        {/* Contabilidade with submenu */}
+        {/* 6. Serviços de Contabilidade (was Contabilidade) with submenu */}
         <div>
           {isCollapsed ? (
             <NavItem
@@ -296,7 +315,7 @@ export function Sidebar({ clientName }: SidebarProps) {
                   <ChevronRight className="h-4 w-4" />
                 )}
               </button>
-              
+
               {accountingExpanded && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
                   <NavItem
@@ -313,7 +332,10 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        {/* Legal Insights */}
+        {/* Divider */}
+        <div className="my-2 border-t border-sidebar-border" />
+
+        {/* 7. Legal Insights */}
         <NavItem
           to="/eventos"
           icon={Scale}
@@ -322,25 +344,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* Impactos */}
-        <NavItem
-          to="/impactos"
-          icon={AlertTriangle}
-          label={t("nav.impacts")}
-          isActive={location.pathname === "/impactos"}
-          isCollapsed={isCollapsed}
-        />
-
-        {/* Legislação & Jurisprudência */}
-        <NavItem
-          to="/normativos"
-          icon={Library}
-          label={t("nav.normativos")}
-          isActive={location.pathname.startsWith("/normativos")}
-          isCollapsed={isCollapsed}
-        />
-
-        {/* Novidades CCA */}
+        {/* 8. Novidades CCA */}
         <NavItem
           to="/novidades-cca"
           icon={Newspaper}
@@ -350,7 +354,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           badge={badges.news}
         />
 
-        {/* Políticas */}
+        {/* 9. Políticas */}
         <NavItem
           to="/politicas"
           icon={BookOpen}
@@ -359,23 +363,39 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* Financeiro */}
-        <NavItem
-          to="/financeiro"
-          icon={Receipt}
-          label={t("nav.financial")}
-          isActive={location.pathname === "/financeiro"}
-          isCollapsed={isCollapsed}
-        />
+        {/* 10. Impactos (locked - future feature) */}
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium opacity-60 pointer-events-none",
+            "text-sidebar-foreground/80",
+            isCollapsed && "justify-center px-2"
+          )}
+        >
+          <AlertTriangle className={cn("h-5 w-5 shrink-0")} />
+          {!isCollapsed && (
+            <span className="flex items-center gap-2">
+              {t("nav.impacts")}
+              <Lock className="h-3.5 w-3.5" />
+            </span>
+          )}
+        </div>
 
-        {/* LegalBi */}
-        <NavItem
-          to="/legalbi"
-          icon={BarChart3}
-          label="LegalBi"
-          isActive={location.pathname === "/legalbi"}
-          isCollapsed={isCollapsed}
-        />
+        {/* 11. Legislação & Jurisprudência (locked - future feature) */}
+        <div
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium opacity-60 pointer-events-none",
+            "text-sidebar-foreground/80",
+            isCollapsed && "justify-center px-2"
+          )}
+        >
+          <Library className={cn("h-5 w-5 shrink-0")} />
+          {!isCollapsed && (
+            <span className="flex items-center gap-2">
+              {t("nav.normativos")}
+              <Lock className="h-3.5 w-3.5" />
+            </span>
+          )}
+        </div>
 
         {/* Contextual navigation by profile */}
 
