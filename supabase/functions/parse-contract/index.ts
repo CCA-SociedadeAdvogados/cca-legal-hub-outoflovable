@@ -1,7 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// Heavy libraries (pdfjs-dist, zip.js) are imported dynamically inside their
-// respective extraction functions to avoid crashing the entire edge function
-// when a module fails to load in certain Deno runtime versions.
+// ALL external libraries are imported dynamically to avoid crashing the edge
+// function during module initialisation on Supabase Edge Runtime / Deno v2.x.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -96,6 +94,7 @@ Deno.serve(async (req) => {
 
       if (storagePath) {
         console.log("Downloading file from storage:", storagePath);
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const supabase = createClient(supabaseUrl, supabaseKey);
