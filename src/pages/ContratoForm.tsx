@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -41,32 +40,25 @@ import { ContractInitialUpload } from '@/components/contracts/ContractInitialUpl
 // TriageAuditBadge removed — analysis done by external CCA agent
 import { cn } from '@/lib/utils';
 import { useContratos, useContrato, type ContratoInsert } from '@/hooks/useContratos';
-import { 
-  TIPO_CONTRATO_LABELS, 
-  ESTADO_CONTRATO_LABELS, 
+import {
+  TIPO_CONTRATO_LABELS,
   DEPARTAMENTO_LABELS,
   TIPO_DURACAO_LABELS,
   TIPO_RENOVACAO_LABELS,
-  ESTRUTURA_PRECOS_LABELS,
-  PERIODICIDADE_FATURACAO_LABELS,
   PAPEL_ENTIDADE_LABELS,
-  METODO_ASSINATURA_LABELS,
   TIPO_GARANTIA_LABELS,
 } from '@/types/contracts';
-import { canTransitionTo } from '@/lib/contractStateMachine';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { CheckCircle2, XCircle, Globe } from 'lucide-react';
 
 const formSchema = z.object({
   // Identificação
-  id_interno: z.string().min(1, 'ID interno é obrigatório'),
   titulo_contrato: z.string().min(1, 'Título é obrigatório'),
   tipo_contrato: z.string().min(1, 'Tipo é obrigatório'),
   tipo_contrato_personalizado: z.string().optional(),
-  estado_contrato: z.string().default('rascunho'),
   departamento_responsavel: z.string().min(1, 'Departamento é obrigatório'),
   objeto_resumido: z.string().optional(),
-  
+
   // Partes
   parte_a_nome_legal: z.string().min(1, 'Nome legal da Parte A é obrigatório'),
   parte_a_nif: z.string().optional(),
@@ -77,18 +69,7 @@ const formSchema = z.object({
   parte_b_morada: z.string().optional(),
   parte_b_pais: z.string().default('Portugal'),
   parte_b_grupo_economico: z.string().optional(),
-  
-  // Contactos
-  contacto_comercial_nome: z.string().optional(),
-  contacto_comercial_email: z.string().email().optional().or(z.literal('')),
-  contacto_comercial_telefone: z.string().optional(),
-  contacto_operacional_nome: z.string().optional(),
-  contacto_operacional_email: z.string().email().optional().or(z.literal('')),
-  contacto_faturacao_nome: z.string().optional(),
-  contacto_faturacao_email: z.string().email().optional().or(z.literal('')),
-  contacto_legal_nome: z.string().optional(),
-  contacto_legal_email: z.string().email().optional().or(z.literal('')),
-  
+
   // Datas
   data_assinatura_parte_a: z.date().optional().nullable(),
   data_assinatura_parte_b: z.date().optional().nullable(),
@@ -98,17 +79,7 @@ const formSchema = z.object({
   tipo_renovacao: z.string().default('sem_renovacao_automatica'),
   renovacao_periodo_meses: z.number().optional().nullable(),
   aviso_previo_nao_renovacao_dias: z.number().default(30),
-  
-  // Financeiro
-  valor_total_estimado: z.number().optional().nullable(),
-  valor_anual_recorrente: z.number().optional().nullable(),
-  moeda: z.string().default('EUR'),
-  estrutura_precos: z.string().optional(),
-  periodicidade_faturacao: z.string().optional(),
-  prazo_pagamento_dias: z.number().default(30),
-  centro_custo: z.string().optional(),
-  numero_encomenda_po: z.string().optional(),
-  
+
   // Obrigações e Riscos
   obrigacoes_parte_a: z.string().optional(),
   obrigacoes_parte_b: z.string().optional(),
@@ -120,13 +91,13 @@ const formSchema = z.object({
   flag_nao_concorrencia: z.boolean().default(false),
   flag_exclusividade: z.boolean().default(false),
   flag_direito_subcontratar: z.boolean().default(false),
-  
+
   // Garantias
   garantia_existente: z.boolean().default(false),
   garantia_tipo: z.string().optional(),
   garantia_valor: z.number().optional().nullable(),
   garantia_data_validade: z.date().optional().nullable(),
-  
+
   // RGPD
   tratamento_dados_pessoais: z.boolean().default(false),
   papel_entidade: z.string().optional(),
@@ -139,10 +110,6 @@ const formSchema = z.object({
   referencia_dpa: z.string().optional(),
   dpia_realizada: z.boolean().default(false),
   referencia_dpia: z.string().optional(),
-  
-  // Aprovação
-  metodo_assinatura: z.string().optional(),
-  ferramenta_assinatura: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -214,11 +181,9 @@ export default function ContratoForm() {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: existingContrato ? {
-      id_interno: existingContrato.id_interno,
       titulo_contrato: existingContrato.titulo_contrato,
       tipo_contrato: existingContrato.tipo_contrato,
       tipo_contrato_personalizado: existingContrato.tipo_contrato_personalizado || '',
-      estado_contrato: existingContrato.estado_contrato,
       departamento_responsavel: existingContrato.departamento_responsavel,
       objeto_resumido: existingContrato.objeto_resumido || '',
       parte_a_nome_legal: existingContrato.parte_a_nome_legal,
@@ -230,15 +195,6 @@ export default function ContratoForm() {
       parte_b_morada: existingContrato.parte_b_morada || '',
       parte_b_pais: existingContrato.parte_b_pais || 'Portugal',
       parte_b_grupo_economico: existingContrato.parte_b_grupo_economico || '',
-      contacto_comercial_nome: existingContrato.contacto_comercial_nome || '',
-      contacto_comercial_email: existingContrato.contacto_comercial_email || '',
-      contacto_comercial_telefone: existingContrato.contacto_comercial_telefone || '',
-      contacto_operacional_nome: existingContrato.contacto_operacional_nome || '',
-      contacto_operacional_email: existingContrato.contacto_operacional_email || '',
-      contacto_faturacao_nome: existingContrato.contacto_faturacao_nome || '',
-      contacto_faturacao_email: existingContrato.contacto_faturacao_email || '',
-      contacto_legal_nome: existingContrato.contacto_legal_nome || '',
-      contacto_legal_email: existingContrato.contacto_legal_email || '',
       data_assinatura_parte_a: existingContrato.data_assinatura_parte_a ? new Date(existingContrato.data_assinatura_parte_a) : null,
       data_assinatura_parte_b: existingContrato.data_assinatura_parte_b ? new Date(existingContrato.data_assinatura_parte_b) : null,
       data_inicio_vigencia: existingContrato.data_inicio_vigencia ? new Date(existingContrato.data_inicio_vigencia) : null,
@@ -247,14 +203,6 @@ export default function ContratoForm() {
       tipo_renovacao: existingContrato.tipo_renovacao,
       renovacao_periodo_meses: existingContrato.renovacao_periodo_meses,
       aviso_previo_nao_renovacao_dias: existingContrato.aviso_previo_nao_renovacao_dias || 30,
-      valor_total_estimado: existingContrato.valor_total_estimado,
-      valor_anual_recorrente: existingContrato.valor_anual_recorrente,
-      moeda: existingContrato.moeda || 'EUR',
-      estrutura_precos: existingContrato.estrutura_precos || '',
-      periodicidade_faturacao: existingContrato.periodicidade_faturacao || '',
-      prazo_pagamento_dias: existingContrato.prazo_pagamento_dias || 30,
-      centro_custo: existingContrato.centro_custo || '',
-      numero_encomenda_po: existingContrato.numero_encomenda_po || '',
       obrigacoes_parte_a: existingContrato.obrigacoes_parte_a || '',
       obrigacoes_parte_b: existingContrato.obrigacoes_parte_b || '',
       sla_kpi_resumo: existingContrato.sla_kpi_resumo || '',
@@ -280,13 +228,9 @@ export default function ContratoForm() {
       referencia_dpa: existingContrato.referencia_dpa || '',
       dpia_realizada: existingContrato.dpia_realizada || false,
       referencia_dpia: existingContrato.referencia_dpia || '',
-      metodo_assinatura: existingContrato.metodo_assinatura || '',
-      ferramenta_assinatura: existingContrato.ferramenta_assinatura || '',
     } : {
-      id_interno: '',
       titulo_contrato: '',
       tipo_contrato: 'prestacao_servicos',
-      estado_contrato: 'rascunho',
       departamento_responsavel: 'outro',
       parte_a_nome_legal: 'Radar Conformidade, Lda.',
       parte_a_pais: 'Portugal',
@@ -295,8 +239,6 @@ export default function ContratoForm() {
       tipo_duracao: 'prazo_determinado',
       tipo_renovacao: 'sem_renovacao_automatica',
       aviso_previo_nao_renovacao_dias: 30,
-      moeda: 'EUR',
-      prazo_pagamento_dias: 30,
     },
   });
 
@@ -304,11 +246,9 @@ export default function ContratoForm() {
   useEffect(() => {
     if (existingContrato && isEditing) {
       form.reset({
-        id_interno: existingContrato.id_interno,
         titulo_contrato: existingContrato.titulo_contrato,
         tipo_contrato: existingContrato.tipo_contrato,
         tipo_contrato_personalizado: existingContrato.tipo_contrato_personalizado || '',
-        estado_contrato: existingContrato.estado_contrato,
         departamento_responsavel: existingContrato.departamento_responsavel,
         objeto_resumido: existingContrato.objeto_resumido || '',
         parte_a_nome_legal: existingContrato.parte_a_nome_legal,
@@ -320,15 +260,6 @@ export default function ContratoForm() {
         parte_b_morada: existingContrato.parte_b_morada || '',
         parte_b_pais: existingContrato.parte_b_pais || 'Portugal',
         parte_b_grupo_economico: existingContrato.parte_b_grupo_economico || '',
-        contacto_comercial_nome: existingContrato.contacto_comercial_nome || '',
-        contacto_comercial_email: existingContrato.contacto_comercial_email || '',
-        contacto_comercial_telefone: existingContrato.contacto_comercial_telefone || '',
-        contacto_operacional_nome: existingContrato.contacto_operacional_nome || '',
-        contacto_operacional_email: existingContrato.contacto_operacional_email || '',
-        contacto_faturacao_nome: existingContrato.contacto_faturacao_nome || '',
-        contacto_faturacao_email: existingContrato.contacto_faturacao_email || '',
-        contacto_legal_nome: existingContrato.contacto_legal_nome || '',
-        contacto_legal_email: existingContrato.contacto_legal_email || '',
         data_assinatura_parte_a: existingContrato.data_assinatura_parte_a ? new Date(existingContrato.data_assinatura_parte_a) : null,
         data_assinatura_parte_b: existingContrato.data_assinatura_parte_b ? new Date(existingContrato.data_assinatura_parte_b) : null,
         data_inicio_vigencia: existingContrato.data_inicio_vigencia ? new Date(existingContrato.data_inicio_vigencia) : null,
@@ -337,14 +268,6 @@ export default function ContratoForm() {
         tipo_renovacao: existingContrato.tipo_renovacao,
         renovacao_periodo_meses: existingContrato.renovacao_periodo_meses,
         aviso_previo_nao_renovacao_dias: existingContrato.aviso_previo_nao_renovacao_dias || 30,
-        valor_total_estimado: existingContrato.valor_total_estimado,
-        valor_anual_recorrente: existingContrato.valor_anual_recorrente,
-        moeda: existingContrato.moeda || 'EUR',
-        estrutura_precos: existingContrato.estrutura_precos || '',
-        periodicidade_faturacao: existingContrato.periodicidade_faturacao || '',
-        prazo_pagamento_dias: existingContrato.prazo_pagamento_dias || 30,
-        centro_custo: existingContrato.centro_custo || '',
-        numero_encomenda_po: existingContrato.numero_encomenda_po || '',
         obrigacoes_parte_a: existingContrato.obrigacoes_parte_a || '',
         obrigacoes_parte_b: existingContrato.obrigacoes_parte_b || '',
         sla_kpi_resumo: existingContrato.sla_kpi_resumo || '',
@@ -370,8 +293,6 @@ export default function ContratoForm() {
         referencia_dpa: existingContrato.referencia_dpa || '',
         dpia_realizada: existingContrato.dpia_realizada || false,
         referencia_dpia: existingContrato.referencia_dpia || '',
-        metodo_assinatura: existingContrato.metodo_assinatura || '',
-        ferramenta_assinatura: existingContrato.ferramenta_assinatura || '',
       });
       setClassifiedAreas(existingContrato?.areas_direito_aplicaveis || []);
     }
@@ -381,17 +302,18 @@ export default function ContratoForm() {
   const handleDataExtracted = (data: any, file: File, extractedText: string) => {
     setUploadedFile(file);
     setExtractedContractText(extractedText);
-    
+
     // Pre-fill the form with extracted data - Identificação
     if (data.titulo_contrato) form.setValue('titulo_contrato', data.titulo_contrato);
     if (data.tipo_contrato) form.setValue('tipo_contrato', data.tipo_contrato);
-    if (data.objeto_resumido) form.setValue('objeto_resumido', data.objeto_resumido);
-    
+    // objeto_resumido: auto-fill from AI extraction
+    form.setValue('objeto_resumido', data.objeto_resumido || 'N/A');
+
     // Parte A
     if (data.parte_a_nome_legal) form.setValue('parte_a_nome_legal', data.parte_a_nome_legal);
     if (data.parte_a_nif) form.setValue('parte_a_nif', data.parte_a_nif);
     if (data.parte_a_morada) form.setValue('parte_a_morada', data.parte_a_morada);
-    
+
     // Parte B
     if (data.parte_b_nome_legal) form.setValue('parte_b_nome_legal', data.parte_b_nome_legal);
     if (data.parte_b_nif) form.setValue('parte_b_nif', data.parte_b_nif);
@@ -412,17 +334,10 @@ export default function ContratoForm() {
     if (data.renovacao_periodo_meses) form.setValue('renovacao_periodo_meses', data.renovacao_periodo_meses);
     if (data.aviso_denuncia_dias) form.setValue('aviso_previo_nao_renovacao_dias', data.aviso_denuncia_dias);
     
-    // Financeiro
-    if (data.valor_total_estimado) form.setValue('valor_total_estimado', data.valor_total_estimado);
-    if (data.valor_mensal) form.setValue('valor_anual_recorrente', data.valor_mensal * 12);
-    if (data.moeda) form.setValue('moeda', data.moeda);
-    if (data.prazo_pagamento_dias) form.setValue('prazo_pagamento_dias', data.prazo_pagamento_dias);
-    if (data.periodicidade_faturacao) form.setValue('periodicidade_faturacao', data.periodicidade_faturacao);
-    
-    // Obrigações
-    if (data.obrigacoes_parte_a) form.setValue('obrigacoes_parte_a', data.obrigacoes_parte_a);
-    if (data.obrigacoes_parte_b) form.setValue('obrigacoes_parte_b', data.obrigacoes_parte_b);
-    if (data.sla_indicadores) form.setValue('sla_kpi_resumo', data.sla_indicadores);
+    // Obrigações — auto-fill from AI, fallback to N/A
+    form.setValue('obrigacoes_parte_a', data.obrigacoes_parte_a || 'N/A');
+    form.setValue('obrigacoes_parte_b', data.obrigacoes_parte_b || 'N/A');
+    form.setValue('sla_kpi_resumo', data.sla_indicadores || 'N/A');
     
     // Cláusulas especiais
     if (data.clausulas_especiais) {
@@ -433,27 +348,20 @@ export default function ContratoForm() {
       if (data.clausulas_especiais.protecao_dados) form.setValue('tratamento_dados_pessoais', true);
     }
     
-    // Generate internal ID if not set
-    if (!form.getValues('id_interno')) {
-      form.setValue('id_interno', generateInternalId());
-    }
-
     // Avança para o formulário após extracção
     setShowUploadStep(false);
   };
 
   const handleSkipUpload = () => {
     setShowUploadStep(false);
-    // Generate internal ID
-    form.setValue('id_interno', generateInternalId());
   };
   const onSubmit = async (data: FormValues) => {
     const contratoData: ContratoInsert = {
-      id_interno: data.id_interno,
+      id_interno: isEditing ? (existingContrato?.id_interno ?? generateInternalId()) : generateInternalId(),
       titulo_contrato: data.titulo_contrato,
       tipo_contrato: data.tipo_contrato as any,
       tipo_contrato_personalizado: data.tipo_contrato === 'outro' ? data.tipo_contrato_personalizado || null : null,
-      estado_contrato: data.estado_contrato as any,
+      estado_contrato: 'activo' as any,
       departamento_responsavel: data.departamento_responsavel as any,
       objeto_resumido: data.objeto_resumido || null,
       parte_a_nome_legal: data.parte_a_nome_legal,
@@ -465,15 +373,6 @@ export default function ContratoForm() {
       parte_b_morada: data.parte_b_morada || null,
       parte_b_pais: data.parte_b_pais || null,
       parte_b_grupo_economico: data.parte_b_grupo_economico || null,
-      contacto_comercial_nome: data.contacto_comercial_nome || null,
-      contacto_comercial_email: data.contacto_comercial_email || null,
-      contacto_comercial_telefone: data.contacto_comercial_telefone || null,
-      contacto_operacional_nome: data.contacto_operacional_nome || null,
-      contacto_operacional_email: data.contacto_operacional_email || null,
-      contacto_faturacao_nome: data.contacto_faturacao_nome || null,
-      contacto_faturacao_email: data.contacto_faturacao_email || null,
-      contacto_legal_nome: data.contacto_legal_nome || null,
-      contacto_legal_email: data.contacto_legal_email || null,
       data_assinatura_parte_a: data.data_assinatura_parte_a?.toISOString().split('T')[0] || null,
       data_assinatura_parte_b: data.data_assinatura_parte_b?.toISOString().split('T')[0] || null,
       data_inicio_vigencia: data.data_inicio_vigencia?.toISOString().split('T')[0] || null,
@@ -482,17 +381,6 @@ export default function ContratoForm() {
       tipo_renovacao: data.tipo_renovacao as any,
       renovacao_periodo_meses: data.renovacao_periodo_meses || null,
       aviso_previo_nao_renovacao_dias: data.aviso_previo_nao_renovacao_dias,
-      valor_total_estimado: data.valor_total_estimado || null,
-      valor_anual_recorrente: data.valor_anual_recorrente || null,
-      moeda: data.moeda || null,
-      estrutura_precos: (data.estrutura_precos as any) || null,
-      // Filter invalid periodicidade_faturacao values - only allow valid enum values
-      periodicidade_faturacao: ['mensal', 'trimestral', 'semestral', 'anual', 'por_marco', 'a_cabeca'].includes(data.periodicidade_faturacao || '') 
-        ? (data.periodicidade_faturacao as any) 
-        : null,
-      prazo_pagamento_dias: data.prazo_pagamento_dias,
-      centro_custo: data.centro_custo || null,
-      numero_encomenda_po: data.numero_encomenda_po || null,
       obrigacoes_parte_a: data.obrigacoes_parte_a || null,
       obrigacoes_parte_b: data.obrigacoes_parte_b || null,
       sla_kpi_resumo: data.sla_kpi_resumo || null,
@@ -518,8 +406,6 @@ export default function ContratoForm() {
       referencia_dpa: data.referencia_dpa || null,
       dpia_realizada: data.dpia_realizada,
       referencia_dpia: data.referencia_dpia || null,
-      metodo_assinatura: (data.metodo_assinatura as any) || null,
-      ferramenta_assinatura: data.ferramenta_assinatura || null,
     };
 
     if (isEditing && id) {
@@ -700,11 +586,10 @@ export default function ContratoForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className={`grid w-full ${isLocal ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-4 lg:grid-cols-8'}`}>
+              <TabsList className={`grid w-full ${isLocal ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-3 lg:grid-cols-7'}`}>
                 <TabsTrigger value="identificacao">Contrato</TabsTrigger>
                 <TabsTrigger value="partes">Partes</TabsTrigger>
                 <TabsTrigger value="datas">Prazos</TabsTrigger>
-                {!isLocal && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
                 {!isLocal && <TabsTrigger value="obrigacoes">Obrigações</TabsTrigger>}
                 <TabsTrigger value="rgpd">RGPD</TabsTrigger>
                 <TabsTrigger value="classificacao">Classificação</TabsTrigger>
@@ -718,21 +603,6 @@ export default function ContratoForm() {
                     <CardTitle>Identificação do Contrato</CardTitle>
                   </CardHeader>
                   <CardContent className="grid gap-6 md:grid-cols-2">
-                    {!isLocal && (
-                      <FormField
-                        control={form.control}
-                        name="id_interno"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>ID Interno *</FormLabel>
-                            <FormControl>
-                              <Input placeholder="CTR-2024-XXX" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
                     <FormField
                       control={form.control}
                       name="tipo_contrato"
@@ -781,33 +651,6 @@ export default function ContratoForm() {
                         </FormItem>
                       )}
                     />
-                    {!isLocal && (
-                      <FormField
-                        control={form.control}
-                        name="estado_contrato"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Estado</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {Object.entries(ESTADO_CONTRATO_LABELS)
-                                  .filter(([value]) => {
-                                    const currentState = existingContrato?.estado_contrato || 'rascunho';
-                                    return value === currentState || canTransitionTo(currentState as any, value as any);
-                                  })
-                                  .map(([value, label]) => (
-                                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
                     <FormField
                       control={form.control}
                       name="departamento_responsavel"
@@ -920,56 +763,6 @@ export default function ContratoForm() {
                   </Card>
                 </div>
 
-                {/* Contactos */}
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Card>
-                    <CardHeader><CardTitle>Contacto Comercial</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField control={form.control} name="contacto_comercial_nome" render={({ field }) => (
-                        <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                      )} />
-                      <FormField control={form.control} name="contacto_comercial_email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl></FormItem>
-                      )} />
-                      <FormField control={form.control} name="contacto_comercial_telefone" render={({ field }) => (
-                        <FormItem><FormLabel>Telefone</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                      )} />
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader><CardTitle>Contacto Operacional</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField control={form.control} name="contacto_operacional_nome" render={({ field }) => (
-                        <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                      )} />
-                      <FormField control={form.control} name="contacto_operacional_email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl></FormItem>
-                      )} />
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader><CardTitle>Contacto Facturação</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField control={form.control} name="contacto_faturacao_nome" render={({ field }) => (
-                        <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                      )} />
-                      <FormField control={form.control} name="contacto_faturacao_email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl></FormItem>
-                      )} />
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardHeader><CardTitle>Contacto Legal</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField control={form.control} name="contacto_legal_nome" render={({ field }) => (
-                        <FormItem><FormLabel>Nome</FormLabel><FormControl><Input {...field} /></FormControl></FormItem>
-                      )} />
-                      <FormField control={form.control} name="contacto_legal_email" render={({ field }) => (
-                        <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} /></FormControl></FormItem>
-                      )} />
-                    </CardContent>
-                  </Card>
-                </div>
               </TabsContent>
 
               {/* Tab 3: Prazos */}
@@ -1050,34 +843,6 @@ export default function ContratoForm() {
                   </CardContent>
                 </Card>
 
-                {/* Assinatura — visível apenas para utilizadores internos */}
-                {!isLocal && (
-                  <Card>
-                    <CardHeader><CardTitle>Assinatura</CardTitle></CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2">
-                      <FormField control={form.control} name="metodo_assinatura" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Método de Assinatura</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              {Object.entries(METODO_ASSINATURA_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>{label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )} />
-                      <FormField control={form.control} name="ferramenta_assinatura" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Ferramenta de Assinatura</FormLabel>
-                          <FormControl><Input {...field} placeholder="Ex: DocuSign, Adobe Sign" /></FormControl>
-                        </FormItem>
-                      )} />
-                    </CardContent>
-                  </Card>
-                )}
-
                 {/* Alertas */}
                 <Card>
                   <CardHeader><CardTitle>Configuração de Alertas</CardTitle></CardHeader>
@@ -1090,84 +855,7 @@ export default function ContratoForm() {
                 </Card>
               </TabsContent>
 
-              {/* Tab 4: Financeiro */}
-              <TabsContent value="financeiro" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader><CardTitle>Condições Financeiras</CardTitle></CardHeader>
-                  <CardContent className="grid gap-6 md:grid-cols-2">
-                    <FormField control={form.control} name="valor_total_estimado" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Valor Total Estimado</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)} value={field.value ?? ''} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="valor_anual_recorrente" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Valor Anual Recorrente</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" {...field} onChange={e => field.onChange(e.target.value ? Number(e.target.value) : null)} value={field.value ?? ''} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="moeda" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Moeda</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="estrutura_precos" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estrutura de Preços</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            {Object.entries(ESTRUTURA_PRECOS_LABELS).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="periodicidade_faturacao" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Periodicidade Facturação</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            {Object.entries(PERIODICIDADE_FATURACAO_LABELS).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>{label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="prazo_pagamento_dias" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prazo Pagamento (dias)</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} />
-                        </FormControl>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="centro_custo" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Centro de Custo</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="numero_encomenda_po" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nº Encomenda / PO</FormLabel>
-                        <FormControl><Input {...field} /></FormControl>
-                      </FormItem>
-                    )} />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Tab 5: Obrigações + Garantias */}
+              {/* Tab 4: Obrigações + Garantias */}
               <TabsContent value="obrigacoes" className="space-y-6 mt-6">
                 <Card>
                   <CardHeader><CardTitle>Obrigações e Cláusulas</CardTitle></CardHeader>

@@ -75,7 +75,16 @@ export function useComplianceAI(aiModel?: string) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = error.message;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          }
+        } catch { /* use original message */ }
+        throw new Error(errorMessage);
+      }
       if (data.error) throw new Error(data.error);
 
       return data.data as ParsedContractData;
@@ -99,7 +108,16 @@ export function useComplianceAI(aiModel?: string) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = error.message;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          }
+        } catch { /* use original message */ }
+        throw new Error(errorMessage);
+      }
       if (data.error) throw new Error(data.error);
 
       return data.data as EventImpactAnalysis;
@@ -126,7 +144,16 @@ export function useComplianceAI(aiModel?: string) {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let errorMessage = error.message;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            if (body?.error) errorMessage = body.error;
+          }
+        } catch { /* use original message */ }
+        throw new Error(errorMessage);
+      }
       if (data.error) throw new Error(data.error);
 
       return data.data as ComplianceCheckResult;
