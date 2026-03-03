@@ -986,7 +986,8 @@
     "syncNav": "Atualizar / Sync",
     "syncingNav": "A sincronizar...",
     "noNavDataSync": "Sem dados sincronizados. Clique em 'Atualizar / Sync' para sincronizar do SharePoint.",
-    "noNavDataConfigJvris": "Configure o ID Jvris da organização nas definições para ligar os dados Base Nav."
+    "noNavDataConfigJvris": "Configure o ID Jvris da organização nas definições para ligar os dados Base Nav.",
+    "lastSync": "Último sync"
   },
   "platformAdmin": {
     "impersonation": {

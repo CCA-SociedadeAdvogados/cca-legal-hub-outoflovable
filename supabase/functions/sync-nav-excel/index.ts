@@ -335,6 +335,7 @@ serve(async (req) => {
       const rawValor = findValue(row, [
         "valor_pendente", "valor pendente", "saldo_pendente", "saldo pendente",
         "total_pendente", "total pendente", "divida", "dívida", "amount",
+        "soma_de_valor_pendente", "soma de valor pendente", "soma valor pendente",
       ]);
       const valorPendente =
         rawValor !== null && rawValor !== undefined
@@ -344,6 +345,7 @@ serve(async (req) => {
       const rawData = findValue(row, [
         "data_vencimento", "data vencimento", "vencimento", "due_date",
         "data_limite", "prazo", "expiry_date",
+        "data_de_vencimento", "data de vencimento",
       ]);
       const dataVencimento = resolveDate(rawData);
 

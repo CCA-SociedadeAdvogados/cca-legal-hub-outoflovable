@@ -169,9 +169,11 @@ export function useFinanceiro() {
     status: calculateAccountStatusFromNav(navCache ?? null),
     tipoCliente,
     prazoPagamentoDias,
-    totalEmAberto: invoices
-      .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
-      .reduce((sum, f) => sum + Number(f.valor), 0),
+    totalEmAberto: (navCache?.valor_pendente != null && navCache.valor_pendente > 0)
+      ? navCache.valor_pendente
+      : invoices
+          .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
+          .reduce((sum, f) => sum + Number(f.valor), 0),
     totalFaturas: invoices.length,
     faturasEmAberto: invoices.filter((f) => f.estado === "em_aberto").length,
     faturasVencidas: invoices.filter((f) => f.estado === "vencida").length,

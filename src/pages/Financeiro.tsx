@@ -13,6 +13,7 @@ import {
   Settings, RefreshCw
 } from "lucide-react";
 import { SharePointDocumentsBrowser } from "@/components/sharepoint/SharePointDocumentsBrowser";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
 
@@ -33,7 +34,6 @@ export default function Financeiro() {
   const {
     accountSummary,
     navCache,
-    jvrisId,
     isLoading,
     isPlatformAdmin,
     updateOrganizationFinancial,
@@ -96,16 +96,36 @@ export default function Financeiro() {
             <p className="text-muted-foreground">{t('financial.subtitle')}</p>
           </div>
           {isPlatformAdmin && (
-            <Button variant="outline" onClick={() => {
-              setConfigForm({
-                tipo_cliente: accountSummary.tipoCliente,
-                prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
-              });
-              setConfigDialogOpen(true);
-            }}>
-              <Settings className="mr-2 h-4 w-4" />
-              {t('financial.configureClient')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={syncNavFromSharePoint.isPending}
+                    onClick={() => syncNavFromSharePoint.mutate()}
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 ${syncNavFromSharePoint.isPending ? "animate-spin" : ""}`} />
+                    {syncNavFromSharePoint.isPending ? t('financial.syncingNav') : t('financial.syncNav')}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {navCache?.synced_at
+                    ? `${t('financial.lastSync')}: ${format(new Date(navCache.synced_at), "dd/MM/yyyy HH:mm")}`
+                    : t('financial.noNavDataSync')}
+                </TooltipContent>
+              </Tooltip>
+              <Button variant="outline" onClick={() => {
+                setConfigForm({
+                  tipo_cliente: accountSummary.tipoCliente,
+                  prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
+                });
+                setConfigDialogOpen(true);
+              }}>
+                <Settings className="mr-2 h-4 w-4" />
+                {t('financial.configureClient')}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -190,66 +210,6 @@ export default function Financeiro() {
             )}
           </CardContent>
         </Card>
-
-        {/* Base Nav (Jvris) */}
-        <Card className="border border-muted">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <RefreshCw className="h-4 w-4 text-muted-foreground" />
-                  Base Nav (Jvris)
-                </CardTitle>
-                {isPlatformAdmin && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={syncNavFromSharePoint.isPending}
-                    onClick={() => syncNavFromSharePoint.mutate()}
-                  >
-                    <RefreshCw className={`mr-2 h-3 w-3 ${syncNavFromSharePoint.isPending ? "animate-spin" : ""}`} />
-                    {syncNavFromSharePoint.isPending ? t('financial.syncingNav') : t('financial.syncNav')}
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent>
-              {navCache ? (
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <p className="text-sm text-muted-foreground">ID Jvris</p>
-                    <p className="font-mono font-medium">{navCache.jvris_id}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor Pendente</p>
-                    <p className="text-lg font-semibold">
-                      {navCache.valor_pendente != null
-                        ? formatCurrency(navCache.valor_pendente)
-                        : "—"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Data de Vencimento</p>
-                    <p className="font-medium">
-                      {navCache.data_vencimento
-                        ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
-                        : "—"}
-                    </p>
-                  </div>
-                  {navCache.synced_at && (
-                    <p className="text-xs text-muted-foreground md:col-span-3">
-                      Último sync: {format(new Date(navCache.synced_at), "dd/MM/yyyy HH:mm")}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  {jvrisId
-                    ? t('financial.noNavDataSync')
-                    : t('financial.noNavDataConfigJvris')}
-                </p>
-              )}
-            </CardContent>
-          </Card>
 
         {/* Arquivo SharePoint */}
         <SharePointDocumentsBrowser />
