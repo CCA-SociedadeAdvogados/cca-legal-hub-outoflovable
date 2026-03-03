@@ -3,7 +3,9 @@
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
 };
 
 const AI_MODELS = [
@@ -69,15 +71,26 @@ async function callAIWithFallback(
 }
 
 Deno.serve(async (req) => {
-  console.log(`[parse-contract] ${req.method} request received`);
+  console.log(`[parse-contract] v3 – verify_jwt=false – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
+    if (req.method !== "POST") {
+      console.warn(`[parse-contract] Unexpected method: ${req.method}`);
+      return new Response(
+        JSON.stringify({ error: `Method ${req.method} not allowed` }),
+        { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await req.json();
     const { textContent, fileContent, fileName, mimeType, storagePath } = body;
+
+    console.log(`[parse-contract] POST payload keys: ${Object.keys(body).join(", ")}`);
+    console.log(`[parse-contract] textContent: ${textContent ? `${String(textContent).length} chars` : "absent"}, fileContent: ${fileContent ? `${String(fileContent).length} chars` : "absent"}, storagePath: ${storagePath ?? "absent"}, fileName: ${fileName ?? "absent"}`);
 
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
     if (!GROQ_API_KEY) {
