@@ -284,11 +284,14 @@ export function useFinanceiro() {
         let msg = error.message;
         try {
           const ctx = (error as any).context;
-          if (ctx instanceof Response) {
+          if (ctx && typeof ctx.json === 'function') {
             const body = await ctx.json();
             if (body?.error) msg = body.error;
+          } else if (ctx?.error) {
+            msg = ctx.error;
           }
         } catch { /* keep generic message */ }
+        console.error("[sync-nav-excel]", msg);
         throw new Error(msg);
       }
       return data;
