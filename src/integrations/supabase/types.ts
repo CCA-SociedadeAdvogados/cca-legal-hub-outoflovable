@@ -1976,6 +1976,39 @@ export type Database = {
           },
         ]
       }
+      financeiro_nav_items: {
+        Row: {
+          data_vencimento: string | null
+          descricao: string | null
+          id: string
+          jvris_id: string
+          numero_documento: string | null
+          raw_row: Json | null
+          synced_at: string | null
+          valor: number | null
+        }
+        Insert: {
+          data_vencimento?: string | null
+          descricao?: string | null
+          id?: string
+          jvris_id: string
+          numero_documento?: string | null
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor?: number | null
+        }
+        Update: {
+          data_vencimento?: string | null
+          descricao?: string | null
+          id?: string
+          jvris_id?: string
+          numero_documento?: string | null
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
       financeiro_nav_cache: {
         Row: {
           data_vencimento: string | null

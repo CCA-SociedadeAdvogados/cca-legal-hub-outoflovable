@@ -987,7 +987,14 @@
     "syncingNav": "Syncing...",
     "noNavDataSync": "No synced data. Click 'Update / Sync' to synchronize from SharePoint.",
     "noNavDataConfigJvris": "Configure the Jvris ID in organization settings to link Base Nav data.",
-    "lastSync": "Last sync"
+    "lastSync": "Last sync",
+    "pendingInvoices": "Pending invoices",
+    "overdue": "Overdue",
+    "withinTerm": "Within term",
+    "invoiceNumber": "Invoice No.",
+    "dueDate": "Due Date",
+    "amount": "Amount",
+    "invoiceStatus": "Status"
   },
   "platformAdmin": {
     "impersonation": {
