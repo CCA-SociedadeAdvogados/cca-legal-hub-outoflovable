@@ -48,6 +48,15 @@ function resolveDate(raw: unknown): string | null {
   return null;
 }
 
+/** Returns true if the value looks like a Portuguese invoice/document number */
+function looksLikeDocumentNumber(value: string): boolean {
+  const trimmed = value.trim().toUpperCase();
+  // Portuguese document prefixes: FT (fatura), ND (nota débito), NC (nota crédito),
+  // FR (fatura-recibo), RE (recibo), VD (venda a dinheiro), GT (guia transporte),
+  // RC (recibo), FP (fatura proforma)
+  return /^(FT|ND|NC|FR|RE|VD|GT|RC|FP)\d+/.test(trimmed);
+}
+
 // ── Microsoft Graph API helpers ─────────────────────────────────
 
 async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
@@ -353,24 +362,43 @@ serve(async (req) => {
 
     for (const row of rows) {
       const rawId = findValue(row, ID_CANDIDATES);
+      const rawIdStr = rawId ? String(rawId).trim() : "";
 
-      if (rawId) {
-        // ── Parent row: has a Client ID ──
-        const jvrisId = String(rawId).trim();
-        if (!jvrisId) continue;
-
-        currentJvrisId = jvrisId;
+      if (rawId && rawIdStr && !looksLikeDocumentNumber(rawIdStr)) {
+        // ── Parent row: has a Client ID (not an invoice number) ──
+        currentJvrisId = rawIdStr;
 
         const rawValor = findValue(row, VALOR_CANDIDATES);
         const vp = rawValor != null
           ? parseFloat(String(rawValor).replace(",", "."))
           : null;
 
-        groups.set(jvrisId, {
+        groups.set(rawIdStr, {
           parentRow: row as Record<string, unknown>,
           valorPendente: (vp !== null && !isNaN(vp)) ? vp : null,
           children: [],
         });
+      } else if (rawId && rawIdStr && looksLikeDocumentNumber(rawIdStr) && currentJvrisId && groups.has(currentJvrisId)) {
+        // ── Child row: value in ID column is actually an invoice number ──
+        const rawNumero = findValue(row, NUMERO_CANDIDATES);
+        const rawValor  = findValue(row, VALOR_CANDIDATES);
+        const rawData   = findValue(row, DATE_CANDIDATES);
+
+        // Use NUMERO_CANDIDATES column if available; otherwise the ID column value is the invoice number
+        const numero = rawNumero ? String(rawNumero).trim() : rawIdStr;
+        const valor  = rawValor != null
+          ? parseFloat(String(rawValor).replace(",", "."))
+          : null;
+        const dataVencimento = resolveDate(rawData);
+
+        if (numero || dataVencimento || (valor !== null && !isNaN(valor))) {
+          groups.get(currentJvrisId)!.children.push({
+            row: row as Record<string, unknown>,
+            numero,
+            valor: (valor !== null && !isNaN(valor)) ? valor : null,
+            dataVencimento,
+          });
+        }
       } else if (currentJvrisId && groups.has(currentJvrisId)) {
         // ── Child row: no Client ID → invoice line of current parent ──
         const rawNumero = findValue(row, NUMERO_CANDIDATES);
@@ -393,6 +421,12 @@ serve(async (req) => {
           });
         }
       }
+    }
+
+    // Debug logging for parsed groups
+    console.log(`Parsed ${groups.size} client groups from ${rows.length} rows:`);
+    for (const [jvrisId, group] of groups) {
+      console.log(`  ${jvrisId}: valor_pendente=${group.valorPendente}, children=${group.children.length}`);
     }
 
     if (groups.size === 0) {
@@ -486,9 +520,15 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("sync-nav-excel error:", err);
+    console.error("sync-nav-excel error:", JSON.stringify(err));
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "object" && err !== null && "message" in err
+          ? String((err as Record<string, unknown>).message)
+          : String(err);
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : String(err) }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

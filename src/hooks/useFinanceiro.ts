@@ -332,11 +332,21 @@ export function useFinanceiro() {
           const ctx = (error as any).context;
           if (ctx && typeof ctx.json === 'function') {
             const body = await ctx.json();
-            if (body?.error) msg = body.error;
+            if (body?.error) {
+              msg = typeof body.error === 'string'
+                ? body.error
+                : (body.error?.message || JSON.stringify(body.error));
+            }
           } else if (ctx?.error) {
-            msg = ctx.error;
+            msg = typeof ctx.error === 'string'
+              ? ctx.error
+              : (ctx.error?.message || JSON.stringify(ctx.error));
           }
         } catch { /* keep generic message */ }
+        // Fallback for unresolved [object Object] or generic edge function errors
+        if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
+          msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
+        }
         console.error("[sync-nav-excel]", msg);
         throw new Error(msg);
       }
