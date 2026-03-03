@@ -78,12 +78,12 @@
   "nav": {
     "home": "Home",
     "dashboard": "Dashboard",
-    "contracts": "Contracts",
+    "contracts": "My Contracts",
     "contractsOverview": "Overview",
     "contractsList": "Contract List",
     "contractsDocuments": "Documents",
     "contractsUpload": "Bulk Upload",
-    "accounting": "Accounting",
+    "accounting": "Accounting Services",
     "accountingDocuments": "Documents",
     "events": "Legal Insights",
     "impacts": "Impacts",
@@ -100,8 +100,8 @@
     "audit": "Audit",
     "admin": "Administration",
     "ccaNews": "CCA News",
-    "financial": "Financial",
-    "legalbi": "LegalBi"
+    "financial": "My CCA Current Account",
+    "legalbi": "Legal Tracker"
   },
   "dashboard": {
     "title": "Dashboard",
