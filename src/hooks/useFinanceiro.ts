@@ -45,7 +45,7 @@ export interface NavCache {
   synced_at: string | null;
 }
 
-export type AccountStatus = "regularizado" | "atencao" | "em_atraso";
+export type AccountStatus = "regularizado" | "pendente" | "em_incumprimento";
 
 export interface AccountSummary {
   status: AccountStatus;
@@ -59,106 +59,35 @@ export interface AccountSummary {
   proximoVencimento: Date | null;
 }
 
-function calculateAccountStatus(
-  invoices: Invoice[],
-  tipoCliente: "pessoa_individual" | "pessoa_coletiva",
-  prazoPagamentoDias: number
+function calculateAccountStatusFromNav(
+  navCache: NavCache | null
 ): AccountStatus {
+  // Sem dados ou sem valor pendente → Regularizado
+  if (!navCache || navCache.valor_pendente === null || navCache.valor_pendente <= 0) {
+    return "regularizado";
+  }
+
+  // Com valor pendente mas sem data de vencimento → Pendente
+  if (!navCache.data_vencimento) {
+    return "pendente";
+  }
+
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  const faturasNaoPagas = invoices.filter(
-    (f) => f.estado === "em_aberto" || f.estado === "vencida" || f.estado === "em_disputa"
-  );
+  const vencimento = new Date(navCache.data_vencimento);
+  vencimento.setHours(0, 0, 0, 0);
 
-  if (faturasNaoPagas.length === 0) {
-    return "regularizado";
+  const diffMs = hoje.getTime() - vencimento.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Vencido há 7 ou mais dias → Em incumprimento
+  if (diffDays >= 7) {
+    return "em_incumprimento";
   }
 
-  // If any invoice is explicitly marked as "vencida", account is overdue
-  if (faturasNaoPagas.some((f) => f.estado === "vencida")) {
-    return "em_atraso";
-  }
-
-  // If any invoice is in dispute, account needs attention
-  if (invoices.some((f) => f.estado === "em_disputa")) {
-    return "atencao";
-  }
-
-  // If there are open invoices, check dates for attention/overdue
-  if (tipoCliente === "pessoa_individual") {
-    // Pessoa Individual: prazo = data de emissão
-    for (const fatura of faturasNaoPagas) {
-      const dataEmissao = new Date(fatura.data_emissao);
-      dataEmissao.setHours(0, 0, 0, 0);
-
-      if (dataEmissao < hoje) {
-        return "em_atraso";
-      }
-      if (dataEmissao.getTime() === hoje.getTime()) {
-        return "atencao";
-      }
-    }
-    return "regularizado";
-  } else {
-    // Pessoa Coletiva: prazo = data_emissao + prazo_pagamento_dias
-    for (const fatura of faturasNaoPagas) {
-      const dataEmissao = new Date(fatura.data_emissao);
-      const prazoFinal = new Date(dataEmissao);
-      prazoFinal.setDate(prazoFinal.getDate() + prazoPagamentoDias);
-      prazoFinal.setHours(0, 0, 0, 0);
-
-      if (prazoFinal < hoje) {
-        return "em_atraso";
-      }
-
-      // Menos de 7 dias para vencer
-      const diasRestantes = Math.ceil(
-        (prazoFinal.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (diasRestantes <= 7 && diasRestantes > 0) {
-        return "atencao";
-      }
-    }
-    return "regularizado";
-  }
-}
-
-function calculateNextDueDate(
-  invoices: Invoice[],
-  tipoCliente: "pessoa_individual" | "pessoa_coletiva",
-  prazoPagamentoDias: number
-): Date | null {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
-  const faturasNaoPagas = invoices.filter(
-    (f) => f.estado === "em_aberto" || f.estado === "vencida"
-  );
-
-  if (faturasNaoPagas.length === 0) {
-    return null;
-  }
-
-  let proximaData: Date | null = null;
-
-  for (const fatura of faturasNaoPagas) {
-    const dataEmissao = new Date(fatura.data_emissao);
-    let prazoFinal: Date;
-
-    if (tipoCliente === "pessoa_individual") {
-      prazoFinal = dataEmissao;
-    } else {
-      prazoFinal = new Date(dataEmissao);
-      prazoFinal.setDate(prazoFinal.getDate() + prazoPagamentoDias);
-    }
-
-    if (!proximaData || prazoFinal < proximaData) {
-      proximaData = prazoFinal;
-    }
-  }
-
-  return proximaData;
+  // Com valor pendente + vencimento há menos de 7 dias → Pendente
+  return "pendente";
 }
 
 export function useFinanceiro() {
@@ -237,7 +166,7 @@ export function useFinanceiro() {
   const prazoPagamentoDias = orgInfo?.prazo_pagamento_dias || 30;
 
   const accountSummary: AccountSummary = {
-    status: calculateAccountStatus(invoices, tipoCliente, prazoPagamentoDias),
+    status: calculateAccountStatusFromNav(navCache ?? null),
     tipoCliente,
     prazoPagamentoDias,
     totalEmAberto: invoices
@@ -247,7 +176,7 @@ export function useFinanceiro() {
     faturasEmAberto: invoices.filter((f) => f.estado === "em_aberto").length,
     faturasVencidas: invoices.filter((f) => f.estado === "vencida").length,
     faturasPagas: invoices.filter((f) => f.estado === "paga").length,
-    proximoVencimento: calculateNextDueDate(invoices, tipoCliente, prazoPagamentoDias),
+    proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
   };
 
   // Mutação para criar fatura
@@ -314,7 +243,6 @@ export function useFinanceiro() {
     mutationFn: async (data: {
       tipo_cliente: "pessoa_individual" | "pessoa_coletiva";
       prazo_pagamento_dias: number;
-      jvris_id?: string | null;
     }) => {
       const { error } = await supabase
         .from("organizations")
@@ -329,6 +257,25 @@ export function useFinanceiro() {
     },
     onError: (error) => {
       toast.error("Erro ao atualizar configurações: " + error.message);
+    },
+  });
+
+  // Mutação para sincronizar Base Nav do SharePoint
+  const syncNavFromSharePoint = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
+        body: { organization_id: organizationId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+      queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+      toast.success(`Base Nav sincronizada: ${data?.synced ?? 0} registos atualizados`);
+    },
+    onError: (error) => {
+      toast.error("Erro ao sincronizar Base Nav: " + error.message);
     },
   });
 
@@ -369,6 +316,7 @@ export function useFinanceiro() {
     updateInvoiceStatus,
     deleteInvoice,
     updateOrganizationFinancial,
+    syncNavFromSharePoint,
     createFolder,
   };
 }

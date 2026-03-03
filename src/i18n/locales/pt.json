@@ -980,7 +980,13 @@
     "saving": "A guardar...",
     "deleteInvoice": "Eliminar Fatura",
     "deleteInvoiceConfirmation": "Tem a certeza que deseja eliminar esta fatura? Esta ação não pode ser revertida.",
-    "deleting": "A eliminar..."
+    "deleting": "A eliminar...",
+    "pending": "Pendente",
+    "inDefault": "Em Incumprimento",
+    "syncNav": "Atualizar / Sync",
+    "syncingNav": "A sincronizar...",
+    "noNavDataSync": "Sem dados sincronizados. Clique em 'Atualizar / Sync' para sincronizar do SharePoint.",
+    "noNavDataConfigJvris": "Configure o ID Jvris da organização nas definições para ligar os dados Base Nav."
   },
   "platformAdmin": {
     "impersonation": {
