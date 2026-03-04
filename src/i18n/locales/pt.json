@@ -989,6 +989,7 @@
     "noNavDataConfigJvris": "Configure o ID Jvris da organização nas definições para ligar os dados Base Nav.",
     "lastSync": "Último sync",
     "pendingInvoices": "Faturas pendentes",
+    "pendingBalance": "Saldo pendente",
     "overdue": "Vencida",
     "withinTerm": "Dentro do prazo",
     "invoiceNumber": "Nº Fatura",
