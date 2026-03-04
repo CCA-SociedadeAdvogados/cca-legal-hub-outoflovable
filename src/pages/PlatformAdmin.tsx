@@ -64,7 +64,6 @@ import { DepartmentsConfig } from "@/components/admin/DepartmentsConfig";
 import { OrgSharePointConfig } from "@/components/admin/OrgSharePointConfig";
 import { OrgLegalBiConfig } from "@/components/admin/OrgLegalBiConfig";
 import { OrgJvrisIdConfig } from "@/components/admin/OrgJvrisIdConfig";
-import { SSOAdminEmailsConfig } from "@/components/admin/SSOAdminEmailsConfig";
 import {
   Building2,
   FileCheck,
@@ -1232,8 +1231,7 @@ export default function PlatformAdmin() {
 
           {/* Platform Admins Tab */}
           <TabsContent value="admins">
-            <SSOAdminEmailsConfig />
-            <Card className="mt-6">
+            <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{t("admin.platformAdmins", "Platform Admins")}</CardTitle>

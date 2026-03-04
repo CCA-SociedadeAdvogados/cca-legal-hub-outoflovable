@@ -63,19 +63,9 @@ export default function Onboarding() {
     }
   }, [userMemberships, selectedOrganizationId]);
 
-  // SSO users: auto-complete onboarding — they are always assigned to CCA org by the SSO function
+  // SSO users go through the normal onboarding flow — their org is pre-assigned
+  // by the SSO edge function, so step 2 (organization) will show as pre-selected.
   const isSSOUser = profile?.auth_method === 'sso_cca';
-  useEffect(() => {
-    if (!isSSOUser || !profile) return;
-    if (profile.onboarding_completed) return; // already handled by ProtectedRoute
-    // Complete onboarding silently for SSO users
-    completeOnboarding.mutateAsync().then(() => {
-      navigate('/');
-    }).catch(() => {
-      // If it fails, still redirect — the SSO function already set onboarding_completed
-      navigate('/');
-    });
-  }, [isSSOUser, profile]);
 
   const handleProfileSubmit = async () => {
     if (!profileData.nome_completo.trim()) {
