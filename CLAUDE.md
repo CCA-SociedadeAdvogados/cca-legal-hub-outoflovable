@@ -4,6 +4,11 @@
 
 CCA Legal Hub is a multi-tenant legal contract management SPA for a Portuguese law firm (CCA - Sociedade de Advogados). It provides contract lifecycle management, regulatory compliance tracking, AI-powered document analysis, and GDPR compliance features. The platform is primarily in **Portuguese** with English translation support.
 
+**Supabase Project ID**: `scjxhhkutsiswsgsuiqo`
+**Supabase URL**: `https://scjxhhkutsiswsgsuiqo.supabase.co`
+
+> **Nota**: O nome do repositório contém "outoflovable" por razões históricas — o projecto foi inicialmente scaffolded via Lovable (ex-GPT Engineer). **Não existem dependências, referências ou código Lovable no projecto actual.** O source `lovable_ai` foi renomeado para `ai_extraction` (migration `20260225000002`). Nunca adicionar referências ao Lovable em código novo.
+
 ---
 
 ## Tech Stack
@@ -1126,9 +1131,11 @@ jurisdicao: 'nacional' | 'europeia' | 'internacional'
 ### Environment Variables
 
 ```env
-VITE_SUPABASE_URL=<supabase-project-url>
+VITE_SUPABASE_URL=https://scjxhhkutsiswsgsuiqo.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=<supabase-anon-key>
 ```
+
+O project ID `scjxhhkutsiswsgsuiqo` também está em `supabase/config.toml` como `project_id`.
 
 ---
 
@@ -1194,3 +1201,5 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<supabase-anon-key>
 13. **No test framework** — verify changes manually via `npm run build` and `npm run lint`
 14. **Self-healing patterns** exist in `useProfile` and `useOrganizations` — don't break them
 15. **Feature flags** control SSO, 2FA, demo login — check `useFeatureFlags()` before adding conditional features
+16. **Supabase project ID é `scjxhhkutsiswsgsuiqo`** — usar este ID ao referenciar o projecto Supabase (config, URLs, CLI commands)
+17. **Zero referências ao Lovable** — o repo foi scaffolded via Lovable mas já não tem dependências nem código Lovable; nunca adicionar referências `lovable`, `gptengineer` ou `lovable_ai` em código novo
