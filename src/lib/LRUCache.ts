@@ -3,8 +3,9 @@
  * Used for in-memory translation caching
  */
 export class LRUCache<T> {
-  private cache = new Map<string, { value: T; accessTime: number }>();
+  private cache = new Map<string, { value: T; accessOrder: number }>();
   private maxSize: number;
+  private counter = 0;
 
   constructor(maxSize = 500) {
     this.maxSize = maxSize;
@@ -13,9 +14,9 @@ export class LRUCache<T> {
   get(key: string): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
-    
-    // Update access time (LRU)
-    entry.accessTime = Date.now();
+
+    // Update access order (LRU) — monotonic counter avoids same-tick ties
+    entry.accessOrder = ++this.counter;
     return entry.value;
   }
 
@@ -24,7 +25,7 @@ export class LRUCache<T> {
     if (this.cache.size >= this.maxSize && !this.cache.has(key)) {
       this.evictOldest();
     }
-    this.cache.set(key, { value, accessTime: Date.now() });
+    this.cache.set(key, { value, accessOrder: ++this.counter });
   }
 
   has(key: string): boolean {
@@ -33,15 +34,15 @@ export class LRUCache<T> {
 
   private evictOldest(): void {
     let oldestKey: string | null = null;
-    let oldestTime = Infinity;
-    
+    let oldestOrder = Infinity;
+
     for (const [key, entry] of this.cache) {
-      if (entry.accessTime < oldestTime) {
-        oldestTime = entry.accessTime;
+      if (entry.accessOrder < oldestOrder) {
+        oldestOrder = entry.accessOrder;
         oldestKey = key;
       }
     }
-    
+
     if (oldestKey) {
       this.cache.delete(oldestKey);
     }
