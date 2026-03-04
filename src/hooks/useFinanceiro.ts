@@ -66,6 +66,7 @@ export interface AccountSummary {
   faturasEmAberto: number;
   faturasVencidas: number;
   proximoVencimento: Date | null;
+  emIncumprimentoDesde: Date | null;
 }
 
 function calculateAccountStatusFromNav(
@@ -281,6 +282,13 @@ export function useFinanceiro() {
       ? navItemsVencidas.length
       : hasNavCache && navCacheIsOverdue ? 1 : invoices.filter((f) => f.estado === "vencida").length,
     proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
+    emIncumprimentoDesde: navItemsVencidas.length > 0
+      ? new Date(
+          navItemsVencidas
+            .map((item) => new Date(item.data_vencimento!))
+            .sort((a, b) => a.getTime() - b.getTime())[0]
+        )
+      : null,
   };
 
   // Mutação para criar fatura
