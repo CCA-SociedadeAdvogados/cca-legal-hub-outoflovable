@@ -377,7 +377,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           {!isCollapsed && (
             <span className="flex items-center gap-2">
               {t("nav.impacts")}
-              <Lock className="h-4 w-4" />
+              <Lock className="h-5 w-5" />
             </span>
           )}
         </div>
@@ -396,7 +396,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           {!isCollapsed && (
             <span className="flex items-center gap-2">
               {t("nav.normativos")}
-              <Lock className="h-4 w-4" />
+              <Lock className="h-5 w-5" />
             </span>
           )}
         </div>
