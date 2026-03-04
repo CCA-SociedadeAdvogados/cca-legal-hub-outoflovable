@@ -84,25 +84,6 @@ export default function Financeiro() {
     return d.getTime() < today.getTime();
   };
 
-  // Extract invoice number from navCache.raw_row (when navItems is empty)
-  const extractInvoiceNumber = (rawRow: Record<string, unknown> | null | undefined): string | null => {
-    if (!rawRow) return null;
-    const candidates = [
-      "numero_documento", "numero documento", "nº doc", "nº documento",
-      "numero_fatura", "numero fatura", "nº fatura",
-      "documento", "fatura", "invoice_number", "doc_number",
-      "referencia", "reference", "numero", "nº",
-    ];
-    for (const [key, value] of Object.entries(rawRow)) {
-      const normalized = key.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
-      for (const candidate of candidates) {
-        const normalizedCandidate = candidate.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
-        if (normalized === normalizedCandidate && value) return String(value).trim();
-      }
-    }
-    return null;
-  };
-
   const getStatusLabel = (status: AccountStatus) => {
     const labels: Record<AccountStatus, string> = {
       regularizado: t('financial.regularized'),
@@ -306,8 +287,8 @@ export default function Financeiro() {
                         ))
                       ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
                         <TableRow>
-                          <TableCell className="font-mono text-sm">
-                            {extractInvoiceNumber(navCache.raw_row) || t('financial.pendingBalance')}
+                          <TableCell className="text-sm text-muted-foreground">
+                            {t('financial.pendingBalance')}
                           </TableCell>
                           <TableCell>
                             {navCache.data_vencimento

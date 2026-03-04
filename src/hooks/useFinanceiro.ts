@@ -43,7 +43,6 @@ export interface NavCache {
   jvris_id: string;
   valor_pendente: number | null;
   data_vencimento: string | null;
-  raw_row: Record<string, unknown> | null;
   synced_at: string | null;
 }
 
