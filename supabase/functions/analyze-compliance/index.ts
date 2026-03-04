@@ -130,7 +130,7 @@ interface AnalysisRequest {
 }
 
 Deno.serve(async (req) => {
-  console.log(`[analyze-compliance] v3 – ${req.method} request received`);
+  console.log(`[analyze-compliance] v4 – verify_jwt=false – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
