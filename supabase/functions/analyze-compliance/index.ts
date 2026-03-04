@@ -3,7 +3,9 @@
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
 };
 
 const AI_MODELS = [
@@ -41,6 +43,12 @@ async function callAIWithFallback(
       if (response.status === 402) {
         console.warn(`[${functionName}] ${name} credits exhausted, trying next model...`);
         lastError = new Error(`${name} credits exhausted`);
+        continue;
+      }
+
+      if (response.status === 413) {
+        console.warn(`[${functionName}] ${name} payload too large, trying next model...`);
+        lastError = new Error(`${name} payload too large`);
         continue;
       }
 
