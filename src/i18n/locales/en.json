@@ -994,7 +994,13 @@
     "invoiceNumber": "Invoice No.",
     "dueDate": "Due Date",
     "amount": "Amount",
-    "invoiceStatus": "Status"
+    "invoiceStatus": "Status",
+    "selectJvrisId": "Select Client ID",
+    "selectJvrisIdDescription": "Multiple clients were found in Base Nav. Select the ID that corresponds to this organization.",
+    "searchClientId": "Search client ID...",
+    "noMatchingIds": "No matching IDs",
+    "confirmSelection": "Confirm Selection",
+    "selecting": "Configuring..."
   },
   "platformAdmin": {
     "impersonation": {

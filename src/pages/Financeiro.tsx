@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useFinanceiro, type AccountStatus } from "@/hooks/useFinanceiro";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Receipt, CreditCard, AlertTriangle, CheckCircle, Clock,
   Building2, User, Calendar,
-  Settings, RefreshCw
+  Settings, RefreshCw, Search, Loader2
 } from "lucide-react";
 import { SharePointDocumentsBrowser } from "@/components/sharepoint/SharePointDocumentsBrowser";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -37,14 +38,29 @@ export default function Financeiro() {
     accountSummary,
     navCache,
     navItems,
+    jvrisId,
+    lastSyncResult,
     isLoading,
     isPlatformAdmin,
     updateOrganizationFinancial,
-    syncNavFromSharePoint
+    syncNavFromSharePoint,
+    setJvrisId
   } = useFinanceiro();
 
   // Dialog states
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [jvrisSearchQuery, setJvrisSearchQuery] = useState("");
+  const [selectedJvrisId, setSelectedJvrisId] = useState<string | null>(null);
+
+  // Show jvris_id selection dialog when sync returns multiple clients and org has no jvris_id
+  const showJvrisSelector = !jvrisId && lastSyncResult?.needs_jvris_config && (lastSyncResult?.jvris_ids?.length ?? 0) > 1;
+
+  const filteredJvrisIds = useMemo(() => {
+    const ids = lastSyncResult?.jvris_ids ?? [];
+    if (!jvrisSearchQuery.trim()) return ids;
+    const q = jvrisSearchQuery.trim().toLowerCase();
+    return ids.filter((id) => id.toLowerCase().includes(q));
+  }, [lastSyncResult?.jvris_ids, jvrisSearchQuery]);
 
   // Config form states
   const [configForm, setConfigForm] = useState({
@@ -273,6 +289,68 @@ export default function Financeiro() {
         <SharePointDocumentsBrowser />
 
       </div>
+
+      {/* Dialog: Selecionar ID Jvris */}
+      <Dialog open={!!showJvrisSelector} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>{t('financial.selectJvrisId')}</DialogTitle>
+            <DialogDescription>
+              {t('financial.selectJvrisIdDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t('financial.searchClientId')}
+                value={jvrisSearchQuery}
+                onChange={(e) => setJvrisSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="max-h-60 overflow-y-auto border rounded-md">
+              {filteredJvrisIds.length === 0 ? (
+                <p className="p-4 text-sm text-muted-foreground text-center">
+                  {t('financial.noMatchingIds')}
+                </p>
+              ) : (
+                filteredJvrisIds.map((id) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`w-full text-left px-4 py-2.5 text-sm font-mono hover:bg-muted transition-colors border-b last:border-b-0 ${
+                      selectedJvrisId === id ? "bg-primary/10 text-primary font-semibold" : ""
+                    }`}
+                    onClick={() => setSelectedJvrisId(id)}
+                  >
+                    {id}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                if (selectedJvrisId) {
+                  setJvrisId.mutate(selectedJvrisId);
+                }
+              }}
+              disabled={!selectedJvrisId || setJvrisId.isPending}
+            >
+              {setJvrisId.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {t('financial.selecting')}
+                </>
+              ) : (
+                t('financial.confirmSelection')
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialog: Configurar Cliente */}
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>

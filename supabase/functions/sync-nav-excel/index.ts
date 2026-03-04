@@ -514,6 +514,7 @@ serve(async (req) => {
     // Only auto-link when there is exactly 1 client in the Excel (unambiguous).
     // For multi-client files, the admin must set jvris_id manually.
     let autoLinkedJvrisId: string | null = null;
+    let orgJvrisId: unknown = null;
     if (cacheRecords.length > 0) {
       const { data: orgRecord } = await supabaseAdmin
         .from("organizations")
@@ -521,7 +522,7 @@ serve(async (req) => {
         .eq("id", organization_id)
         .single();
 
-      const orgJvrisId = (orgRecord as Record<string, unknown>)?.jvris_id;
+      orgJvrisId = (orgRecord as Record<string, unknown>)?.jvris_id;
       if (!orgJvrisId && cacheRecords.length === 1) {
         autoLinkedJvrisId = cacheRecords[0].jvris_id;
         await supabaseAdmin
@@ -542,6 +543,7 @@ serve(async (req) => {
         file: baseNavFile.name,
         jvris_ids: cacheRecords.map((r) => r.jvris_id),
         auto_linked: autoLinkedJvrisId,
+        needs_jvris_config: !orgJvrisId && cacheRecords.length > 1,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
