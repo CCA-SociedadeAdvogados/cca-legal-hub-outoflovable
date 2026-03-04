@@ -1,7 +1,7 @@
 project_id = "scjxhhkutsiswsgsuiqo"
 
 [functions.analyze-compliance]
-verify_jwt = true
+verify_jwt = false
 
 [functions.analyze-document]
 verify_jwt = true
