@@ -287,7 +287,10 @@ export default function Financeiro() {
                         ))
                       ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
                         <TableRow>
-                          <TableCell className="font-mono text-sm">{t('financial.pendingBalance')}</TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {navCache.jvris_id}
+                            <span className="block text-xs text-muted-foreground font-sans">{t('financial.pendingBalance')}</span>
+                          </TableCell>
                           <TableCell>
                             {navCache.data_vencimento
                               ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
