@@ -177,6 +177,21 @@ export function useFinanceiro() {
     enabled: !!orgInfo?.jvris_id,
   });
 
+  // Buscar jvris_ids disponíveis no cache (para selector quando org não tem jvris_id)
+  const { data: availableJvrisIds = [] } = useQuery({
+    queryKey: ["available-jvris-ids"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("financeiro_nav_cache")
+        .select("jvris_id");
+
+      if (error) throw error;
+      return (data || []).map((row: { jvris_id: string }) => row.jvris_id).sort();
+    },
+    enabled: !!organizationId && !orgInfo?.jvris_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Log query errors for debugging
   if (navCacheError) console.error("[useFinanceiro] navCache query error:", navCacheError);
   if (navItemsError) console.error("[useFinanceiro] navItems query error:", navItemsError);
@@ -383,6 +398,7 @@ export function useFinanceiro() {
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
       queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
       setLastSyncResult(data);
       let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
       if (data?.auto_linked) {
@@ -408,6 +424,7 @@ export function useFinanceiro() {
       queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
       setLastSyncResult(null);
       toast.success("ID Jvris configurado com sucesso");
     },
@@ -447,6 +464,7 @@ export function useFinanceiro() {
     navCache: navCache ?? null,
     navItems,
     jvrisId: orgInfo?.jvris_id ?? null,
+    availableJvrisIds,
     lastSyncResult,
     organizationId,
     isLoading: isLoadingInvoices || isLoadingFolders,

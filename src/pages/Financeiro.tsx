@@ -39,6 +39,7 @@ export default function Financeiro() {
     navCache,
     navItems,
     jvrisId,
+    availableJvrisIds,
     lastSyncResult,
     isLoading,
     isPlatformAdmin,
@@ -52,15 +53,19 @@ export default function Financeiro() {
   const [jvrisSearchQuery, setJvrisSearchQuery] = useState("");
   const [selectedJvrisId, setSelectedJvrisId] = useState<string | null>(null);
 
-  // Show jvris_id selection dialog when sync returns multiple clients and org has no jvris_id
-  const showJvrisSelector = !jvrisId && lastSyncResult?.needs_jvris_config && (lastSyncResult?.jvris_ids?.length ?? 0) > 1;
+  // Show jvris_id selection dialog when org has no jvris_id and there are available IDs
+  const hasAvailableIds = (lastSyncResult?.jvris_ids?.length ?? 0) > 1 || availableJvrisIds.length > 1;
+  const showJvrisSelector = !jvrisId && hasAvailableIds && isPlatformAdmin;
 
   const filteredJvrisIds = useMemo(() => {
-    const ids = lastSyncResult?.jvris_ids ?? [];
+    // Prefer lastSyncResult (fresh from sync), fall back to DB query
+    const ids = (lastSyncResult?.jvris_ids?.length ?? 0) > 0
+      ? lastSyncResult!.jvris_ids!
+      : availableJvrisIds;
     if (!jvrisSearchQuery.trim()) return ids;
     const q = jvrisSearchQuery.trim().toLowerCase();
     return ids.filter((id) => id.toLowerCase().includes(q));
-  }, [lastSyncResult?.jvris_ids, jvrisSearchQuery]);
+  }, [lastSyncResult, availableJvrisIds, jvrisSearchQuery]);
 
   // Config form states
   const [configForm, setConfigForm] = useState({
@@ -242,44 +247,46 @@ export default function Financeiro() {
                     <span className="text-primary">{accountSummary.faturasEmAberto} {t('financial.withinTerm')}</span>
                   )}
                 </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('financial.invoiceNumber')}</TableHead>
-                      <TableHead>{t('financial.dueDate')}</TableHead>
-                      <TableHead className="text-right">{t('financial.amount')}</TableHead>
-                      <TableHead>{t('financial.invoiceStatus')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {navItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono text-sm">
-                          {item.numero_documento || "—"}
-                        </TableCell>
-                        <TableCell>
-                          {item.data_vencimento
-                            ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {item.valor != null ? formatCurrency(item.valor) : "—"}
-                        </TableCell>
-                        <TableCell>
-                          {item.data_vencimento && isOverdue(item.data_vencimento) ? (
-                            <Badge variant="destructive" className="text-xs">
-                              {t('financial.overdue')}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-xs">
-                              {t('financial.withinTerm')}
-                            </Badge>
-                          )}
-                        </TableCell>
+                <div className="max-h-[400px] overflow-y-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('financial.invoiceNumber')}</TableHead>
+                        <TableHead>{t('financial.dueDate')}</TableHead>
+                        <TableHead className="text-right">{t('financial.amount')}</TableHead>
+                        <TableHead>{t('financial.invoiceStatus')}</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {navItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono text-sm">
+                            {item.numero_documento || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {item.data_vencimento
+                              ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {item.valor != null ? formatCurrency(item.valor) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            {item.data_vencimento && isOverdue(item.data_vencimento) ? (
+                              <Badge variant="destructive" className="text-xs">
+                                {t('financial.overdue')}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                {t('financial.withinTerm')}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             )}
           </CardContent>
