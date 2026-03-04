@@ -42,6 +42,12 @@ async function callAIWithFallback(
         continue;
       }
 
+      if (response.status === 413) {
+        console.warn(`[${functionName}] ${name} payload too large, trying next model...`);
+        lastError = new Error(`${name} payload too large`);
+        continue;
+      }
+
       if (!response.ok) {
         const errorText = await response.text();
         console.warn(`[${functionName}] ${name} failed (${response.status}): ${errorText}`);
@@ -67,6 +73,9 @@ async function callAIWithFallback(
     }
   }
 
+  if (lastError?.message?.includes("payload too large")) {
+    throw new Error("O documento é demasiado grande para análise. Tente com um ficheiro mais curto ou cole apenas as secções mais relevantes.");
+  }
   throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
 }
 
@@ -249,10 +258,11 @@ INSTRUÇÕES IMPORTANTES:
 6. Nas cláusulas importantes, seja específico sobre o conteúdo
 7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades`;
 
-    // Limitar o texto para evitar exceder os limites de tokens da API (≈ 60 000 chars ≈ 15 000 tokens)
-    const MAX_CHARS = 60000;
+    // Limitar o texto para evitar exceder os limites de payload da API Groq
+    // (~30 000 chars ≈ 7 500 tokens — margem segura para modelos menores)
+    const MAX_CHARS = 30000;
     const truncatedText = contractText.length > MAX_CHARS
-      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado — apenas os primeiros 60 000 caracteres foram analisados]"
+      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado — apenas os primeiros 30 000 caracteres foram analisados]"
       : contractText;
 
     if (contractText.length > MAX_CHARS) {
