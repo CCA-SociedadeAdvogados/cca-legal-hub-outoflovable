@@ -250,20 +250,33 @@ export function useFinanceiro() {
     return d.getTime() >= hoje.getTime();
   });
 
-  const hasNavData = navItems.length > 0 || (navCache?.valor_pendente != null && navCache.valor_pendente > 0);
+  const hasNavItems = navItems.length > 0;
+  const hasNavCache = navCache?.valor_pendente != null && navCache.valor_pendente > 0;
+
+  // When navCache has data but navItems is empty (no invoice detail rows in the Excel),
+  // derive counters from navCache instead of showing 0
+  const navCacheIsOverdue = hasNavCache && navCache.data_vencimento
+    ? new Date(navCache.data_vencimento).getTime() < hoje.getTime()
+    : false;
 
   const accountSummary: AccountSummary = {
     status: calculateAccountStatusFromNav(navCache ?? null, navItems),
     tipoCliente,
     prazoPagamentoDias,
-    totalEmAberto: (navCache?.valor_pendente != null && navCache.valor_pendente > 0)
+    totalEmAberto: hasNavCache
       ? navCache.valor_pendente
       : invoices
           .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
           .reduce((sum, f) => sum + Number(f.valor), 0),
-    totalFaturasEmIncumprimento: hasNavData ? navItems.length : invoices.filter((f) => f.estado !== "paga").length,
-    faturasEmAberto: hasNavData ? navItemsEmAberto.length : invoices.filter((f) => f.estado === "em_aberto").length,
-    faturasVencidas: hasNavData ? navItemsVencidas.length : invoices.filter((f) => f.estado === "vencida").length,
+    totalFaturasEmIncumprimento: hasNavItems
+      ? navItems.length
+      : hasNavCache ? 1 : invoices.filter((f) => f.estado !== "paga").length,
+    faturasEmAberto: hasNavItems
+      ? navItemsEmAberto.length
+      : hasNavCache && !navCacheIsOverdue ? 1 : invoices.filter((f) => f.estado === "em_aberto").length,
+    faturasVencidas: hasNavItems
+      ? navItemsVencidas.length
+      : hasNavCache && navCacheIsOverdue ? 1 : invoices.filter((f) => f.estado === "vencida").length,
     proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
   };
 

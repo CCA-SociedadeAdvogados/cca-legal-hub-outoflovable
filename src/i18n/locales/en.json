@@ -989,6 +989,7 @@
     "noNavDataConfigJvris": "Configure the Jvris ID in organization settings to link Base Nav data.",
     "lastSync": "Last sync",
     "pendingInvoices": "Pending invoices",
+    "pendingBalance": "Pending balance",
     "overdue": "Overdue",
     "withinTerm": "Within term",
     "invoiceNumber": "Invoice No.",

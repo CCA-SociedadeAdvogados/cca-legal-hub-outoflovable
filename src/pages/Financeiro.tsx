@@ -236,10 +236,10 @@ export default function Financeiro() {
             )}
 
             {/* Lista de faturas */}
-            {navItems.length > 0 && (
+            {(navItems.length > 0 || (navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0)) && (
               <div className="mt-4 pt-4 border-t space-y-3">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{t('financial.pendingInvoices')}: <strong className="text-foreground">{navItems.length}</strong></span>
+                  <span>{t('financial.pendingInvoices')}: <strong className="text-foreground">{accountSummary.totalFaturasEmIncumprimento}</strong></span>
                   {accountSummary.faturasVencidas > 0 && (
                     <span className="text-destructive">{accountSummary.faturasVencidas} {t('financial.overdue')}</span>
                   )}
@@ -258,21 +258,46 @@ export default function Financeiro() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {navItems.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-mono text-sm">
-                            {item.numero_documento || "—"}
-                          </TableCell>
+                      {navItems.length > 0 ? (
+                        navItems.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="font-mono text-sm">
+                              {item.numero_documento || "—"}
+                            </TableCell>
+                            <TableCell>
+                              {item.data_vencimento
+                                ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
+                                : "—"}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {item.valor != null ? formatCurrency(item.valor) : "—"}
+                            </TableCell>
+                            <TableCell>
+                              {item.data_vencimento && isOverdue(item.data_vencimento) ? (
+                                <Badge variant="destructive" className="text-xs">
+                                  {t('financial.overdue')}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-xs">
+                                  {t('financial.withinTerm')}
+                                </Badge>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
+                        <TableRow>
+                          <TableCell className="font-mono text-sm">{t('financial.pendingBalance')}</TableCell>
                           <TableCell>
-                            {item.data_vencimento
-                              ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
+                            {navCache.data_vencimento
+                              ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
                               : "—"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {item.valor != null ? formatCurrency(item.valor) : "—"}
+                            {formatCurrency(navCache.valor_pendente)}
                           </TableCell>
                           <TableCell>
-                            {item.data_vencimento && isOverdue(item.data_vencimento) ? (
+                            {navCache.data_vencimento && isOverdue(navCache.data_vencimento) ? (
                               <Badge variant="destructive" className="text-xs">
                                 {t('financial.overdue')}
                               </Badge>
@@ -283,7 +308,7 @@ export default function Financeiro() {
                             )}
                           </TableCell>
                         </TableRow>
-                      ))}
+                      ) : null}
                     </TableBody>
                   </Table>
                 </div>
