@@ -414,19 +414,19 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Check if user exists
+      // Check if user already has a profile (maybeSingle: no error if 0 rows)
       const { data: existingUser } = await supabase
         .from("profiles")
         .select("id, email, nome_completo")
         .eq("email", email)
-        .single();
+        .maybeSingle();
 
       let userId: string;
 
       if (existingUser) {
-        // User exists - update SSO info
+        // Profile found — update SSO fields
         console.log(`[SSO-CCA] Updating existing user`);
-        
+
         await supabase
           .from("profiles")
           .update({
@@ -442,10 +442,10 @@ Deno.serve(async (req) => {
 
         userId = existingUser.id;
       } else {
-        // JIT Provisioning - Create new user
-        console.log(`[SSO-CCA] Creating new user via JIT`);
+        // No profile found — attempt JIT provisioning
+        console.log(`[SSO-CCA] No profile found — attempting JIT provisioning`);
 
-        // Create auth user
+        // Try to create auth user; if it already exists (e.g. trigger delay), look it up instead
         const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
           email: email,
           email_confirm: true,
@@ -456,31 +456,45 @@ Deno.serve(async (req) => {
         });
 
         if (authError) {
-          console.error(`[SSO-CCA] Failed to create auth user`);
-          return new Response(
-            JSON.stringify({
-              error: "user_creation_failed",
-              message: "Falha ao criar utilizador",
-            }),
-            {
-              status: 500,
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
+          // User already exists in auth.users but has no profile yet (trigger delay or failure)
+          if (authError.message?.includes("already been registered") || authError.status === 422) {
+            console.log(`[SSO-CCA] Auth user already exists — looking up by email`);
+            const { data: { users: existingAuthUsers }, error: listError } =
+              await supabase.auth.admin.listUsers();
+            const found = !listError && existingAuthUsers?.find((u) => u.email === email);
+            if (!found) {
+              console.error(`[SSO-CCA] Could not resolve existing auth user for ${email.substring(0, 3)}***`);
+              return new Response(
+                JSON.stringify({ error: "user_lookup_failed", message: "Falha ao identificar utilizador existente" }),
+                { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+              );
             }
-          );
+            userId = found.id;
+            console.log(`[SSO-CCA] Resolved existing auth user, will upsert profile`);
+          } else {
+            console.error(`[SSO-CCA] Failed to create auth user: ${authError.message}`);
+            return new Response(
+              JSON.stringify({ error: "user_creation_failed", message: "Falha ao criar utilizador" }),
+              { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        } else {
+          userId = authUser.user.id;
         }
 
-        userId = authUser.user.id;
-
-        // Update profile with SSO info
+        // Upsert profile with SSO info (handles both new user and trigger-delayed profile)
         await supabase
           .from("profiles")
-          .update({
+          .upsert({
+            id: userId,
+            email: email,
+            nome_completo: userName.substring(0, 255).trim(),
             auth_method: "sso_cca",
             sso_provider: "cca",
             sso_external_id: externalId,
             last_login_at: new Date().toISOString(),
-          })
-          .eq("id", userId);
+            onboarding_completed: false,
+          }, { onConflict: "id" });
       }
 
       // ═══════════════════════════════════════════════════════════════════════

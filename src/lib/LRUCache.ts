@@ -15,7 +15,7 @@ export class LRUCache<T> {
     const entry = this.cache.get(key);
     if (!entry) return null;
 
-    // Update access order (LRU) — monotonic counter avoids same-tick ties
+    // Update access order (LRU)
     entry.accessOrder = ++this.counter;
     return entry.value;
   }
