@@ -288,7 +288,7 @@ export function useFinanceiro() {
             .map((item) => new Date(item.data_vencimento!))
             .sort((a, b) => a.getTime() - b.getTime())[0]
         )
-      : null,
+      : (navCacheIsOverdue && navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null),
   };
 
   // Mutação para criar fatura
