@@ -373,11 +373,31 @@ serve(async (req) => {
           ? parseFloat(String(rawValor).replace(",", "."))
           : null;
 
-        groups.set(rawIdStr, {
+        const group: ClientGroup = {
           parentRow: row as Record<string, unknown>,
           valorPendente: (vp !== null && !isNaN(vp)) ? vp : null,
           children: [],
-        });
+        };
+
+        // If the parent row also has invoice data (flat structure),
+        // create a child item from the same row
+        const parentNumero = findValue(row, NUMERO_CANDIDATES);
+        const parentData   = findValue(row, DATE_CANDIDATES);
+        if (parentNumero) {
+          const pNumero = String(parentNumero).trim();
+          const pValor  = (vp !== null && !isNaN(vp)) ? vp : null;
+          const pData   = resolveDate(parentData);
+          if (pNumero || pData || pValor !== null) {
+            group.children.push({
+              row: row as Record<string, unknown>,
+              numero: pNumero || null,
+              valor: pValor,
+              dataVencimento: pData,
+            });
+          }
+        }
+
+        groups.set(rawIdStr, group);
       } else if (rawId && rawIdStr && looksLikeDocumentNumber(rawIdStr) && currentJvrisId && groups.has(currentJvrisId)) {
         // ── Child row: value in ID column is actually an invoice number ──
         const rawNumero = findValue(row, NUMERO_CANDIDATES);
