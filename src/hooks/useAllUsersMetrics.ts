@@ -37,46 +37,45 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
   const { data: allMembers, isLoading: isLoadingMembers } = useQuery({
     queryKey: ["allMembersWithProfiles"],
     queryFn: async (): Promise<AllMembersEntry[]> => {
-      // Get all organization members
-      const { data: members, error: membersError } = await supabase
-        .from("organization_members")
-        .select(`id, user_id, organization_id, role, created_at, organization:organizations(name)`)
-        .order("created_at", { ascending: false });
+      // 1. Fetch ALL profiles (base list — every user in the system)
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from("profiles_safe")
+        .select("id, email, nome_completo, avatar_url, auth_method, last_login_at, locked_until, login_attempts");
 
-      if (membersError) throw membersError;
-      if (!members || members.length === 0) return [];
+      if (profilesError) throw profilesError;
+      if (!allProfiles || allProfiles.length === 0) return [];
 
-      const userIds = [...new Set(members.map(m => m.user_id))];
-      const orgIds = [...new Set(members.map(m => m.organization_id))];
+      const allUserIds = allProfiles.map(p => p.id);
 
-      // Fetch profiles, user_departments and platform_admins in parallel
-      const [profilesResult, userDeptsResult, platformAdminsResult] = await Promise.all([
+      // 2. Fetch org memberships, platform_admins and departments in parallel
+      const [membersResult, platformAdminsResult] = await Promise.all([
         supabase
-          .from("profiles_safe")
-          .select("id, email, nome_completo, avatar_url, auth_method, last_login_at, locked_until, login_attempts")
-          .in("id", userIds),
-        supabase
-          .from("user_departments" as any)
-          .select("user_id, organization_id, department_id, departments:department_id(id, name)")
-          .in("user_id", userIds)
-          .in("organization_id", orgIds),
+          .from("organization_members")
+          .select(`id, user_id, organization_id, role, created_at, organization:organizations(name)`)
+          .in("user_id", allUserIds)
+          .order("created_at", { ascending: false }),
         supabase
           .from("platform_admins")
           .select("user_id")
-          .in("user_id", userIds),
+          .in("user_id", allUserIds),
       ]);
 
-      if (profilesResult.error) throw profilesResult.error;
+      if (membersResult.error) throw membersResult.error;
 
-      const profilesMap = new Map(profilesResult.data?.map(p => [p.id, p]) || []);
-      const platformAdminSet = new Set(
-        (platformAdminsResult.data || []).map((pa: { user_id: string }) => pa.user_id)
-      );
+      const members = membersResult.data || [];
+      const orgIds = [...new Set(members.map(m => m.organization_id))];
 
-      // Build a map: `${userId}_${orgId}` → DepartmentRef[]
-      const deptMap = new Map<string, DepartmentRef[]>();
-      if (userDeptsResult.data) {
-        for (const ud of userDeptsResult.data as any[]) {
+      // 3. Fetch departments only for users that have org memberships
+      let deptMap = new Map<string, DepartmentRef[]>();
+      if (members.length > 0 && orgIds.length > 0) {
+        const memberUserIds = [...new Set(members.map(m => m.user_id))];
+        const { data: userDeptsData } = await supabase
+          .from("user_departments" as any)
+          .select("user_id, organization_id, department_id, departments:department_id(id, name)")
+          .in("user_id", memberUserIds)
+          .in("organization_id", orgIds);
+
+        for (const ud of (userDeptsData as any[] || [])) {
           const key = `${ud.user_id}_${ud.organization_id}`;
           if (!deptMap.has(key)) deptMap.set(key, []);
           const dept = ud.departments as { id: string; name: string } | null;
@@ -84,17 +83,46 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
         }
       }
 
-      return members.map(member => ({
-        id: member.id,
-        user_id: member.user_id,
-        organization_id: member.organization_id,
-        role: member.role,
-        created_at: member.created_at,
-        is_platform_admin: platformAdminSet.has(member.user_id),
-        profiles: profilesMap.get(member.user_id) || null,
-        organization: member.organization as { name: string } | null,
-        departments: deptMap.get(`${member.user_id}_${member.organization_id}`) || [],
-      }));
+      const profilesMap = new Map(allProfiles.map(p => [p.id, p]));
+      const platformAdminSet = new Set(
+        (platformAdminsResult.data || []).map((pa: { user_id: string }) => pa.user_id)
+      );
+
+      // Track which users already have an org membership entry
+      const usersWithMembership = new Set<string>();
+
+      // 4a. One entry per org membership (preserves multi-org users)
+      const memberEntries: AllMembersEntry[] = members.map(member => {
+        usersWithMembership.add(member.user_id);
+        return {
+          id: member.id,
+          user_id: member.user_id,
+          organization_id: member.organization_id,
+          role: member.role,
+          created_at: member.created_at,
+          is_platform_admin: platformAdminSet.has(member.user_id),
+          profiles: profilesMap.get(member.user_id) || null,
+          organization: member.organization as { name: string } | null,
+          departments: deptMap.get(`${member.user_id}_${member.organization_id}`) || [],
+        };
+      });
+
+      // 4b. Users with no org membership still appear (sem organização)
+      const noOrgEntries: AllMembersEntry[] = allProfiles
+        .filter(p => !usersWithMembership.has(p.id))
+        .map(p => ({
+          id: p.id,
+          user_id: p.id,
+          organization_id: "",
+          role: "viewer" as AppRole,
+          created_at: new Date().toISOString(),
+          is_platform_admin: platformAdminSet.has(p.id),
+          profiles: p,
+          organization: null,
+          departments: [],
+        }));
+
+      return [...memberEntries, ...noOrgEntries];
     },
     enabled: !!isPlatformAdmin,
   });
