@@ -69,29 +69,48 @@ export interface AccountSummary {
 }
 
 function calculateAccountStatusFromNav(
-  navCache: NavCache | null
+  navCache: NavCache | null,
+  navItems: NavItem[]
 ): AccountStatus {
   // Sem dados ou sem valor pendente → Regularizado
   if (!navCache || navCache.valor_pendente === null || navCache.valor_pendente <= 0) {
     return "regularizado";
   }
 
-  // Com valor pendente mas sem data de vencimento → Pendente
-  if (!navCache.data_vencimento) {
-    return "pendente";
-  }
-
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  const vencimento = new Date(navCache.data_vencimento);
-  vencimento.setHours(0, 0, 0, 0);
+  // Calcular dias de atraso da fatura vencida mais antiga
+  let oldestOverdueDays = 0;
 
-  const diffMs = hoje.getTime() - vencimento.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  for (const item of navItems) {
+    if (!item.data_vencimento) continue;
+    const vencimento = new Date(item.data_vencimento);
+    vencimento.setHours(0, 0, 0, 0);
+    const diffDays = Math.floor(
+      (hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (diffDays > oldestOverdueDays) {
+      oldestOverdueDays = diffDays;
+    }
+  }
+
+  // Fallback: usar data_vencimento do navCache se não há itens individuais
+  if (navItems.length === 0 && navCache.data_vencimento) {
+    const vencimento = new Date(navCache.data_vencimento);
+    vencimento.setHours(0, 0, 0, 0);
+    oldestOverdueDays = Math.floor(
+      (hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24)
+    );
+  }
+
+  // Sem faturas vencidas → Pendente
+  if (oldestOverdueDays < 0) {
+    return "pendente";
+  }
 
   // Vencido há 7 ou mais dias → Em incumprimento
-  if (diffDays >= 7) {
+  if (oldestOverdueDays >= 7) {
     return "em_incumprimento";
   }
 
@@ -122,7 +141,7 @@ export function useFinanceiro() {
   });
 
   // Buscar dados do cache Base Nav (via jvris_id da organização)
-  const { data: navCache } = useQuery({
+  const { data: navCache, error: navCacheError } = useQuery({
     queryKey: ["financeiro-nav-cache", orgInfo?.jvris_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -138,7 +157,7 @@ export function useFinanceiro() {
   });
 
   // Buscar linhas individuais (faturas) do cache Base Nav
-  const { data: navItems = [] } = useQuery({
+  const { data: navItems = [], error: navItemsError } = useQuery({
     queryKey: ["financeiro-nav-items", orgInfo?.jvris_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -152,6 +171,10 @@ export function useFinanceiro() {
     },
     enabled: !!orgInfo?.jvris_id,
   });
+
+  // Log query errors for debugging
+  if (navCacheError) console.error("[useFinanceiro] navCache query error:", navCacheError);
+  if (navItemsError) console.error("[useFinanceiro] navItems query error:", navItemsError);
 
   // Buscar faturas
   const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery({
@@ -210,7 +233,7 @@ export function useFinanceiro() {
   const hasNavData = navItems.length > 0 || (navCache?.valor_pendente != null && navCache.valor_pendente > 0);
 
   const accountSummary: AccountSummary = {
-    status: calculateAccountStatusFromNav(navCache ?? null),
+    status: calculateAccountStatusFromNav(navCache ?? null, navItems),
     tipoCliente,
     prazoPagamentoDias,
     totalEmAberto: (navCache?.valor_pendente != null && navCache.valor_pendente > 0)
@@ -356,7 +379,11 @@ export function useFinanceiro() {
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
       queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
-      toast.success(`Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`);
+      let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
+      if (data?.auto_linked) {
+        msg += ` (ID Jvris configurado: ${data.auto_linked})`;
+      }
+      toast.success(msg);
     },
     onError: (error) => {
       toast.error("Erro ao sincronizar Base Nav: " + error.message);
