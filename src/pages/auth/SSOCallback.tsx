@@ -80,8 +80,9 @@ export default function SSOCallback() {
           }
 
           // Pre-populate the profile cache with fresh data from the DB so that
-          // ProtectedRoute reads onboarding_completed=true without a race condition.
+          // ProtectedRoute / OnboardingRoute read the correct onboarding_completed value.
           const { data: { user: sessionUser } } = await supabase.auth.getUser();
+          let needsOnboarding = false;
           if (sessionUser) {
             const { data: freshProfile } = await supabase
               .from("profiles")
@@ -90,12 +91,15 @@ export default function SSOCallback() {
               .maybeSingle();
             if (freshProfile) {
               queryClient.setQueryData(["profile", sessionUser.id], freshProfile);
+              needsOnboarding = !freshProfile.onboarding_completed;
             }
           }
 
           await queryClient.invalidateQueries();
           setState("success");
-          setTimeout(() => navigate("/", { replace: true }), 1500);
+          // Send to onboarding if the user hasn't completed it yet (first SSO login)
+          const destination = needsOnboarding ? "/onboarding" : "/";
+          setTimeout(() => navigate(destination, { replace: true }), 1500);
         } else {
           setError({ code: "no_session", message: "Não foi possível estabelecer a sessão. Por favor, tente novamente." });
           setState("error");

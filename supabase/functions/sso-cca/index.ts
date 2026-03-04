@@ -636,21 +636,21 @@ Deno.serve(async (req) => {
         console.log(`[SSO-CCA] Successfully assigned user to CCA_Teste with role: ${assignedRole}`);
       }
 
-      // ── Step 5: Update profile with onboarding + org ──────────────────────
-      // Mark onboarding as completed for SSO users — they don't need the onboarding flow.
-      // Also ALWAYS set current_organization_id to CCA (even if already set to something else).
-      const { error: onboardingError } = await supabase
+      // ── Step 5: Update profile with org assignment ─────────────────────
+      // ALWAYS set current_organization_id to CCA (even if already set to something else).
+      // Do NOT force onboarding_completed — SSO users must go through onboarding
+      // to select their department and role on first login.
+      const { error: orgUpdateError } = await supabase
         .from("profiles")
         .update({
-          onboarding_completed: true,
           current_organization_id: CCA_TESTE_ORG_ID,
         })
         .eq("id", userId);
 
-      if (onboardingError) {
-        console.error(`[SSO-CCA] Failed to mark onboarding complete:`, onboardingError.message);
+      if (orgUpdateError) {
+        console.error(`[SSO-CCA] Failed to set current_organization_id:`, orgUpdateError.message);
       } else {
-        console.log(`[SSO-CCA] Onboarding marked complete for SSO user`);
+        console.log(`[SSO-CCA] current_organization_id set to CCA for SSO user`);
       }
 
       // Log authentication activity
