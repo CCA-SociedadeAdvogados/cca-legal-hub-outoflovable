@@ -9,14 +9,13 @@ const corsHeaders = {
 };
 
 const AI_MODELS = [
-  { model: "gemini-2.0-flash", name: "Gemini 2.0 Flash" },
-  { model: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
-  { model: "gemini-2.0-flash-lite", name: "Gemini 2.0 Flash Lite" },
+  { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
+  { model: "llama-3.1-8b-instant",    name: "Llama 3.1 8B" },
 ];
 
 async function callAIWithFallback(
   apiKey: string,
-  messages: Array<{ role: string; content: any }>,
+  messages: Array<{ role: string; content: string }>,
   functionName: string
 ): Promise<{ content: string; model: string }> {
   let lastError: Error | null = null;
@@ -25,7 +24,7 @@ async function callAIWithFallback(
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
@@ -35,14 +34,9 @@ async function callAIWithFallback(
       });
 
       if (response.status === 429) {
-        console.warn(`[${functionName}] ${name} rate limited, trying next model...`);
+        const body = await response.text();
+        console.warn(`[${functionName}] ${name} rate limited: ${body}`);
         lastError = new Error(`${name} rate limited`);
-        continue;
-      }
-
-      if (response.status === 402) {
-        console.warn(`[${functionName}] ${name} credits exhausted, trying next model...`);
-        lastError = new Error(`${name} credits exhausted`);
         continue;
       }
 
@@ -77,11 +71,15 @@ async function callAIWithFallback(
     }
   }
 
+  if (lastError?.message?.includes("payload too large")) {
+    throw new Error("O documento é demasiado grande para análise. Tente com um ficheiro mais curto ou cole apenas as secções mais relevantes.");
+  }
   throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
 }
 
 // Input validation constants
-const MAX_TEXT_CONTENT_LENGTH = 500000; // 500KB of text
+const MAX_TEXT_CONTENT_LENGTH = 500000; // 500KB of text (validation only — truncation happens before AI call)
+const MAX_CHARS_AI = 30000; // ~7 500 tokens — safe limit for Groq/Llama models
 const MAX_ARRAY_LENGTH = 100;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_TYPES = ["parse_contract", "analyze_event_impact", "compliance_check", "contract_compliance_check"] as const;
@@ -111,6 +109,13 @@ function validateTextContent(text: unknown): { valid: boolean; error?: string } 
   return { valid: true };
 }
 
+// Truncate text for Groq/Llama models
+function truncateForAI(text: string): string {
+  if (text.length <= MAX_CHARS_AI) return text;
+  console.warn(`Text truncated from ${text.length} to ${MAX_CHARS_AI} chars for AI analysis`);
+  return text.substring(0, MAX_CHARS_AI) + "\n\n[Nota: texto truncado — apenas os primeiros 30 000 caracteres foram analisados]";
+}
+
 interface AnalysisRequest {
   type: typeof VALID_TYPES[number];
   data: {
@@ -125,7 +130,7 @@ interface AnalysisRequest {
 }
 
 Deno.serve(async (req) => {
-  console.log(`[analyze-compliance] v2 – ${req.method} request received`);
+  console.log(`[analyze-compliance] v3 – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -256,9 +261,9 @@ Deno.serve(async (req) => {
       model: typeof requestedModel === "string" ? requestedModel : undefined,
     };
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    if (!GROQ_API_KEY) {
+      throw new Error("GROQ_API_KEY is not configured");
     }
 
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
@@ -277,7 +282,7 @@ Deno.serve(async (req) => {
         );
       }
       systemPrompt = getContractParsingPrompt();
-      userPrompt = `Analise o seguinte contrato e extraia as informações:\n\n${request.data.textContent}`;
+      userPrompt = `Analise o seguinte contrato e extraia as informações:\n\n${truncateForAI(request.data.textContent)}`;
     } else if (request.type === "analyze_event_impact") {
       if (!request.data.eventoId) {
         return new Response(
@@ -318,7 +323,7 @@ Deno.serve(async (req) => {
       }
 
       systemPrompt = getEventImpactAnalysisPrompt();
-      userPrompt = buildEventImpactPrompt(evento, contratos || []);
+      userPrompt = truncateForAI(buildEventImpactPrompt(evento, contratos || []));
     } else if (request.type === "compliance_check") {
       if (!request.data.eventoId) {
         return new Response(
@@ -339,7 +344,7 @@ Deno.serve(async (req) => {
         .in("id", request.data.contratoIds || []);
 
       systemPrompt = getComplianceCheckPrompt();
-      userPrompt = buildComplianceCheckPrompt(evento, contratos || []);
+      userPrompt = truncateForAI(buildComplianceCheckPrompt(evento, contratos || []));
     } else if (request.type === "contract_compliance_check") {
       const { textContent, tipoContrato, areasDireitoAplicaveis } = request.data;
 
@@ -367,8 +372,8 @@ Deno.serve(async (req) => {
 
       if (!eventos || eventos.length === 0) {
         return new Response(
-          JSON.stringify({ 
-            success: true, 
+          JSON.stringify({
+            success: true,
             data: {
               resumo_contrato: "Contrato analisado",
               eventos_verificados: [],
@@ -383,7 +388,7 @@ Deno.serve(async (req) => {
       }
 
       systemPrompt = getContractComplianceCheckPrompt();
-      userPrompt = buildContractCompliancePrompt(textContent || "", tipoContrato || "outro", eventos || [], areasDireitoAplicaveis || []);
+      userPrompt = truncateForAI(buildContractCompliancePrompt(textContent || "", tipoContrato || "outro", eventos || [], areasDireitoAplicaveis || []));
     } else {
       throw new Error("Tipo de análise não suportado");
     }
@@ -391,7 +396,7 @@ Deno.serve(async (req) => {
     console.log(`Processing ${request.type} analysis...`);
 
     const { content } = await callAIWithFallback(
-      GEMINI_API_KEY!,
+      GROQ_API_KEY,
       [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
@@ -401,10 +406,21 @@ Deno.serve(async (req) => {
 
     let parsedData;
     try {
-      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      let jsonStr = content.trim();
+      const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (codeBlockMatch) {
+        jsonStr = codeBlockMatch[1].trim();
+      } else {
+        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+      }
+      const firstBrace = jsonStr.indexOf('{');
+      const lastBrace  = jsonStr.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+      }
       parsedData = JSON.parse(jsonStr);
     } catch {
-      console.error("Failed to parse AI response");
+      console.error("Failed to parse AI response as JSON:", content.substring(0, 500));
       throw new Error("Não foi possível processar a resposta da IA");
     }
 
@@ -415,16 +431,17 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
-    console.error("Error in analyze-compliance function:", error instanceof Error ? error.message : "Unknown error");
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Error in analyze-compliance function:", errorMessage);
     return new Response(
-      JSON.stringify({ error: "Erro ao processar análise" }),
+      JSON.stringify({ error: errorMessage || "Erro ao processar análise" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
 
 function getContractParsingPrompt(): string {
-  return `Você é um assistente jurídico especializado em análise de contratos portugueses. 
+  return `Você é um assistente jurídico especializado em análise de contratos portugueses.
 Analise o texto do contrato fornecido e extraia as seguintes informações de forma estruturada.
 Responda APENAS com um JSON válido, sem markdown ou texto adicional.
 
@@ -625,7 +642,7 @@ function buildContractCompliancePrompt(textContent: string, tipoContrato: string
     outro: "Outro"
   };
 
-  const areasClassificadas = areasDireito.length > 0 
+  const areasClassificadas = areasDireito.length > 0
     ? areasDireito.map(a => areasDireitoLabels[a] || a).join(", ")
     : "Todas as áreas";
 
@@ -634,8 +651,8 @@ CONTRATO A ANALISAR:
 - Tipo de Contrato: ${tipoContratoLabels[tipoContrato] || tipoContrato}
 - Áreas de Direito Classificadas: ${areasClassificadas}
 
-TEXTO COMPLETO DO CONTRATO:
-${textContent.substring(0, 100000)}
+TEXTO DO CONTRATO:
+${textContent}
 `;
 
   const eventosInfo = eventos.map((e, i) => `
