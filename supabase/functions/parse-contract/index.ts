@@ -320,8 +320,11 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<string> {
     );
   }
 
-  // Desactivar worker (necessário em ambientes edge/serverless)
-  pdfjs.GlobalWorkerOptions.workerSrc = "";
+  // Apontar para o módulo worker real — necessário mesmo em ambientes
+  // edge/serverless porque o pdfjs-dist v4 exige um workerSrc truthy
+  // para inicializar o "fake worker" (fallback sem Web Worker).
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    "https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs?external=canvas";
 
   const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
   const pages: string[] = [];
