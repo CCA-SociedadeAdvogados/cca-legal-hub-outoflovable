@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Receipt, CreditCard, AlertTriangle, CheckCircle, Clock,
   Building2, User, Calendar,
@@ -38,10 +39,12 @@ export default function Financeiro() {
     accountSummary,
     navCache,
     navItems,
+    navError,
     jvrisId,
     availableJvrisIds,
     lastSyncResult,
     isLoading,
+    isLoadingNav,
     isPlatformAdmin,
     updateOrganizationFinancial,
     syncNavFromSharePoint,
@@ -236,8 +239,8 @@ export default function Financeiro() {
             )}
 
             {/* Lista de faturas */}
-            {(navItems.length > 0 || (navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0)) && (
-              <div className="mt-4 pt-4 border-t space-y-3">
+            <div className="mt-4 pt-4 border-t space-y-3">
+              {!isLoadingNav && (navItems.length > 0 || (navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0)) && (
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span>{t('financial.pendingInvoices')}: <strong className="text-foreground">{accountSummary.totalFaturasEmIncumprimento}</strong></span>
                   {accountSummary.faturasVencidas > 0 && (
@@ -247,59 +250,51 @@ export default function Financeiro() {
                     <span className="text-primary">{accountSummary.faturasEmAberto} {t('financial.withinTerm')}</span>
                   )}
                 </div>
-                <div className="max-h-[400px] overflow-y-auto rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('financial.invoiceNumber')}</TableHead>
-                        <TableHead>{t('financial.dueDate')}</TableHead>
-                        <TableHead className="text-right">{t('financial.amount')}</TableHead>
-                        <TableHead>{t('financial.invoiceStatus')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {navItems.length > 0 ? (
-                        navItems.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-mono text-sm">
-                              {item.numero_documento || "—"}
-                            </TableCell>
-                            <TableCell>
-                              {item.data_vencimento
-                                ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
-                                : "—"}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {item.valor != null ? formatCurrency(item.valor) : "—"}
-                            </TableCell>
-                            <TableCell>
-                              {item.data_vencimento && isOverdue(item.data_vencimento) ? (
-                                <Badge variant="destructive" className="text-xs">
-                                  {t('financial.overdue')}
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-xs">
-                                  {t('financial.withinTerm')}
-                                </Badge>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
-                        <TableRow>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {t('financial.pendingBalance')}
+              )}
+
+              {navError && (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>{t('financial.errorLoadingInvoices')}</span>
+                </div>
+              )}
+
+              <div className="max-h-[400px] overflow-y-auto rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('financial.invoiceNumber')}</TableHead>
+                      <TableHead>{t('financial.dueDate')}</TableHead>
+                      <TableHead className="text-right">{t('financial.amount')}</TableHead>
+                      <TableHead>{t('financial.invoiceStatus')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingNav ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <TableRow key={`skeleton-${i}`}>
+                          <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                          <TableCell className="text-right"><Skeleton className="h-5 w-16 ml-auto" /></TableCell>
+                          <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                        </TableRow>
+                      ))
+                    ) : navItems.length > 0 ? (
+                      navItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono text-sm">
+                            {item.numero_documento || "—"}
                           </TableCell>
                           <TableCell>
-                            {navCache.data_vencimento
-                              ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
+                            {item.data_vencimento
+                              ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
                               : "—"}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            {formatCurrency(navCache.valor_pendente)}
+                            {item.valor != null ? formatCurrency(item.valor) : "—"}
                           </TableCell>
                           <TableCell>
-                            {navCache.data_vencimento && isOverdue(navCache.data_vencimento) ? (
+                            {item.data_vencimento && isOverdue(item.data_vencimento) ? (
                               <Badge variant="destructive" className="text-xs">
                                 {t('financial.overdue')}
                               </Badge>
@@ -310,12 +305,44 @@ export default function Financeiro() {
                             )}
                           </TableCell>
                         </TableRow>
-                      ) : null}
-                    </TableBody>
-                  </Table>
-                </div>
+                      ))
+                    ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
+                      <TableRow>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {t('financial.pendingBalance')}
+                        </TableCell>
+                        <TableCell>
+                          {navCache.data_vencimento
+                            ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(navCache.valor_pendente)}
+                        </TableCell>
+                        <TableCell>
+                          {navCache.data_vencimento && isOverdue(navCache.data_vencimento) ? (
+                            <Badge variant="destructive" className="text-xs">
+                              {t('financial.overdue')}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs">
+                              {t('financial.withinTerm')}
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ) : !navError ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                          <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>{t('financial.noInvoices')}</p>
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </TableBody>
+                </Table>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
