@@ -922,6 +922,7 @@
     "overdueCount": "Vencidas",
     "totalOpen": "Total em Aberto",
     "nextDue": "Próximo vencimento",
+    "defaultSince": "Em incumprimento desde",
     "invoices": "Faturas",
     "invoiceHistory": "Histórico de faturas da organização",
     "newInvoice": "Nova Fatura",

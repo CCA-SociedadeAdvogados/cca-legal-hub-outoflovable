@@ -228,12 +228,12 @@ export default function Financeiro() {
               </div>
             </div>
 
-            {accountSummary.proximoVencimento && (
+            {accountSummary.emIncumprimentoDesde && (
               <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('financial.nextDue')}:</span>
-                <span className="font-medium">
-                  {format(accountSummary.proximoVencimento, i18n.language === 'pt' ? "dd 'de' MMMM 'de' yyyy" : "MMMM d, yyyy", { locale: dateLocale })}
+                <Calendar className="h-4 w-4 text-risk-high" />
+                <span className="text-risk-high">{t('financial.defaultSince')}:</span>
+                <span className="font-medium text-risk-high">
+                  {format(accountSummary.emIncumprimentoDesde, i18n.language === 'pt' ? "dd 'de' MMMM 'de' yyyy" : "MMMM d, yyyy", { locale: dateLocale })}
                 </span>
               </div>
             )}

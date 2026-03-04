@@ -922,6 +922,7 @@
     "overdueCount": "Overdue",
     "totalOpen": "Total Open",
     "nextDue": "Next due date",
+    "defaultSince": "In default since",
     "invoices": "Invoices",
     "invoiceHistory": "Organization invoice history",
     "newInvoice": "New Invoice",
