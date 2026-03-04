@@ -383,17 +383,15 @@ serve(async (req) => {
           // If this duplicate row also has invoice data, append as child
           const rowNumero = findValue(row, NUMERO_CANDIDATES);
           const rowData = findValue(row, DATE_CANDIDATES);
-          if (rowNumero) {
-            const numero = String(rowNumero).trim();
-            const dataVencimento = resolveDate(rowData);
-            if (numero || dataVencimento || validVp !== null) {
-              existing.children.push({
-                row: row as Record<string, unknown>,
-                numero: numero || null,
-                valor: validVp,
-                dataVencimento,
-              });
-            }
+          const numero = rowNumero ? String(rowNumero).trim() : null;
+          const dataVencimento = resolveDate(rowData);
+          if (numero || dataVencimento || validVp !== null) {
+            existing.children.push({
+              row: row as Record<string, unknown>,
+              numero,
+              valor: validVp,
+              dataVencimento,
+            });
           }
         } else {
           // ── New client group ──
@@ -405,17 +403,15 @@ serve(async (req) => {
           // If this parent row also has invoice data (flat structure), add as child
           const rowNumero = findValue(row, NUMERO_CANDIDATES);
           const rowData = findValue(row, DATE_CANDIDATES);
-          if (rowNumero) {
-            const numero = String(rowNumero).trim();
-            const dataVencimento = resolveDate(rowData);
-            if (numero || dataVencimento || validVp !== null) {
-              group.children.push({
-                row: row as Record<string, unknown>,
-                numero: numero || null,
-                valor: validVp,
-                dataVencimento,
-              });
-            }
+          const numero = rowNumero ? String(rowNumero).trim() : null;
+          const dataVencimento = resolveDate(rowData);
+          if (numero || dataVencimento || validVp !== null) {
+            group.children.push({
+              row: row as Record<string, unknown>,
+              numero,
+              valor: validVp,
+              dataVencimento,
+            });
           }
           groups.set(rawIdStr, group);
         }
