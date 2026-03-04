@@ -79,6 +79,20 @@ export default function SSOCallback() {
             return;
           }
 
+          // Pre-populate the profile cache with fresh data from the DB so that
+          // ProtectedRoute reads onboarding_completed=true without a race condition.
+          const { data: { user: sessionUser } } = await supabase.auth.getUser();
+          if (sessionUser) {
+            const { data: freshProfile } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", sessionUser.id)
+              .maybeSingle();
+            if (freshProfile) {
+              queryClient.setQueryData(["profile", sessionUser.id], freshProfile);
+            }
+          }
+
           await queryClient.invalidateQueries();
           setState("success");
           setTimeout(() => navigate("/", { replace: true }), 1500);
