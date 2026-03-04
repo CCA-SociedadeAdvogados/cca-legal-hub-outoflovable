@@ -483,6 +483,8 @@ Deno.serve(async (req) => {
         }
 
         // Upsert profile with SSO info (handles both new user and trigger-delayed profile)
+        // NOTE: Do NOT include onboarding_completed here — new profiles get the schema
+        // default (false), and returning users must keep their existing value.
         await supabase
           .from("profiles")
           .upsert({
@@ -493,7 +495,6 @@ Deno.serve(async (req) => {
             sso_provider: "cca",
             sso_external_id: externalId,
             last_login_at: new Date().toISOString(),
-            onboarding_completed: false,
           }, { onConflict: "id" });
       }
 
@@ -630,8 +631,20 @@ Deno.serve(async (req) => {
         });
 
       if (assignError) {
-        console.error(`[SSO-CCA] CRITICAL: Failed to assign user to CCA_Teste:`, assignError.message, assignError);
-        // Continue — we still set current_organization_id below as a fallback
+        console.error(`[SSO-CCA] RPC assign_sso_user_to_organization failed:`, assignError.message, assignError);
+        // Fallback: direct INSERT into organization_members
+        console.log(`[SSO-CCA] Attempting direct INSERT fallback for org membership`);
+        const { error: directInsertError } = await supabase
+          .from("organization_members")
+          .upsert(
+            { organization_id: CCA_TESTE_ORG_ID, user_id: userId, role: assignedRole },
+            { onConflict: "organization_id,user_id" }
+          );
+        if (directInsertError) {
+          console.error(`[SSO-CCA] CRITICAL: Direct INSERT fallback also failed:`, directInsertError.message);
+        } else {
+          console.log(`[SSO-CCA] Direct INSERT fallback succeeded — user assigned to CCA_Teste`);
+        }
       } else {
         console.log(`[SSO-CCA] Successfully assigned user to CCA_Teste with role: ${assignedRole}`);
       }
