@@ -371,11 +371,13 @@ export function Sidebar({ clientName }: SidebarProps) {
             isCollapsed && "justify-center px-2"
           )}
         >
-          <AlertTriangle className={cn("h-5 w-5 shrink-0")} />
+          <div className="relative shrink-0">
+            <AlertTriangle className="h-5 w-5" />
+          </div>
           {!isCollapsed && (
             <span className="flex items-center gap-2">
               {t("nav.impacts")}
-              <Lock className="h-3.5 w-3.5" />
+              <Lock className="h-4 w-4" />
             </span>
           )}
         </div>
@@ -388,11 +390,13 @@ export function Sidebar({ clientName }: SidebarProps) {
             isCollapsed && "justify-center px-2"
           )}
         >
-          <Library className={cn("h-5 w-5 shrink-0")} />
+          <div className="relative shrink-0">
+            <Library className="h-5 w-5" />
+          </div>
           {!isCollapsed && (
             <span className="flex items-center gap-2">
               {t("nav.normativos")}
-              <Lock className="h-3.5 w-3.5" />
+              <Lock className="h-4 w-4" />
             </span>
           )}
         </div>
