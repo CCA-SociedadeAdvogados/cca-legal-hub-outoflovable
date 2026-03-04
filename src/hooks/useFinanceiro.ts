@@ -130,7 +130,7 @@ export function useFinanceiro() {
   } | null>(null);
 
   // Buscar info financeira da organização
-  const { data: orgInfo } = useQuery({
+  const { data: orgInfo, isLoading: isLoadingOrgInfo } = useQuery({
     queryKey: ["organization-financial-info", organizationId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -146,7 +146,7 @@ export function useFinanceiro() {
   });
 
   // Buscar dados do cache Base Nav (via jvris_id da organização)
-  const { data: navCache, error: navCacheError } = useQuery({
+  const { data: navCache, error: navCacheError, isLoading: isLoadingNavCache } = useQuery({
     queryKey: ["financeiro-nav-cache", orgInfo?.jvris_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -162,7 +162,7 @@ export function useFinanceiro() {
   });
 
   // Buscar linhas individuais (faturas) do cache Base Nav
-  const { data: navItems = [], error: navItemsError } = useQuery({
+  const { data: navItems = [], error: navItemsError, isLoading: isLoadingNavItems } = useQuery({
     queryKey: ["financeiro-nav-items", orgInfo?.jvris_id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -476,11 +476,13 @@ export function useFinanceiro() {
     accountSummary,
     navCache: navCache ?? null,
     navItems,
+    navError: navItemsError || navCacheError || null,
     jvrisId: orgInfo?.jvris_id ?? null,
     availableJvrisIds,
     lastSyncResult,
     organizationId,
-    isLoading: isLoadingInvoices || isLoadingFolders,
+    isLoading: isLoadingInvoices || isLoadingFolders || isLoadingOrgInfo,
+    isLoadingNav: isLoadingOrgInfo || isLoadingNavCache || isLoadingNavItems,
     isPlatformAdmin,
     createInvoice,
     updateInvoiceStatus,

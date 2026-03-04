@@ -1001,7 +1001,8 @@
     "searchClientId": "Pesquisar ID do cliente...",
     "noMatchingIds": "Nenhum ID correspondente",
     "confirmSelection": "Confirmar Seleção",
-    "selecting": "A configurar..."
+    "selecting": "A configurar...",
+    "errorLoadingInvoices": "Erro ao carregar faturas. Verifique a ligação e tente novamente."
   },
   "platformAdmin": {
     "impersonation": {

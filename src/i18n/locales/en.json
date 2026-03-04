@@ -1001,7 +1001,8 @@
     "searchClientId": "Search client ID...",
     "noMatchingIds": "No matching IDs",
     "confirmSelection": "Confirm Selection",
-    "selecting": "Configuring..."
+    "selecting": "Configuring...",
+    "errorLoadingInvoices": "Error loading invoices. Check your connection and try again."
   },
   "platformAdmin": {
     "impersonation": {
