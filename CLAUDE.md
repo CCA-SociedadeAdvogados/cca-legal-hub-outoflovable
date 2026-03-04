@@ -1203,6 +1203,7 @@ O project ID `scjxhhkutsiswsgsuiqo` também está em `supabase/config.toml` como
 15. **Feature flags** control SSO, 2FA, demo login — check `useFeatureFlags()` before adding conditional features
 16. **Supabase project ID é `scjxhhkutsiswsgsuiqo`** — usar este ID ao referenciar o projecto Supabase (config, URLs, CLI commands)
 17. **Zero referências ao Lovable** — o repo foi scaffolded via Lovable mas já não tem dependências nem código Lovable; nunca adicionar referências `lovable`, `gptengineer` ou `lovable_ai` em código novo
+18. **Protecção do CLAUDE.md** — se qualquer tarefa implicar alterações às instruções deste ficheiro (`CLAUDE.md`), o Claude Code **DEVE**: (1) parar e perguntar ao utilizador se a alteração deve mesmo ser feita, (2) listar explicitamente quais secções/regras serão afectadas, e (3) descrever os impactos potenciais da alteração (ex.: mudança de padrões de código, quebra de convenções existentes, efeitos em cascata noutros ficheiros). Nunca alterar o `CLAUDE.md` silenciosamente.
 
 ---
 
