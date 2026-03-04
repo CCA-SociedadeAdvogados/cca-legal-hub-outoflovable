@@ -48,13 +48,11 @@ function resolveDate(raw: unknown): string | null {
   return null;
 }
 
-/** Returns true if the value looks like a Portuguese invoice/document number */
-function looksLikeDocumentNumber(value: string): boolean {
-  const trimmed = value.trim().toUpperCase();
-  // Portuguese document prefixes: FT (fatura), ND (nota débito), NC (nota crédito),
-  // FR (fatura-recibo), RE (recibo), VD (venda a dinheiro), GT (guia transporte),
-  // RC (recibo), FP (fatura proforma)
-  return /^(FT|ND|NC|FR|RE|VD|GT|RC|FP)\d+/.test(trimmed);
+/** Returns true if the value looks like a NAV Client ID (e.g. C.0009, CL.123) */
+function looksLikeClientId(value: string): boolean {
+  const trimmed = value.trim();
+  // Client IDs: 1-2 uppercase letters followed by dot and digits
+  return /^[A-Z]{1,2}\.\d+$/i.test(trimmed);
 }
 
 // ── Microsoft Graph API helpers ─────────────────────────────────
@@ -364,7 +362,7 @@ serve(async (req) => {
       const rawId = findValue(row, ID_CANDIDATES);
       const rawIdStr = rawId ? String(rawId).trim() : "";
 
-      if (rawId && rawIdStr && !looksLikeDocumentNumber(rawIdStr)) {
+      if (rawId && rawIdStr && looksLikeClientId(rawIdStr)) {
         // ── Parent row: has a Client ID (not an invoice number) ──
         currentJvrisId = rawIdStr;
 
@@ -386,7 +384,7 @@ serve(async (req) => {
           const rowData = findValue(row, DATE_CANDIDATES);
           let numero = rowNumero ? String(rowNumero).trim() : null;
           // If numero matches the client ID or doesn't look like a real doc number, discard it
-          if (numero && (numero === rawIdStr || !looksLikeDocumentNumber(numero))) {
+          if (numero && (numero === rawIdStr || looksLikeClientId(numero))) {
             numero = null;
           }
           const dataVencimento = resolveDate(rowData);
@@ -411,7 +409,7 @@ serve(async (req) => {
           const rowData = findValue(row, DATE_CANDIDATES);
           let numero = rowNumero ? String(rowNumero).trim() : null;
           // If numero matches the client ID or doesn't look like a real doc number, discard it
-          if (numero && (numero === rawIdStr || !looksLikeDocumentNumber(numero))) {
+          if (numero && (numero === rawIdStr || looksLikeClientId(numero))) {
             numero = null;
           }
           const dataVencimento = resolveDate(rowData);
@@ -425,7 +423,7 @@ serve(async (req) => {
           }
           groups.set(rawIdStr, group);
         }
-      } else if (rawId && rawIdStr && looksLikeDocumentNumber(rawIdStr) && currentJvrisId && groups.has(currentJvrisId)) {
+      } else if (rawId && rawIdStr && !looksLikeClientId(rawIdStr) && currentJvrisId && groups.has(currentJvrisId)) {
         // ── Child row: value in ID column is actually an invoice number ──
         const rawNumero = findValue(row, NUMERO_CANDIDATES);
         const rawValor  = findValue(row, VALOR_CANDIDATES);
