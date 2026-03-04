@@ -510,12 +510,34 @@ serve(async (req) => {
     const totalItems = itemRecords.length;
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
+    // ── Auto-link: set org.jvris_id if not already configured ──
+    let autoLinkedJvrisId: string | null = null;
+    if (cacheRecords.length > 0) {
+      const { data: orgRecord } = await supabaseAdmin
+        .from("organizations")
+        .select("jvris_id")
+        .eq("id", organization_id)
+        .single();
+
+      const orgJvrisId = (orgRecord as Record<string, unknown>)?.jvris_id;
+      if (!orgJvrisId) {
+        autoLinkedJvrisId = cacheRecords[0].jvris_id;
+        await supabaseAdmin
+          .from("organizations")
+          .update({ jvris_id: autoLinkedJvrisId })
+          .eq("id", organization_id);
+        console.log(`Auto-linked org ${organization_id} → jvris_id ${autoLinkedJvrisId}`);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         synced: cacheRecords.length,
         items: totalItems,
         file: baseNavFile.name,
+        jvris_ids: cacheRecords.map((r) => r.jvris_id),
+        auto_linked: autoLinkedJvrisId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
