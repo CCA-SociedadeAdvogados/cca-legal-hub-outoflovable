@@ -1,5 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// ALL external libraries are imported dynamically to avoid crashing the edge
+// function during module initialisation on Supabase Edge Runtime / Deno v2.x.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -116,9 +116,11 @@ interface AnalysisRequest {
   model?: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
+  console.log(`[analyze-compliance] v2 – ${req.method} request received`);
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
   try {
@@ -251,6 +253,7 @@ serve(async (req) => {
       throw new Error("GEMINI_API_KEY is not configured");
     }
 
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
