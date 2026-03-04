@@ -1203,3 +1203,122 @@ O project ID `scjxhhkutsiswsgsuiqo` também está em `supabase/config.toml` como
 15. **Feature flags** control SSO, 2FA, demo login — check `useFeatureFlags()` before adding conditional features
 16. **Supabase project ID é `scjxhhkutsiswsgsuiqo`** — usar este ID ao referenciar o projecto Supabase (config, URLs, CLI commands)
 17. **Zero referências ao Lovable** — o repo foi scaffolded via Lovable mas já não tem dependências nem código Lovable; nunca adicionar referências `lovable`, `gptengineer` ou `lovable_ai` em código novo
+
+---
+
+## Git Workflow & PR Strategy
+
+> **Goal**: PRs pequenos, fáceis de revisar, rápidos de aprovar e fazer merge.
+
+### 11.1 Regras de Commit para Claude Code
+
+**Commits devem ser atómicos** — cada commit faz UMA coisa lógica. Nunca misturar:
+- Funcionalidade nova + refactor de código existente
+- Fix de bug + alterações de estilo
+- Alterações de schema/DB + alterações de UI
+- Múltiplas features no mesmo commit
+
+**Convenção de commit messages** (Conventional Commits):
+```
+<tipo>(<scope>): <descrição curta em PT>
+
+Tipos: feat, fix, refactor, style, docs, chore, perf, test
+Scopes: contracts, auth, admin, compliance, dashboard, i18n, edge-fn, db
+```
+
+Exemplos:
+```
+feat(contracts): adicionar filtro por estado na listagem
+fix(auth): corrigir redirect após SSO callback
+refactor(hooks): extrair lógica de paginação para hook genérico
+chore(deps): atualizar shadcn/ui components
+docs: atualizar CLAUDE.md com workflow de git
+```
+
+**Limite de ficheiros por commit**: máximo ~5-8 ficheiros alterados. Se uma tarefa afeta mais ficheiros, dividir em commits sequenciais lógicos.
+
+### 11.2 Estratégia de Branches
+
+```
+main (produção — protegida)
+ └── feat/CCA-XX-descricao-curta    ← feature branches
+ └── fix/CCA-XX-descricao-curta     ← bug fixes
+ └── refactor/descricao-curta       ← refactors
+ └── chore/descricao-curta          ← maintenance
+```
+
+**Regras**:
+- Nunca fazer push direto para `main`
+- Branches devem ser curtas (1-3 dias max) para evitar conflitos
+- Fazer `git pull origin main --rebase` antes de abrir PR para manter o histórico limpo
+
+### 11.3 Como Estruturar PRs para Review Rápido
+
+**Tamanho ideal de PR**: máximo **~200-300 linhas alteradas** (excluindo ficheiros gerados). PRs maiores devem ser divididos.
+
+**Estratégia de divisão de PRs grandes**:
+
+| Situação | Como dividir |
+|----------|-------------|
+| Feature nova com UI + hook + edge function | PR 1: edge function + tipos → PR 2: hook + lógica → PR 3: UI components |
+| Alteração de schema + frontend | PR 1: migration + types → PR 2: hooks + UI |
+| Refactor grande | PR por módulo/pasta afetada |
+| Novo componente complexo | PR 1: componente base → PR 2: integração na página |
+
+**Template de PR description** (usar no GitHub):
+```markdown
+## O quê
+[Descrição em 1-2 frases]
+
+## Porquê
+[Contexto / ticket / problema que resolve]
+
+## Como testar
+1. [Passo 1]
+2. [Passo 2]
+
+## Checklist
+- [ ] Traduções adicionadas (pt.json + en.json)
+- [ ] Sem erros de lint (`npm run lint`)
+- [ ] Build passa (`npm run build`)
+- [ ] Testado em dark mode
+```
+
+### 11.4 Instruções Específicas para Claude Code
+
+Quando pedires ao Claude Code para implementar algo, usa prompts que forcem granularidade:
+
+```
+# ❌ Evitar — gera PR gigante
+"Implementa o sistema de notificações completo"
+
+# ✅ Preferir — gera commits pequenos e focados
+"Cria o hook useNotifications com queries para a tabela notifications.
+Faz commit apenas deste hook, sem alterar componentes."
+
+# ✅ Encadear tarefas pequenas
+"Agora cria o componente NotificationBell que usa o hook useNotifications.
+Commit separado."
+```
+
+**Regra para Claude Code**: Ao receber uma tarefa grande, SEMPRE propor um plano de execução dividido em commits antes de começar a codificar. Pedir confirmação antes de avançar.
+
+### 11.5 Acelerar Reviews
+
+- **Auto-merge para PRs triviais**: docs, traduções, dependências (se CI passa)
+- **Reviewers rotativos**: definir CODEOWNERS no GitHub para atribuição automática
+- **Labels de prioridade**: `urgent`, `quick-review` (< 50 linhas), `needs-discussion`
+- **Review assíncrono**: reviewer tem 24h para aprovar PRs `quick-review`, 48h para restantes
+- **Draft PRs**: abrir como Draft quando ainda em progresso para dar visibilidade à equipa
+
+**Ficheiro `.github/CODEOWNERS` sugerido**:
+```
+# Default reviewers
+* @asilva-cca
+
+# Edge functions require compliance review
+supabase/functions/ @asilva-cca @lfgaspar-cca
+
+# DB migrations require admin review
+supabase/migrations/ @asilva-cca
+```
