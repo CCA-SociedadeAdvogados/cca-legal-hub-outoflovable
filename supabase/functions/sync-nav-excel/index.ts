@@ -372,32 +372,37 @@ serve(async (req) => {
         const vp = rawValor != null
           ? parseFloat(String(rawValor).replace(",", "."))
           : null;
+        const validVp = (vp !== null && !isNaN(vp)) ? vp : null;
 
-        const group: ClientGroup = {
-          parentRow: row as Record<string, unknown>,
-          valorPendente: (vp !== null && !isNaN(vp)) ? vp : null,
-          children: [],
-        };
-
-        // If the parent row also has invoice data (flat structure),
-        // create a child item from the same row
-        const parentNumero = findValue(row, NUMERO_CANDIDATES);
-        const parentData   = findValue(row, DATE_CANDIDATES);
-        if (parentNumero) {
-          const pNumero = String(parentNumero).trim();
-          const pValor  = (vp !== null && !isNaN(vp)) ? vp : null;
-          const pData   = resolveDate(parentData);
-          if (pNumero || pData || pValor !== null) {
-            group.children.push({
-              row: row as Record<string, unknown>,
-              numero: pNumero || null,
-              valor: pValor,
-              dataVencimento: pData,
-            });
+        if (groups.has(rawIdStr)) {
+          // ── Duplicate client ID: keep existing children, sum valor ──
+          const existing = groups.get(rawIdStr)!;
+          if (validVp !== null) {
+            existing.valorPendente = (existing.valorPendente || 0) + validVp;
           }
+          // If this duplicate row also has invoice data, append as child
+          const rowNumero = findValue(row, NUMERO_CANDIDATES);
+          const rowData = findValue(row, DATE_CANDIDATES);
+          if (rowNumero) {
+            const numero = String(rowNumero).trim();
+            const dataVencimento = resolveDate(rowData);
+            if (numero || dataVencimento || validVp !== null) {
+              existing.children.push({
+                row: row as Record<string, unknown>,
+                numero: numero || null,
+                valor: validVp,
+                dataVencimento,
+              });
+            }
+          }
+        } else {
+          // ── New client group ──
+          groups.set(rawIdStr, {
+            parentRow: row as Record<string, unknown>,
+            valorPendente: validVp,
+            children: [],
+          });
         }
-
-        groups.set(rawIdStr, group);
       } else if (rawId && rawIdStr && looksLikeDocumentNumber(rawIdStr) && currentJvrisId && groups.has(currentJvrisId)) {
         // ── Child row: value in ID column is actually an invoice number ──
         const rawNumero = findValue(row, NUMERO_CANDIDATES);
