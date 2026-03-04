@@ -511,6 +511,8 @@ serve(async (req) => {
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
     // ── Auto-link: set org.jvris_id if not already configured ──
+    // Only auto-link when there is exactly 1 client in the Excel (unambiguous).
+    // For multi-client files, the admin must set jvris_id manually.
     let autoLinkedJvrisId: string | null = null;
     if (cacheRecords.length > 0) {
       const { data: orgRecord } = await supabaseAdmin
@@ -520,13 +522,15 @@ serve(async (req) => {
         .single();
 
       const orgJvrisId = (orgRecord as Record<string, unknown>)?.jvris_id;
-      if (!orgJvrisId) {
+      if (!orgJvrisId && cacheRecords.length === 1) {
         autoLinkedJvrisId = cacheRecords[0].jvris_id;
         await supabaseAdmin
           .from("organizations")
           .update({ jvris_id: autoLinkedJvrisId })
           .eq("id", organization_id);
         console.log(`Auto-linked org ${organization_id} → jvris_id ${autoLinkedJvrisId}`);
+      } else if (!orgJvrisId && cacheRecords.length > 1) {
+        console.log(`Org ${organization_id} has no jvris_id set. ${cacheRecords.length} clients found — manual configuration required.`);
       }
     }
 

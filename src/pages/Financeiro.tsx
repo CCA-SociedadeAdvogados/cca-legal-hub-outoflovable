@@ -173,8 +173,50 @@ export default function Financeiro() {
             </div>
           </CardHeader>
           <CardContent>
-            {navItems.length > 0 ? (
-              <div className="space-y-3">
+            {/* Contadores */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-muted rounded-lg">
+                  <Receipt className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t('financial.totalInDefault')}</p>
+                  <p className="text-lg font-semibold">{accountSummary.totalFaturasEmIncumprimento}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t('financial.openAmount')}</p>
+                  <p className="text-lg font-semibold">{accountSummary.faturasEmAberto}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-destructive/20 rounded-lg">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">{t('financial.overdueCount')}</p>
+                  <p className="text-lg font-semibold">{accountSummary.faturasVencidas}</p>
+                </div>
+              </div>
+            </div>
+
+            {accountSummary.proximoVencimento && (
+              <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">{t('financial.nextDue')}:</span>
+                <span className="font-medium">
+                  {format(accountSummary.proximoVencimento, i18n.language === 'pt' ? "dd 'de' MMMM 'de' yyyy" : "MMMM d, yyyy", { locale: dateLocale })}
+                </span>
+              </div>
+            )}
+
+            {/* Lista de faturas */}
+            {navItems.length > 0 && (
+              <div className="mt-4 pt-4 border-t space-y-3">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span>{t('financial.pendingInvoices')}: <strong className="text-foreground">{navItems.length}</strong></span>
                   {accountSummary.faturasVencidas > 0 && (
@@ -222,54 +264,6 @@ export default function Financeiro() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-muted rounded-lg">
-                    <Receipt className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('financial.totalInvoices')}</p>
-                    <p className="text-lg font-semibold">{accountSummary.totalFaturas}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/20 rounded-lg">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('financial.openAmount')}</p>
-                    <p className="text-lg font-semibold">{accountSummary.faturasEmAberto}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-destructive/20 rounded-lg">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('financial.overdueCount')}</p>
-                    <p className="text-lg font-semibold">{accountSummary.faturasVencidas}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-risk-low/20 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-risk-low" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('financial.paidCount')}</p>
-                    <p className="text-lg font-semibold">{accountSummary.faturasPagas}</p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {accountSummary.proximoVencimento && (
-              <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('financial.nextDue')}:</span>
-                <span className="font-medium">
-                  {format(accountSummary.proximoVencimento, i18n.language === 'pt' ? "dd 'de' MMMM 'de' yyyy" : "MMMM d, yyyy", { locale: dateLocale })}
-                </span>
               </div>
             )}
           </CardContent>

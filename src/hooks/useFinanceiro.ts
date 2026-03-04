@@ -61,10 +61,9 @@ export interface AccountSummary {
   tipoCliente: "pessoa_individual" | "pessoa_coletiva";
   prazoPagamentoDias: number;
   totalEmAberto: number;
-  totalFaturas: number;
+  totalFaturasEmIncumprimento: number;
   faturasEmAberto: number;
   faturasVencidas: number;
-  faturasPagas: number;
   proximoVencimento: Date | null;
 }
 
@@ -232,6 +231,9 @@ export function useFinanceiro() {
 
   const hasNavData = navItems.length > 0 || (navCache?.valor_pendente != null && navCache.valor_pendente > 0);
 
+  // Filter navItems with valor pendente (> 0)
+  const navItemsComValor = navItems.filter((item) => item.valor != null && item.valor > 0);
+
   const accountSummary: AccountSummary = {
     status: calculateAccountStatusFromNav(navCache ?? null, navItems),
     tipoCliente,
@@ -241,10 +243,9 @@ export function useFinanceiro() {
       : invoices
           .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
           .reduce((sum, f) => sum + Number(f.valor), 0),
-    totalFaturas: hasNavData ? navItems.length : invoices.length,
+    totalFaturasEmIncumprimento: hasNavData ? navItemsComValor.length : invoices.filter((f) => f.estado !== "paga").length,
     faturasEmAberto: hasNavData ? navItemsEmAberto.length : invoices.filter((f) => f.estado === "em_aberto").length,
     faturasVencidas: hasNavData ? navItemsVencidas.length : invoices.filter((f) => f.estado === "vencida").length,
-    faturasPagas: hasNavData ? 0 : invoices.filter((f) => f.estado === "paga").length,
     proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
   };
 
