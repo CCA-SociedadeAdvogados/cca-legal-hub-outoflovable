@@ -23,8 +23,8 @@ import { pt, enUS } from "date-fns/locale";
 
 const statusColors: Record<AccountStatus, string> = {
   regularizado: "bg-risk-low/20 text-risk-low border-risk-low/30",
-  pendente: "bg-risk-medium/20 text-risk-medium border-risk-medium/30",
-  em_incumprimento: "bg-destructive/20 text-destructive border-destructive/30",
+  pendente: "bg-gray-100 dark:bg-gray-800 text-risk-medium border-risk-medium/30",
+  em_incumprimento: "bg-gray-100 dark:bg-gray-800 text-destructive border-destructive/30",
 };
 
 const statusIcons: Record<AccountStatus, React.ReactNode> = {

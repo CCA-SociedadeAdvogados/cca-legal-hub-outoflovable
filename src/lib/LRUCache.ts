@@ -42,7 +42,7 @@ export class LRUCache<T> {
         oldestKey = key;
       }
     }
-    
+
     if (oldestKey) {
       this.cache.delete(oldestKey);
     }

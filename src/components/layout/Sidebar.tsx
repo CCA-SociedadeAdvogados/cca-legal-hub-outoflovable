@@ -375,10 +375,10 @@ export function Sidebar({ clientName }: SidebarProps) {
             <AlertTriangle className="h-5 w-5" />
           </div>
           {!isCollapsed && (
-            <span className="flex items-center gap-2">
-              {t("nav.impacts")}
-              <Lock className="h-4 w-4" />
-            </span>
+            <>
+              <span className="flex-1 truncate">{t("nav.impacts")}</span>
+              <Lock className="h-4 w-4 shrink-0" />
+            </>
           )}
         </div>
 
@@ -394,10 +394,10 @@ export function Sidebar({ clientName }: SidebarProps) {
             <Library className="h-5 w-5" />
           </div>
           {!isCollapsed && (
-            <span className="flex items-center gap-2">
-              {t("nav.normativos")}
-              <Lock className="h-4 w-4" />
-            </span>
+            <>
+              <span className="flex-1 truncate">{t("nav.normativos")}</span>
+              <Lock className="h-4 w-4 shrink-0" />
+            </>
           )}
         </div>
 
