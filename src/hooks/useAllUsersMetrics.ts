@@ -16,6 +16,7 @@ export interface AllMembersEntry {
   organization_id: string;
   role: AppRole;
   created_at: string;
+  is_platform_admin: boolean;
   profiles: {
     id: string | null;
     email: string | null;
@@ -48,8 +49,8 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
       const userIds = [...new Set(members.map(m => m.user_id))];
       const orgIds = [...new Set(members.map(m => m.organization_id))];
 
-      // Fetch profiles and user_departments in parallel
-      const [profilesResult, userDeptsResult] = await Promise.all([
+      // Fetch profiles, user_departments and platform_admins in parallel
+      const [profilesResult, userDeptsResult, platformAdminsResult] = await Promise.all([
         supabase
           .from("profiles_safe")
           .select("id, email, nome_completo, avatar_url, auth_method, last_login_at, locked_until, login_attempts")
@@ -59,11 +60,18 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
           .select("user_id, organization_id, department_id, departments:department_id(id, name)")
           .in("user_id", userIds)
           .in("organization_id", orgIds),
+        supabase
+          .from("platform_admins")
+          .select("user_id")
+          .in("user_id", userIds),
       ]);
 
       if (profilesResult.error) throw profilesResult.error;
 
       const profilesMap = new Map(profilesResult.data?.map(p => [p.id, p]) || []);
+      const platformAdminSet = new Set(
+        (platformAdminsResult.data || []).map((pa: { user_id: string }) => pa.user_id)
+      );
 
       // Build a map: `${userId}_${orgId}` → DepartmentRef[]
       const deptMap = new Map<string, DepartmentRef[]>();
@@ -82,6 +90,7 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
         organization_id: member.organization_id,
         role: member.role,
         created_at: member.created_at,
+        is_platform_admin: platformAdminSet.has(member.user_id),
         profiles: profilesMap.get(member.user_id) || null,
         organization: member.organization as { name: string } | null,
         departments: deptMap.get(`${member.user_id}_${member.organization_id}`) || [],

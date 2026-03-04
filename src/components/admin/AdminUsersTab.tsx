@@ -67,6 +67,7 @@ interface AllMembersEntry {
   organization_id: string;
   role: AppRole;
   created_at: string;
+  is_platform_admin: boolean;
   profiles: MemberProfile | null;
   organization: { name: string } | null;
   departments: DepartmentRef[];
@@ -434,11 +435,14 @@ export function AdminUsersTab({
                           {(() => {
                             const auth = member.profiles?.auth_method || 'local';
                             const role = member.role;
-                            // Derive LegalHub profile label
-                            // Note: isPlatformAdmin not available here, so we rely on role=admin+SSO
                             let label = '';
                             let cls = '';
-                            if (auth === 'sso_cca') {
+                            let icon: React.ReactNode = null;
+                            if (member.is_platform_admin) {
+                              label = 'Admin Plataforma';
+                              cls = 'bg-risk-medium/20 text-risk-medium';
+                              icon = <Crown className="h-3 w-3" />;
+                            } else if (auth === 'sso_cca') {
                               if (role === 'admin') { label = 'Gestão CCA'; cls = 'bg-primary/20 text-primary'; }
                               else { label = 'Utilizador CCA'; cls = 'bg-primary/10 text-primary'; }
                             } else {
@@ -447,6 +451,7 @@ export function AdminUsersTab({
                             }
                             return (
                               <Badge className={`${cls} flex items-center gap-1 w-fit text-xs`}>
+                                {icon}
                                 {label}
                               </Badge>
                             );
