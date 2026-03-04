@@ -994,7 +994,13 @@
     "invoiceNumber": "Nº Fatura",
     "dueDate": "Data de Vencimento",
     "amount": "Valor",
-    "invoiceStatus": "Estado"
+    "invoiceStatus": "Estado",
+    "selectJvrisId": "Selecione o ID do Cliente",
+    "selectJvrisIdDescription": "Foram encontrados vários clientes na Base Nav. Selecione o ID que corresponde a esta organização.",
+    "searchClientId": "Pesquisar ID do cliente...",
+    "noMatchingIds": "Nenhum ID correspondente",
+    "confirmSelection": "Confirmar Seleção",
+    "selecting": "A configurar..."
   },
   "platformAdmin": {
     "impersonation": {

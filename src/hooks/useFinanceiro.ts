@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
@@ -122,6 +123,11 @@ export function useFinanceiro() {
   const { isPlatformAdmin } = usePlatformAdmin();
   const organizationId = profile?.current_organization_id;
   const queryClient = useQueryClient();
+  const [lastSyncResult, setLastSyncResult] = useState<{
+    jvris_ids?: string[];
+    auto_linked?: string | null;
+    needs_jvris_config?: boolean;
+  } | null>(null);
 
   // Buscar info financeira da organização
   const { data: orgInfo } = useQuery({
@@ -231,9 +237,6 @@ export function useFinanceiro() {
 
   const hasNavData = navItems.length > 0 || (navCache?.valor_pendente != null && navCache.valor_pendente > 0);
 
-  // Filter navItems with valor pendente (> 0)
-  const navItemsComValor = navItems.filter((item) => item.valor != null && item.valor > 0);
-
   const accountSummary: AccountSummary = {
     status: calculateAccountStatusFromNav(navCache ?? null, navItems),
     tipoCliente,
@@ -243,7 +246,7 @@ export function useFinanceiro() {
       : invoices
           .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
           .reduce((sum, f) => sum + Number(f.valor), 0),
-    totalFaturasEmIncumprimento: hasNavData ? navItemsComValor.length : invoices.filter((f) => f.estado !== "paga").length,
+    totalFaturasEmIncumprimento: hasNavData ? navItems.length : invoices.filter((f) => f.estado !== "paga").length,
     faturasEmAberto: hasNavData ? navItemsEmAberto.length : invoices.filter((f) => f.estado === "em_aberto").length,
     faturasVencidas: hasNavData ? navItemsVencidas.length : invoices.filter((f) => f.estado === "vencida").length,
     proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
@@ -380,6 +383,7 @@ export function useFinanceiro() {
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
       queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
       queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+      setLastSyncResult(data);
       let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
       if (data?.auto_linked) {
         msg += ` (ID Jvris configurado: ${data.auto_linked})`;
@@ -388,6 +392,27 @@ export function useFinanceiro() {
     },
     onError: (error) => {
       toast.error("Erro ao sincronizar Base Nav: " + error.message);
+    },
+  });
+
+  // Mutação para configurar jvris_id da organização
+  const setJvrisId = useMutation({
+    mutationFn: async (jvrisId: string) => {
+      const { error } = await supabase
+        .from("organizations")
+        .update({ jvris_id: jvrisId } as any)
+        .eq("id", organizationId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+      setLastSyncResult(null);
+      toast.success("ID Jvris configurado com sucesso");
+    },
+    onError: (error) => {
+      toast.error("Erro ao configurar ID Jvris: " + error.message);
     },
   });
 
@@ -422,6 +447,7 @@ export function useFinanceiro() {
     navCache: navCache ?? null,
     navItems,
     jvrisId: orgInfo?.jvris_id ?? null,
+    lastSyncResult,
     organizationId,
     isLoading: isLoadingInvoices || isLoadingFolders,
     isPlatformAdmin,
@@ -430,6 +456,7 @@ export function useFinanceiro() {
     deleteInvoice,
     updateOrganizationFinancial,
     syncNavFromSharePoint,
+    setJvrisId,
     createFolder,
   };
 }
