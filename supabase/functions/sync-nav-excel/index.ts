@@ -397,11 +397,27 @@ serve(async (req) => {
           }
         } else {
           // ── New client group ──
-          groups.set(rawIdStr, {
+          const group: ClientGroup = {
             parentRow: row as Record<string, unknown>,
             valorPendente: validVp,
             children: [],
-          });
+          };
+          // If this parent row also has invoice data (flat structure), add as child
+          const rowNumero = findValue(row, NUMERO_CANDIDATES);
+          const rowData = findValue(row, DATE_CANDIDATES);
+          if (rowNumero) {
+            const numero = String(rowNumero).trim();
+            const dataVencimento = resolveDate(rowData);
+            if (numero || dataVencimento || validVp !== null) {
+              group.children.push({
+                row: row as Record<string, unknown>,
+                numero: numero || null,
+                valor: validVp,
+                dataVencimento,
+              });
+            }
+          }
+          groups.set(rawIdStr, group);
         }
       } else if (rawId && rawIdStr && looksLikeDocumentNumber(rawIdStr) && currentJvrisId && groups.has(currentJvrisId)) {
         // ── Child row: value in ID column is actually an invoice number ──
