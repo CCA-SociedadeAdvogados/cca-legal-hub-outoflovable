@@ -147,8 +147,18 @@ Deno.serve(async (req) => {
   console.log(`[SSO-CCA] Parsed path: "${path}" | method: ${req.method}`);
   console.log(`[SSO-CCA] Config check: clientId=${SSO_CONFIG.clientId ? "SET" : "MISSING"}, issuerUrl=${SSO_CONFIG.issuerUrl ? "SET" : "MISSING"}, redirectUrl=${SSO_CONFIG.redirectUrl ? "SET" : "MISSING"}, clientSecret=${SSO_CONFIG.clientSecret ? "SET" : "MISSING"}`);
 
-  // Create Supabase client with service role for all operations
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  // Create Supabase client with service role for all operations.
+  // CRITICAL: persistSession must be false so that verifyOtp does NOT change
+  // the client's auth context from service_role to the authenticated user.
+  // Without this, all DB operations after verifyOtp would run with user-level
+  // RLS instead of service_role, silently failing on tables like sso_admin_emails
+  // and platform_admins.
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
   try {
     // Check if SSO is configured
@@ -473,51 +483,14 @@ Deno.serve(async (req) => {
           .eq("id", userId);
       }
 
-      // Generate real session for the user
-      console.log("[SSO-CCA] Generating session for user");
-
-      // Step 1: Generate magic link hash
-      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-        type: "magiclink",
-        email: email,
-      });
-
-      if (linkError || !linkData?.properties?.hashed_token) {
-        console.error("[SSO-CCA] Failed to generate link:", linkError?.message);
-        return new Response(
-          JSON.stringify({
-            error: "session_generation_failed",
-            message: "Falha ao gerar sessão",
-          }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
-
-      // Step 2: Verify OTP to create real session with tokens
-      const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
-        token_hash: linkData.properties.hashed_token,
-        type: "email",
-      });
-
-      if (sessionError || !sessionData?.session) {
-        console.error("[SSO-CCA] Failed to verify OTP:", sessionError?.message);
-        return new Response(
-          JSON.stringify({
-            error: "session_verification_failed",
-            message: "Falha ao verificar sessão",
-          }),
-          {
-            status: 500,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
-        );
-      }
+      // ═══════════════════════════════════════════════════════════════════════
+      // PHASE 1: All admin/database operations (runs as service_role)
+      // These MUST happen before verifyOtp which could affect the client's
+      // auth context. With persistSession:false this shouldn't happen, but
+      // we keep admin ops first as a defensive measure.
+      // ═══════════════════════════════════════════════════════════════════════
 
       // Auto-assign SSO users to CCA_Teste organization using SECURITY DEFINER function
-      // This bypasses RLS policies that would otherwise block the insert
       const CCA_TESTE_ORG_ID = "e33bf0c9-71b9-491b-8054-d4c88d8bb4ee";
 
       // ── Step 1: Check sso_admin_emails table (highest priority) ──────────────
@@ -632,8 +605,9 @@ Deno.serve(async (req) => {
         console.log(`[SSO-CCA] sso_admin_emails table unavailable — skipping platform_admins sync to preserve manually-set admins`);
       }
 
+      // ── Step 4: Assign user to CCA organization ────────────────────────────
       console.log(`[SSO-CCA] Assigning user to CCA_Teste organization via RPC with role: ${assignedRole}`);
-      
+
       const { error: assignError } = await supabase
         .rpc("assign_sso_user_to_organization", {
           p_user_id: userId,
@@ -642,12 +616,15 @@ Deno.serve(async (req) => {
         });
 
       if (assignError) {
-        console.error(`[SSO-CCA] Failed to assign user to CCA_Teste:`, assignError.message);
+        console.error(`[SSO-CCA] CRITICAL: Failed to assign user to CCA_Teste:`, assignError.message, assignError);
+        // Continue — we still set current_organization_id below as a fallback
       } else {
         console.log(`[SSO-CCA] Successfully assigned user to CCA_Teste with role: ${assignedRole}`);
       }
 
-      // Mark onboarding as completed for SSO users — they don't need the onboarding flow
+      // ── Step 5: Update profile with onboarding + org ──────────────────────
+      // Mark onboarding as completed for SSO users — they don't need the onboarding flow.
+      // Also ALWAYS set current_organization_id to CCA (even if already set to something else).
       const { error: onboardingError } = await supabase
         .from("profiles")
         .update({
@@ -670,8 +647,56 @@ Deno.serve(async (req) => {
         success: true,
         metadata: {
           idp: "cca",
+          role: assignedRole,
+          roleSource: roleSource,
+          orgAssigned: !assignError,
         },
       }]);
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // PHASE 2: Generate session (LAST step — after all admin ops are done)
+      // ═══════════════════════════════════════════════════════════════════════
+      console.log("[SSO-CCA] Generating session for user");
+
+      // Step 1: Generate magic link hash
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: "magiclink",
+        email: email,
+      });
+
+      if (linkError || !linkData?.properties?.hashed_token) {
+        console.error("[SSO-CCA] Failed to generate link:", linkError?.message);
+        return new Response(
+          JSON.stringify({
+            error: "session_generation_failed",
+            message: "Falha ao gerar sessão",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      // Step 2: Verify OTP to create real session with tokens
+      const { data: sessionData, error: sessionError } = await supabase.auth.verifyOtp({
+        token_hash: linkData.properties.hashed_token,
+        type: "email",
+      });
+
+      if (sessionError || !sessionData?.session) {
+        console.error("[SSO-CCA] Failed to verify OTP:", sessionError?.message);
+        return new Response(
+          JSON.stringify({
+            error: "session_verification_failed",
+            message: "Falha ao verificar sessão",
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
 
       console.log(`[SSO-CCA] SSO login successful for user ${userId}`);
 
