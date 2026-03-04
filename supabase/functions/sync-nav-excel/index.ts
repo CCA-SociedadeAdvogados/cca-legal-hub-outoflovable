@@ -381,11 +381,13 @@ serve(async (req) => {
             existing.valorPendente = (existing.valorPendente || 0) + validVp;
           }
           // If this duplicate row also has invoice data, append as child
+          // Only add when there's a document number or due date — a row with
+          // only valor is a totals/summary row, not an individual invoice
           const rowNumero = findValue(row, NUMERO_CANDIDATES);
           const rowData = findValue(row, DATE_CANDIDATES);
           const numero = rowNumero ? String(rowNumero).trim() : null;
           const dataVencimento = resolveDate(rowData);
-          if (numero || dataVencimento || validVp !== null) {
+          if (numero || dataVencimento) {
             existing.children.push({
               row: row as Record<string, unknown>,
               numero,
@@ -401,11 +403,13 @@ serve(async (req) => {
             children: [],
           };
           // If this parent row also has invoice data (flat structure), add as child
+          // Only add when there's a document number or due date — a row with
+          // only valor is a totals/summary row, not an individual invoice
           const rowNumero = findValue(row, NUMERO_CANDIDATES);
           const rowData = findValue(row, DATE_CANDIDATES);
           const numero = rowNumero ? String(rowNumero).trim() : null;
           const dataVencimento = resolveDate(rowData);
-          if (numero || dataVencimento || validVp !== null) {
+          if (numero || dataVencimento) {
             group.children.push({
               row: row as Record<string, unknown>,
               numero,
