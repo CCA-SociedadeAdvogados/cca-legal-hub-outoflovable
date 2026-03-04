@@ -171,6 +171,7 @@ export function useFinanceiro() {
         .eq("jvris_id", orgInfo!.jvris_id!)
         .not("numero_documento", "is", null)
         .neq("numero_documento", "")
+        .not("data_vencimento", "is", null)
         .order("data_vencimento", { ascending: true });
 
       if (error) throw error;
