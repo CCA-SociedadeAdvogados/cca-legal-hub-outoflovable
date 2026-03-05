@@ -16,6 +16,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { useSubscriptionPlans, useCreateSubscription } from '@/hooks/useSubscription';
 import { useOnboarding } from '@/hooks/useOnboarding';
 import { supabase } from '@/integrations/supabase/client';
+import { syncDepartamento } from '@/lib/syncDepartamento';
 
 const STEPS = [
   { id: 'profile', title: 'Perfil', icon: User },
@@ -131,10 +132,29 @@ export default function Onboarding() {
         await createSubscription.mutateAsync(selectedPlan);
       }
       await completeOnboarding.mutateAsync();
-      
+
+      // Sync departamento with user_departments junction table
+      // At this point both departamento and current_organization_id should be set
+      if (user?.id && profileData.departamento) {
+        const { data: freshProfile } = await supabase
+          .from('profiles')
+          .select('current_organization_id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (freshProfile?.current_organization_id) {
+          try {
+            await syncDepartamento(user.id, freshProfile.current_organization_id, profileData.departamento);
+          } catch (syncError) {
+            // Non-blocking — department sync is best-effort during onboarding
+            console.warn('[Onboarding] Failed to sync user_departments:', syncError);
+          }
+        }
+      }
+
       // Aguardar que o cache do perfil seja atualizado antes de navegar
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
-      
+
       toast.success('Configuração concluída com sucesso!');
       navigate('/');
     } catch (error: any) {

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { syncDepartamento } from '@/lib/syncDepartamento';
 
 const DEPARTAMENTO_VALUES = [
   'juridico', 'comercial', 'financeiro', 'rh', 'it', 'operacoes', 'marketing', 'outro',
@@ -50,16 +51,31 @@ export function DepartmentGate({ children }: DepartmentGateProps) {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      // Get the user's current organization
+      const { data: profileData } = await supabase
         .from('profiles')
-        .update({
-          departamento: selectedDept as "comercial" | "financeiro" | "it" | "juridico" | "marketing" | "operacoes" | "outro" | "rh",
-        })
-        .eq('id', user.id);
+        .select('current_organization_id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      const orgId = profileData?.current_organization_id;
 
-      await queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
+      if (orgId) {
+        // Sync profiles.departamento + user_departments
+        await syncDepartamento(user.id, orgId, selectedDept);
+      } else {
+        // Fallback: only update profiles.departamento (no org yet)
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            departamento: selectedDept as "comercial" | "financeiro" | "it" | "juridico" | "marketing" | "operacoes" | "outro" | "rh",
+          })
+          .eq('id', user.id);
+        if (error) throw error;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['profile', user.id] });
+      await queryClient.invalidateQueries({ queryKey: ['user-departments'] });
       toast({ title: t('department.saved') });
     } catch (error: unknown) {
       toast({
