@@ -13,7 +13,7 @@ const SSO_CONFIG = {
   // Trim trailing slash to prevent double-slash in endpoint URLs (e.g. //authorize, //token)
   issuerUrl: (Deno.env.get("CCA_SSO_ISSUER_URL") || "").replace(/\/$/, ""),
   redirectUrl: (Deno.env.get("CCA_SSO_REDIRECT_URL") || "").trim(),
-  allowedDomains: (Deno.env.get("CCA_SSO_ALLOWED_DOMAINS") || "cca.pt,cca-law.com").split(",").map(d => d.trim().toLowerCase()),
+  allowedDomains: (Deno.env.get("CCA_SSO_ALLOWED_DOMAINS") || "cca.pt,cca-law.com,cca.law").split(",").map(d => d.trim().toLowerCase()),
   defaultRole: "viewer",
 };
 
