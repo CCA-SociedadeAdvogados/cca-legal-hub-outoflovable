@@ -119,10 +119,15 @@ function calculateAccountStatusFromNav(
   return "em_aberto";
 }
 
-export function useFinanceiro() {
+/**
+ * @param overrideOrgId - Quando fornecido (ex: seleção via ClienteSelectorJvris por utilizadores CCA),
+ * os dados são carregados para esta organização em vez da organização atual do perfil.
+ */
+export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
-  const organizationId = profile?.current_organization_id;
+  // Utilizadores CCA podem ver dados de qualquer organização via o seletor Jvris
+  const organizationId = overrideOrgId || profile?.current_organization_id;
   const queryClient = useQueryClient();
   const [lastSyncResult, setLastSyncResult] = useState<{
     jvris_ids?: string[];
