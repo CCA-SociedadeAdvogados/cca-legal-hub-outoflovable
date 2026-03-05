@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { CCAOrgSwitcher } from '@/components/layout/CCAOrgSwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -89,6 +90,9 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        {/* CCA Org Switcher */}
+        <CCAOrgSwitcher />
+
         {/* Language Selector */}
         <LanguageSelector />
 

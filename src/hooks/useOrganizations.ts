@@ -189,6 +189,20 @@ export function useOrganizations() {
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
       queryClient.invalidateQueries({ queryKey: ['eventos-legislativos'] });
       queryClient.invalidateQueries({ queryKey: ['impactos'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['client-folders'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] });
+      queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] });
+      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      queryClient.invalidateQueries({ queryKey: ['user-departments'] });
+      queryClient.invalidateQueries({ queryKey: ['contentBlocks'] });
+      queryClient.invalidateQueries({ queryKey: ['homeConfig'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       toast.success('Organização alterada');
     },
     onError: (error: any) => {
