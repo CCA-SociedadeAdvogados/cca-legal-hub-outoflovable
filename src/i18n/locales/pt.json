@@ -1179,5 +1179,13 @@
     "deleteError": "Erro ao remover configuração",
     "syncSuccess": "Sincronização concluída: {{added}} novos, {{updated}} atualizados, {{deleted}} removidos",
     "syncError": "Erro na sincronização: {{message}}"
+  },
+  "cca": {
+    "selectOrg": "Selecionar organização",
+    "allOrganizations": "Todas as organizações",
+    "myOrganizations": "As minhas organizações",
+    "searchOrg": "Pesquisar organização...",
+    "noOrgsFound": "Nenhuma organização encontrada",
+    "viewingOrg": "A visualizar organização"
   }
 }

@@ -1179,5 +1179,13 @@
     "deleteError": "Error removing configuration",
     "syncSuccess": "Sync completed: {{added}} new, {{updated}} updated, {{deleted}} deleted",
     "syncError": "Sync error: {{message}}"
+  },
+  "cca": {
+    "selectOrg": "Select organization",
+    "allOrganizations": "All organizations",
+    "myOrganizations": "My organizations",
+    "searchOrg": "Search organization...",
+    "noOrgsFound": "No organizations found",
+    "viewingOrg": "Viewing organization"
   }
 }

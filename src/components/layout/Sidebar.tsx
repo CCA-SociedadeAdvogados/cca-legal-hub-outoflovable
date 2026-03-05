@@ -414,8 +414,8 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* A Minha Organização — local users */}
-        {(isOrgManager || isOrgUser) && (
+        {/* A Minha Organização — CCA users (org selecionada) + local users */}
+        {(isCCAUser || isOrgManager || isOrgUser) && (
           <NavItem
             to="/minha-organizacao"
             icon={Building2}
@@ -425,7 +425,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* Utilizadores (org-scoped) — org_manager + app_admin */}
+        {/* Utilizadores (org-scoped) — cca_manager + org_manager + app_admin */}
         {can('users:view_own_org') && (
           <NavItem
             to="/utilizadores-org"
@@ -436,8 +436,8 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* Organização — only for Admin or org users (not CCA SSO) */}
-        {(isAppAdmin) && (
+        {/* Organização — Admin + CCA managers */}
+        {(isAppAdmin || can('org:view_all')) && (
           <NavItem
             to="/organizacao"
             icon={Building2}
