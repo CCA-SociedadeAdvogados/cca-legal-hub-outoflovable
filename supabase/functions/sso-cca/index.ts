@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// xlsx utilizado para ler o ficheiro SharePoint com o mapeamento email → ID Jvris
+import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +27,404 @@ const ALPHANUMERIC_REGEX = /^[a-zA-Z0-9_-]+$/;
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// ─── Configuração Jvris / SharePoint ────────────────────────────────────────
+// As credenciais SharePoint (SHAREPOINT_*) já estão configuradas para o sync-nav-excel.
+// CCA_JVRIS_USERS_FILE: nome (sem extensão) do ficheiro Excel no SharePoint que
+//   contém a listagem de utilizadores CCA com os respetivos IDs Jvris.
+//   Formato esperado: colunas "email" e "jvris_id" (nomes flexíveis, ver abaixo).
+// CCA_JVRIS_SHAREPOINT_SITE_ID: ID do site SharePoint da CCA onde o ficheiro reside.
+//   Se não definido, o lookup é ignorado (login não é bloqueado).
+const JVRIS_CONFIG = {
+  tenantId: Deno.env.get("SHAREPOINT_TENANT_ID") || "",
+  clientId: Deno.env.get("SHAREPOINT_CLIENT_ID") || "",
+  clientSecret: Deno.env.get("SHAREPOINT_CLIENT_SECRET") || "",
+  siteId: Deno.env.get("CCA_JVRIS_SHAREPOINT_SITE_ID") || "",
+  fileName: Deno.env.get("CCA_JVRIS_USERS_FILE") || "Jvris_Utilizadores",
+};
+
+// Candidatos para o cabeçalho da coluna de email (case-insensitive, sem diacríticos)
+const EMAIL_COL_CANDIDATES = ["email", "emailaddress", "correioeletronico", "utilizadoremail", "upn", "mail"];
+// Candidatos para o cabeçalho da coluna do ID Jvris
+const JVRIS_COL_CANDIDATES = ["jvrisid", "idjvris", "jvris", "codigojvris", "codigo", "clienteid"];
+
+/** Normaliza um cabeçalho de coluna: lowercase + remove diacríticos + remove não-alfanumérico */
+function normalizeHeader(header: string): string {
+  return header
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Obtém um token de acesso à Microsoft Graph API usando as credenciais
+ * de aplicação SharePoint (client credentials flow).
+ */
+async function getGraphToken(): Promise<string | null> {
+  if (!JVRIS_CONFIG.tenantId || !JVRIS_CONFIG.clientId || !JVRIS_CONFIG.clientSecret) {
+    console.log("[SSO-CCA][Jvris] Credenciais SharePoint não configuradas — lookup ignorado");
+    return null;
+  }
+
+  try {
+    const tokenUrl = `https://login.microsoftonline.com/${JVRIS_CONFIG.tenantId}/oauth2/v2.0/token`;
+    const resp = await fetch(tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: JVRIS_CONFIG.clientId,
+        client_secret: JVRIS_CONFIG.clientSecret,
+        scope: "https://graph.microsoft.com/.default",
+      }),
+    });
+
+    if (!resp.ok) {
+      console.error(`[SSO-CCA][Jvris] Falha ao obter token Graph: ${resp.status}`);
+      return null;
+    }
+
+    const data = await resp.json();
+    return data.access_token as string ?? null;
+  } catch (err) {
+    console.error("[SSO-CCA][Jvris] Erro ao obter token Graph:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/**
+ * Procura o ficheiro de mapeamento Jvris nos drives do site SharePoint configurado.
+ * Devolve a URL de download ou null se não encontrado.
+ */
+async function findJvrisFileDownloadUrl(graphToken: string): Promise<string | null> {
+  if (!JVRIS_CONFIG.siteId) {
+    console.log("[SSO-CCA][Jvris] CCA_JVRIS_SHAREPOINT_SITE_ID não configurado — lookup ignorado");
+    return null;
+  }
+
+  try {
+    // Listar todos os drives (bibliotecas de documentos) do site
+    const drivesResp = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${JVRIS_CONFIG.siteId}/drives`,
+      { headers: { "Authorization": `Bearer ${graphToken}` } }
+    );
+
+    if (!drivesResp.ok) {
+      console.error(`[SSO-CCA][Jvris] Falha ao listar drives: ${drivesResp.status}`);
+      return null;
+    }
+
+    const drivesData = await drivesResp.json();
+    const drives: Array<{ id: string; name: string }> = drivesData.value || [];
+    console.log(`[SSO-CCA][Jvris] ${drives.length} drive(s) encontrado(s) no site CCA`);
+
+    const fileNameLower = JVRIS_CONFIG.fileName.toLowerCase();
+
+    for (const drive of drives) {
+      // Pesquisar o ficheiro dentro do drive atual
+      const searchResp = await fetch(
+        `https://graph.microsoft.com/v1.0/drives/${drive.id}/root/search(q='${encodeURIComponent(JVRIS_CONFIG.fileName)}')`,
+        { headers: { "Authorization": `Bearer ${graphToken}` } }
+      );
+
+      if (!searchResp.ok) continue;
+
+      const searchData = await searchResp.json();
+      const items: Array<{ name: string; "@microsoft.graph.downloadUrl"?: string; file?: object }> =
+        searchData.value || [];
+
+      // Encontrar o ficheiro cujo nome (sem extensão) corresponda ao configurado
+      const match = items.find((item) => {
+        if (!item.file) return false; // ignorar pastas
+        const nameWithoutExt = item.name.replace(/\.[^.]+$/, "").toLowerCase();
+        return nameWithoutExt === fileNameLower;
+      });
+
+      if (match && match["@microsoft.graph.downloadUrl"]) {
+        console.log(`[SSO-CCA][Jvris] Ficheiro encontrado: "${match.name}" no drive "${drive.name}"`);
+        return match["@microsoft.graph.downloadUrl"];
+      }
+    }
+
+    console.log(`[SSO-CCA][Jvris] Ficheiro "${JVRIS_CONFIG.fileName}" não encontrado nos ${drives.length} drive(s)`);
+    return null;
+  } catch (err) {
+    console.error("[SSO-CCA][Jvris] Erro ao procurar ficheiro:", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/**
+ * Lê o ficheiro Excel do SharePoint com o mapeamento organização → ID Jvris e
+ * atualiza a coluna `organizations.jvris_id` para cada organização encontrada.
+ *
+ * Formato esperado do ficheiro (colunas flexíveis):
+ *   nome_org  |  jvris_id
+ *   ----------|----------
+ *   Client A  |  C.0009
+ *   Client B  |  C.0042
+ *
+ * A correspondência é feita pelo nome da organização (case-insensitive, normalizado).
+ * Organizações sem correspondência ficam inalteradas.
+ * Função completamente não-bloqueante — erros apenas registados em log.
+ *
+ * Env var adicional: CCA_JVRIS_ORGS_FILE (default: "Jvris_Clientes")
+ */
+// deno-lint-ignore no-explicit-any
+async function syncOrgsJvrisIdFromSharePoint(supabase: any): Promise<void> {
+  try {
+    const orgsFileName = Deno.env.get("CCA_JVRIS_ORGS_FILE") || "Jvris_Clientes";
+
+    // Passo 1: obter token Graph
+    const graphToken = await getGraphToken();
+    if (!graphToken) return;
+
+    // Passo 2: localizar o ficheiro no SharePoint (reutiliza a lógica de findJvrisFileDownloadUrl
+    //          com o nome do ficheiro de organizações)
+    if (!JVRIS_CONFIG.siteId) {
+      console.log("[SSO-CCA][Jvris][Orgs] CCA_JVRIS_SHAREPOINT_SITE_ID não configurado — sync ignorado");
+      return;
+    }
+
+    const drivesResp = await fetch(
+      `https://graph.microsoft.com/v1.0/sites/${JVRIS_CONFIG.siteId}/drives`,
+      { headers: { "Authorization": `Bearer ${graphToken}` } }
+    );
+
+    if (!drivesResp.ok) {
+      console.error(`[SSO-CCA][Jvris][Orgs] Falha ao listar drives: ${drivesResp.status}`);
+      return;
+    }
+
+    const drivesData = await drivesResp.json();
+    const drives: Array<{ id: string; name: string }> = drivesData.value || [];
+    const orgsFileNameLower = orgsFileName.toLowerCase();
+    let downloadUrl: string | null = null;
+
+    for (const drive of drives) {
+      const searchResp = await fetch(
+        `https://graph.microsoft.com/v1.0/drives/${drive.id}/root/search(q='${encodeURIComponent(orgsFileName)}')`,
+        { headers: { "Authorization": `Bearer ${graphToken}` } }
+      );
+      if (!searchResp.ok) continue;
+
+      const searchData = await searchResp.json();
+      const items: Array<{ name: string; "@microsoft.graph.downloadUrl"?: string; file?: object }> =
+        searchData.value || [];
+
+      const match = items.find((item) => {
+        if (!item.file) return false;
+        const nameWithoutExt = item.name.replace(/\.[^.]+$/, "").toLowerCase();
+        return nameWithoutExt === orgsFileNameLower;
+      });
+
+      if (match && match["@microsoft.graph.downloadUrl"]) {
+        console.log(`[SSO-CCA][Jvris][Orgs] Ficheiro encontrado: "${match.name}" no drive "${drive.name}"`);
+        downloadUrl = match["@microsoft.graph.downloadUrl"];
+        break;
+      }
+    }
+
+    if (!downloadUrl) {
+      console.log(`[SSO-CCA][Jvris][Orgs] Ficheiro "${orgsFileName}" não encontrado — sync de orgs ignorado`);
+      return;
+    }
+
+    // Passo 3: descarregar e parsear o ficheiro
+    const fileResp = await fetch(downloadUrl);
+    if (!fileResp.ok) {
+      console.error(`[SSO-CCA][Jvris][Orgs] Falha ao descarregar ficheiro: ${fileResp.status}`);
+      return;
+    }
+
+    const fileBuffer = await fileResp.arrayBuffer();
+    const workbook = XLSX.read(new Uint8Array(fileBuffer), { type: "array" });
+    const firstSheetName = workbook.SheetNames[0];
+    if (!firstSheetName) return;
+
+    const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(
+      workbook.Sheets[firstSheetName],
+      { defval: "" }
+    );
+
+    if (rows.length === 0) {
+      console.log("[SSO-CCA][Jvris][Orgs] Ficheiro vazio");
+      return;
+    }
+
+    // Passo 4: identificar colunas de nome da org e jvris_id
+    const headers = Object.keys(rows[0]);
+    const ORG_NAME_CANDIDATES = ["nome", "nomeorg", "organizacao", "nome_organizacao", "organization", "name", "client", "cliente"];
+    let orgNameCol: string | null = null;
+    let orgJvrisCol: string | null = null;
+
+    for (const h of headers) {
+      const normalized = normalizeHeader(h);
+      if (!orgNameCol && ORG_NAME_CANDIDATES.includes(normalized)) orgNameCol = h;
+      if (!orgJvrisCol && JVRIS_COL_CANDIDATES.includes(normalized)) orgJvrisCol = h;
+    }
+
+    if (!orgNameCol || !orgJvrisCol) {
+      console.log(
+        `[SSO-CCA][Jvris][Orgs] Colunas não identificadas no ficheiro de organizações. ` +
+        `Cabeçalhos: [${headers.join(", ")}]`
+      );
+      return;
+    }
+
+    console.log(`[SSO-CCA][Jvris][Orgs] ${rows.length} linhas — col org: "${orgNameCol}", col jvris: "${orgJvrisCol}"`);
+
+    // Passo 5: buscar todas as organizações do Supabase
+    const { data: orgs, error: orgsError } = await supabase
+      .from("organizations")
+      .select("id, name, jvris_id");
+
+    if (orgsError) {
+      console.error(`[SSO-CCA][Jvris][Orgs] Erro ao buscar organizações:`, orgsError.message);
+      return;
+    }
+
+    // Passo 6: fazer o match e atualizar jvris_id para cada organização encontrada
+    let updated = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const rowOrgName = String(row[orgNameCol] || "").trim();
+      const rowJvrisId = String(row[orgJvrisCol] || "").trim();
+
+      if (!rowOrgName || !rowJvrisId) continue;
+
+      // Encontrar organização pelo nome (case-insensitive)
+      const org = (orgs || []).find(
+        (o: { id: string; name: string; jvris_id: string | null }) =>
+          o.name.toLowerCase() === rowOrgName.toLowerCase()
+      );
+
+      if (!org) {
+        skipped++;
+        continue;
+      }
+
+      // Apenas atualizar se o jvris_id for diferente do atual (evitar writes desnecessários)
+      if (org.jvris_id === rowJvrisId) {
+        skipped++;
+        continue;
+      }
+
+      const { error: updateError } = await supabase
+        .from("organizations")
+        .update({ jvris_id: rowJvrisId })
+        .eq("id", org.id);
+
+      if (updateError) {
+        console.error(`[SSO-CCA][Jvris][Orgs] Erro ao atualizar "${org.name}":`, updateError.message);
+      } else {
+        updated++;
+        console.log(`[SSO-CCA][Jvris][Orgs] Org "${org.name}" → jvris_id: ${rowJvrisId}`);
+      }
+    }
+
+    console.log(`[SSO-CCA][Jvris][Orgs] Sync concluído: ${updated} atualizadas, ${skipped} sem alteração`);
+  } catch (err) {
+    console.error("[SSO-CCA][Jvris][Orgs] Erro inesperado no sync (login não afetado):", err instanceof Error ? err.message : err);
+  }
+}
+
+/**
+ * Lê o ficheiro Excel do SharePoint e procura o ID Jvris correspondente ao email
+ * do utilizador que fez login.
+ *
+ * Esta função é completamente não-bloqueante: qualquer erro é registado em log
+ * mas nunca impede o login.
+ *
+ * @returns ID Jvris (ex: "C.0042") ou null se não encontrado / erro
+ */
+async function lookupJvrisIdFromSharePoint(email: string): Promise<string | null> {
+  try {
+    // Passo 1: obter token Graph
+    const graphToken = await getGraphToken();
+    if (!graphToken) return null;
+
+    // Passo 2: localizar o ficheiro no SharePoint
+    const downloadUrl = await findJvrisFileDownloadUrl(graphToken);
+    if (!downloadUrl) return null;
+
+    // Passo 3: descarregar o ficheiro Excel
+    console.log("[SSO-CCA][Jvris] A descarregar ficheiro de mapeamento...");
+    const fileResp = await fetch(downloadUrl);
+    if (!fileResp.ok) {
+      console.error(`[SSO-CCA][Jvris] Falha ao descarregar ficheiro: ${fileResp.status}`);
+      return null;
+    }
+
+    const fileBuffer = await fileResp.arrayBuffer();
+
+    // Passo 4: parsear o Excel (primeira folha)
+    const workbook = XLSX.read(new Uint8Array(fileBuffer), { type: "array" });
+    const firstSheetName = workbook.SheetNames[0];
+    if (!firstSheetName) {
+      console.log("[SSO-CCA][Jvris] Ficheiro Excel sem folhas");
+      return null;
+    }
+
+    const sheet = workbook.Sheets[firstSheetName];
+    const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    if (rows.length === 0) {
+      console.log("[SSO-CCA][Jvris] Ficheiro vazio");
+      return null;
+    }
+
+    // Passo 5: identificar colunas de email e jvris_id pelos cabeçalhos
+    const headers = Object.keys(rows[0]);
+    let emailCol: string | null = null;
+    let jvrisCol: string | null = null;
+
+    for (const h of headers) {
+      const normalized = normalizeHeader(h);
+      if (!emailCol && EMAIL_COL_CANDIDATES.includes(normalized)) emailCol = h;
+      if (!jvrisCol && JVRIS_COL_CANDIDATES.includes(normalized)) jvrisCol = h;
+    }
+
+    if (!emailCol || !jvrisCol) {
+      console.log(
+        `[SSO-CCA][Jvris] Colunas não identificadas. ` +
+        `Cabeçalhos encontrados: [${headers.join(", ")}]. ` +
+        `Esperado: coluna de email (${EMAIL_COL_CANDIDATES.join("/")}) ` +
+        `e coluna de ID Jvris (${JVRIS_COL_CANDIDATES.join("/")})`
+      );
+      return null;
+    }
+
+    console.log(`[SSO-CCA][Jvris] Colunas identificadas — email: "${emailCol}", jvris_id: "${jvrisCol}". Linhas: ${rows.length}`);
+
+    // Passo 6: procurar a linha com o email do utilizador (case-insensitive)
+    const emailLower = email.toLowerCase();
+    const matchRow = rows.find((row) => {
+      const rowEmail = String(row[emailCol!] || "").toLowerCase().trim();
+      return rowEmail === emailLower;
+    });
+
+    if (!matchRow) {
+      console.log(`[SSO-CCA][Jvris] Email não encontrado no ficheiro — sem ID Jvris para este utilizador`);
+      return null;
+    }
+
+    const jvrisId = String(matchRow[jvrisCol] || "").trim();
+    if (!jvrisId) {
+      console.log(`[SSO-CCA][Jvris] Linha encontrada mas ID Jvris está vazio`);
+      return null;
+    }
+
+    console.log(`[SSO-CCA][Jvris] ID Jvris encontrado: ${jvrisId}`);
+    return jvrisId;
+  } catch (err) {
+    // Nunca bloquear o login por falha no lookup Jvris
+    console.error("[SSO-CCA][Jvris] Erro inesperado no lookup (login não afetado):", err instanceof Error ? err.message : err);
+    return null;
+  }
+}
 
 // Decode JWT ID token payload (signature already validated by token exchange)
 function decodeIdToken(idToken: string): Record<string, unknown> | null {
@@ -666,6 +1066,39 @@ Deno.serve(async (req) => {
         console.log(`[SSO-CCA] current_organization_id set to CCA for SSO user`);
       }
 
+      // ── Step 6: Lookup e indexação do ID Jvris (não-bloqueante) ─────────────
+      // Executa em paralelo dois processos independentes:
+      //   a) Lookup do ID Jvris do utilizador (profiles.jvris_id) pelo seu email
+      //   b) Sync do mapeamento organização → jvris_id (organizations.jvris_id)
+      // O login NÃO é bloqueado em caso de falha em nenhum dos dois.
+      let jvrisId: string | null = null;
+      try {
+        const [userJvrisId] = await Promise.allSettled([
+          lookupJvrisIdFromSharePoint(email),
+          syncOrgsJvrisIdFromSharePoint(supabase),
+        ]);
+
+        // Resultado do lookup do utilizador
+        if (userJvrisId.status === "fulfilled" && userJvrisId.value) {
+          jvrisId = userJvrisId.value;
+          const { error: jvrisUpdateError } = await supabase
+            .from("profiles")
+            .update({ jvris_id: jvrisId })
+            .eq("id", userId);
+
+          if (jvrisUpdateError) {
+            console.error(`[SSO-CCA][Jvris] Falha ao guardar jvris_id no perfil:`, jvrisUpdateError.message);
+          } else {
+            console.log(`[SSO-CCA][Jvris] jvris_id guardado no perfil: ${jvrisId}`);
+          }
+        } else {
+          console.log(`[SSO-CCA][Jvris] ID Jvris do utilizador não encontrado — perfil fica sem jvris_id`);
+        }
+      } catch (jvrisErr) {
+        // Garantia extra: qualquer erro aqui não deve interromper o fluxo de login
+        console.error("[SSO-CCA][Jvris] Erro inesperado no lookup (login não afetado):", jvrisErr instanceof Error ? jvrisErr.message : jvrisErr);
+      }
+
       // Log authentication activity
       await supabase.from("auth_activity_logs").insert([{
         user_id: userId,
@@ -677,6 +1110,7 @@ Deno.serve(async (req) => {
           role: assignedRole,
           roleSource: roleSource,
           orgAssigned: !assignError,
+          jvrisIdFound: !!jvrisId,
         },
       }]);
 
