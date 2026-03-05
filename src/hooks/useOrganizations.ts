@@ -78,12 +78,33 @@ export function useOrganizations() {
         .eq('id', user.id)
         .maybeSingle();
 
-      if (!profile?.current_organization_id) return null;
+      let orgId = profile?.current_organization_id;
+
+      // Self-healing: if current_organization_id is NULL but user has memberships,
+      // auto-set it to the first membership's org. Without this, RLS blocks ALL data.
+      if (!orgId) {
+        const { data: memberships } = await supabase
+          .from('organization_members')
+          .select('organization_id')
+          .eq('user_id', user.id)
+          .limit(1);
+
+        if (memberships && memberships.length > 0) {
+          orgId = memberships[0].organization_id;
+          // Fix the profile so this doesn't happen again
+          await supabase
+            .from('profiles')
+            .update({ current_organization_id: orgId })
+            .eq('id', user.id);
+        }
+      }
+
+      if (!orgId) return null;
 
       const { data: org } = await supabase
         .from('organizations')
         .select('*')
-        .eq('id', profile.current_organization_id)
+        .eq('id', orgId)
         .maybeSingle();
 
       return org as Organization | null;
