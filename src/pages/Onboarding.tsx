@@ -452,8 +452,8 @@ export default function Onboarding() {
                 Voltar
               </Button>
               {/* Only show continue button if user has memberships or pre-assigned org in step 1, or in other steps */}
-              {(currentStep !== 1 || hasMemberships || profile?.current_organization_id) && (
-                <Button onClick={handleNext} disabled={isLoading || (currentStep === 1 && !selectedOrganizationId && !profile?.current_organization_id)}>
+              {(currentStep !== 1 || hasMemberships || isSSOUser || profile?.current_organization_id) && (
+                <Button onClick={handleNext} disabled={isLoading || (currentStep === 1 && !selectedOrganizationId && !isSSOUser && !profile?.current_organization_id)}>
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   ) : null}
