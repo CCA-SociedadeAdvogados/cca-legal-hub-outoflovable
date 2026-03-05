@@ -100,8 +100,8 @@ export default function Onboarding() {
   };
 
   const handleOrgSubmit = async () => {
-    // Se o utilizador já tem organização pré-atribuída, avançar directamente
-    if (profile?.current_organization_id) {
+    // Se o utilizador já tem organização pré-atribuída (admin ou SSO), avançar directamente
+    if (isSSOUser || profile?.current_organization_id) {
       setCurrentStep(2);
       return;
     }
@@ -261,14 +261,11 @@ export default function Onboarding() {
                       <SelectValue placeholder="Selecione o departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="juridico">Jurídico</SelectItem>
-                      <SelectItem value="comercial">Comercial</SelectItem>
-                      <SelectItem value="financeiro">Financeiro</SelectItem>
-                      <SelectItem value="rh">Recursos Humanos</SelectItem>
-                      <SelectItem value="it">TI</SelectItem>
-                      <SelectItem value="operacoes">Operações</SelectItem>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
+                      {['juridico', 'comercial', 'financeiro', 'rh', 'it', 'operacoes', 'marketing', 'outro'].map((dept) => (
+                        <SelectItem key={dept} value={dept}>
+                          {t(`departments.${dept}`)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
