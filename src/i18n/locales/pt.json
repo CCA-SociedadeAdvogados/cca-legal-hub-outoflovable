@@ -65,16 +65,6 @@
     "saved": "Departamento guardado com sucesso",
     "saveError": "Erro ao guardar departamento"
   },
-  "departments": {
-    "juridico": "Jurídico",
-    "comercial": "Comercial",
-    "financeiro": "Financeiro",
-    "rh": "Recursos Humanos",
-    "it": "TI",
-    "operacoes": "Operações",
-    "marketing": "Marketing",
-    "outro": "Outro"
-  },
   "notifications": {
     "title": "Notificações",
     "subtitle": "Histórico de todas as suas notificações",
@@ -511,7 +501,13 @@
     "financial": "Financeiro",
     "legal": "Jurídico",
     "marketing": "Marketing",
-    "other": "Outro"
+    "other": "Outro",
+    "juridico": "Jurídico",
+    "comercial": "Comercial",
+    "financeiro": "Financeiro",
+    "rh": "Recursos Humanos",
+    "operacoes": "Operações",
+    "outro": "Outro"
   },
   "areaOfLaw": {
     "labor": "Laboral",

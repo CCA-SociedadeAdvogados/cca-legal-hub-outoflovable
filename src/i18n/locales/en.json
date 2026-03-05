@@ -65,16 +65,6 @@
     "saved": "Department saved successfully",
     "saveError": "Error saving department"
   },
-  "departments": {
-    "juridico": "Legal",
-    "comercial": "Commercial",
-    "financeiro": "Finance",
-    "rh": "Human Resources",
-    "it": "IT",
-    "operacoes": "Operations",
-    "marketing": "Marketing",
-    "outro": "Other"
-  },
   "notifications": {
     "title": "Notifications",
     "subtitle": "History of all your notifications",
@@ -511,7 +501,13 @@
     "financial": "Financial",
     "legal": "Legal",
     "marketing": "Marketing",
-    "other": "Other"
+    "other": "Other",
+    "juridico": "Legal",
+    "comercial": "Commercial",
+    "financeiro": "Finance",
+    "rh": "Human Resources",
+    "operacoes": "Operations",
+    "outro": "Other"
   },
   "areaOfLaw": {
     "labor": "Labor",
