@@ -11,15 +11,8 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 
-const DEPARTAMENTOS = [
-  { value: 'juridico', label: 'Jurídico' },
-  { value: 'comercial', label: 'Comercial' },
-  { value: 'financeiro', label: 'Financeiro' },
-  { value: 'rh', label: 'Recursos Humanos' },
-  { value: 'it', label: 'TI' },
-  { value: 'operacoes', label: 'Operações' },
-  { value: 'marketing', label: 'Marketing' },
-  { value: 'outro', label: 'Outro' },
+const DEPARTAMENTO_VALUES = [
+  'juridico', 'comercial', 'financeiro', 'rh', 'it', 'operacoes', 'marketing', 'outro',
 ] as const;
 
 interface DepartmentGateProps {
@@ -53,6 +46,8 @@ export function DepartmentGate({ children }: DepartmentGateProps) {
       return;
     }
 
+    if (!user?.id) return;
+
     setIsSaving(true);
     try {
       const { error } = await supabase
@@ -60,7 +55,7 @@ export function DepartmentGate({ children }: DepartmentGateProps) {
         .update({
           departamento: selectedDept as "comercial" | "financeiro" | "it" | "juridico" | "marketing" | "operacoes" | "outro" | "rh",
         })
-        .eq('id', user?.id);
+        .eq('id', user.id);
 
       if (error) throw error;
 
@@ -97,9 +92,9 @@ export function DepartmentGate({ children }: DepartmentGateProps) {
                 <SelectValue placeholder={t('department.placeholder')} />
               </SelectTrigger>
               <SelectContent>
-                {DEPARTAMENTOS.map((dept) => (
-                  <SelectItem key={dept.value} value={dept.value}>
-                    {dept.label}
+                {DEPARTAMENTO_VALUES.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {t(`departments.${value}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
