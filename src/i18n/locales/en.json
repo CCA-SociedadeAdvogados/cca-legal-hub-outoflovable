@@ -1020,7 +1020,13 @@
     "noMatchingIds": "No matching IDs",
     "confirmSelection": "Confirm Selection",
     "selecting": "Configuring...",
-    "errorLoadingInvoices": "Error loading invoices. Check your connection and try again."
+    "errorLoadingInvoices": "Error loading invoices. Check your connection and try again.",
+    "emDia": "Up to Date",
+    "emAberto": "Outstanding",
+    "searchByJvrisId": "Search by Jvris ID",
+    "jvrisId": "Jvris ID",
+    "noMatchingClients": "No matching clients",
+    "noClientsWithJvrisId": "No organizations with Jvris ID configured"
   },
   "platformAdmin": {
     "impersonation": {

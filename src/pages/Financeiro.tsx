@@ -17,19 +17,21 @@ import {
   Settings, RefreshCw, Search, Loader2
 } from "lucide-react";
 import { SharePointDocumentsBrowser } from "@/components/sharepoint/SharePointDocumentsBrowser";
+import { ClienteSelectorJvris } from "@/components/ClienteSelectorJvris";
+import { useLegalHubProfile } from "@/hooks/useLegalHubProfile";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
 
 const statusColors: Record<AccountStatus, string> = {
-  regularizado: "bg-risk-low/20 text-risk-low border-risk-low/30",
-  pendente: "bg-gray-100 dark:bg-gray-800 text-risk-medium border-risk-medium/30",
+  em_dia: "bg-risk-low/20 text-risk-low border-risk-low/30",
+  em_aberto: "bg-gray-100 dark:bg-gray-800 text-risk-medium border-risk-medium/30",
   em_incumprimento: "bg-gray-100 dark:bg-gray-800 text-destructive border-destructive/30",
 };
 
 const statusIcons: Record<AccountStatus, React.ReactNode> = {
-  regularizado: <CheckCircle className="h-5 w-5" />,
-  pendente: <AlertTriangle className="h-5 w-5" />,
+  em_dia: <CheckCircle className="h-5 w-5" />,
+  em_aberto: <AlertTriangle className="h-5 w-5" />,
   em_incumprimento: <Clock className="h-5 w-5" />,
 };
 
@@ -50,6 +52,7 @@ export default function Financeiro() {
     syncNavFromSharePoint,
     setJvrisId
   } = useFinanceiro();
+  const { isCCAUser } = useLegalHubProfile();
 
   // Dialog states
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
@@ -89,8 +92,8 @@ export default function Financeiro() {
 
   const getStatusLabel = (status: AccountStatus) => {
     const labels: Record<AccountStatus, string> = {
-      regularizado: t('financial.regularized'),
-      pendente: t('financial.pending'),
+      em_dia: t('financial.emDia'),
+      em_aberto: t('financial.emAberto'),
       em_incumprimento: t('financial.inDefault'),
     };
     return labels[status];
@@ -126,43 +129,50 @@ export default function Financeiro() {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">{t('financial.title')}</h1>
             <p className="text-muted-foreground">{t('financial.subtitle')}</p>
           </div>
-          {isPlatformAdmin && (
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={syncNavFromSharePoint.isPending}
-                    onClick={() => syncNavFromSharePoint.mutate()}
-                  >
-                    <RefreshCw className={`mr-2 h-4 w-4 ${syncNavFromSharePoint.isPending ? "animate-spin" : ""}`} />
-                    {syncNavFromSharePoint.isPending ? t('financial.syncingNav') : t('financial.syncNav')}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {navCache?.synced_at
-                    ? `${t('financial.lastSync')}: ${format(new Date(navCache.synced_at), "dd/MM/yyyy HH:mm")}`
-                    : t('financial.noNavDataSync')}
-                </TooltipContent>
-              </Tooltip>
-              <Button variant="outline" onClick={() => {
-                setConfigForm({
-                  tipo_cliente: accountSummary.tipoCliente,
-                  prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
-                });
-                setConfigDialogOpen(true);
-              }}>
-                <Settings className="mr-2 h-4 w-4" />
-                {t('financial.configureClient')}
-              </Button>
-            </div>
-          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Seletor de cliente por ID Jvris — CCA users + admins */}
+            {(isCCAUser || isPlatformAdmin) && (
+              <ClienteSelectorJvris />
+            )}
+
+            {isPlatformAdmin && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={syncNavFromSharePoint.isPending}
+                      onClick={() => syncNavFromSharePoint.mutate()}
+                    >
+                      <RefreshCw className={`mr-2 h-4 w-4 ${syncNavFromSharePoint.isPending ? "animate-spin" : ""}`} />
+                      {syncNavFromSharePoint.isPending ? t('financial.syncingNav') : t('financial.syncNav')}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {navCache?.synced_at
+                      ? `${t('financial.lastSync')}: ${format(new Date(navCache.synced_at), "dd/MM/yyyy HH:mm")}`
+                      : t('financial.noNavDataSync')}
+                  </TooltipContent>
+                </Tooltip>
+                <Button variant="outline" onClick={() => {
+                  setConfigForm({
+                    tipo_cliente: accountSummary.tipoCliente,
+                    prazo_pagamento_dias: String(accountSummary.prazoPagamentoDias),
+                  });
+                  setConfigDialogOpen(true);
+                }}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  {t('financial.configureClient')}
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Resumo da Conta Corrente */}

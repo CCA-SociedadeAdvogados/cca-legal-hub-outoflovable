@@ -10,6 +10,7 @@ import { ThemeProvider } from "next-themes";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { DepartmentGate } from "@/components/layout/DepartmentGate";
 import { translationService } from "@/lib/TranslationService";
+import { ClienteProvider } from "@/contexts/ClienteContext";
 import React from "react";
 
 // Initialize translation service (migration, cleanup)
@@ -189,13 +190,15 @@ const App = () => (
       <AuthProvider>
         <ImpersonationProvider>
           <SidebarProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <AppRoutes />
-              </BrowserRouter>
-            </TooltipProvider>
+            <ClienteProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
+              </TooltipProvider>
+            </ClienteProvider>
           </SidebarProvider>
         </ImpersonationProvider>
       </AuthProvider>
