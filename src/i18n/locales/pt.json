@@ -52,7 +52,18 @@
     "expand": "Expandir",
     "lightMode": "Modo Claro",
     "darkMode": "Modo Escuro",
-    "optional": "opcional"
+    "optional": "opcional",
+    "saving": "A guardar...",
+    "continue": "Continuar"
+  },
+  "department": {
+    "label": "Departamento",
+    "placeholder": "Selecione o departamento",
+    "selectRequired": "Por favor, selecione o seu departamento",
+    "gateTitle": "Selecione o seu Departamento",
+    "gateDescription": "Para utilizar a plataforma, é necessário indicar o seu departamento.",
+    "saved": "Departamento guardado com sucesso",
+    "saveError": "Erro ao guardar departamento"
   },
   "notifications": {
     "title": "Notificações",

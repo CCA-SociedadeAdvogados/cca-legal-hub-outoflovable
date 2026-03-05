@@ -52,7 +52,18 @@
     "expand": "Expand",
     "lightMode": "Light Mode",
     "darkMode": "Dark Mode",
-    "optional": "optional"
+    "optional": "optional",
+    "saving": "Saving...",
+    "continue": "Continue"
+  },
+  "department": {
+    "label": "Department",
+    "placeholder": "Select department",
+    "selectRequired": "Please select your department",
+    "gateTitle": "Select your Department",
+    "gateDescription": "To use the platform, you need to indicate your department.",
+    "saved": "Department saved successfully",
+    "saveError": "Error saving department"
   },
   "notifications": {
     "title": "Notifications",

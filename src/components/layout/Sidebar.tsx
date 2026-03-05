@@ -3,11 +3,10 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useSidebarBadges } from "@/hooks/useSidebarBadges";
 import { useUserTheme } from "@/hooks/useUserTheme";
-import { useLegalHubProfile } from "@/hooks/useLegalHubProfile";
+import { usePermissions } from "@/hooks/usePermissions";
 import ccaLogo from "@/assets/cca-logo.png";
 import {
   Tooltip,
@@ -113,11 +112,10 @@ export function Sidebar({ clientName }: SidebarProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { signOut } = useAuth();
-  const { isPlatformAdmin } = usePlatformAdmin();
   const { isCollapsed, toggle } = useSidebar();
   const { resolvedTheme, toggleTheme } = useUserTheme();
   const badges = useSidebarBadges();
-  const { legalHubProfile, isCCAUser, isOrgManager, isOrgUser } = useLegalHubProfile();
+  const { can, isAppAdmin, isCCAUser, isOrgManager, isOrgUser } = usePermissions();
   
   const [contractsExpanded, setContractsExpanded] = useState(
     location.pathname.startsWith("/contratos") || location.pathname === "/"
@@ -270,14 +268,16 @@ export function Sidebar({ clientName }: SidebarProps) {
                     isCollapsed={false}
                     isSubmenu
                   />
-                  <NavItem
-                    to="/contratos/upload-massa"
-                    icon={Upload}
-                    label={t("nav.contractsUpload")}
-                    isActive={location.pathname === "/contratos/upload-massa"}
-                    isCollapsed={false}
-                    isSubmenu
-                  />
+                  {can('contracts:bulk_upload') && (
+                    <NavItem
+                      to="/contratos/upload-massa"
+                      icon={Upload}
+                      label={t("nav.contractsUpload")}
+                      isActive={location.pathname === "/contratos/upload-massa"}
+                      isCollapsed={false}
+                      isSubmenu
+                    />
+                  )}
                 </div>
               )}
             </>
@@ -425,8 +425,8 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* Utilizadores (org-scoped) — org_manager only */}
-        {isOrgManager && (
+        {/* Utilizadores (org-scoped) — org_manager + app_admin */}
+        {can('users:view_own_org') && (
           <NavItem
             to="/utilizadores-org"
             icon={UserCog}
@@ -437,7 +437,7 @@ export function Sidebar({ clientName }: SidebarProps) {
         )}
 
         {/* Organização — only for Admin or org users (not CCA SSO) */}
-        {(isPlatformAdmin) && (
+        {(isAppAdmin) && (
           <NavItem
             to="/organizacao"
             icon={Building2}
@@ -483,7 +483,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           </button>
         )}
 
-        {isPlatformAdmin && (
+        {isAppAdmin && (
           <NavItem
             to="/admin"
             icon={Crown}

@@ -8,6 +8,7 @@ import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
 import { ThemeProvider } from "next-themes";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { DepartmentGate } from "@/components/layout/DepartmentGate";
 import { translationService } from "@/lib/TranslationService";
 import React from "react";
 
@@ -77,7 +78,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/onboarding" replace />;
   }
 
-  return <>{children}</>;
+  // Block access until department is set
+  return <DepartmentGate>{children}</DepartmentGate>;
 };
 
 const OnboardingRoute = () => {

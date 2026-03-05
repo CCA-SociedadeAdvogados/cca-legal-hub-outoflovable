@@ -73,6 +73,11 @@ export default function Onboarding() {
       return;
     }
 
+    if (!profileData.departamento) {
+      toast.error('Por favor, selecione o seu departamento');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Use upsert to handle case where profile might not exist
@@ -247,7 +252,7 @@ export default function Onboarding() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="departamento">Departamento</Label>
+                  <Label htmlFor="departamento">Departamento *</Label>
                   <Select
                     value={profileData.departamento}
                     onValueChange={(value) => setProfileData({ ...profileData, departamento: value })}
