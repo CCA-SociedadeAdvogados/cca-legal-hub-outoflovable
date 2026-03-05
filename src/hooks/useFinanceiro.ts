@@ -55,7 +55,7 @@ export interface NavItem {
   synced_at: string | null;
 }
 
-export type AccountStatus = "regularizado" | "pendente" | "em_incumprimento";
+export type AccountStatus = "em_dia" | "em_aberto" | "em_incumprimento";
 
 export interface AccountSummary {
   status: AccountStatus;
@@ -73,9 +73,9 @@ function calculateAccountStatusFromNav(
   navCache: NavCache | null,
   navItems: NavItem[]
 ): AccountStatus {
-  // Sem dados ou sem valor pendente → Regularizado
+  // Sem dados ou sem valor pendente → Em Dia
   if (!navCache || navCache.valor_pendente === null || navCache.valor_pendente <= 0) {
-    return "regularizado";
+    return "em_dia";
   }
 
   const hoje = new Date();
@@ -105,18 +105,18 @@ function calculateAccountStatusFromNav(
     );
   }
 
-  // Sem faturas vencidas → Pendente
-  if (oldestOverdueDays < 0) {
-    return "pendente";
+  // Sem faturas vencidas → Em Dia
+  if (oldestOverdueDays <= 0) {
+    return "em_dia";
   }
 
-  // Vencido há 7 ou mais dias → Em incumprimento
-  if (oldestOverdueDays >= 7) {
+  // Vencido há 30 ou mais dias → Em Incumprimento
+  if (oldestOverdueDays >= 30) {
     return "em_incumprimento";
   }
 
-  // Com valor pendente + vencimento há menos de 7 dias → Pendente
-  return "pendente";
+  // Faturas vencidas há menos de 30 dias → Em Aberto
+  return "em_aberto";
 }
 
 export function useFinanceiro() {

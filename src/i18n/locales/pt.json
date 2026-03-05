@@ -1020,7 +1020,13 @@
     "noMatchingIds": "Nenhum ID correspondente",
     "confirmSelection": "Confirmar Seleção",
     "selecting": "A configurar...",
-    "errorLoadingInvoices": "Erro ao carregar faturas. Verifique a ligação e tente novamente."
+    "errorLoadingInvoices": "Erro ao carregar faturas. Verifique a ligação e tente novamente.",
+    "emDia": "Em Dia",
+    "emAberto": "Em Aberto",
+    "searchByJvrisId": "Pesquisar por ID Jvris",
+    "jvrisId": "ID Jvris",
+    "noMatchingClients": "Nenhum cliente encontrado",
+    "noClientsWithJvrisId": "Nenhuma organização com ID Jvris configurado"
   },
   "platformAdmin": {
     "impersonation": {
