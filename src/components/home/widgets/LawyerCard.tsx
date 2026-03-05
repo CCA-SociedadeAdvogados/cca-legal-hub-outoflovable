@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useAzureProfile } from '@/hooks/useAzureProfile';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Scale } from 'lucide-react';
+import { Scale, Mail } from 'lucide-react';
 
 interface LawyerCardProps {
   title: string;
@@ -16,7 +17,8 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(
   function LawyerCard({ title, organizationId }, ref) {
     const { t } = useTranslation();
     const { organizations, isLoading } = useOrganizations();
-    
+    const { nomeCompleto, email, photoUrl, iniciais, isSSO, isLoadingPhoto } = useAzureProfile();
+
     const organization = organizations?.find(org => org.id === organizationId);
 
     if (isLoading) {
@@ -38,7 +40,12 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(
       );
     }
 
-    if (!organization?.lawyer_name) {
+    // Para CCA SSO users, mostrar dados do utilizador autenticado
+    const lawyerName = isSSO ? nomeCompleto : organization?.lawyer_name;
+    const lawyerPhoto = isSSO ? photoUrl : organization?.lawyer_photo_url;
+    const lawyerEmail = isSSO ? email : null;
+
+    if (!lawyerName) {
       return (
         <Card ref={ref}>
           <CardHeader>
@@ -58,12 +65,14 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(
       );
     }
 
-    const initials = organization.lawyer_name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
+    const displayInitials = isSSO
+      ? iniciais
+      : lawyerName
+          .split(' ')
+          .map((n: string) => n[0])
+          .join('')
+          .slice(0, 2)
+          .toUpperCase();
 
     return (
       <Card ref={ref}>
@@ -73,14 +82,28 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(
         <CardContent>
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={organization.lawyer_photo_url || undefined} alt={organization.lawyer_name} />
-              <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                {initials}
-              </AvatarFallback>
+              {isLoadingPhoto ? (
+                <AvatarFallback className="text-lg bg-primary/10 text-primary animate-pulse">
+                  {displayInitials}
+                </AvatarFallback>
+              ) : (
+                <>
+                  <AvatarImage src={lawyerPhoto || undefined} alt={lawyerName} />
+                  <AvatarFallback className="text-lg bg-primary/10 text-primary">
+                    {displayInitials}
+                  </AvatarFallback>
+                </>
+              )}
             </Avatar>
             <div>
-              <p className="font-medium text-foreground">{organization.lawyer_name}</p>
+              <p className="font-medium text-foreground">{lawyerName}</p>
               <p className="text-sm text-muted-foreground">{t('home.responsibleLawyer')}</p>
+              {lawyerEmail && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Mail className="h-3 w-3" />
+                  {lawyerEmail}
+                </p>
+              )}
             </div>
           </div>
         </CardContent>

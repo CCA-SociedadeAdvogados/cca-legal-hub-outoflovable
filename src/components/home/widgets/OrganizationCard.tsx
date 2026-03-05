@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building2, User } from 'lucide-react';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useAzureProfile } from '@/hooks/useAzureProfile';
 
 interface OrganizationCardProps {
   title: string;
@@ -15,9 +16,10 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
   function OrganizationCard({ title, config, organizationId }, ref) {
     const { t } = useTranslation();
     const { organizations } = useOrganizations();
-    
+    const { nomeCompleto, photoUrl, iniciais, isSSO } = useAzureProfile();
+
     const organization = organizations?.find(org => org.id === organizationId);
-    
+
     if (!organization) {
       return (
         <Card ref={ref}>
@@ -38,6 +40,14 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
 
     const showLogo = config.showLogo !== false;
     const showLawyer = config.showLawyer !== false;
+
+    // Para CCA SSO users, mostrar dados do utilizador autenticado como advogado
+    const lawyerName = isSSO
+      ? nomeCompleto
+      : (organization as unknown as { lawyer_name?: string }).lawyer_name;
+    const lawyerPhoto = isSSO
+      ? photoUrl
+      : (organization as unknown as { lawyer_photo_url?: string }).lawyer_photo_url;
 
     return (
       <Card ref={ref}>
@@ -65,22 +75,20 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
             </div>
           </div>
 
-          {showLawyer && 'lawyer_name' in organization && (organization as unknown as { lawyer_name?: string }).lawyer_name && (
+          {showLawyer && lawyerName && (
             <div className="flex items-center gap-3 pt-2 border-t">
               <Avatar className="h-10 w-10">
-                <AvatarImage 
-                  src={(organization as unknown as { lawyer_photo_url?: string }).lawyer_photo_url || undefined} 
-                  alt={(organization as unknown as { lawyer_name?: string }).lawyer_name || ''} 
+                <AvatarImage
+                  src={lawyerPhoto || undefined}
+                  alt={lawyerName}
                 />
-                <AvatarFallback>
-                  <User className="h-5 w-5" />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {isSSO ? iniciais : <User className="h-5 w-5" />}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <p className="text-xs text-muted-foreground">{t('home.responsibleLawyer')}</p>
-                <p className="text-sm font-medium">
-                  {(organization as unknown as { lawyer_name?: string }).lawyer_name}
-                </p>
+                <p className="text-sm font-medium">{lawyerName}</p>
               </div>
             </div>
           )}
