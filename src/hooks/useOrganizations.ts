@@ -84,7 +84,7 @@ export function useOrganizations() {
       const { data: org } = await supabase
         .from('organizations')
         .select('*')
-        .eq('client_code', profile.current_organization_id)
+        .eq('id', profile.current_organization_id)
         .maybeSingle();
 
       return (org ?? null) as Organization | null;
@@ -150,12 +150,12 @@ export function useOrganizations() {
 
     const { data: orgs } = await supabase
       .from('organizations')
-      .select('client_code, name')
-      .in('client_code', orgIds);
+      .select('id, client_code, name')
+      .in('id', orgIds);
 
     if (orgs && orgs.length > 0) {
       orgs.forEach((o) => {
-        orgsMap[o.client_code || ''] = { client_code: o.client_code, name: o.name };
+        orgsMap[o.id] = { client_code: o.client_code, name: o.name };
       });
     }
 

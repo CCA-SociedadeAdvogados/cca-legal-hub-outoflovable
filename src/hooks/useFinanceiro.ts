@@ -142,7 +142,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       const { data, error } = await supabase
         .from("organizations")
         .select("tipo_cliente, prazo_pagamento_dias, jvris_id")
-        .eq("client_code", organizationId)
+        .eq("id", organizationId)
         .single();
 
       if (error) throw error;
@@ -364,7 +364,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       const { error } = await supabase
         .from("organizations")
         .update(data)
-        .eq("client_code", organizationId);
+        .eq("id", organizationId);
 
       if (error) throw error;
     },
@@ -446,7 +446,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       const { error } = await supabase
         .from("organizations")
         .update({ jvris_id: jvrisId } as any)
-        .eq("client_code", organizationId);
+        .eq("id", organizationId);
       if (error) throw error;
     },
     onSuccess: () => {
