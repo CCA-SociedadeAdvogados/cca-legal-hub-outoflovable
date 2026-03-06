@@ -23,7 +23,7 @@ export function IndustrySectorProvider({ children }: { children: React.ReactNode
       const { data, error } = await supabase
         .from('organizations')
         .select('industry_sectors')
-        .eq('client_code', effectiveOrganizationId)
+        .eq('id', effectiveOrganizationId)
         .maybeSingle();
 
       if (error) {

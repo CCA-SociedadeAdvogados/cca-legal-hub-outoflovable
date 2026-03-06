@@ -114,7 +114,7 @@ export function usePlatformAdmin() {
     queryKey: ["globalStats"],
     queryFn: async (): Promise<GlobalStats> => {
       const [orgsResult, contractsResult, profilesResult] = await Promise.all([
-        supabase.from("organizations").select("client_code", { count: "exact", head: true }),
+        supabase.from("organizations").select("id", { count: "exact", head: true }),
         supabase.from("contratos_safe" as "contratos").select("id, estado_contrato"),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
       ]);
@@ -169,10 +169,10 @@ export function usePlatformAdmin() {
       if (orgIds.length > 0) {
         const { data: orgsData } = await supabase
           .from("organizations")
-          .select("client_code, name")
-          .in("client_code", orgIds);
+          .select("id, name")
+          .in("id", orgIds);
         for (const org of orgsData || []) {
-          orgsMap.set(org.client_code || '', org.name);
+          orgsMap.set(org.id, org.name);
         }
       }
 
