@@ -70,10 +70,10 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
       if (orgIds.length > 0) {
         const { data: orgsData } = await supabase
           .from("organizations")
-          .select("id, name")
-          .in("id", orgIds);
+          .select("client_code, name")
+          .in("client_code", orgIds);
         for (const org of (orgsData || [])) {
-          orgsMap.set(org.id, { name: org.name });
+          orgsMap.set(org.client_code || '', { name: org.name });
         }
       }
 

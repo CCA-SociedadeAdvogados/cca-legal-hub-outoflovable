@@ -82,7 +82,7 @@ interface AdminUsersTabProps {
   isLoadingMetrics: boolean;
   selectedOrgId: string | null;
   onOrgChange: (orgId: string | null) => void;
-  onViewOrgMembers: (org: { id: string; name: string }) => void;
+  onViewOrgMembers: (org: { client_code: string | null; name: string }) => void;
   onDeleteUser?: (member: AllMembersEntry) => void;
   onImpersonateUser?: (member: AllMembersEntry) => void;
   isDeletingUser?: boolean;

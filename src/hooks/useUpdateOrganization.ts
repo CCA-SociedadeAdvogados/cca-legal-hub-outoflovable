@@ -48,7 +48,7 @@ export function useUpdateOrganization(organizationId: string | null) {
       const { error } = await supabase
         .from('organizations')
         .update(updateData)
-        .eq('id', organizationId);
+        .eq('client_code', organizationId);
 
       if (error) throw error;
     },
@@ -75,7 +75,7 @@ export function useUpdateOrganization(organizationId: string | null) {
       const { error } = await supabase
         .from('organizations')
         .update(updateData)
-        .eq('id', organizationId);
+        .eq('client_code', organizationId);
 
       if (error) throw error;
     },

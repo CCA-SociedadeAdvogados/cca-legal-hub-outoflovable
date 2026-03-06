@@ -32,7 +32,7 @@ export function OrgJvrisIdConfig({ organizationId }: OrgJvrisIdConfigProps) {
       const { data } = await supabase
         .from("organizations")
         .select("jvris_id")
-        .eq("id", organizationId)
+        .eq("client_code", organizationId)
         .single();
       const id = (data as any)?.jvris_id as string | null | undefined;
       setCurrentSavedId(id ?? null);
@@ -48,7 +48,7 @@ export function OrgJvrisIdConfig({ organizationId }: OrgJvrisIdConfigProps) {
       const { error } = await supabase
         .from("organizations")
         .update({ jvris_id: jvrisId.trim() || null } as any)
-        .eq("id", organizationId);
+        .eq("client_code", organizationId);
       if (error) throw error;
       setCurrentSavedId(jvrisId.trim() || null);
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
