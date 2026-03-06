@@ -880,6 +880,8 @@ Deno.serve(async (req) => {
             locked_until: null,
             ...(platformUser?.department ? { departamento: platformUser.department } : {}),
             ...(platformUser?.job_title ? { cargo: platformUser.job_title } : {}),
+            // Auto-complete onboarding for SSO users with pre-seeded data
+            ...(platformUser ? { onboarding_completed: true } : {}),
           })
           .eq("id", existingUser.id);
 
@@ -926,8 +928,7 @@ Deno.serve(async (req) => {
         }
 
         // Upsert profile with SSO info (handles both new user and trigger-delayed profile)
-        // NOTE: Do NOT include onboarding_completed here — new profiles get the schema
-        // default (false), and returning users must keep their existing value.
+        // Auto-complete onboarding when platform_users data is available (all data pre-seeded)
         await supabase
           .from("profiles")
           .upsert({
@@ -940,6 +941,7 @@ Deno.serve(async (req) => {
             last_login_at: new Date().toISOString(),
             ...(platformUser?.department ? { departamento: platformUser.department } : {}),
             ...(platformUser?.job_title ? { cargo: platformUser.job_title } : {}),
+            ...(platformUser ? { onboarding_completed: true } : {}),
           }, { onConflict: "id" });
       }
 
