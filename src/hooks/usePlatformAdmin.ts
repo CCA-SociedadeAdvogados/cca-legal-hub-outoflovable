@@ -154,16 +154,32 @@ export function usePlatformAdmin() {
     queryKey: ["allContracts"],
     queryFn: async () => {
       // Platform admins use contratos_safe view which still shows all fields for admins
+      // Views don't support PostgREST joins, so fetch org names separately
       const { data, error } = await supabase
         .from("contratos_safe" as "contratos")
-        .select(`
-          *,
-          organization:organizations(name)
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) return data;
+
+      // Enrich with organization names
+      const orgIds = [...new Set(data.map((c) => c.organization_id).filter(Boolean))];
+      const orgsMap = new Map<string, string>();
+      if (orgIds.length > 0) {
+        const { data: orgsData } = await supabase
+          .from("organizations")
+          .select("id, name")
+          .in("id", orgIds);
+        for (const org of orgsData || []) {
+          orgsMap.set(org.id, org.name);
+        }
+      }
+
+      return data.map((c) => ({
+        ...c,
+        organization: c.organization_id ? { name: orgsMap.get(c.organization_id) || "-" } : null,
+      }));
     },
     enabled: !!isPlatformAdmin,
   });
