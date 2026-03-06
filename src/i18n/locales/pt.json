@@ -1186,6 +1186,18 @@
     "syncSuccess": "Sincronização concluída: {{added}} novos, {{updated}} atualizados, {{deleted}} removidos",
     "syncError": "Erro na sincronização: {{message}}"
   },
+  "organizations": {
+    "title": "Organizações",
+    "subtitle": "Pesquise e consulte os clientes da CCA",
+    "searchPlaceholder": "Pesquisar por ID JVRIS ou nome...",
+    "idJvris": "ID JVRIS",
+    "name": "Nome",
+    "group": "Grupo",
+    "responsible": "Responsável",
+    "emptyState": "Introduza um ID JVRIS ou nome para pesquisar",
+    "noResults": "Nenhuma organização encontrada",
+    "error": "Erro ao carregar organizações"
+  },
   "cca": {
     "selectOrg": "Selecionar organização",
     "allOrganizations": "Todas as organizações",

@@ -794,9 +794,50 @@ Deno.serve(async (req) => {
 
       // Extract name (fallback to email prefix)
       const userName = (userInfo.name || email.split("@")[0]) as string;
-      
+
       // Extract external ID (Microsoft uses 'oid', standard OIDC uses 'sub')
       const externalId = String(userInfo.oid || userInfo.sub || "").substring(0, 255);
+
+      // ── platform_users soft lookup ──────────────────────────────────────────
+      // If the user exists in platform_users (pre-seeded), use their data for
+      // profile enrichment. If not found, fall back to JIT provisioning.
+      let platformUser: {
+        full_name: string | null;
+        role: string | null;
+        department: string | null;
+        job_title: string | null;
+      } | null = null;
+
+      try {
+        const { data: puData, error: puError } = await supabase
+          .from("platform_users")
+          .select("full_name, role, department, job_title")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (puError && puError.code !== "42P01") {
+          // Log error but don't block login (soft check)
+          console.error("[SSO-CCA] platform_users lookup error:", puError.message);
+        } else if (puError?.code === "42P01") {
+          console.log("[SSO-CCA] platform_users table not found — skipping lookup");
+        } else if (puData) {
+          platformUser = puData;
+          console.log(`[SSO-CCA] platform_users: found pre-seeded data for ${email.substring(0, 3)}***`);
+
+          // Mark user as active and update last access timestamp
+          await supabase
+            .from("platform_users")
+            .update({ is_active: true, updated_at: new Date().toISOString() })
+            .eq("email", email);
+        } else {
+          console.log("[SSO-CCA] platform_users: no record found — using JIT provisioning");
+        }
+      } catch (puCatchError) {
+        console.error("[SSO-CCA] platform_users lookup exception:", puCatchError instanceof Error ? puCatchError.message : puCatchError);
+      }
+
+      // Use platform_users name if available, otherwise Azure AD token name
+      const effectiveName = (platformUser?.full_name || userName).substring(0, 255).trim();
 
       // Validate email domain
       const emailDomain = email.split("@")[1]?.toLowerCase();
@@ -824,7 +865,7 @@ Deno.serve(async (req) => {
       let userId: string;
 
       if (existingUser) {
-        // Profile found — update SSO fields
+        // Profile found — update SSO fields (use platform_users data if available)
         console.log(`[SSO-CCA] Updating existing user`);
 
         await supabase
@@ -833,10 +874,12 @@ Deno.serve(async (req) => {
             auth_method: "sso_cca",
             sso_provider: "cca",
             sso_external_id: externalId,
-            nome_completo: userName.substring(0, 255).trim(),
+            nome_completo: effectiveName,
             last_login_at: new Date().toISOString(),
             login_attempts: 0,
             locked_until: null,
+            ...(platformUser?.department ? { departamento: platformUser.department } : {}),
+            ...(platformUser?.job_title ? { cargo: platformUser.job_title } : {}),
           })
           .eq("id", existingUser.id);
 
@@ -850,7 +893,7 @@ Deno.serve(async (req) => {
           email: email,
           email_confirm: true,
           user_metadata: {
-            nome_completo: userName.substring(0, 255).trim(),
+            nome_completo: effectiveName,
             auth_method: "sso_cca",
           },
         });
@@ -890,11 +933,13 @@ Deno.serve(async (req) => {
           .upsert({
             id: userId,
             email: email,
-            nome_completo: userName.substring(0, 255).trim(),
+            nome_completo: effectiveName,
             auth_method: "sso_cca",
             sso_provider: "cca",
             sso_external_id: externalId,
             last_login_at: new Date().toISOString(),
+            ...(platformUser?.department ? { departamento: platformUser.department } : {}),
+            ...(platformUser?.job_title ? { cargo: platformUser.job_title } : {}),
           }, { onConflict: "id" });
       }
 
