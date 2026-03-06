@@ -11,6 +11,9 @@ export interface Organization {
   lawyer_name: string | null;
   lawyer_photo_url: string | null;
   industry_sectors: string[] | null;
+  client_code: string | null;
+  group: string | null;
+  responsible: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,8 +45,8 @@ export interface UserMembership {
   organizations: {
     id: string;
     name: string;
-    slug: string;
-    logo_url: string | null;
+    slug?: string;
+    logo_url?: string | null;
   };
 }
 
@@ -102,7 +105,7 @@ export function useOrganizations() {
         .select(`
           organization_id,
           role,
-          organizations!inner (id, name, slug, logo_url)
+          organizations!inner (id, name)
         `)
         .eq('user_id', user.id);
 
@@ -135,7 +138,7 @@ export function useOrganizations() {
               .select(`
                 organization_id,
                 role,
-                organizations!inner (id, name, slug, logo_url)
+                organizations!inner (id, name)
               `)
               .eq('user_id', user.id);
             

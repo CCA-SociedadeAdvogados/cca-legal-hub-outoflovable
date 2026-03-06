@@ -45,6 +45,7 @@ import MeuDepartamento from "./pages/MeuDepartamento";
 import MinhaOrganizacao from "./pages/MinhaOrganizacao";
 import UtilizadoresOrg from "./pages/UtilizadoresOrg";
 import LegalBi from "./pages/LegalBi";
+import OrganizationsPage from "./pages/OrganizationsPage";
 import { PlatformAdminRoute } from "./components/layout/PlatformAdminRoute";
 
 const queryClient = new QueryClient({
@@ -165,7 +166,9 @@ const AppRoutes = () => {
       <Route path="/meu-departamento" element={<ProtectedRoute><MeuDepartamento /></ProtectedRoute>} />
       <Route path="/minha-organizacao" element={<ProtectedRoute><MinhaOrganizacao /></ProtectedRoute>} />
       <Route path="/utilizadores-org" element={<ProtectedRoute><UtilizadoresOrg /></ProtectedRoute>} />
-      
+      <Route path="/organizations" element={<ProtectedRoute><OrganizationsPage /></ProtectedRoute>} />
+      <Route path="/organizations/:clientCode" element={<ProtectedRoute><OrganizationsPage /></ProtectedRoute>} />
+
       {/* Utilizadores - redirect para admin com tab users */}
       <Route path="/utilizadores" element={
         <ProtectedRoute>

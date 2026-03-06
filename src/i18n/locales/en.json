@@ -1186,6 +1186,18 @@
     "syncSuccess": "Sync completed: {{added}} new, {{updated}} updated, {{deleted}} deleted",
     "syncError": "Sync error: {{message}}"
   },
+  "organizations": {
+    "title": "Organizations",
+    "subtitle": "Search and browse CCA clients",
+    "searchPlaceholder": "Search by JVRIS ID or name...",
+    "idJvris": "JVRIS ID",
+    "name": "Name",
+    "group": "Group",
+    "responsible": "Responsible",
+    "emptyState": "Enter a JVRIS ID or name to search",
+    "noResults": "No organizations found",
+    "error": "Error loading organizations"
+  },
   "cca": {
     "selectOrg": "Select organization",
     "allOrganizations": "All organizations",

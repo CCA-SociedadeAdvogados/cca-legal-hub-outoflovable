@@ -2306,10 +2306,14 @@ export type Database = {
       }
       organizations: {
         Row: {
+          client_code: string | null
+          cost_center: string | null
           created_at: string
           custom_branding: Json | null
+          group: string | null
           id: string
           industry_sectors: string[] | null
+          is_active: boolean | null
           jvris_id: string | null
           lawyer_name: string | null
           lawyer_photo_url: string | null
@@ -2318,16 +2322,22 @@ export type Database = {
           name: string
           prazo_pagamento_dias: number | null
           primary_color: string | null
+          responsible: string | null
+          responsible_email: string | null
           secondary_color: string | null
           slug: string
           tipo_cliente: string | null
           updated_at: string
         }
         Insert: {
+          client_code?: string | null
+          cost_center?: string | null
           created_at?: string
           custom_branding?: Json | null
+          group?: string | null
           id?: string
           industry_sectors?: string[] | null
+          is_active?: boolean | null
           jvris_id?: string | null
           lawyer_name?: string | null
           lawyer_photo_url?: string | null
@@ -2336,16 +2346,22 @@ export type Database = {
           name: string
           prazo_pagamento_dias?: number | null
           primary_color?: string | null
+          responsible?: string | null
+          responsible_email?: string | null
           secondary_color?: string | null
           slug: string
           tipo_cliente?: string | null
           updated_at?: string
         }
         Update: {
+          client_code?: string | null
+          cost_center?: string | null
           created_at?: string
           custom_branding?: Json | null
+          group?: string | null
           id?: string
           industry_sectors?: string[] | null
+          is_active?: boolean | null
           jvris_id?: string | null
           lawyer_name?: string | null
           lawyer_photo_url?: string | null
@@ -2354,9 +2370,50 @@ export type Database = {
           name?: string
           prazo_pagamento_dias?: number | null
           primary_color?: string | null
+          responsible?: string | null
+          responsible_email?: string | null
           secondary_color?: string | null
           slug?: string
           tipo_cliente?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_users: {
+        Row: {
+          email: string
+          full_name: string | null
+          role: string | null
+          department: string | null
+          job_title: string | null
+          organization: string | null
+          auth_method: string | null
+          is_active: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          email: string
+          full_name?: string | null
+          role?: string | null
+          department?: string | null
+          job_title?: string | null
+          organization?: string | null
+          auth_method?: string | null
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          email?: string
+          full_name?: string | null
+          role?: string | null
+          department?: string | null
+          job_title?: string | null
+          organization?: string | null
+          auth_method?: string | null
+          is_active?: boolean | null
+          created_at?: string
           updated_at?: string
         }
         Relationships: []
