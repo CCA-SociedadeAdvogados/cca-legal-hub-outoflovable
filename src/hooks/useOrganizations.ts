@@ -81,23 +81,14 @@ export function useOrganizations() {
 
       if (!profile?.current_organization_id) return null;
 
-      // Try by client_code first (new schema), then fall back to id (legacy)
+      // New schema: organizations uses client_code as PK (no id column)
       const { data: org } = await supabase
         .from('organizations')
         .select('*')
         .eq('client_code', profile.current_organization_id)
         .maybeSingle();
 
-      if (org) return org as Organization | null;
-
-      // Fallback: try legacy id column (may not exist in new schema)
-      const { data: orgById } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('id' as any, profile.current_organization_id)
-        .maybeSingle();
-
-      return (orgById ?? null) as Organization | null;
+      return (org ?? null) as Organization | null;
     },
     enabled: !!user,
   });
@@ -156,8 +147,8 @@ export function useOrganizations() {
   ): Promise<UserMembership[]> {
     const orgIds = members.map((m) => m.organization_id);
 
-    // Try to fetch organizations by client_code (new schema) or id (legacy)
-    let orgsMap: Record<string, { client_code: string | null; name: string }> = {};
+    // Fetch organizations by client_code (new schema PK)
+    const orgsMap: Record<string, { client_code: string | null; name: string }> = {};
 
     const { data: orgs } = await supabase
       .from('organizations')
@@ -168,26 +159,6 @@ export function useOrganizations() {
       orgs.forEach((o) => {
         if (o.client_code) orgsMap[o.client_code] = o;
       });
-    }
-
-    // Fallback: try legacy id column for any unmatched
-    const unmatchedIds = orgIds.filter((id) => !orgsMap[id]);
-    if (unmatchedIds.length > 0) {
-      const { data: legacyOrgs } = await supabase
-        .from('organizations')
-        .select('client_code, name')
-        .in('id' as any, unmatchedIds);
-
-      if (legacyOrgs) {
-        legacyOrgs.forEach((o) => {
-          // Map by the organization_id value from members
-          unmatchedIds.forEach((uid) => {
-            if (!orgsMap[uid] && o.name) {
-              orgsMap[uid] = o;
-            }
-          });
-        });
-      }
     }
 
     return members.map((m) => ({

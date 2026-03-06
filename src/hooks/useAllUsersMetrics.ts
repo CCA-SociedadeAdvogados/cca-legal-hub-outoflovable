@@ -51,7 +51,7 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
       const [membersResult, platformAdminsResult] = await Promise.all([
         supabase
           .from("organization_members")
-          .select(`id, user_id, organization_id, role, created_at, organization:organizations(name)`)
+          .select(`id, user_id, organization_id, role, created_at`)
           .in("user_id", allUserIds)
           .order("created_at", { ascending: false }),
         supabase
