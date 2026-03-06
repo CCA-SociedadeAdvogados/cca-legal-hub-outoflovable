@@ -83,14 +83,14 @@ export function useOnboarding() {
     }
   }, [profile?.auth_method, profile?.onboarding_completed, ssoAutoCompleteGaveUp]);
 
-  const isSSOAutoComplete =
-    profile?.auth_method === 'sso_cca' &&
-    !profile?.onboarding_completed &&
-    !ssoAutoCompleteGaveUp;
+  const isSSOUser = profile?.auth_method === 'sso_cca';
 
   return {
-    isOnboardingComplete: profile?.onboarding_completed ?? isSSOAutoComplete ?? false,
-    isLoading: isLoading || isSSOAutoComplete,
+    // SSO users are pre-seeded by the edge function — treat as onboarding complete
+    // immediately so they are never blocked. The auto-complete mutation persists the
+    // flag in the background; if it fails, the next login will retry.
+    isOnboardingComplete: profile?.onboarding_completed || isSSOUser || false,
+    isLoading,
     completeOnboarding,
   };
 }

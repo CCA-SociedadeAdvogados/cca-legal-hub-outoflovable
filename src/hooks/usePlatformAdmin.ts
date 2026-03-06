@@ -236,7 +236,7 @@ export function usePlatformAdmin() {
       const { data, error } = await supabase
         .from("organizations")
         .update(updateData)
-        .eq("client_code", id)
+        .eq("id", id)
         .select()
         .single();
       if (error) throw error;
@@ -253,7 +253,7 @@ export function usePlatformAdmin() {
       const { error } = await supabase
         .from("organizations")
         .delete()
-        .eq("client_code", orgId);
+        .eq("id", orgId);
       if (error) throw error;
     },
     onSuccess: () => {
