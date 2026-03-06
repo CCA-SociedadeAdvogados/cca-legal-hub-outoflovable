@@ -18,10 +18,11 @@ import { Search, X, Building2, Hash, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface OrganizationWithJvris {
-  id: string;
+  id?: string;
+  client_code: string | null;
   name: string;
   jvris_id: string | null;
-  logo_url: string | null;
+  logo_url?: string | null;
 }
 
 /**
@@ -59,7 +60,7 @@ export function ClienteSelectorJvris() {
       // Buscar organizações que têm jvris_id
       let query = supabase
         .from('organizations')
-        .select('id, name, jvris_id, logo_url')
+        .select('client_code, name, jvris_id')
         .not('jvris_id', 'is', null)
         .order('name');
 
@@ -81,7 +82,7 @@ export function ClienteSelectorJvris() {
   const handleSelect = useCallback((org: OrganizationWithJvris) => {
     if (!org.jvris_id) return;
     setCliente({
-      organizationId: org.id,
+      organizationId: org.client_code || org.id || '',
       nome: org.name,
       jvrisId: org.jvris_id,
     });

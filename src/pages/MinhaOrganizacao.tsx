@@ -66,7 +66,7 @@ export default function MinhaOrganizacao() {
       const { error } = await supabase
         .from('organizations')
         .update({ name: orgName.trim() })
-        .eq('id', currentOrganization.id);
+        .eq('client_code', currentOrganization.client_code || currentOrganization.id);
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ['current-organization'] });
       queryClient.invalidateQueries({ queryKey: ['organizations'] });

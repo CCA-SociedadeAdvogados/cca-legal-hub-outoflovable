@@ -60,7 +60,7 @@ export function useCCAAccess() {
       const { data: orgs, error: orgError } = await supabase
         .from('organizations')
         .select('*')
-        .in('id', orgIds)
+        .in('client_code', orgIds)
         .order('name');
 
       if (orgError) throw orgError;

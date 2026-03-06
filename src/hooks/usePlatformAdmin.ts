@@ -156,10 +156,7 @@ export function usePlatformAdmin() {
       // Platform admins use contratos_safe view which still shows all fields for admins
       const { data, error } = await supabase
         .from("contratos_safe" as "contratos")
-        .select(`
-          *,
-          organization:organizations(name)
-        `)
+        .select('*')
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -343,14 +340,13 @@ export function usePlatformAdmin() {
       // Verificar se pertence a outra organização
       const { data: otherOrg } = await supabase
         .from("organization_members")
-        .select("id, organization:organizations(name)")
+        .select("id, organization_id")
         .eq("user_id", profile.id)
         .neq("organization_id", orgId)
         .maybeSingle();
-      
+
       if (otherOrg && !forceMove) {
-        const orgName = (otherOrg.organization as { name: string } | null)?.name || 'outra organização';
-        throw new Error(`USER_IN_OTHER_ORG:${orgName}`);
+        throw new Error(`USER_IN_OTHER_ORG:outra organização`);
       }
 
       // Se forceMove, remover das outras organizações primeiro

@@ -43,10 +43,8 @@ export interface UserMembership {
   organization_id: string;
   role: 'owner' | 'admin' | 'editor' | 'viewer';
   organizations: {
-    id: string;
+    client_code: string | null;
     name: string;
-    slug?: string;
-    logo_url?: string | null;
   };
 }
 
@@ -83,13 +81,14 @@ export function useOrganizations() {
 
       if (!profile?.current_organization_id) return null;
 
+      // New schema: organizations uses client_code as PK (no id column)
       const { data: org } = await supabase
         .from('organizations')
         .select('*')
-        .eq('id', profile.current_organization_id)
+        .eq('client_code', profile.current_organization_id)
         .maybeSingle();
 
-      return org as Organization | null;
+      return (org ?? null) as Organization | null;
     },
     enabled: !!user,
   });
@@ -100,57 +99,77 @@ export function useOrganizations() {
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
+      // Fetch memberships without join (organizations table schema may differ)
+      const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
-        .select(`
-          organization_id,
-          role,
-          organizations!inner (id, name)
-        `)
+        .select('organization_id, role')
         .eq('user_id', user.id);
 
-      if (error) throw error;
-      
-      const memberships = data as unknown as UserMembership[];
-      
-      // Auto-healing: If no memberships but user has current_organization_id, create membership
-      if (memberships.length === 0) {
+      if (membersError) throw membersError;
+
+      if (!membersData || membersData.length === 0) {
+        // Auto-healing: If no memberships but user has current_organization_id, create membership
         const { data: profile } = await supabase
           .from('profiles')
           .select('current_organization_id')
           .eq('id', user.id)
           .maybeSingle();
-        
+
         if (profile?.current_organization_id) {
-          // Create membership with 'editor' role
-          const { error: insertError } = await supabase
+          await supabase
             .from('organization_members')
             .insert({
               organization_id: profile.current_organization_id,
               user_id: user.id,
               role: 'editor',
             });
-          
-          if (!insertError) {
-            // Re-fetch memberships after auto-healing
-            const { data: newData } = await supabase
-              .from('organization_members')
-              .select(`
-                organization_id,
-                role,
-                organizations!inner (id, name)
-              `)
-              .eq('user_id', user.id);
-            
-            return (newData || []) as unknown as UserMembership[];
+
+          const { data: newData } = await supabase
+            .from('organization_members')
+            .select('organization_id, role')
+            .eq('user_id', user.id);
+
+          if (newData && newData.length > 0) {
+            return buildMemberships(newData);
           }
         }
+        return [];
       }
-      
-      return memberships;
+
+      return buildMemberships(membersData);
     },
     enabled: !!user,
   });
+
+  // Helper: enrich membership records with organization name
+  async function buildMemberships(
+    members: { organization_id: string; role: string }[]
+  ): Promise<UserMembership[]> {
+    const orgIds = members.map((m) => m.organization_id);
+
+    // Fetch organizations by client_code (new schema PK)
+    const orgsMap: Record<string, { client_code: string | null; name: string }> = {};
+
+    const { data: orgs } = await supabase
+      .from('organizations')
+      .select('client_code, name')
+      .in('client_code', orgIds);
+
+    if (orgs && orgs.length > 0) {
+      orgs.forEach((o) => {
+        if (o.client_code) orgsMap[o.client_code] = o;
+      });
+    }
+
+    return members.map((m) => ({
+      organization_id: m.organization_id,
+      role: m.role as UserMembership['role'],
+      organizations: orgsMap[m.organization_id] || {
+        client_code: null,
+        name: 'Organização',
+      },
+    }));
+  }
 
   const createOrganization = useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
