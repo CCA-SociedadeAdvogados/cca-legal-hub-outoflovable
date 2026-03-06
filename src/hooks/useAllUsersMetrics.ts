@@ -65,7 +65,19 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
       const members = membersResult.data || [];
       const orgIds = [...new Set(members.map(m => m.organization_id))];
 
-      // 3. Fetch departments only for users that have org memberships
+      // 3a. Fetch organization names
+      const orgsMap = new Map<string, { name: string }>();
+      if (orgIds.length > 0) {
+        const { data: orgsData } = await supabase
+          .from("organizations")
+          .select("id, name")
+          .in("id", orgIds);
+        for (const org of (orgsData || [])) {
+          orgsMap.set(org.id, { name: org.name });
+        }
+      }
+
+      // 3b. Fetch departments only for users that have org memberships
       let deptMap = new Map<string, DepartmentRef[]>();
       if (members.length > 0 && orgIds.length > 0) {
         const memberUserIds = [...new Set(members.map(m => m.user_id))];
@@ -102,7 +114,7 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
           created_at: member.created_at,
           is_platform_admin: platformAdminSet.has(member.user_id),
           profiles: profilesMap.get(member.user_id) || null,
-          organization: member.organization as { name: string } | null,
+          organization: orgsMap.get(member.organization_id) || null,
           departments: deptMap.get(`${member.user_id}_${member.organization_id}`) || [],
         };
       });

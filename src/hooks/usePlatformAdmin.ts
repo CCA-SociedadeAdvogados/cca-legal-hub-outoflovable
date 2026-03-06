@@ -156,7 +156,10 @@ export function usePlatformAdmin() {
       // Platform admins use contratos_safe view which still shows all fields for admins
       const { data, error } = await supabase
         .from("contratos_safe" as "contratos")
-        .select('*')
+        .select(`
+          *,
+          organization:organizations(name)
+        `)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;

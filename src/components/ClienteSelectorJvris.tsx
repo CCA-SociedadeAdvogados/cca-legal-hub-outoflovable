@@ -60,7 +60,7 @@ export function ClienteSelectorJvris() {
       // Buscar organizações que têm jvris_id
       let query = supabase
         .from('organizations')
-        .select('client_code, name, jvris_id')
+        .select('id, client_code, name, jvris_id')
         .not('jvris_id', 'is', null)
         .order('name');
 
@@ -158,12 +158,12 @@ export function ClienteSelectorJvris() {
             ) : (
               resultados.map((org) => (
                 <button
-                  key={org.id}
+                  key={org.client_code ?? org.id}
                   type="button"
                   onClick={() => handleSelect(org)}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors border-b last:border-b-0",
-                    cliente?.organizationId === org.id && "bg-primary/5"
+                    cliente?.organizationId === org.client_code && "bg-primary/5"
                   )}
                 >
                   {org.logo_url ? (

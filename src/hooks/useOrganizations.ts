@@ -81,11 +81,10 @@ export function useOrganizations() {
 
       if (!profile?.current_organization_id) return null;
 
-      // New schema: organizations uses client_code as PK (no id column)
       const { data: org } = await supabase
         .from('organizations')
         .select('*')
-        .eq('client_code', profile.current_organization_id)
+        .eq('id', profile.current_organization_id)
         .maybeSingle();
 
       return (org ?? null) as Organization | null;
@@ -147,17 +146,16 @@ export function useOrganizations() {
   ): Promise<UserMembership[]> {
     const orgIds = members.map((m) => m.organization_id);
 
-    // Fetch organizations by client_code (new schema PK)
     const orgsMap: Record<string, { client_code: string | null; name: string }> = {};
 
     const { data: orgs } = await supabase
       .from('organizations')
-      .select('client_code, name')
-      .in('client_code', orgIds);
+      .select('id, client_code, name')
+      .in('id', orgIds);
 
     if (orgs && orgs.length > 0) {
       orgs.forEach((o) => {
-        if (o.client_code) orgsMap[o.client_code] = o;
+        orgsMap[o.id] = { client_code: o.client_code, name: o.name };
       });
     }
 
