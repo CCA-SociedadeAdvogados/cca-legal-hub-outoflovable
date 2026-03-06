@@ -116,8 +116,8 @@ export default function Financeiro() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations")
-        .select("id, name, slug, jvris_id, tipo_cliente, prazo_pagamento_dias, logo_url, industry_sectors, created_at")
-        .eq("id", cliente!.organizationId)
+        .select("client_code, name, slug, jvris_id, tipo_cliente, prazo_pagamento_dias, logo_url, industry_sectors, created_at")
+        .eq("client_code", cliente!.organizationId)
         .single();
       if (error) throw error;
       return data;

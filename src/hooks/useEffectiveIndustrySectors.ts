@@ -17,7 +17,7 @@ export function useEffectiveIndustrySectors() {
       const { data, error } = await supabase
         .from('organizations')
         .select('industry_sectors')
-        .eq('id', effectiveOrganizationId)
+        .eq('client_code', effectiveOrganizationId)
         .maybeSingle();
 
       if (error) {
