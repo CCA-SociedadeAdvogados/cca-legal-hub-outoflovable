@@ -114,7 +114,7 @@ export function usePlatformAdmin() {
     queryKey: ["globalStats"],
     queryFn: async (): Promise<GlobalStats> => {
       const [orgsResult, contractsResult, profilesResult] = await Promise.all([
-        supabase.from("organizations").select("id", { count: "exact", head: true }),
+        supabase.from("organizations").select("client_code", { count: "exact", head: true }),
         supabase.from("contratos_safe" as "contratos").select("id, estado_contrato"),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
       ]);
@@ -154,13 +154,32 @@ export function usePlatformAdmin() {
     queryKey: ["allContracts"],
     queryFn: async () => {
       // Platform admins use contratos_safe view which still shows all fields for admins
+      // Views don't support PostgREST joins, so fetch org names separately
       const { data, error } = await supabase
         .from("contratos_safe" as "contratos")
-        .select('*')
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
-      return data;
+      if (!data || data.length === 0) return data;
+
+      // Enrich with organization names
+      const orgIds = [...new Set(data.map((c) => c.organization_id).filter(Boolean))];
+      const orgsMap = new Map<string, string>();
+      if (orgIds.length > 0) {
+        const { data: orgsData } = await supabase
+          .from("organizations")
+          .select("client_code, name")
+          .in("client_code", orgIds);
+        for (const org of orgsData || []) {
+          orgsMap.set(org.client_code || '', org.name);
+        }
+      }
+
+      return data.map((c) => ({
+        ...c,
+        organization: c.organization_id ? { name: orgsMap.get(c.organization_id) || "-" } : null,
+      }));
     },
     enabled: !!isPlatformAdmin,
   });
@@ -217,7 +236,7 @@ export function usePlatformAdmin() {
       const { data, error } = await supabase
         .from("organizations")
         .update(updateData)
-        .eq("id", id)
+        .eq("client_code", id)
         .select()
         .single();
       if (error) throw error;
@@ -234,7 +253,7 @@ export function usePlatformAdmin() {
       const { error } = await supabase
         .from("organizations")
         .delete()
-        .eq("id", orgId);
+        .eq("client_code", orgId);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -138,13 +138,13 @@ export default function PlatformAdmin() {
   const [newOrgSectors, setNewOrgSectors] = useState<string[]>([]);
   const [newOrgLegalBiUrl, setNewOrgLegalBiUrl] = useState("");
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
-  const [editingOrg, setEditingOrg] = useState<{ id: string; name: string; slug: string; industry_sectors?: string[] | null } | null>(null);
+  const [editingOrg, setEditingOrg] = useState<{ client_code: string | null; name: string; slug: string; industry_sectors?: string[] | null } | null>(null);
   const [editOrgName, setEditOrgName] = useState("");
   const [editOrgSlug, setEditOrgSlug] = useState("");
   const [editOrgSectors, setEditOrgSectors] = useState<string[]>([]);
   const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
   
-  const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
+  const [selectedOrg, setSelectedOrg] = useState<{ client_code: string | null; name: string } | null>(null);
   const [isMembersSheetOpen, setIsMembersSheetOpen] = useState(false);
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<AppRole>("viewer");
@@ -170,7 +170,7 @@ export default function PlatformAdmin() {
   // Estado para impersonation de org
   const [impersonationReason, setImpersonationReason] = useState("");
   const [isImpersonationDialogOpen, setIsImpersonationDialogOpen] = useState(false);
-  const [selectedOrgForImpersonation, setSelectedOrgForImpersonation] = useState<{ id: string; name: string } | null>(null);
+  const [selectedOrgForImpersonation, setSelectedOrgForImpersonation] = useState<{ client_code: string | null; name: string } | null>(null);
   
   // Estado para impersonation de utilizador individual
   const [isUserImpersonationDialogOpen, setIsUserImpersonationDialogOpen] = useState(false);
@@ -209,7 +209,7 @@ export default function PlatformAdmin() {
   const { allMembers, isLoadingMembers: isLoadingAllMembers, userMetrics, isLoadingMetrics } = useAllUsersMetrics(isPlatformAdmin);
 
   // Query para obter membros da organização selecionada (para sheet de gestão)
-  const { data: orgMembers, isLoading: isLoadingOrgMembers } = useOrganizationMembers(selectedOrg?.id || null);
+  const { data: orgMembers, isLoading: isLoadingOrgMembers } = useOrganizationMembers(selectedOrg?.client_code || null);
 
   // Query para histórico de impersonation
   const { data: impersonationHistory, isLoading: isLoadingHistory } = useQuery({
@@ -306,7 +306,7 @@ export default function PlatformAdmin() {
 
     try {
       await startImpersonation(
-        selectedOrgForImpersonation.id,
+        selectedOrgForImpersonation.client_code || '',
         selectedOrgForImpersonation.name,
         impersonationReason.trim()
       );
@@ -326,7 +326,7 @@ export default function PlatformAdmin() {
     }
   };
   
-  const openImpersonationDialog = (org: { id: string; name: string }) => {
+  const openImpersonationDialog = (org: { client_code: string | null; name: string }) => {
     setSelectedOrgForImpersonation(org);
     setImpersonationReason("");
     setIsImpersonationDialogOpen(true);
@@ -438,7 +438,7 @@ export default function PlatformAdmin() {
     }
   };
 
-  const handleEditOrganization = (org: { id: string; name: string; slug: string; industry_sectors?: string[] | null }) => {
+  const handleEditOrganization = (org: { client_code: string | null; name: string; slug: string; industry_sectors?: string[] | null }) => {
     setEditingOrg(org);
     setEditOrgName(org.name);
     setEditOrgSlug(org.slug);
@@ -458,7 +458,7 @@ export default function PlatformAdmin() {
 
     try {
       await updateOrganization.mutateAsync({
-        id: editingOrg.id,
+        id: editingOrg.client_code || '',
         name: editOrgName.trim(),
         slug: editOrgSlug.trim().toLowerCase().replace(/\s+/g, "-"),
         industrySectors: editOrgSectors,
@@ -482,7 +482,7 @@ export default function PlatformAdmin() {
   };
 
   // Handlers para gestão de membros da organização
-  const handleViewOrgMembers = (org: { id: string; name: string }) => {
+  const handleViewOrgMembers = (org: { client_code: string | null; name: string }) => {
     setSelectedOrg(org);
     setIsMembersSheetOpen(true);
   };
@@ -499,7 +499,7 @@ export default function PlatformAdmin() {
 
     try {
       await addMemberToOrg.mutateAsync({
-        orgId: selectedOrg.id,
+        orgId: selectedOrg.client_code || '',
         email: newMemberEmail.trim(),
         role: newMemberRole,
       });
@@ -533,7 +533,7 @@ export default function PlatformAdmin() {
     
     try {
       await addMemberToOrg.mutateAsync({
-        orgId: selectedOrg.id,
+        orgId: selectedOrg.client_code || '',
         email: pendingMemberAdd.email,
         role: pendingMemberAdd.role,
         forceMove: true,
@@ -570,7 +570,7 @@ export default function PlatformAdmin() {
       const result = await createUser.mutateAsync({
         email: newUserEmail.trim(),
         nome_completo: newUserName.trim(),
-        organizationId: selectedOrg.id,
+        organizationId: selectedOrg.client_code || '',
         role: newUserRole,
         password: newUserPassword || undefined,
       });
@@ -804,7 +804,7 @@ export default function PlatformAdmin() {
                     ) : (
                       filteredOrganizations?.map((org) => (
                         <div
-                          key={org.id}
+                          key={org.client_code || org.slug}
                           className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex items-center gap-3">
@@ -996,7 +996,7 @@ export default function PlatformAdmin() {
                       {allOrganizations?.map((org) => {
                         const sectors = (org as { industry_sectors?: string[] | null }).industry_sectors || [];
                         return (
-                          <TableRow key={org.id}>
+                          <TableRow key={org.client_code || org.slug}>
                             <TableCell className="font-medium">{org.name}</TableCell>
                             <TableCell>
                               <Badge variant="outline">{org.slug}</Badge>
@@ -1032,7 +1032,7 @@ export default function PlatformAdmin() {
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => handleEditOrganization({
-                                    id: org.id,
+                                    client_code: org.client_code,
                                     name: org.name,
                                     slug: org.slug,
                                     industry_sectors: (org as { industry_sectors?: string[] | null }).industry_sectors,
@@ -1063,7 +1063,7 @@ export default function PlatformAdmin() {
                                     <AlertDialogFooter>
                                       <AlertDialogCancel>{t("common.cancel", "Cancelar")}</AlertDialogCancel>
                                       <AlertDialogAction
-                                        onClick={() => handleDeleteOrganization(org.id, org.name)}
+                                        onClick={() => handleDeleteOrganization(org.client_code || '', org.name)}
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                       >
                                         Eliminar
@@ -1124,9 +1124,9 @@ export default function PlatformAdmin() {
                     selectedSectors={editOrgSectors}
                     onSectorsChange={setEditOrgSectors}
                   />
-                  <OrgSharePointConfig organizationId={editingOrg?.id || null} />
-                  <OrgLegalBiConfig organizationId={editingOrg?.id || null} />
-                  <OrgJvrisIdConfig organizationId={editingOrg?.id || null} />
+                  <OrgSharePointConfig organizationId={editingOrg?.client_code || null} />
+                  <OrgLegalBiConfig organizationId={editingOrg?.client_code || null} />
+                  <OrgJvrisIdConfig organizationId={editingOrg?.client_code || null} />
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsEditOrgOpen(false)}>

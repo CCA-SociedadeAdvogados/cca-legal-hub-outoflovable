@@ -32,7 +32,7 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
       const { data } = await supabase
         .from("organizations")
         .select("legalbi_url")
-        .eq("id", organizationId)
+        .eq("client_code", organizationId)
         .single();
       const url = (data as any)?.legalbi_url as string | null | undefined;
       setCurrentSavedUrl(url ?? null);
@@ -48,7 +48,7 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
       const { error } = await supabase
         .from("organizations")
         .update({ legalbi_url: legalbiUrl || null } as any)
-        .eq("id", organizationId);
+        .eq("client_code", organizationId);
       if (error) throw error;
       setCurrentSavedUrl(legalbiUrl || null);
       queryClient.invalidateQueries({ queryKey: ["organizations"] });

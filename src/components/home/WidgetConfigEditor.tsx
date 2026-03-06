@@ -38,7 +38,7 @@ export function WidgetConfigEditor({
 
   // Organization data
   const { organizations } = useOrganizations();
-  const organization = organizations?.find(org => org.id === organizationId);
+  const organization = organizations?.find(org => org.client_code === organizationId);
   
   // Update organization hook
   const { 
