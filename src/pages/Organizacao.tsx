@@ -59,7 +59,7 @@ const roleIcons = {
 
 export default function Organizacao() {
   const { t } = useTranslation();
-  const { organizations, currentOrganization, userMemberships, isLoading, membershipsLoading, createOrganization, switchOrganization } = useOrganizations();
+  const { organizations, currentOrganization, userMemberships, membershipsLoading, createOrganization, switchOrganization } = useOrganizations();
   const { members, inviteMember, updateMemberRole, removeMember } = useOrganizationMembers(currentOrganization?.id);
   const { isPlatformAdmin } = usePlatformAdmin();
   const { legalHubProfile, isLoading: profileLoading } = useLegalHubProfile();
@@ -106,7 +106,7 @@ export default function Organizacao() {
     switchOrganization.mutate(organizationId);
   };
 
-  if (isLoading || membershipsLoading || profileLoading) {
+  if (membershipsLoading || profileLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
