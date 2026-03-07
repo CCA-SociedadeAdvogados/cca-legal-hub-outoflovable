@@ -59,7 +59,7 @@ const roleIcons = {
 
 export default function Organizacao() {
   const { t } = useTranslation();
-  const { organizations, currentOrganization, userMemberships, isLoading, membershipsLoading, createOrganization, switchOrganization } = useOrganizations();
+  const { currentOrganization, userMemberships, isLoading, membershipsLoading, createOrganization, switchOrganization } = useOrganizations();
   const { members, inviteMember, updateMemberRole, removeMember } = useOrganizationMembers(currentOrganization?.id);
   const { isPlatformAdmin } = usePlatformAdmin();
   const { legalHubProfile, isLoading: profileLoading } = useLegalHubProfile();
@@ -214,7 +214,7 @@ export default function Organizacao() {
           </div>
           
           {/* Organization Switcher */}
-          {organizations && organizations.length > 1 && (
+          {userMemberships && userMemberships.length > 1 && (
             <Select
               value={currentOrganization.id}
               onValueChange={(value) => switchOrganization.mutate(value)}
@@ -223,9 +223,9 @@ export default function Organizacao() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
-                    {org.name}
+                {userMemberships.map((m) => (
+                  <SelectItem key={m.organization_id} value={m.organization_id}>
+                    {m.organizations.name}
                   </SelectItem>
                 ))}
               </SelectContent>

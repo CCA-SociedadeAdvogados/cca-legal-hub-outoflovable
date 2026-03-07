@@ -56,10 +56,21 @@ export function useOrganizations() {
     queryKey: ['organizations', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
+
+      // Only fetch organizations the user is a member of
+      const { data: memberships, error: membError } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', user.id);
+
+      if (membError) throw membError;
+      if (!memberships || memberships.length === 0) return [];
+
+      const orgIds = memberships.map((m) => m.organization_id);
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
+        .in('id', orgIds)
         .order('name');
 
       if (error) throw error;

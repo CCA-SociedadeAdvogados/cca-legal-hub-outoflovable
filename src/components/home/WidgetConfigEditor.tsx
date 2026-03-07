@@ -37,8 +37,8 @@ export function WidgetConfigEditor({
   const [config, setConfig] = useState(widget.config);
 
   // Organization data
-  const { organizations } = useOrganizations();
-  const organization = organizations?.find(org => org.id === organizationId);
+  const { currentOrganization } = useOrganizations();
+  const organization = currentOrganization?.id === organizationId ? currentOrganization : null;
   
   // Update organization hook
   const { 

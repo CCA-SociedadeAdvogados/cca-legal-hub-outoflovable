@@ -15,10 +15,10 @@ interface OrganizationCardProps {
 const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
   function OrganizationCard({ title, config, organizationId }, ref) {
     const { t } = useTranslation();
-    const { organizations } = useOrganizations();
+    const { currentOrganization } = useOrganizations();
     const { nomeCompleto, photoUrl, iniciais, isSSO } = useAzureProfile();
 
-    const organization = organizations?.find(org => org.id === organizationId);
+    const organization = currentOrganization?.id === organizationId ? currentOrganization : null;
 
     if (!organization) {
       return (

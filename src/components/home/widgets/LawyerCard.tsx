@@ -16,10 +16,10 @@ interface LawyerCardProps {
 const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(
   function LawyerCard({ title, organizationId }, ref) {
     const { t } = useTranslation();
-    const { organizations, isLoading } = useOrganizations();
+    const { currentOrganization, isLoading } = useOrganizations();
     const { nomeCompleto, email, photoUrl, iniciais, isSSO, isLoadingPhoto } = useAzureProfile();
 
-    const organization = organizations?.find(org => org.id === organizationId);
+    const organization = currentOrganization?.id === organizationId ? currentOrganization : null;
 
     if (isLoading) {
       return (
