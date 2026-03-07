@@ -31,13 +31,19 @@ export function useLegalHubProfile() {
   const { isPlatformAdmin, isCheckingAdmin } = usePlatformAdmin();
   const { userMemberships, currentOrganization, membershipsLoading } = useOrganizations();
 
+  const authMethod = (profile as any)?.auth_method ?? null;
+  // SSO users are identified as soon as the profile loads — no need to wait for memberships.
+  // Their role (cca_user vs cca_manager) updates reactively when memberships finish in background.
+  const isSSOUser = !profileLoading && authMethod === 'sso_cca';
+
   const currentMembership = userMemberships?.find(
     (m) => m.organization_id === currentOrganization?.id
   );
   const role = currentMembership?.role ?? null;
-  const authMethod = (profile as any)?.auth_method ?? null;
 
-  const isLoading = profileLoading || isCheckingAdmin || membershipsLoading;
+  // Local users need memberships to derive role-based access.
+  // SSO/CCA users don't block on memberships — org switch happens inside the platform after login.
+  const isLoading = profileLoading || isCheckingAdmin || (!isSSOUser && membershipsLoading);
 
   const legalHubProfile: LegalHubProfile | null = isLoading
     ? null
