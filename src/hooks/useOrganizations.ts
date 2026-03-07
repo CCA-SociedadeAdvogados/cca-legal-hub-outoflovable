@@ -68,7 +68,7 @@ export function useOrganizations() {
     enabled: !!user,
   });
 
-  const { data: currentOrganization } = useQuery({
+  const { data: currentOrganization, isLoading: currentOrgLoading } = useQuery({
     queryKey: ['current-organization', user?.id],
     queryFn: async () => {
       if (!user) return null;
@@ -235,6 +235,7 @@ export function useOrganizations() {
     currentOrganization,
     userMemberships,
     isLoading,
+    currentOrgLoading,
     membershipsLoading,
     createOrganization,
     switchOrganization,

@@ -5,7 +5,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 import { ExternalLink, BarChart3, AlertCircle, Loader2, Monitor } from 'lucide-react';
 
 export default function LegalBi() {
-  const { currentOrganization, isLoading } = useOrganizations();
+  const { currentOrganization, currentOrgLoading } = useOrganizations();
 
   const legalbiUrl = (currentOrganization as any)?.legalbi_url as string | null | undefined;
 
@@ -15,7 +15,7 @@ export default function LegalBi() {
     }
   };
 
-  if (isLoading) {
+  if (currentOrgLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">

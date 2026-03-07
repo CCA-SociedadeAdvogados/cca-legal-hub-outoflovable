@@ -15,7 +15,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
 export default function MinhaOrganizacao() {
-  const { currentOrganization, isLoading } = useOrganizations();
+  const { currentOrganization, currentOrgLoading } = useOrganizations();
   const { members, isLoading: membersLoading } = useOrganizationMembers(currentOrganization?.id);
   const { legalHubProfile, isLoading: profileLoading } = useLegalHubProfile();
   const queryClient = useQueryClient();
@@ -24,7 +24,7 @@ export default function MinhaOrganizacao() {
   const [orgName, setOrgName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (profileLoading || isLoading) {
+  if (profileLoading || currentOrgLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
