@@ -48,15 +48,18 @@ export interface UserMembership {
   };
 }
 
-export function useOrganizations() {
+export function useOrganizations(opts?: { enabled?: boolean }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Callers como useLegalHubProfile podem desativar todas as queries para SSO users
+  const queriesEnabled = !!user && (opts?.enabled !== false);
 
   const { data: organizations, isLoading } = useQuery({
     queryKey: ['organizations', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
+
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
@@ -65,7 +68,7 @@ export function useOrganizations() {
       if (error) throw error;
       return data as Organization[];
     },
-    enabled: !!user,
+    enabled: queriesEnabled,
   });
 
   const { data: currentOrganization, isLoading: currentOrgLoading } = useQuery({
@@ -89,7 +92,7 @@ export function useOrganizations() {
 
       return (org ?? null) as Organization | null;
     },
-    enabled: !!user,
+    enabled: queriesEnabled,
   });
 
   // Query to fetch all organizations the user is a member of
@@ -100,6 +103,7 @@ export function useOrganizations() {
 
       // Fetch memberships without join (organizations table schema may differ)
       const { data: membersData, error: membersError } = await supabase
+
         .from('organization_members')
         .select('organization_id, role')
         .eq('user_id', user.id);
@@ -137,7 +141,7 @@ export function useOrganizations() {
 
       return buildMemberships(membersData);
     },
-    enabled: !!user,
+    enabled: queriesEnabled,
   });
 
   // Helper: enrich membership records with organization name

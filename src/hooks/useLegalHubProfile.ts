@@ -29,21 +29,26 @@ export function useLegalHubProfile() {
   const { user } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const { isPlatformAdmin, isCheckingAdmin } = usePlatformAdmin();
-  const { userMemberships, currentOrganization, membershipsLoading } = useOrganizations();
 
   const authMethod = (profile as any)?.auth_method ?? null;
-  // SSO users are identified as soon as the profile loads — no need to wait for memberships.
-  // Their role (cca_user vs cca_manager) updates reactively when memberships finish in background.
+  // SSO users são identificados assim que o profile carrega.
+  // Não disparar queries de org para eles — apenas precisamos saber que são CCA/SSO.
   const isSSOUser = !profileLoading && authMethod === 'sso_cca';
+
+  // Org queries só para utilizadores locais, e apenas após o profile carregar
+  // (evita disparar queries desnecessárias que depois se cancelam para SSO users)
+  const { userMemberships, currentOrganization, membershipsLoading } = useOrganizations({
+    enabled: !profileLoading && !isSSOUser,
+  });
 
   const currentMembership = userMemberships?.find(
     (m) => m.organization_id === currentOrganization?.id
   );
   const role = currentMembership?.role ?? null;
 
-  // Local users need memberships to derive role-based access.
-  // SSO/CCA users don't block on memberships — org switch happens inside the platform after login.
-  const isLoading = profileLoading || isCheckingAdmin || (!isSSOUser && membershipsLoading);
+  // SSO/CCA: spinner resolve logo que o profile carrega — admin check e memberships correm em background.
+  // Local: aguardar admin check + memberships para derivar role correto.
+  const isLoading = profileLoading || (!isSSOUser && (isCheckingAdmin || membershipsLoading));
 
   const legalHubProfile: LegalHubProfile | null = isLoading
     ? null
