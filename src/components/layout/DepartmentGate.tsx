@@ -36,6 +36,12 @@ export function DepartmentGate({ children }: DepartmentGateProps) {
     );
   }
 
+  // SSO CCA users bypass department gate — they are internal staff
+  // and their department is optional (set via platform_users or profile)
+  if ((profile as any)?.auth_method === 'sso_cca') {
+    return <>{children}</>;
+  }
+
   // If department is already set, render children
   if (profile?.departamento) {
     return <>{children}</>;

@@ -95,7 +95,11 @@ export default function SSOCallback() {
             }
           }
 
-          await queryClient.invalidateQueries();
+          // Invalidate all queries EXCEPT the profile we just cached,
+          // so ProtectedRoute / DepartmentGate see the fresh profile immediately.
+          await queryClient.invalidateQueries({
+            predicate: (query) => query.queryKey[0] !== 'profile',
+          });
           setState("success");
           // Send to onboarding if the user hasn't completed it yet (first SSO login)
           const destination = needsOnboarding ? "/onboarding" : "/";
