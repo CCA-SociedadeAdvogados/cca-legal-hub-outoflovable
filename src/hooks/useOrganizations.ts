@@ -204,7 +204,7 @@ export function useOrganizations() {
 
       if (error) throw error;
     },
-      onSuccess: async () => {
+         onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['current-organization'] }),
         queryClient.invalidateQueries({ queryKey: ['profile'] }),
@@ -220,7 +220,6 @@ export function useOrganizations() {
       ]);
 
       toast.success('Organização alterada');
-    },
     },
     onError: (error: any) => {
       toast.error(error.message || 'Erro ao mudar organização');
