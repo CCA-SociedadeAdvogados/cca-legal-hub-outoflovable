@@ -24,7 +24,12 @@ export const useProfile = () => {
           nome_completo,
           avatar_url,
           onboarding_completed,
-          current_organization_id
+          current_organization_id,
+          auth_method,
+          sso_external_id,
+          sso_group,
+          departamento,
+          theme_preference
         `)
         .eq('id', user.id)
         .maybeSingle();
@@ -72,7 +77,12 @@ export const useProfile = () => {
           nome_completo,
           avatar_url,
           onboarding_completed,
-          current_organization_id
+          current_organization_id,
+          auth_method,
+          sso_external_id,
+          sso_group,
+          departamento,
+          theme_preference
         `)
         .single();
       
