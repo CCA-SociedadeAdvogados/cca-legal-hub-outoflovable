@@ -42,90 +42,72 @@ export function OrgJvrisIdConfig({ organizationId }: OrgJvrisIdConfigProps) {
   }, [organizationId]);
 
   const handleSave = async () => {
-    if (!organizationId) return;
-    setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from("organizations")
-        .update({ jvris_id: jvrisId.trim() || null } as any)
-        .eq("id", organizationId);
-      if (error) throw error;
-      setCurrentSavedId(jvrisId.trim() || null);
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      queryClient.invalidateQueries({ queryKey: ["organization-financial-info"] });
-      toast.success("ID Jvris guardado com sucesso");
-    } catch (err: unknown) {
-      const msg = (err as { message?: string })?.message;
-      toast.error(msg ? `Erro ao guardar ID Jvris: ${msg}` : "Erro ao guardar ID Jvris");
-    } finally {
-      setIsSaving(false);
+  if (!organizationId) return;
+
+  setIsSaving(true);
+
+  try {
+    const normalizedId = jvrisId.trim() || null;
+
+    const { error } = await supabase
+      .from("organizations")
+      .update({ jvris_id: normalizedId } as any)
+      .eq("id", organizationId);
+
+    if (error) throw error;
+
+    const { data: spConfig } = await supabase
+      .from("sharepoint_config")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    if (!spConfig) {
+      throw new Error(
+        "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
+      );
     }
-  };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 py-4">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm text-muted-foreground">A carregar configuração Jvris...</span>
-      </div>
+    const { data, error: syncError } = await supabase.functions.invoke("sync-nav-excel", {
+      body: { organization_id: organizationId },
+    });
+
+    if (syncError) {
+      let msg = syncError.message;
+
+      try {
+        const ctx = (syncError as any).context;
+        if (ctx && typeof ctx.json === "function") {
+          const body = await ctx.json();
+          if (body?.error) {
+            msg =
+              typeof body.error === "string"
+                ? body.error
+                : body.error?.message || JSON.stringify(body.error);
+          }
+        }
+      } catch {
+        // mantém mensagem base
+      }
+
+      throw new Error(msg);
+    }
+
+    setCurrentSavedId(normalizedId);
+
+    queryClient.invalidateQueries({ queryKey: ["organizations"] });
+    queryClient.invalidateQueries({ queryKey: ["organization-financial-info"] });
+    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+    queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
+
+    toast.success(
+      `ID Jvris guardado e Base Nav sincronizada com sucesso (${data?.items ?? 0} faturas)`
     );
+  } catch (err: unknown) {
+    const msg = (err as { message?: string })?.message;
+    toast.error(msg ? `Erro ao guardar ID Jvris: ${msg}` : "Erro ao guardar ID Jvris");
+  } finally {
+    setIsSaving(false);
   }
-
-  return (
-    <div className="space-y-4">
-      <Separator />
-      <div className="flex items-center gap-2 flex-wrap">
-        <Hash className="h-4 w-4 text-muted-foreground" />
-        <Label className="text-base font-medium">ID Jvris</Label>
-        {currentSavedId ? (
-          <Badge variant="outline" className="text-xs">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Configurado
-          </Badge>
-        ) : (
-          <Badge variant="subtle" className="text-xs">
-            Não configurado
-          </Badge>
-        )}
-      </div>
-
-      {currentSavedId && (
-        <p className="text-xs text-muted-foreground font-mono truncate">
-          {currentSavedId}
-        </p>
-      )}
-
-      <div className="grid gap-2">
-        <Label htmlFor="jvris-id">ID Jvris</Label>
-        <Input
-          id="jvris-id"
-          value={jvrisId}
-          onChange={(e) => setJvrisId(e.target.value)}
-          placeholder="ex: CCA-001"
-        />
-        <p className="text-xs text-muted-foreground">
-          Identificador único no sistema Jvris para ligar os dados Base Nav.
-        </p>
-      </div>
-
-      <Button
-        type="button"
-        onClick={handleSave}
-        disabled={isSaving || !organizationId}
-        className="w-full"
-      >
-        {isSaving ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            A guardar...
-          </>
-        ) : (
-          <>
-            <Save className="h-4 w-4 mr-2" />
-            Guardar ID Jvris
-          </>
-        )}
-      </Button>
-    </div>
-  );
-}
+};
