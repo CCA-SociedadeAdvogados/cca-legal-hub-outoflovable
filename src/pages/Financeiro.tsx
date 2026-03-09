@@ -69,11 +69,12 @@ export default function Financeiro() {
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [jvrisSearchQuery, setJvrisSearchQuery] = useState("");
   const [selectedJvrisId, setSelectedJvrisId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("financeiro");
+  const [dismissJvrisSelector, setDismissJvrisSelector] = useState(false);
 
   // Show jvris_id selection dialog when org has no jvris_id and there are available IDs
   const hasAvailableIds = (lastSyncResult?.jvris_ids?.length ?? 0) > 1 || availableJvrisIds.length > 1;
-  const showJvrisSelector = !jvrisId && hasAvailableIds && isPlatformAdmin;
+  const showJvrisSelector =
+  !dismissJvrisSelector && !jvrisId && hasAvailableIds && (isPlatformAdmin || isCCAUser);
 
   const filteredJvrisIds = useMemo(() => {
     const ids = (lastSyncResult?.jvris_ids?.length ?? 0) > 0
@@ -169,7 +170,19 @@ export default function Financeiro() {
       </AppLayout>
     );
   }
+  const handleConfirmJvrisSelection = async () => {
+  if (!selectedJvrisId) return;
 
+  try {
+    await setJvrisId.mutateAsync(selectedJvrisId);
+
+    setDismissJvrisSelector(true);
+    setSelectedJvrisId(null);
+    setJvrisSearchQuery("");
+  } catch (error) {
+    console.error("[Financeiro] erro ao confirmar seleção de jvris_id:", error);
+  }
+};
   // ─── Conteúdo do separador Financeiro ────────────────────────────────────────
   const tabFinanceiro = (
     <>
@@ -738,8 +751,18 @@ export default function Financeiro() {
               {t("common.cancel")}
             </Button>
             <Button
-              onClick={handleUpdateConfig}
-              disabled={updateOrganizationFinancial.isPending}
+  onClick={handleConfirmJvrisSelection}
+  disabled={!selectedJvrisId || setJvrisId.isPending}
+>
+  {setJvrisId.isPending ? (
+    <>
+      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      {t("financial.selecting")}
+    </>
+  ) : (
+    t("financial.confirmSelection")
+  )}
+</Button>
             >
               {updateOrganizationFinancial.isPending ? t("financial.saving") : t("common.save")}
             </Button>
