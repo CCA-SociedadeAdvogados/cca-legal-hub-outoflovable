@@ -373,9 +373,24 @@ export function useSharePointConfigByOrgId(orgId: string | null) {
     queryFn: async (): Promise<SharePointConfig | null> => {
       if (!orgId) return null;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("sharepoint_config")
-        .select("*")
+        .select(`
+          id,
+          organization_id,
+          site_id,
+          site_name,
+          site_url,
+          drive_id,
+          root_folder_path,
+          sync_enabled,
+          sync_interval_minutes,
+          last_sync_at,
+          last_sync_status,
+          last_sync_error,
+          created_at,
+          updated_at
+        `)
         .eq("organization_id", orgId)
         .maybeSingle();
 

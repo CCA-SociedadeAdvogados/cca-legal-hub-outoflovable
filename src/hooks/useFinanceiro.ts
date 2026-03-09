@@ -237,7 +237,7 @@ export function useFinanceiro(overrideOrgId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("invoices")
-        .select("*")
+        .select("id, organization_id, numero, data_emissao, periodo_inicio, periodo_fim, valor, moeda, estado, url_ficheiro, notas, created_at, updated_at")
         .eq("organization_id", organizationId)
         .order("data_emissao", { ascending: false });
 
@@ -252,7 +252,7 @@ export function useFinanceiro(overrideOrgId?: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("client_folders")
-        .select("*")
+        .select("id, organization_id, nome, descricao, estado, tags, created_at, updated_at")
         .eq("organization_id", organizationId)
         .eq("estado", "ativa")
         .order("created_at", { ascending: false });
@@ -353,18 +353,19 @@ export function useFinanceiro(overrideOrgId?: string) {
       let msg = error.message;
 
       try {
-        const ctx = (error as any).context;
+        const errWithContext = error as { context?: { json?: () => Promise<unknown>; error?: string | { message?: string } } };
+        const ctx = errWithContext.context;
 
         if (ctx && typeof ctx.json === "function") {
-          const body = await ctx.json();
+          const body = (await ctx.json()) as { error?: string | { message?: string } } | null;
           if (body?.error) {
             msg =
               typeof body.error === "string"
                 ? body.error
                 : body.error?.message || JSON.stringify(body.error);
           }
-        } else if ((error as any)?.context?.error) {
-          const ctxError = (error as any).context.error;
+        } else if (ctx?.error) {
+          const ctxError = ctx.error;
           msg =
             typeof ctxError === "string"
               ? ctxError
