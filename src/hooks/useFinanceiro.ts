@@ -376,91 +376,127 @@ export function useFinanceiro(overrideOrgId?: string) {
       toast.error("Erro ao atualizar configurações: " + error.message);
     },
   });
+const runNavSync = async () => {
+  if (!organizationId) {
+    throw new Error("Organização não definida.");
+  }
 
+  const { data: spConfig } = await supabase
+    .from("sharepoint_config")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  if (!spConfig) {
+    throw new Error(
+      "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
+    );
+  }
+
+  const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
+    body: { organization_id: organizationId },
+  });
+
+  if (error) {
+    let msg = error.message;
+
+    try {
+      const ctx = (error as any).context;
+      if (ctx && typeof ctx.json === "function") {
+        const body = await ctx.json();
+        if (body?.error) {
+          msg =
+            typeof body.error === "string"
+              ? body.error
+              : body.error?.message || JSON.stringify(body.error);
+        }
+      } else if ((error as any)?.context?.error) {
+        const ctxError = (error as any).context.error;
+        msg =
+          typeof ctxError === "string"
+            ? ctxError
+            : ctxError?.message || JSON.stringify(ctxError);
+      }
+    } catch {
+      // mantém a mensagem base
+    }
+
+    if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
+      msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
+    }
+
+    throw new Error(msg);
+  }
+
+  return data;
+};
   // Mutação para sincronizar Base Nav do SharePoint
   const syncNavFromSharePoint = useMutation({
-    mutationFn: async () => {
-      // Pre-flight: check SharePoint is configured for this org
-      const { data: spConfig } = await supabase
-        .from("sharepoint_config")
-        .select("id")
-        .eq("organization_id", organizationId!)
-        .maybeSingle();
+  mutationFn: async () => {
+    return await runNavSync();
+  },
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+    queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+    queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
 
-      if (!spConfig) {
-        throw new Error(
-          "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
-        );
-      }
+    setLastSyncResult(data);
 
-      const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
-        body: { organization_id: organizationId },
-      });
-      if (error) {
-        // Extract real error message from edge function response body
-        let msg = error.message;
-        try {
-          const ctx = (error as any).context;
-          if (ctx && typeof ctx.json === 'function') {
-            const body = await ctx.json();
-            if (body?.error) {
-              msg = typeof body.error === 'string'
-                ? body.error
-                : (body.error?.message || JSON.stringify(body.error));
-            }
-          } else if (ctx?.error) {
-            msg = typeof ctx.error === 'string'
-              ? ctx.error
-              : (ctx.error?.message || JSON.stringify(ctx.error));
-          }
-        } catch { /* keep generic message */ }
-        // Fallback for unresolved [object Object] or generic edge function errors
-        if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
-          msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
-        }
-        console.error("[sync-nav-excel]", msg);
-        throw new Error(msg);
-      }
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
-      queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
-      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
-      setLastSyncResult(data);
-      let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
-      if (data?.auto_linked) {
-        msg += ` (ID Jvris configurado: ${data.auto_linked})`;
-      }
-      toast.success(msg);
-    },
-    onError: (error) => {
-      toast.error("Erro ao sincronizar Base Nav: " + error.message);
-    },
-  });
+    let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
+    if (data?.auto_linked) {
+      msg += ` (ID Jvris configurado: ${data.auto_linked})`;
+    }
+
+    toast.success(msg);
+  },
+  onError: (error) => {
+    toast.error("Erro ao sincronizar Base Nav: " + error.message);
+  },
+});
 
   // Mutação para configurar jvris_id da organização
-  const setJvrisId = useMutation({
-    mutationFn: async (jvrisId: string) => {
-      const { error } = await supabase
-        .from("organizations")
-        .update({ jvris_id: jvrisId } as any)
-        .eq("id", organizationId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
-      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
-      setLastSyncResult(null);
-      toast.success("ID Jvris configurado com sucesso");
-    },
-    onError: (error) => {
-      toast.error("Erro ao configurar ID Jvris: " + error.message);
-    },
-  });
+const setJvrisId = useMutation({
+  mutationFn: async (jvrisId: string) => {
+    if (!organizationId) {
+      throw new Error("Organização não definida.");
+    }
+
+    const normalizedId = jvrisId.trim();
+
+    const { error } = await supabase
+      .from("organizations")
+      .update({ jvris_id: normalizedId } as any)
+      .eq("id", organizationId);
+
+    if (error) throw error;
+
+    const syncData = await runNavSync();
+
+    return {
+      jvrisId: normalizedId,
+      syncData,
+    };
+  },
+  onSuccess: ({ syncData }) => {
+    queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+    queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
+
+    setLastSyncResult(syncData ?? null);
+
+    let msg = "ID Jvris configurado e Base Nav sincronizada com sucesso";
+    if (syncData?.synced != null || syncData?.items != null) {
+      msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
+    }
+
+    toast.success(msg);
+  },
+  onError: (error) => {
+    toast.error("Erro ao configurar ID Jvris: " + error.message);
+  },
+});
 
   // Mutação para criar pasta
   const createFolder = useMutation({
