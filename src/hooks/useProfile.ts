@@ -16,9 +16,17 @@ export const useProfile = () => {
     queryFn: async () => {
       if (!user?.id) return null;
       
-      const { data, error } = await supabase
+            const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          id,
+          email,
+          nome_completo,
+          avatar_url,
+          onboarding_completed,
+          current_organization_id,
+          jvris_id
+        `)
         .eq('id', user.id)
         .maybeSingle();
       
@@ -55,11 +63,19 @@ export const useProfile = () => {
     mutationFn: async (updates: ProfileUpdate) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
       
-      const { data, error } = await supabase
+            const { data, error } = await supabase
         .from('profiles')
         .update(updates)
         .eq('id', user.id)
-        .select()
+        .select(`
+          id,
+          email,
+          nome_completo,
+          avatar_url,
+          onboarding_completed,
+          current_organization_id,
+          jvris_id
+        `)
         .single();
       
       if (error) throw error;
