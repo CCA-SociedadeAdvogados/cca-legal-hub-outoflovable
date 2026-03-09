@@ -794,10 +794,17 @@ export default function Financeiro() {
               onClick={handleConfirmJvrisSelection}
               disabled={!selectedJvrisId || setJvrisId.isPending || isConfirmingJvrisSelection}
             >
-              {setJvrisId.isPending || isConfirmingJvrisSelection ? (
+              {!selectedJvrisId ? (
+                "Sem selecção"
+              ) : isConfirmingJvrisSelection ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("financial.selecting")}
+                  A confirmar...
+                </>
+              ) : setJvrisId.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  A gravar...
                 </>
               ) : (
                 t("financial.confirmSelection")
