@@ -73,7 +73,6 @@ function calculateAccountStatusFromNav(
   navCache: NavCache | null,
   navItems: NavItem[]
 ): AccountStatus {
-  // Sem dados ou sem valor pendente → Em Dia
   if (!navCache || navCache.valor_pendente === null || navCache.valor_pendente <= 0) {
     return "em_dia";
   }
@@ -81,41 +80,40 @@ function calculateAccountStatusFromNav(
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
-  // Calcular dias de atraso da fatura vencida mais antiga
   let oldestOverdueDays = 0;
 
   for (const item of navItems) {
     if (!item.data_vencimento) continue;
+
     const vencimento = new Date(item.data_vencimento);
     vencimento.setHours(0, 0, 0, 0);
+
     const diffDays = Math.floor(
       (hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24)
     );
+
     if (diffDays > oldestOverdueDays) {
       oldestOverdueDays = diffDays;
     }
   }
 
-  // Fallback: usar data_vencimento do navCache se não há itens individuais
   if (navItems.length === 0 && navCache.data_vencimento) {
     const vencimento = new Date(navCache.data_vencimento);
     vencimento.setHours(0, 0, 0, 0);
+
     oldestOverdueDays = Math.floor(
       (hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24)
     );
   }
 
-  // Sem faturas vencidas → Em Dia
   if (oldestOverdueDays <= 0) {
     return "em_dia";
   }
 
-  // Vencido há 30 ou mais dias → Em Incumprimento
   if (oldestOverdueDays >= 30) {
     return "em_incumprimento";
   }
 
-  // Faturas vencidas há menos de 30 dias → Em Aberto
   return "em_aberto";
 }
 
@@ -126,16 +124,17 @@ function calculateAccountStatusFromNav(
 export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
-  // Utilizadores CCA podem ver dados de qualquer organização via o seletor Jvris
   const organizationId = overrideOrgId || profile?.current_organization_id;
   const queryClient = useQueryClient();
+
   const [lastSyncResult, setLastSyncResult] = useState<{
     jvris_ids?: string[];
     auto_linked?: string | null;
     needs_jvris_config?: boolean;
+    synced?: number;
+    items?: number;
   } | null>(null);
 
-  // Buscar info financeira da organização
   const { data: orgInfo, isLoading: isLoadingOrgInfo } = useQuery({
     queryKey: ["organization-financial-info", organizationId],
     queryFn: async () => {
@@ -151,7 +150,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     enabled: !!organizationId,
   });
 
-  // Buscar dados do cache Base Nav (via jvris_id da organização)
   const { data: navCache, error: navCacheError, isLoading: isLoadingNavCache } = useQuery({
     queryKey: ["financeiro-nav-cache", orgInfo?.jvris_id],
     queryFn: async () => {
@@ -167,7 +165,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     enabled: !!orgInfo?.jvris_id,
   });
 
-  // Buscar linhas individuais (faturas) do cache Base Nav
   const { data: navItems = [], error: navItemsError, isLoading: isLoadingNavItems } = useQuery({
     queryKey: ["financeiro-nav-items", orgInfo?.jvris_id],
     queryFn: async () => {
@@ -186,7 +183,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     enabled: !!orgInfo?.jvris_id,
   });
 
-  // Buscar jvris_ids disponíveis no cache (para selector quando org não tem jvris_id)
   const { data: availableJvrisIds = [] } = useQuery({
     queryKey: ["available-jvris-ids"],
     queryFn: async () => {
@@ -195,17 +191,24 @@ export function useFinanceiro(overrideOrgId?: string) {
         .select("jvris_id");
 
       if (error) throw error;
-      return (data || []).map((row: { jvris_id: string }) => row.jvris_id).sort();
+
+      return (data || [])
+        .map((row: { jvris_id: string }) => row.jvris_id)
+        .filter(Boolean)
+        .sort();
     },
     enabled: !!organizationId && !orgInfo?.jvris_id,
     staleTime: 5 * 60 * 1000,
   });
 
-  // Log query errors for debugging
-  if (navCacheError) console.error("[useFinanceiro] navCache query error:", navCacheError);
-  if (navItemsError) console.error("[useFinanceiro] navItems query error:", navItemsError);
+  if (navCacheError) {
+    console.error("[useFinanceiro] navCache query error:", navCacheError);
+  }
 
-  // Buscar faturas
+  if (navItemsError) {
+    console.error("[useFinanceiro] navItems query error:", navItemsError);
+  }
+
   const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery({
     queryKey: ["invoices", organizationId],
     queryFn: async () => {
@@ -221,7 +224,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     enabled: !!organizationId,
   });
 
-  // Buscar pastas ativas
   const { data: folders = [], isLoading: isLoadingFolders } = useQuery({
     queryKey: ["client-folders", organizationId],
     queryFn: async () => {
@@ -238,11 +240,9 @@ export function useFinanceiro(overrideOrgId?: string) {
     enabled: !!organizationId,
   });
 
-  // Calcular resumo da conta
   const tipoCliente = orgInfo?.tipo_cliente || "pessoa_coletiva";
   const prazoPagamentoDias = orgInfo?.prazo_pagamento_dias || 30;
 
-  // Derive overdue / pending counts from navItems (Excel child rows)
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
 
@@ -252,8 +252,9 @@ export function useFinanceiro(overrideOrgId?: string) {
     d.setHours(0, 0, 0, 0);
     return d.getTime() < hoje.getTime();
   });
+
   const navItemsEmAberto = navItems.filter((item) => {
-    if (!item.data_vencimento) return true; // no date = still open
+    if (!item.data_vencimento) return true;
     const d = new Date(item.data_vencimento);
     d.setHours(0, 0, 0, 0);
     return d.getTime() >= hoje.getTime();
@@ -262,41 +263,105 @@ export function useFinanceiro(overrideOrgId?: string) {
   const hasNavItems = navItems.length > 0;
   const hasNavCache = navCache?.valor_pendente != null && navCache.valor_pendente > 0;
 
-  // When navCache has data but navItems is empty (no invoice detail rows in the Excel),
-  // derive counters from navCache instead of showing 0
-  const navCacheIsOverdue = hasNavCache && navCache.data_vencimento
-    ? new Date(navCache.data_vencimento).getTime() < hoje.getTime()
-    : false;
+  const navCacheIsOverdue =
+    hasNavCache && navCache.data_vencimento
+      ? new Date(navCache.data_vencimento).getTime() < hoje.getTime()
+      : false;
 
   const accountSummary: AccountSummary = {
     status: calculateAccountStatusFromNav(navCache ?? null, navItems),
     tipoCliente,
     prazoPagamentoDias,
     totalEmAberto: hasNavCache
-      ? navCache.valor_pendente
+      ? navCache!.valor_pendente ?? 0
       : invoices
           .filter((f) => f.estado === "em_aberto" || f.estado === "vencida")
           .reduce((sum, f) => sum + Number(f.valor), 0),
     totalFaturasEmIncumprimento: hasNavItems
       ? navItems.length
-      : hasNavCache ? 1 : invoices.filter((f) => f.estado !== "paga").length,
+      : hasNavCache
+        ? 1
+        : invoices.filter((f) => f.estado !== "paga").length,
     faturasEmAberto: hasNavItems
       ? navItemsEmAberto.length
-      : hasNavCache && !navCacheIsOverdue ? 1 : invoices.filter((f) => f.estado === "em_aberto").length,
+      : hasNavCache && !navCacheIsOverdue
+        ? 1
+        : invoices.filter((f) => f.estado === "em_aberto").length,
     faturasVencidas: hasNavItems
       ? navItemsVencidas.length
-      : hasNavCache && navCacheIsOverdue ? 1 : invoices.filter((f) => f.estado === "vencida").length,
+      : hasNavCache && navCacheIsOverdue
+        ? 1
+        : invoices.filter((f) => f.estado === "vencida").length,
     proximoVencimento: navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null,
-    emIncumprimentoDesde: navItemsVencidas.length > 0
-      ? new Date(
-          navItemsVencidas
-            .map((item) => new Date(item.data_vencimento!))
-            .sort((a, b) => a.getTime() - b.getTime())[0]
-        )
-      : (navCacheIsOverdue && navCache?.data_vencimento ? new Date(navCache.data_vencimento) : null),
+    emIncumprimentoDesde:
+      navItemsVencidas.length > 0
+        ? new Date(
+            navItemsVencidas
+              .map((item) => new Date(item.data_vencimento!))
+              .sort((a, b) => a.getTime() - b.getTime())[0]
+          )
+        : navCacheIsOverdue && navCache?.data_vencimento
+          ? new Date(navCache.data_vencimento)
+          : null,
   };
 
-  // Mutação para criar fatura
+  const runNavSync = async () => {
+    if (!organizationId) {
+      throw new Error("Organização não definida.");
+    }
+
+    const { data: spConfig } = await supabase
+      .from("sharepoint_config")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    if (!spConfig) {
+      throw new Error(
+        "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
+      );
+    }
+
+    const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
+      body: { organization_id: organizationId },
+    });
+
+    if (error) {
+      let msg = error.message;
+
+      try {
+        const ctx = (error as any).context;
+
+        if (ctx && typeof ctx.json === "function") {
+          const body = await ctx.json();
+          if (body?.error) {
+            msg =
+              typeof body.error === "string"
+                ? body.error
+                : body.error?.message || JSON.stringify(body.error);
+          }
+        } else if ((error as any)?.context?.error) {
+          const ctxError = (error as any).context.error;
+          msg =
+            typeof ctxError === "string"
+              ? ctxError
+              : ctxError?.message || JSON.stringify(ctxError);
+        }
+      } catch {
+        // mantém a mensagem base
+      }
+
+      if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
+        msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
+      }
+
+      console.error("[sync-nav-excel]", msg);
+      throw new Error(msg);
+    }
+
+    return data;
+  };
+
   const createInvoice = useMutation({
     mutationFn: async (invoice: Omit<Invoice, "id" | "created_at" | "updated_at">) => {
       const { data, error } = await supabase
@@ -317,7 +382,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-  // Mutação para atualizar estado da fatura
   const updateInvoiceStatus = useMutation({
     mutationFn: async ({ id, estado }: { id: string; estado: Invoice["estado"] }) => {
       const { error } = await supabase
@@ -336,7 +400,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-  // Mutação para eliminar fatura
   const deleteInvoice = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -355,7 +418,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-  // Mutação para atualizar configurações financeiras da organização
   const updateOrganizationFinancial = useMutation({
     mutationFn: async (data: {
       tipo_cliente: "pessoa_individual" | "pessoa_coletiva";
@@ -369,190 +431,86 @@ export function useFinanceiro(overrideOrgId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
+      queryClient.invalidateQueries({
+        queryKey: ["organization-financial-info", organizationId],
+      });
       toast.success("Configurações atualizadas");
     },
     onError: (error) => {
       toast.error("Erro ao atualizar configurações: " + error.message);
     },
   });
-const runNavSync = async () => {
-  if (!organizationId) {
-    throw new Error("Organização não definida.");
-  }
 
-  const { data: spConfig } = await supabase
-    .from("sharepoint_config")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-
-  if (!spConfig) {
-    throw new Error(
-      "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
-    );
-  }
-
-  const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
-    body: { organization_id: organizationId },
-  });
-
-  if (error) {
-    let msg = error.message;
-
-    try {
-      const ctx = (error as any).context;
-      if (ctx && typeof ctx.json === "function") {
-        const body = await ctx.json();
-        if (body?.error) {
-          msg =
-            typeof body.error === "string"
-              ? body.error
-              : body.error?.message || JSON.stringify(body.error);
-        }
-      } else if ((error as any)?.context?.error) {
-        const ctxError = (error as any).context.error;
-        msg =
-          typeof ctxError === "string"
-            ? ctxError
-            : ctxError?.message || JSON.stringify(ctxError);
-      }
-    } catch {
-      // mantém a mensagem base
-    }
-
-    if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
-      msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
-    }
-
-    throw new Error(msg);
-  }
-
-  return data;
-};
-  const runNavSync = async () => {
-  if (!organizationId) {
-    throw new Error("Organização não definida.");
-  }
-
-  const { data: spConfig } = await supabase
-    .from("sharepoint_config")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .maybeSingle();
-
-  if (!spConfig) {
-    throw new Error(
-      "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
-    );
-  }
-
-  const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
-    body: { organization_id: organizationId },
-  });
-
-  if (error) {
-    let msg = error.message;
-
-    try {
-      const ctx = (error as any).context;
-      if (ctx && typeof ctx.json === "function") {
-        const body = await ctx.json();
-        if (body?.error) {
-          msg =
-            typeof body.error === "string"
-              ? body.error
-              : body.error?.message || JSON.stringify(body.error);
-        }
-      } else if ((error as any)?.context?.error) {
-        const ctxError = (error as any).context.error;
-        msg =
-          typeof ctxError === "string"
-            ? ctxError
-            : ctxError?.message || JSON.stringify(ctxError);
-      }
-    } catch {
-      // mantém a mensagem base
-    }
-
-    if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
-      msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
-    }
-
-    throw new Error(msg);
-  }
-
-  return data;
-};
-  // Mutação para sincronizar Base Nav do SharePoint
   const syncNavFromSharePoint = useMutation({
-  mutationFn: async () => {
-    return await runNavSync();
-  },
-  onSuccess: (data) => {
-    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
-    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
-    queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
-    queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
+    mutationFn: async () => {
+      return await runNavSync();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+      queryClient.invalidateQueries({
+        queryKey: ["organization-financial-info", organizationId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
 
-    setLastSyncResult(data);
+      setLastSyncResult(data ?? null);
 
-    let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
-    if (data?.auto_linked) {
-      msg += ` (ID Jvris configurado: ${data.auto_linked})`;
-    }
+      let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
+      if (data?.auto_linked) {
+        msg += ` (ID Jvris configurado: ${data.auto_linked})`;
+      }
 
-    toast.success(msg);
-  },
-  onError: (error) => {
-    toast.error("Erro ao sincronizar Base Nav: " + error.message);
-  },
-});
+      toast.success(msg);
+    },
+    onError: (error) => {
+      toast.error("Erro ao sincronizar Base Nav: " + error.message);
+    },
+  });
 
-  // Mutação para configurar jvris_id da organização
-const setJvrisId = useMutation({
-  mutationFn: async (jvrisId: string) => {
-    if (!organizationId) {
-      throw new Error("Organização não definida.");
-    }
+  const setJvrisId = useMutation({
+    mutationFn: async (jvrisId: string) => {
+      if (!organizationId) {
+        throw new Error("Organização não definida.");
+      }
 
-    const normalizedId = jvrisId.trim();
+      const normalizedId = jvrisId.trim();
 
-    const { error } = await supabase
-      .from("organizations")
-      .update({ jvris_id: normalizedId } as any)
-      .eq("id", organizationId);
+      const { error } = await supabase
+        .from("organizations")
+        .update({ jvris_id: normalizedId } as any)
+        .eq("id", organizationId);
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const syncData = await runNavSync();
+      const syncData = await runNavSync();
 
-    return {
-      jvrisId: normalizedId,
-      syncData,
-    };
-  },
-  onSuccess: ({ syncData }) => {
-    queryClient.invalidateQueries({ queryKey: ["organization-financial-info", organizationId] });
-    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
-    queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
-    queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
+      return {
+        jvrisId: normalizedId,
+        syncData,
+      };
+    },
+    onSuccess: ({ syncData }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["organization-financial-info", organizationId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
+      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
+      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
 
-    setLastSyncResult(syncData ?? null);
+      setLastSyncResult(syncData ?? null);
 
-    let msg = "ID Jvris configurado e Base Nav sincronizada com sucesso";
-    if (syncData?.synced != null || syncData?.items != null) {
-      msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
-    }
+      let msg = "ID Jvris configurado e Base Nav sincronizada com sucesso";
+      if (syncData?.synced != null || syncData?.items != null) {
+        msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
+      }
 
-    toast.success(msg);
-  },
-  onError: (error) => {
-    toast.error("Erro ao configurar ID Jvris: " + error.message);
-  },
-});
-  
-  // Mutação para criar pasta
+      toast.success(msg);
+    },
+    onError: (error) => {
+      toast.error("Erro ao configurar ID Jvris: " + error.message);
+    },
+  });
+
   const createFolder = useMutation({
     mutationFn: async (folder: { nome: string; descricao?: string; tags?: string[] }) => {
       const { data, error } = await supabase
