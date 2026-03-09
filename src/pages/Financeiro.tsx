@@ -763,19 +763,29 @@ export default function Financeiro() {
                   {t("financial.noMatchingIds")}
                 </p>
               ) : (
-                filteredJvrisIds.map((id) => (
-                  <button
-                    key={id}
-                    type="button"
-                    className={`w-full text-left px-4 py-2.5 text-sm font-mono hover:bg-muted transition-colors border-b last:border-b-0 ${
-                      selectedJvrisId === id ? "bg-primary/10 text-primary font-semibold" : ""
-                    }`}
-                    onClick={() => setSelectedJvrisId(id)}
-                  >
-                    {id}
-                  </button>
-                ))
+                filteredJvrisIds.map((id) => {
+                  const normalizedId = String(id).trim();
+                  const isSelected = selectedJvrisId === normalizedId;
+                  return (
+                    <button
+                      key={normalizedId}
+                      type="button"
+                      className={`w-full text-left px-4 py-2.5 text-sm font-mono hover:bg-muted transition-colors border-b last:border-b-0 ${
+                        isSelected ? "bg-primary/10 text-primary font-semibold" : ""
+                      }`}
+                      onClick={() => setSelectedJvrisId(normalizedId)}
+                    >
+                      {normalizedId}
+                    </button>
+                  );
+                })
               )}
+            </div>
+
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>Seleccionado: {selectedJvrisId ?? "nenhum"}</div>
+              <div>isPending: {String(setJvrisId.isPending)}</div>
+              <div>isConfirming: {String(isConfirmingJvrisSelection)}</div>
             </div>
           </div>
 
@@ -784,10 +794,17 @@ export default function Financeiro() {
               onClick={handleConfirmJvrisSelection}
               disabled={!selectedJvrisId || setJvrisId.isPending || isConfirmingJvrisSelection}
             >
-              {setJvrisId.isPending || isConfirmingJvrisSelection ? (
+              {!selectedJvrisId ? (
+                "Sem selecção"
+              ) : isConfirmingJvrisSelection ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {t("financial.selecting")}
+                  A confirmar...
+                </>
+              ) : setJvrisId.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  A gravar...
                 </>
               ) : (
                 t("financial.confirmSelection")
