@@ -4,6 +4,11 @@ import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
+function useEffectiveOrganizationId(overrideOrgId?: string) {
+  const { profile } = useProfile();
+  return overrideOrgId || profile?.current_organization_id || null;
+}
+
 export interface SharePointConfig {
   id: string;
   organization_id: string;
@@ -66,18 +71,33 @@ export interface SyncResult {
 }
 
 // Hook para obter a configuração do SharePoint
-export function useSharePointConfig() {
-  const { profile } = useProfile();
+export function useSharePointConfig(overrideOrgId?: string) {
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
 
   return useQuery({
-    queryKey: ["sharepoint-config", profile?.current_organization_id],
+    queryKey: ["sharepoint-config", organizationId],
     queryFn: async (): Promise<SharePointConfig | null> => {
-      if (!profile?.current_organization_id) return null;
+      if (!organizationId) return null;
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("sharepoint_config")
-        .select("*")
-        .eq("organization_id", profile.current_organization_id)
+        .select(`
+          id,
+          organization_id,
+          site_id,
+          site_name,
+          site_url,
+          drive_id,
+          root_folder_path,
+          sync_enabled,
+          sync_interval_minutes,
+          last_sync_at,
+          last_sync_status,
+          last_sync_error,
+          created_at,
+          updated_at
+        `)
+        .eq("organization_id", organizationId)
         .maybeSingle();
 
       if (error) {
@@ -85,25 +105,41 @@ export function useSharePointConfig() {
         return null;
       }
 
-      return data as SharePointConfig | null;
+      return (data as SharePointConfig | null) ?? null;
     },
-    enabled: !!profile?.current_organization_id,
+    enabled: !!organizationId,
   });
 }
 
 // Hook para obter documentos do SharePoint
-export function useSharePointDocuments(folderPath: string = "/") {
-  const { profile } = useProfile();
+export function useSharePointDocuments(folderPath: string = "/", overrideOrgId?: string) {
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
 
   return useQuery({
-    queryKey: ["sharepoint-documents", profile?.current_organization_id, folderPath],
+    queryKey: ["sharepoint-documents", organizationId, folderPath],
     queryFn: async (): Promise<SharePointDocument[]> => {
-      if (!profile?.current_organization_id) return [];
+      if (!organizationId) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("sharepoint_documents")
-        .select("*")
-        .eq("organization_id", profile.current_organization_id)
+        .select(`
+          id,
+          organization_id,
+          config_id,
+          sharepoint_item_id,
+          name,
+          file_extension,
+          mime_type,
+          size_bytes,
+          web_url,
+          folder_path,
+          is_folder,
+          sharepoint_modified_at,
+          sharepoint_modified_by,
+          synced_at,
+          is_deleted
+        `)
+        .eq("organization_id", organizationId)
         .eq("folder_path", folderPath)
         .eq("is_deleted", false)
         .order("is_folder", { ascending: false })
@@ -114,25 +150,36 @@ export function useSharePointDocuments(folderPath: string = "/") {
         return [];
       }
 
-      return (data || []) as SharePointDocument[];
+      return (data as SharePointDocument[]) ?? [];
     },
-    enabled: !!profile?.current_organization_id,
+    enabled: !!organizationId,
   });
 }
 
 // Hook para obter logs de sincronização
-export function useSharePointSyncLogs(limit: number = 10) {
-  const { profile } = useProfile();
+export function useSharePointSyncLogs(limit: number = 10, overrideOrgId?: string) {
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
 
   return useQuery({
-    queryKey: ["sharepoint-sync-logs", profile?.current_organization_id, limit],
+    queryKey: ["sharepoint-sync-logs", organizationId, limit],
     queryFn: async (): Promise<SharePointSyncLog[]> => {
-      if (!profile?.current_organization_id) return [];
+      if (!organizationId) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("sharepoint_sync_logs")
-        .select("*")
-        .eq("organization_id", profile.current_organization_id)
+        .select(`
+          id,
+          config_id,
+          started_at,
+          completed_at,
+          status,
+          items_found,
+          items_added,
+          items_updated,
+          items_deleted,
+          error_message
+        `)
+        .eq("organization_id", organizationId)
         .order("started_at", { ascending: false })
         .limit(limit);
 
@@ -141,28 +188,28 @@ export function useSharePointSyncLogs(limit: number = 10) {
         return [];
       }
 
-      return (data || []) as SharePointSyncLog[];
+      return (data as SharePointSyncLog[]) ?? [];
     },
-    enabled: !!profile?.current_organization_id,
+    enabled: !!organizationId,
   });
 }
 
 // Hook para salvar/atualizar configuração
-export function useSaveSharePointConfig() {
+export function useSaveSharePointConfig(overrideOrgId?: string) {
   const queryClient = useQueryClient();
-  const { profile } = useProfile();
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
   const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (config: { site_id: string; sync_enabled?: boolean; sync_interval_minutes?: number; root_folder_path?: string }) => {
-      if (!profile?.current_organization_id) {
+      if (!organizationId) {
         throw new Error("Organization not found");
       }
 
       const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
         body: {
           action: "save_config",
-          organization_id: profile.current_organization_id,
+          organization_id: organizationId,
           config: {
             site_id: config.site_id,
             sync_enabled: config.sync_enabled ?? true,
@@ -176,7 +223,7 @@ export function useSaveSharePointConfig() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-config"] });
+      queryClient.invalidateQueries({ queryKey: ["sharepoint-config", organizationId] });
       toast.success(t("sharepoint.configSaved", "Configuração SharePoint guardada"));
     },
     onError: (error) => {
@@ -187,20 +234,20 @@ export function useSaveSharePointConfig() {
 }
 
 // Hook para sincronizar manualmente
-export function useSyncSharePoint() {
+export function useSyncSharePoint(overrideOrgId?: string) {
   const queryClient = useQueryClient();
-  const { profile } = useProfile();
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
   const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async (options?: { force_full_sync?: boolean }): Promise<SyncResult> => {
-      if (!profile?.current_organization_id) {
+      if (!organizationId) {
         throw new Error("Organization not found");
       }
 
       const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
         body: {
-          organization_id: profile.current_organization_id,
+          organization_id: organizationId,
           force_full_sync: options?.force_full_sync ?? false,
         },
       });
@@ -212,9 +259,9 @@ export function useSyncSharePoint() {
       return data as SyncResult;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents"] });
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-config"] });
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-sync-logs"] });
+      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents", organizationId] });
+      queryClient.invalidateQueries({ queryKey: ["sharepoint-config", organizationId] });
+      queryClient.invalidateQueries({ queryKey: ["sharepoint-sync-logs", organizationId] });
 
       if (result.success && result.data) {
         const { items_added, items_updated, items_deleted } = result.data;
