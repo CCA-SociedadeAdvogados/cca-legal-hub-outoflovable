@@ -24,8 +24,7 @@ export const useProfile = () => {
           nome_completo,
           avatar_url,
           onboarding_completed,
-          current_organization_id,
-          jvris_id
+          current_organization_id
         `)
         .eq('id', user.id)
         .maybeSingle();
@@ -73,8 +72,7 @@ export const useProfile = () => {
           nome_completo,
           avatar_url,
           onboarding_completed,
-          current_organization_id,
-          jvris_id
+          current_organization_id
         `)
         .single();
       
