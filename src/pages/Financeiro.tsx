@@ -35,7 +35,7 @@ import { useCliente } from "@/contexts/ClienteContext";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { pt, enUS } from "date-fns/locale";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -57,6 +57,7 @@ export default function Financeiro() {
   const { t, i18n } = useTranslation();
   const { cliente } = useCliente();
   const { isCCAUser } = useLegalHubProfile();
+    const queryClient = useQueryClient();
 
   const {
     accountSummary,
@@ -78,20 +79,19 @@ export default function Financeiro() {
 
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
   const [jvrisSearchQuery, setJvrisSearchQuery] = useState("");
-  const [selectedJvrisId, setSelectedJvrisId] = useState<string | null>(null);
-  const [dismissJvrisSelector, setDismissJvrisSelector] = useState(false);
+    const [selectedJvrisId, setSelectedJvrisId] = useState<string | null>(null);
+  const [isConfirmingJvrisSelection, setIsConfirmingJvrisSelection] = useState(false);
 
-  useEffect(() => {
-    setDismissJvrisSelector(false);
+    useEffect(() => {
     setSelectedJvrisId(null);
     setJvrisSearchQuery("");
+    setIsConfirmingJvrisSelection(false);
   }, [cliente?.organizationId]);
 
   const hasAvailableIds =
     (lastSyncResult?.jvris_ids?.length ?? 0) > 1 || availableJvrisIds.length > 1;
 
   const showJvrisSelector =
-    !dismissJvrisSelector &&
     !jvrisId &&
     hasAvailableIds &&
     (isPlatformAdmin || isCCAUser);
@@ -200,17 +200,35 @@ export default function Financeiro() {
     );
   };
 
-  const handleConfirmJvrisSelection = async () => {
-    if (!selectedJvrisId) return;
+   const handleConfirmJvrisSelection = async () => {
+    if (!selectedJvrisId || !cliente?.organizationId) return;
 
     try {
+      setIsConfirmingJvrisSelection(true);
+
       await setJvrisId.mutateAsync(selectedJvrisId);
 
-      setDismissJvrisSelector(true);
+      await queryClient.refetchQueries({
+        queryKey: ["organization-financial-info", cliente.organizationId],
+        exact: true,
+      });
+
+      await queryClient.refetchQueries({
+        queryKey: ["financeiro-nav-cache", selectedJvrisId],
+        exact: true,
+      });
+
+      await queryClient.refetchQueries({
+        queryKey: ["financeiro-nav-items", selectedJvrisId],
+        exact: true,
+      });
+
       setSelectedJvrisId(null);
       setJvrisSearchQuery("");
     } catch (error) {
       console.error("[Financeiro] erro ao confirmar seleção de jvris_id:", error);
+    } finally {
+      setIsConfirmingJvrisSelection(false);
     }
   };
 
@@ -709,8 +727,20 @@ export default function Financeiro() {
         )}
       </div>
 
-      <Dialog open={showJvrisSelector} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+           <Dialog open={showJvrisSelector} onOpenChange={() => {}}>
+        <DialogContent
+          className="sm:max-w-md"
+          onPointerDownOutside={(e) => {
+            if (isConfirmingJvrisSelection || setJvrisId.isPending) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            if (isConfirmingJvrisSelection || setJvrisId.isPending) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle>{t("financial.selectJvrisId")}</DialogTitle>
             <DialogDescription>{t("financial.selectJvrisIdDescription")}</DialogDescription>
@@ -750,11 +780,11 @@ export default function Financeiro() {
           </div>
 
           <DialogFooter>
-            <Button
+                       <Button
               onClick={handleConfirmJvrisSelection}
-              disabled={!selectedJvrisId || setJvrisId.isPending}
+              disabled={!selectedJvrisId || setJvrisId.isPending || isConfirmingJvrisSelection}
             >
-              {setJvrisId.isPending ? (
+              {setJvrisId.isPending || isConfirmingJvrisSelection ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {t("financial.selecting")}
@@ -762,7 +792,7 @@ export default function Financeiro() {
               ) : (
                 t("financial.confirmSelection")
               )}
-            </Button>
+                      </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
