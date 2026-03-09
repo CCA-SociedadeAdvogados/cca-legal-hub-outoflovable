@@ -204,21 +204,18 @@ export function useOrganizations() {
 
       if (error) throw error;
     },
-         onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['current-organization'] }),
-        queryClient.invalidateQueries({ queryKey: ['profile'] }),
-        queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] }),
-        queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] }),
-        queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] }),
-        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
-        queryClient.invalidateQueries({ queryKey: ['client-folders'] }),
-        queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
-        queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
-        queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
-        queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
-      ]);
-
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['current-organization'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['client-folders'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] });
+      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] });
+      queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] });
       toast.success('Organização alterada');
     },
     onError: (error: any) => {
