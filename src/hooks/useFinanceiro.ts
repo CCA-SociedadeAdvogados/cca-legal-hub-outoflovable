@@ -430,6 +430,60 @@ const runNavSync = async () => {
 
   return data;
 };
+  const runNavSync = async () => {
+  if (!organizationId) {
+    throw new Error("Organização não definida.");
+  }
+
+  const { data: spConfig } = await supabase
+    .from("sharepoint_config")
+    .select("id")
+    .eq("organization_id", organizationId)
+    .maybeSingle();
+
+  if (!spConfig) {
+    throw new Error(
+      "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
+    );
+  }
+
+  const { data, error } = await supabase.functions.invoke("sync-nav-excel", {
+    body: { organization_id: organizationId },
+  });
+
+  if (error) {
+    let msg = error.message;
+
+    try {
+      const ctx = (error as any).context;
+      if (ctx && typeof ctx.json === "function") {
+        const body = await ctx.json();
+        if (body?.error) {
+          msg =
+            typeof body.error === "string"
+              ? body.error
+              : body.error?.message || JSON.stringify(body.error);
+        }
+      } else if ((error as any)?.context?.error) {
+        const ctxError = (error as any).context.error;
+        msg =
+          typeof ctxError === "string"
+            ? ctxError
+            : ctxError?.message || JSON.stringify(ctxError);
+      }
+    } catch {
+      // mantém a mensagem base
+    }
+
+    if (msg === "[object Object]" || msg === "Edge Function returned a non-2xx status code") {
+      msg = "Erro na Edge Function. Verifique os logs para mais detalhes.";
+    }
+
+    throw new Error(msg);
+  }
+
+  return data;
+};
   // Mutação para sincronizar Base Nav do SharePoint
   const syncNavFromSharePoint = useMutation({
   mutationFn: async () => {
@@ -497,7 +551,7 @@ const setJvrisId = useMutation({
     toast.error("Erro ao configurar ID Jvris: " + error.message);
   },
 });
-
+  
   // Mutação para criar pasta
   const createFolder = useMutation({
     mutationFn: async (folder: { nome: string; descricao?: string; tags?: string[] }) => {
