@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useProfile } from "@/hooks/useProfile";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import { toast } from "sonner";
@@ -135,56 +136,83 @@ export function useFinanceiro(overrideOrgId?: string) {
     items?: number;
   } | null>(null);
 
-  const { data: orgInfo, isLoading: isLoadingOrgInfo } = useQuery({
+    const {
+    data: orgInfo,
+    isLoading: isLoadingOrgInfo,
+    refetch: refetchOrgInfo,
+  } = useQuery({
     queryKey: ["organization-financial-info", organizationId],
     queryFn: async () => {
+      if (!organizationId) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("organizations")
         .select("tipo_cliente, prazo_pagamento_dias, jvris_id")
         .eq("id", organizationId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as OrganizationFinancialInfo;
+
+      return (data as OrganizationFinancialInfo | null) ?? null;
     },
     enabled: !!organizationId,
   });
 
-  const { data: navCache, error: navCacheError, isLoading: isLoadingNavCache } = useQuery({
+    const {
+    data: navCache,
+    error: navCacheError,
+    isLoading: isLoadingNavCache,
+  } = useQuery({
     queryKey: ["financeiro-nav-cache", orgInfo?.jvris_id],
     queryFn: async () => {
+      if (!orgInfo?.jvris_id) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from("financeiro_nav_cache")
-        .select("*")
-        .eq("jvris_id", orgInfo!.jvris_id!)
-        .single();
+        .select("id, jvris_id, valor_pendente, data_vencimento, synced_at")
+        .eq("jvris_id", orgInfo.jvris_id)
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") throw error;
-      return (data as NavCache) || null;
+      if (error) throw error;
+
+      return (data as NavCache | null) ?? null;
     },
     enabled: !!orgInfo?.jvris_id,
   });
 
-  const { data: navItems = [], error: navItemsError, isLoading: isLoadingNavItems } = useQuery({
+   const {
+    data: navItems = [],
+    error: navItemsError,
+    isLoading: isLoadingNavItems,
+  } = useQuery({
     queryKey: ["financeiro-nav-items", orgInfo?.jvris_id],
     queryFn: async () => {
+      if (!orgInfo?.jvris_id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("financeiro_nav_items")
-        .select("*")
-        .eq("jvris_id", orgInfo!.jvris_id!)
+        .select("id, jvris_id, numero_documento, valor, data_vencimento, synced_at")
+        .eq("jvris_id", orgInfo.jvris_id)
         .not("numero_documento", "is", null)
         .neq("numero_documento", "")
         .not("data_vencimento", "is", null)
         .order("data_vencimento", { ascending: true });
 
       if (error) throw error;
-      return (data as NavItem[]) || [];
+
+      return (data as NavItem[]) ?? [];
     },
     enabled: !!orgInfo?.jvris_id,
   });
 
-  const { data: availableJvrisIds = [] } = useQuery({
-    queryKey: ["available-jvris-ids"],
+    const { data: availableJvrisIds = [] } = useQuery({
+    queryKey: ["available-jvris-ids", organizationId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("financeiro_nav_cache")
@@ -192,22 +220,17 @@ export function useFinanceiro(overrideOrgId?: string) {
 
       if (error) throw error;
 
-      return (data || [])
-        .map((row: { jvris_id: string }) => row.jvris_id)
-        .filter(Boolean)
-        .sort();
+      return Array.from(
+        new Set(
+          (data ?? [])
+            .map((row: { jvris_id: string | null }) => row.jvris_id?.trim())
+            .filter((value): value is string => Boolean(value))
+        )
+      ).sort();
     },
     enabled: !!organizationId && !orgInfo?.jvris_id,
     staleTime: 5 * 60 * 1000,
   });
-
-  if (navCacheError) {
-    console.error("[useFinanceiro] navCache query error:", navCacheError);
-  }
-
-  if (navItemsError) {
-    console.error("[useFinanceiro] navItems query error:", navItemsError);
-  }
 
   const { data: invoices = [], isLoading: isLoadingInvoices } = useQuery({
     queryKey: ["invoices", organizationId],
@@ -443,19 +466,27 @@ export function useFinanceiro(overrideOrgId?: string) {
 
   const syncNavFromSharePoint = useMutation({
     mutationFn: async () => {
-      return await runNavSync();
+      const data = await runNavSync();
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["organization-financial-info", organizationId],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] }),
+        queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["available-jvris-ids", organizationId],
+        }),
+      ]);
+
+      await refetchOrgInfo();
+
+      return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
-      queryClient.invalidateQueries({
-        queryKey: ["organization-financial-info", organizationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
-
       setLastSyncResult(data ?? null);
 
-      let msg = `Base Nav sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
+      let msg = `Base NAV sincronizada: ${data?.synced ?? 0} clientes, ${data?.items ?? 0} faturas`;
       if (data?.auto_linked) {
         msg += ` (ID Jvris configurado: ${data.auto_linked})`;
       }
@@ -463,11 +494,11 @@ export function useFinanceiro(overrideOrgId?: string) {
       toast.success(msg);
     },
     onError: (error) => {
-      toast.error("Erro ao sincronizar Base Nav: " + error.message);
+      toast.error("Erro ao sincronizar Base NAV: " + error.message);
     },
   });
 
-  const setJvrisId = useMutation({
+   const setJvrisId = useMutation({
     mutationFn: async (jvrisId: string) => {
       if (!organizationId) {
         throw new Error("Organização não definida.");
@@ -475,31 +506,63 @@ export function useFinanceiro(overrideOrgId?: string) {
 
       const normalizedId = jvrisId.trim();
 
-      const { error } = await supabase
+      if (!normalizedId) {
+        throw new Error("ID Jvris inválido.");
+      }
+
+      const payload: TablesUpdate<"organizations"> = {
+        jvris_id: normalizedId,
+      };
+
+      const { error: updateError } = await supabase
         .from("organizations")
-        .update({ jvris_id: normalizedId } as any)
+        .update(payload)
         .eq("id", organizationId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       const syncData = await runNavSync();
 
+      await queryClient.invalidateQueries({
+        queryKey: ["organization-financial-info", organizationId],
+      });
+
+      const refreshedOrg = await refetchOrgInfo();
+
+      if (refreshedOrg.error) {
+        throw refreshedOrg.error;
+      }
+
+      const refreshedJvrisId = refreshedOrg.data?.jvris_id ?? null;
+
+      if (refreshedJvrisId !== normalizedId) {
+        throw new Error(
+          `O ID Jvris foi gravado, mas a organização ainda não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${refreshedJvrisId ?? "null"}`
+        );
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["financeiro-nav-cache", normalizedId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["financeiro-nav-items", normalizedId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["available-jvris-ids", organizationId],
+        }),
+      ]);
+
       return {
         jvrisId: normalizedId,
-        syncData,
+        syncData: syncData ?? null,
+        organizationFinancialInfo: refreshedOrg.data ?? null,
       };
     },
     onSuccess: ({ syncData }) => {
-      queryClient.invalidateQueries({
-        queryKey: ["organization-financial-info", organizationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-cache"] });
-      queryClient.invalidateQueries({ queryKey: ["financeiro-nav-items"] });
-      queryClient.invalidateQueries({ queryKey: ["available-jvris-ids"] });
-
       setLastSyncResult(syncData ?? null);
 
-      let msg = "ID Jvris configurado e Base Nav sincronizada com sucesso";
+      let msg = "ID Jvris configurado e Base NAV sincronizada com sucesso";
       if (syncData?.synced != null || syncData?.items != null) {
         msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
       }
@@ -534,26 +597,25 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-  return {
+    return {
+    accountSummary,
     invoices,
     folders,
-    accountSummary,
-    navCache: navCache ?? null,
+    navCache,
     navItems,
-    navError: navItemsError || navCacheError || null,
-    jvrisId: orgInfo?.jvris_id ?? null,
+    navError: navCacheError || navItemsError || null,
+    jvrisId: orgInfo?.jvris_id || null,
     availableJvrisIds,
     lastSyncResult,
-    organizationId,
-    isLoading: isLoadingInvoices || isLoadingFolders || isLoadingOrgInfo,
-    isLoadingNav: isLoadingOrgInfo || isLoadingNavCache || isLoadingNavItems,
+    isLoading:
+      isLoadingOrgInfo || isLoadingInvoices || isLoadingFolders,
+    isLoadingNav: isLoadingNavCache || isLoadingNavItems,
     isPlatformAdmin,
     createInvoice,
     updateInvoiceStatus,
     deleteInvoice,
+    createFolder,
     updateOrganizationFinancial,
     syncNavFromSharePoint,
     setJvrisId,
-    createFolder,
   };
-}
