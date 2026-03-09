@@ -574,7 +574,7 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-  const createFolder = useMutation({
+    const createFolder = useMutation({
     mutationFn: async (folder: { nome: string; descricao?: string; tags?: string[] }) => {
       const { data, error } = await supabase
         .from("client_folders")
@@ -597,25 +597,26 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-    return {
-    accountSummary,
+  return {
     invoices,
     folders,
-    navCache,
+    accountSummary,
+    navCache: navCache ?? null,
     navItems,
-    navError: navCacheError || navItemsError || null,
-    jvrisId: orgInfo?.jvris_id || null,
+    navError: navItemsError || navCacheError || null,
+    jvrisId: orgInfo?.jvris_id ?? null,
     availableJvrisIds,
     lastSyncResult,
-    isLoading:
-      isLoadingOrgInfo || isLoadingInvoices || isLoadingFolders,
-    isLoadingNav: isLoadingNavCache || isLoadingNavItems,
+    organizationId,
+    isLoading: isLoadingInvoices || isLoadingFolders || isLoadingOrgInfo,
+    isLoadingNav: isLoadingOrgInfo || isLoadingNavCache || isLoadingNavItems,
     isPlatformAdmin,
     createInvoice,
     updateInvoiceStatus,
     deleteInvoice,
-    createFolder,
     updateOrganizationFinancial,
     syncNavFromSharePoint,
     setJvrisId,
+    createFolder,
   };
+}
