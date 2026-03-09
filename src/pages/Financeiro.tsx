@@ -782,8 +782,10 @@ export default function Financeiro() {
               )}
             </div>
 
-            <div className="text-xs text-muted-foreground">
-              Seleccionado: {selectedJvrisId ?? "nenhum"}
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>Seleccionado: {selectedJvrisId ?? "nenhum"}</div>
+              <div>isPending: {String(setJvrisId.isPending)}</div>
+              <div>isConfirming: {String(isConfirmingJvrisSelection)}</div>
             </div>
           </div>
 
