@@ -1113,33 +1113,22 @@ Deno.serve(async (req) => {
         console.log(`[SSO-CCA] current_organization_id set to CCA for SSO user`);
       }
 
-      // ── Step 6: Lookup e indexação do ID Jvris (não-bloqueante) ─────────────
-      // Executa em paralelo dois processos independentes:
-      //   a) Lookup do ID Jvris do utilizador (profiles.jvris_id) pelo seu email
-      //   b) Sync do mapeamento organização → jvris_id (organizations.jvris_id)
-      // O login NÃO é bloqueado em caso de falha em nenhum dos dois.
+      // ── Step 6: Sync do mapeamento organização → jvris_id (não-bloqueante) ──
+      // O jvris_id é guardado em organizations.jvris_id (não em profiles).
+      // O login NÃO é bloqueado em caso de falha.
       let jvrisId: string | null = null;
       try {
-        const [userJvrisId] = await Promise.allSettled([
+        const [userJvrisId, _orgSync] = await Promise.allSettled([
           lookupJvrisIdFromSharePoint(email),
           syncOrgsJvrisIdFromSharePoint(supabase),
         ]);
 
-        // Resultado do lookup do utilizador
+        // Registar o resultado do lookup para metadata de audit log
         if (userJvrisId.status === "fulfilled" && userJvrisId.value) {
           jvrisId = userJvrisId.value;
-          const { error: jvrisUpdateError } = await supabase
-            .from("profiles")
-            .update({ jvris_id: jvrisId })
-            .eq("id", userId);
-
-          if (jvrisUpdateError) {
-            console.error(`[SSO-CCA][Jvris] Falha ao guardar jvris_id no perfil:`, jvrisUpdateError.message);
-          } else {
-            console.log(`[SSO-CCA][Jvris] jvris_id guardado no perfil: ${jvrisId}`);
-          }
+          console.log(`[SSO-CCA][Jvris] ID Jvris do utilizador encontrado: ${jvrisId}`);
         } else {
-          console.log(`[SSO-CCA][Jvris] ID Jvris do utilizador não encontrado — perfil fica sem jvris_id`);
+          console.log(`[SSO-CCA][Jvris] ID Jvris do utilizador não encontrado`);
         }
       } catch (jvrisErr) {
         // Garantia extra: qualquer erro aqui não deve interromper o fluxo de login
