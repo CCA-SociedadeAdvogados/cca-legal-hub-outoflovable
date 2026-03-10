@@ -165,29 +165,61 @@ export function useFinanceiro(overrideOrgId?: string, overrideJvrisId?: string |
 
   const effectiveJvrisId = overrideJvrisId?.trim() || orgInfo?.jvris_id || null;
 
-  const {
-    data: navCache,
-    error: navCacheError,
-    isLoading: isLoadingNavCache,
-  } = useQuery({
-    queryKey: ["financeiro-nav-cache", effectiveJvrisId],
-    queryFn: async () => {
-      if (!effectiveJvrisId) {
-        return null;
-      }
+const {
+  data: navCache,
+  error: navCacheError,
+  isLoading: isLoadingNavCache,
+} = useQuery({
+  queryKey: ["financeiro-nav-cache", effectiveJvrisId],
+  queryFn: async () => {
+    if (!effectiveJvrisId) {
+      return null;
+    }
 
-      const { data, error } = await supabase
-        .from("financeiro_nav_cache")
-        .select("id, jvris_id, valor_pendente, data_vencimento, synced_at")
-        .eq("jvris_id", effectiveJvrisId)
-        .maybeSingle();
+    const { data, error } = await supabase
+      .from("financeiro_nav_cache")
+      .select("id, jvris_id, valor_pendente, data_vencimento, synced_at")
+      .eq("jvris_id", effectiveJvrisId)
+      .order("data_vencimento", { ascending: true });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      return (data as NavCache | null) ?? null;
-    },
-    enabled: !!effectiveJvrisId,
-  });
+    const rows = (data as NavCache[]) ?? [];
+
+    if (rows.length === 0) {
+      return null;
+    }
+
+    const totalValorPendente = rows.reduce(
+      (sum, row) => sum + Number(row.valor_pendente ?? 0),
+      0
+    );
+
+    const dueDates = rows
+      .map((row) => row.data_vencimento)
+      .filter((value): value is string => Boolean(value))
+      .sort();
+
+    const syncedAts = rows
+      .map((row) => row.synced_at)
+      .filter((value): value is string => Boolean(value))
+      .sort();
+
+    const consolidatedNavCache: NavCache = {
+      id: rows[0].id,
+      jvris_id: effectiveJvrisId,
+      valor_pendente: totalValorPendente,
+      data_vencimento: dueDates.length > 0 ? dueDates[0] : null,
+      synced_at: syncedAts.length > 0 ? syncedAts[syncedAts.length - 1] : null,
+    };
+
+    console.log("[useFinanceiro] navCache consolidado:", consolidatedNavCache);
+    console.log("[useFinanceiro] linhas navCache:", rows);
+
+    return consolidatedNavCache;
+  },
+  enabled: !!effectiveJvrisId,
+});
 
   const {
     data: navItems = [],
