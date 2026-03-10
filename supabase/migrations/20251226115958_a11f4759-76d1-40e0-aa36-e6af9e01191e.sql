@@ -74,26 +74,90 @@ alter table legal.sources enable row level security;
 alter table legal.documents enable row level security;
 alter table legal.fetch_queue enable row level security;
 
-create policy "public read sources"
-  on legal.sources for select
-  using (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'legal'
+      AND tablename = 'sources'
+      AND policyname = 'public read sources'
+  ) THEN
+    CREATE POLICY "public read sources"
+      ON legal.sources
+      FOR SELECT
+      USING (true);
+  END IF;
+END
+$$;
 
-create policy "public read documents"
-  on legal.documents for select
-  using (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'legal'
+      AND tablename = 'documents'
+      AND policyname = 'public read documents'
+  ) THEN
+    CREATE POLICY "public read documents"
+      ON legal.documents
+      FOR SELECT
+      USING (true);
+  END IF;
+END
+$$;
 
--- Service role can insert/update/delete
-create policy "service role manage sources"
-  on legal.sources for all
-  using (auth.role() = 'service_role');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'legal'
+      AND tablename = 'sources'
+      AND policyname = 'service role manage sources'
+  ) THEN
+    CREATE POLICY "service role manage sources"
+      ON legal.sources
+      FOR ALL
+      USING (auth.role() = 'service_role');
+  END IF;
+END
+$$;
 
-create policy "service role manage documents"
-  on legal.documents for all
-  using (auth.role() = 'service_role');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'legal'
+      AND tablename = 'documents'
+      AND policyname = 'service role manage documents'
+  ) THEN
+    CREATE POLICY "service role manage documents"
+      ON legal.documents
+      FOR ALL
+      USING (auth.role() = 'service_role');
+  END IF;
+END
+$$;
 
-create policy "service role manage fetch_queue"
-  on legal.fetch_queue for all
-  using (auth.role() = 'service_role');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'legal'
+      AND tablename = 'fetch_queue'
+      AND policyname = 'service role manage fetch_queue'
+  ) THEN
+    CREATE POLICY "service role manage fetch_queue"
+      ON legal.fetch_queue
+      FOR ALL
+      USING (auth.role() = 'service_role');
+  END IF;
+END
+$$;
 
 -- Search function
 create or replace function legal.search_documents(
