@@ -517,32 +517,29 @@ const setJvrisId = useMutation({
       jvris_id: normalizedId,
     };
 
-    const { error: updateError } = await supabase
+    const { data: updatedOrg, error: updateError } = await supabase
       .from("organizations")
       .update(payload)
-      .eq("id", organizationId);
+      .eq("id", organizationId)
+      .select("id, jvris_id, tipo_cliente, prazo_pagamento_dias")
+      .single();
 
     if (updateError) throw updateError;
 
-    await queryClient.invalidateQueries({
-      queryKey: ["organization-financial-info", organizationId],
-    });
+    console.log("[useFinanceiro] organização actualizada:", updatedOrg);
 
-    const refreshedOrg = await refetchOrgInfo();
+    const updatedJvrisId = updatedOrg?.jvris_id ?? null;
 
-    console.log("[useFinanceiro] organização refrescada:", refreshedOrg.data);
-
-    if (refreshedOrg.error) {
-      throw refreshedOrg.error;
-    }
-
-    const refreshedJvrisId = refreshedOrg.data?.jvris_id ?? null;
-
-    if (refreshedJvrisId !== normalizedId) {
+    if (updatedJvrisId !== normalizedId) {
       throw new Error(
-        `O ID Jvris foi gravado, mas a organização ainda não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${refreshedJvrisId ?? "null"}`
+        `O ID Jvris foi gravado, mas a resposta da base de dados não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${updatedJvrisId ?? "null"}`
       );
     }
+
+    queryClient.setQueryData(
+      ["organization-financial-info", organizationId],
+      updatedOrg
+    );
 
     let syncData: Awaited<ReturnType<typeof runNavSync>> | null = null;
     let syncWarning: string | null = null;
@@ -566,21 +563,27 @@ const setJvrisId = useMutation({
         syncError instanceof Error
           ? syncError.message
           : "O ID Jvris foi gravado, mas a sincronização NAV falhou.";
-      console.error("[useFinanceiro] falha na sincronização NAV após gravar jvris_id:", syncError);
+
+      console.error(
+        "[useFinanceiro] falha na sincronização NAV após gravar jvris_id:",
+        syncError
+      );
     }
 
     return {
       jvrisId: normalizedId,
       syncData,
       syncWarning,
-      organizationFinancialInfo: refreshedOrg.data ?? null,
+      organizationFinancialInfo: updatedOrg ?? null,
     };
   },
   onSuccess: ({ syncData, syncWarning }) => {
     setLastSyncResult(syncData ?? null);
 
     if (syncWarning) {
-      toast.warning(`ID Jvris configurado com sucesso, mas a sincronização NAV falhou: ${syncWarning}`);
+      toast.warning(
+        `ID Jvris configurado com sucesso, mas a sincronização NAV falhou: ${syncWarning}`
+      );
       return;
     }
 
