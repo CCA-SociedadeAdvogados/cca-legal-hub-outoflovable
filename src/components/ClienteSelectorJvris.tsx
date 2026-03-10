@@ -12,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Search, X, Building2, Hash, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -62,7 +61,7 @@ export function ClienteSelectorJvris() {
         );
       }
 
-      const { data, error } = await query.limit(50);
+      const { data, error } = await query.limit(200);
 
       if (error) throw error;
 
@@ -142,7 +141,7 @@ export function ClienteSelectorJvris() {
             </div>
           </div>
 
-          <ScrollArea className="max-h-[320px]">
+          <div className="max-h-[420px] overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -191,7 +190,7 @@ export function ClienteSelectorJvris() {
                 );
               })
             )}
-          </ScrollArea>
+          </div>
         </PopoverContent>
       </Popover>
     </div>
