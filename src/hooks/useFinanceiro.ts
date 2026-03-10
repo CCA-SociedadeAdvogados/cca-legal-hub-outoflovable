@@ -499,48 +499,56 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-   const setJvrisId = useMutation({
-    mutationFn: async (jvrisId: string) => {
-      if (!organizationId) {
-        throw new Error("Organização não definida.");
-      }
+const setJvrisId = useMutation({
+  mutationFn: async (jvrisId: string) => {
+    if (!organizationId) {
+      throw new Error("Organização não definida.");
+    }
 
-      const normalizedId = jvrisId.trim();
+    const normalizedId = jvrisId.trim();
 
-      if (!normalizedId) {
-        throw new Error("ID Jvris inválido.");
-      }
+    if (!normalizedId) {
+      throw new Error("ID Jvris inválido.");
+    }
 
-      const payload: TablesUpdate<"organizations"> = {
-        jvris_id: normalizedId,
-      };
+    console.log("[useFinanceiro] a gravar jvris_id:", normalizedId);
 
-      const { error: updateError } = await supabase
-        .from("organizations")
-        .update(payload)
-        .eq("id", organizationId);
+    const payload: TablesUpdate<"organizations"> = {
+      jvris_id: normalizedId,
+    };
 
-      if (updateError) throw updateError;
+    const { error: updateError } = await supabase
+      .from("organizations")
+      .update(payload)
+      .eq("id", organizationId);
 
-      const syncData = await runNavSync();
+    if (updateError) throw updateError;
 
-      await queryClient.invalidateQueries({
-        queryKey: ["organization-financial-info", organizationId],
-      });
+    await queryClient.invalidateQueries({
+      queryKey: ["organization-financial-info", organizationId],
+    });
 
-      const refreshedOrg = await refetchOrgInfo();
+    const refreshedOrg = await refetchOrgInfo();
 
-      if (refreshedOrg.error) {
-        throw refreshedOrg.error;
-      }
+    console.log("[useFinanceiro] organização refrescada:", refreshedOrg.data);
 
-      const refreshedJvrisId = refreshedOrg.data?.jvris_id ?? null;
+    if (refreshedOrg.error) {
+      throw refreshedOrg.error;
+    }
 
-      if (refreshedJvrisId !== normalizedId) {
-        throw new Error(
-          `O ID Jvris foi gravado, mas a organização ainda não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${refreshedJvrisId ?? "null"}`
-        );
-      }
+    const refreshedJvrisId = refreshedOrg.data?.jvris_id ?? null;
+
+    if (refreshedJvrisId !== normalizedId) {
+      throw new Error(
+        `O ID Jvris foi gravado, mas a organização ainda não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${refreshedJvrisId ?? "null"}`
+      );
+    }
+
+    let syncData: Awaited<ReturnType<typeof runNavSync>> | null = null;
+    let syncWarning: string | null = null;
+
+    try {
+      syncData = await runNavSync();
 
       await Promise.all([
         queryClient.invalidateQueries({
@@ -553,27 +561,40 @@ export function useFinanceiro(overrideOrgId?: string) {
           queryKey: ["available-jvris-ids", organizationId],
         }),
       ]);
+    } catch (syncError) {
+      syncWarning =
+        syncError instanceof Error
+          ? syncError.message
+          : "O ID Jvris foi gravado, mas a sincronização NAV falhou.";
+      console.error("[useFinanceiro] falha na sincronização NAV após gravar jvris_id:", syncError);
+    }
 
-      return {
-        jvrisId: normalizedId,
-        syncData: syncData ?? null,
-        organizationFinancialInfo: refreshedOrg.data ?? null,
-      };
-    },
-    onSuccess: ({ syncData }) => {
-      setLastSyncResult(syncData ?? null);
+    return {
+      jvrisId: normalizedId,
+      syncData,
+      syncWarning,
+      organizationFinancialInfo: refreshedOrg.data ?? null,
+    };
+  },
+  onSuccess: ({ syncData, syncWarning }) => {
+    setLastSyncResult(syncData ?? null);
 
-      let msg = "ID Jvris configurado e Base NAV sincronizada com sucesso";
-      if (syncData?.synced != null || syncData?.items != null) {
-        msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
-      }
+    if (syncWarning) {
+      toast.warning(`ID Jvris configurado com sucesso, mas a sincronização NAV falhou: ${syncWarning}`);
+      return;
+    }
 
-      toast.success(msg);
-    },
-    onError: (error) => {
-      toast.error("Erro ao configurar ID Jvris: " + error.message);
-    },
-  });
+    let msg = "ID Jvris configurado e Base NAV sincronizada com sucesso";
+    if (syncData?.synced != null || syncData?.items != null) {
+      msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
+    }
+
+    toast.success(msg);
+  },
+  onError: (error) => {
+    toast.error("Erro ao configurar ID Jvris: " + error.message);
+  },
+});
 
     const createFolder = useMutation({
     mutationFn: async (folder: { nome: string; descricao?: string; tags?: string[] }) => {
