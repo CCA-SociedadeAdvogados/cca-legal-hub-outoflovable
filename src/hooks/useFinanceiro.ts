@@ -521,7 +521,7 @@ const setJvrisId = useMutation({
       .from("organizations")
       .update(payload)
       .eq("id", organizationId)
-      .select("id, jvris_id, tipo_cliente, prazo_pagamento_dias")
+      .select("id, jvris_id")
       .single();
 
     if (updateError) throw updateError;
@@ -538,7 +538,11 @@ const setJvrisId = useMutation({
 
     queryClient.setQueryData(
       ["organization-financial-info", organizationId],
-      updatedOrg
+      (oldData: OrganizationFinancialInfo | null) => ({
+        tipo_cliente: oldData?.tipo_cliente ?? "pessoa_coletiva",
+        prazo_pagamento_dias: oldData?.prazo_pagamento_dias ?? 30,
+        jvris_id: normalizedId,
+      })
     );
 
     let syncData: Awaited<ReturnType<typeof runNavSync>> | null = null;
