@@ -119,10 +119,10 @@ function calculateAccountStatusFromNav(
 }
 
 /**
- * @param overrideOrgId - Quando fornecido (ex: seleção via ClienteSelectorJvris por utilizadores CCA),
- * os dados são carregados para esta organização em vez da organização atual do perfil.
+ * @param overrideOrgId - organização efectiva a usar
+ * @param overrideJvrisId - cliente financeiro seleccionado via pesquisa por ID Jvris
  */
-export function useFinanceiro(overrideOrgId?: string) {
+export function useFinanceiro(overrideOrgId?: string, overrideJvrisId?: string | null) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
   const organizationId = overrideOrgId || profile?.current_organization_id;
@@ -136,10 +136,9 @@ export function useFinanceiro(overrideOrgId?: string) {
     items?: number;
   } | null>(null);
 
-    const {
+  const {
     data: orgInfo,
     isLoading: isLoadingOrgInfo,
-    refetch: refetchOrgInfo,
   } = useQuery({
     queryKey: ["organization-financial-info", organizationId],
     queryFn: async () => {
@@ -149,56 +148,62 @@ export function useFinanceiro(overrideOrgId?: string) {
 
       const { data, error } = await supabase
         .from("organizations")
-        .select("tipo_cliente, prazo_pagamento_dias, jvris_id")
+        .select("tipo_cliente, jvris_id")
         .eq("id", organizationId)
         .maybeSingle();
 
       if (error) throw error;
 
-      return (data as OrganizationFinancialInfo | null) ?? null;
+      return ({
+        tipo_cliente: (data?.tipo_cliente as "pessoa_individual" | "pessoa_coletiva") || "pessoa_coletiva",
+        prazo_pagamento_dias: 30,
+        jvris_id: data?.jvris_id ?? null,
+      } as OrganizationFinancialInfo | null);
     },
     enabled: !!organizationId,
   });
 
-    const {
+  const effectiveJvrisId = overrideJvrisId?.trim() || orgInfo?.jvris_id || null;
+
+  const {
     data: navCache,
     error: navCacheError,
     isLoading: isLoadingNavCache,
   } = useQuery({
-    queryKey: ["financeiro-nav-cache", orgInfo?.jvris_id],
+    queryKey: ["financeiro-nav-cache", effectiveJvrisId],
     queryFn: async () => {
-      if (!orgInfo?.jvris_id) {
+      if (!effectiveJvrisId) {
         return null;
       }
 
       const { data, error } = await supabase
         .from("financeiro_nav_cache")
         .select("id, jvris_id, valor_pendente, data_vencimento, synced_at")
-        .eq("jvris_id", orgInfo.jvris_id)
+        .eq("jvris_id", effectiveJvrisId)
         .maybeSingle();
 
       if (error) throw error;
 
       return (data as NavCache | null) ?? null;
     },
-    enabled: !!orgInfo?.jvris_id,
+    enabled: !!effectiveJvrisId,
   });
 
-   const {
+  const {
     data: navItems = [],
     error: navItemsError,
     isLoading: isLoadingNavItems,
   } = useQuery({
-    queryKey: ["financeiro-nav-items", orgInfo?.jvris_id],
+    queryKey: ["financeiro-nav-items", effectiveJvrisId],
     queryFn: async () => {
-      if (!orgInfo?.jvris_id) {
+      if (!effectiveJvrisId) {
         return [];
       }
 
       const { data, error } = await supabase
         .from("financeiro_nav_items")
         .select("id, jvris_id, numero_documento, valor, data_vencimento, synced_at")
-        .eq("jvris_id", orgInfo.jvris_id)
+        .eq("jvris_id", effectiveJvrisId)
         .not("numero_documento", "is", null)
         .neq("numero_documento", "")
         .not("data_vencimento", "is", null)
@@ -208,10 +213,10 @@ export function useFinanceiro(overrideOrgId?: string) {
 
       return (data as NavItem[]) ?? [];
     },
-    enabled: !!orgInfo?.jvris_id,
+    enabled: !!effectiveJvrisId,
   });
 
-    const { data: availableJvrisIds = [] } = useQuery({
+  const { data: availableJvrisIds = [] } = useQuery({
     queryKey: ["available-jvris-ids", organizationId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -449,7 +454,9 @@ export function useFinanceiro(overrideOrgId?: string) {
     }) => {
       const { error } = await supabase
         .from("organizations")
-        .update(data)
+        .update({
+          tipo_cliente: data.tipo_cliente,
+        })
         .eq("id", organizationId);
 
       if (error) throw error;
@@ -480,8 +487,6 @@ export function useFinanceiro(overrideOrgId?: string) {
         }),
       ]);
 
-      await refetchOrgInfo();
-
       return data;
     },
     onSuccess: (data) => {
@@ -499,111 +504,107 @@ export function useFinanceiro(overrideOrgId?: string) {
     },
   });
 
-const setJvrisId = useMutation({
-  mutationFn: async (jvrisId: string) => {
-    if (!organizationId) {
-      throw new Error("Organização não definida.");
-    }
+  const setJvrisId = useMutation({
+    mutationFn: async (jvrisId: string) => {
+      if (!organizationId) {
+        throw new Error("Organização não definida.");
+      }
 
-    const normalizedId = jvrisId.trim();
+      const normalizedId = jvrisId.trim();
 
-    if (!normalizedId) {
-      throw new Error("ID Jvris inválido.");
-    }
+      if (!normalizedId) {
+        throw new Error("ID Jvris inválido.");
+      }
 
-    console.log("[useFinanceiro] a gravar jvris_id:", normalizedId);
-
-    const payload: TablesUpdate<"organizations"> = {
-      jvris_id: normalizedId,
-    };
-
-    const { data: updatedOrg, error: updateError } = await supabase
-      .from("organizations")
-      .update(payload)
-      .eq("id", organizationId)
-      .select("id, jvris_id")
-      .single();
-
-    if (updateError) throw updateError;
-
-    console.log("[useFinanceiro] organização actualizada:", updatedOrg);
-
-    const updatedJvrisId = updatedOrg?.jvris_id ?? null;
-
-    if (updatedJvrisId !== normalizedId) {
-      throw new Error(
-        `O ID Jvris foi gravado, mas a resposta da base de dados não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${updatedJvrisId ?? "null"}`
-      );
-    }
-
-    queryClient.setQueryData(
-      ["organization-financial-info", organizationId],
-      (oldData: OrganizationFinancialInfo | null) => ({
-        tipo_cliente: oldData?.tipo_cliente ?? "pessoa_coletiva",
-        prazo_pagamento_dias: oldData?.prazo_pagamento_dias ?? 30,
+      const payload: TablesUpdate<"organizations"> = {
         jvris_id: normalizedId,
-      })
-    );
+      };
 
-    let syncData: Awaited<ReturnType<typeof runNavSync>> | null = null;
-    let syncWarning: string | null = null;
+      const { data: updatedOrg, error: updateError } = await supabase
+        .from("organizations")
+        .update(payload)
+        .eq("id", organizationId)
+        .select("id, jvris_id")
+        .single();
 
-    try {
-      syncData = await runNavSync();
+      if (updateError) throw updateError;
 
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: ["financeiro-nav-cache", normalizedId],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["financeiro-nav-items", normalizedId],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["available-jvris-ids", organizationId],
-        }),
-      ]);
-    } catch (syncError) {
-      syncWarning =
-        syncError instanceof Error
-          ? syncError.message
-          : "O ID Jvris foi gravado, mas a sincronização NAV falhou.";
+      const updatedJvrisId = updatedOrg?.jvris_id ?? null;
 
-      console.error(
-        "[useFinanceiro] falha na sincronização NAV após gravar jvris_id:",
-        syncError
+      if (updatedJvrisId !== normalizedId) {
+        throw new Error(
+          `O ID Jvris foi gravado, mas a resposta da base de dados não reflecte o valor esperado. Esperado: ${normalizedId}; actual: ${updatedJvrisId ?? "null"}`
+        );
+      }
+
+      queryClient.setQueryData(
+        ["organization-financial-info", organizationId],
+        (oldData: OrganizationFinancialInfo | null) => ({
+          tipo_cliente: oldData?.tipo_cliente ?? "pessoa_coletiva",
+          prazo_pagamento_dias: oldData?.prazo_pagamento_dias ?? 30,
+          jvris_id: normalizedId,
+        })
       );
-    }
 
-    return {
-      jvrisId: normalizedId,
-      syncData,
-      syncWarning,
-      organizationFinancialInfo: updatedOrg ?? null,
-    };
-  },
-  onSuccess: ({ syncData, syncWarning }) => {
-    setLastSyncResult(syncData ?? null);
+      let syncData: Awaited<ReturnType<typeof runNavSync>> | null = null;
+      let syncWarning: string | null = null;
 
-    if (syncWarning) {
-      toast.warning(
-        `ID Jvris configurado com sucesso, mas a sincronização NAV falhou: ${syncWarning}`
-      );
-      return;
-    }
+      try {
+        syncData = await runNavSync();
 
-    let msg = "ID Jvris configurado e Base NAV sincronizada com sucesso";
-    if (syncData?.synced != null || syncData?.items != null) {
-      msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
-    }
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["financeiro-nav-cache", normalizedId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["financeiro-nav-items", normalizedId],
+          }),
+          queryClient.invalidateQueries({
+            queryKey: ["available-jvris-ids", organizationId],
+          }),
+        ]);
+      } catch (syncError) {
+        syncWarning =
+          syncError instanceof Error
+            ? syncError.message
+            : "O ID Jvris foi gravado, mas a sincronização NAV falhou.";
 
-    toast.success(msg);
-  },
-  onError: (error) => {
-    toast.error("Erro ao configurar ID Jvris: " + error.message);
-  },
-});
+        console.error(
+          "[useFinanceiro] falha na sincronização NAV após gravar jvris_id:",
+          syncError
+        );
+      }
 
-    const createFolder = useMutation({
+      return {
+        jvrisId: normalizedId,
+        syncData,
+        syncWarning,
+        organizationFinancialInfo: updatedOrg ?? null,
+      };
+    },
+    onSuccess: ({ syncData, syncWarning }) => {
+      setLastSyncResult(syncData ?? null);
+
+      if (syncWarning) {
+        toast.warning(
+          `ID Jvris configurado com sucesso, mas a sincronização NAV falhou: ${syncWarning}`
+        );
+        return;
+      }
+
+      let msg = "ID Jvris configurado e Base NAV sincronizada com sucesso";
+      if (syncData?.synced != null || syncData?.items != null) {
+        msg += `: ${syncData?.synced ?? 0} clientes, ${syncData?.items ?? 0} faturas`;
+      }
+
+      toast.success(msg);
+    },
+    onError: (error) => {
+      toast.error("Erro ao configurar ID Jvris: " + error.message);
+    },
+  });
+
+  const createFolder = useMutation({
     mutationFn: async (folder: { nome: string; descricao?: string; tags?: string[] }) => {
       const { data, error } = await supabase
         .from("client_folders")
@@ -633,7 +634,8 @@ const setJvrisId = useMutation({
     navCache: navCache ?? null,
     navItems,
     navError: navItemsError || navCacheError || null,
-    jvrisId: orgInfo?.jvris_id ?? null,
+    jvrisId: effectiveJvrisId,
+    baseOrganizationJvrisId: orgInfo?.jvris_id ?? null,
     availableJvrisIds,
     lastSyncResult,
     organizationId,
