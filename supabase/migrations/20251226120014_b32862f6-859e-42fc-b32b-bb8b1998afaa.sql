@@ -3,19 +3,70 @@ insert into storage.buckets (id, name, public)
 values ('legal-mirror', 'legal-mirror', true)
 on conflict (id) do nothing;
 
--- Storage policies for legal-mirror bucket
-create policy "Public read legal mirror files"
-on storage.objects for select
-using (bucket_id = 'legal-mirror');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'Public read legal mirror files'
+  ) THEN
+    CREATE POLICY "Public read legal mirror files"
+      ON storage.objects
+      FOR SELECT
+      USING (bucket_id = 'legal-mirror');
+  END IF;
+END
+$$;
 
-create policy "Service role can upload legal mirror files"
-on storage.objects for insert
-with check (bucket_id = 'legal-mirror');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'Service role can upload legal mirror files'
+  ) THEN
+    CREATE POLICY "Service role can upload legal mirror files"
+      ON storage.objects
+      FOR INSERT
+      WITH CHECK (bucket_id = 'legal-mirror');
+  END IF;
+END
+$$;
 
-create policy "Service role can update legal mirror files"
-on storage.objects for update
-using (bucket_id = 'legal-mirror');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'Service role can update legal mirror files'
+  ) THEN
+    CREATE POLICY "Service role can update legal mirror files"
+      ON storage.objects
+      FOR UPDATE
+      USING (bucket_id = 'legal-mirror');
+  END IF;
+END
+$$;
 
-create policy "Service role can delete legal mirror files"
-on storage.objects for delete
-using (bucket_id = 'legal-mirror');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'Service role can delete legal mirror files'
+  ) THEN
+    CREATE POLICY "Service role can delete legal mirror files"
+      ON storage.objects
+      FOR DELETE
+      USING (bucket_id = 'legal-mirror');
+  END IF;
+END
+$$;
