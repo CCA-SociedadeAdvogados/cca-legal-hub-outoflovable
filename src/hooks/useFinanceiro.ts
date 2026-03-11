@@ -119,14 +119,15 @@ function calculateAccountStatusFromNav(
 }
 
 /**
- * @param overrideOrgId - organização efectiva a usar
- * @param overrideJvrisId - cliente financeiro seleccionado via pesquisa por ID Jvris
+ * @param overrideOrgId organização efectiva a usar
+ * @param overrideJvrisId cliente financeiro seleccionado via pesquisa por ID Jvris
  */
 export function useFinanceiro(overrideOrgId?: string, overrideJvrisId?: string | null) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
-  const organizationId = overrideOrgId || profile?.current_organization_id;
   const queryClient = useQueryClient();
+
+  const organizationId = overrideOrgId || profile?.current_organization_id || null;
 
   const [lastSyncResult, setLastSyncResult] = useState<{
     jvris_ids?: string[];
@@ -155,7 +156,9 @@ export function useFinanceiro(overrideOrgId?: string, overrideJvrisId?: string |
       if (error) throw error;
 
       return ({
-        tipo_cliente: (data?.tipo_cliente as "pessoa_individual" | "pessoa_coletiva") || "pessoa_coletiva",
+        tipo_cliente:
+          (data?.tipo_cliente as "pessoa_individual" | "pessoa_coletiva") ||
+          "pessoa_coletiva",
         prazo_pagamento_dias: 30,
         jvris_id: data?.jvris_id ?? null,
       } as OrganizationFinancialInfo | null);
@@ -163,70 +166,68 @@ export function useFinanceiro(overrideOrgId?: string, overrideJvrisId?: string |
     enabled: !!organizationId,
   });
 
-  const effectiveJvrisId = overrideJvrisId?.trim() || orgInfo?.jvris_id || null;
+  const normalizedOverrideJvrisId = overrideJvrisId?.trim() || null;
+  const effectiveJvrisId = normalizedOverrideJvrisId || orgInfo?.jvris_id || null;
 
-const {
-  data: navCache,
-  error: navCacheError,
-  isLoading: isLoadingNavCache,
-} = useQuery({
-  queryKey: ["financeiro-nav-cache", effectiveJvrisId],
-  queryFn: async () => {
-    if (!effectiveJvrisId) {
-      return null;
-    }
+  const {
+    data: navCache,
+    error: navCacheError,
+    isLoading: isLoadingNavCache,
+  } = useQuery({
+    queryKey: ["financeiro-nav-cache", organizationId, effectiveJvrisId],
+    queryFn: async () => {
+      if (!effectiveJvrisId) {
+        return null;
+      }
 
-    const { data, error } = await supabase
-      .from("financeiro_nav_cache")
-      .select("id, jvris_id, valor_pendente, data_vencimento, synced_at")
-      .eq("jvris_id", effectiveJvrisId)
-      .order("data_vencimento", { ascending: true });
+      const { data, error } = await supabase
+        .from("financeiro_nav_cache")
+        .select("id, jvris_id, valor_pendente, data_vencimento, synced_at")
+        .eq("jvris_id", effectiveJvrisId)
+        .order("data_vencimento", { ascending: true });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const rows = (data as NavCache[]) ?? [];
+      const rows = (data as NavCache[]) ?? [];
 
-    if (rows.length === 0) {
-      return null;
-    }
+      if (rows.length === 0) {
+        return null;
+      }
 
-    const totalValorPendente = rows.reduce(
-      (sum, row) => sum + Number(row.valor_pendente ?? 0),
-      0
-    );
+      const totalValorPendente = rows.reduce(
+        (sum, row) => sum + Number(row.valor_pendente ?? 0),
+        0
+      );
 
-    const dueDates = rows
-      .map((row) => row.data_vencimento)
-      .filter((value): value is string => Boolean(value))
-      .sort();
+      const dueDates = rows
+        .map((row) => row.data_vencimento)
+        .filter((value): value is string => Boolean(value))
+        .sort();
 
-    const syncedAts = rows
-      .map((row) => row.synced_at)
-      .filter((value): value is string => Boolean(value))
-      .sort();
+      const syncedAts = rows
+        .map((row) => row.synced_at)
+        .filter((value): value is string => Boolean(value))
+        .sort();
 
-    const consolidatedNavCache: NavCache = {
-      id: rows[0].id,
-      jvris_id: effectiveJvrisId,
-      valor_pendente: totalValorPendente,
-      data_vencimento: dueDates.length > 0 ? dueDates[0] : null,
-      synced_at: syncedAts.length > 0 ? syncedAts[syncedAts.length - 1] : null,
-    };
+      const consolidatedNavCache: NavCache = {
+        id: rows[0].id,
+        jvris_id: effectiveJvrisId,
+        valor_pendente: totalValorPendente,
+        data_vencimento: dueDates.length > 0 ? dueDates[0] : null,
+        synced_at: syncedAts.length > 0 ? syncedAts[syncedAts.length - 1] : null,
+      };
 
-    console.log("[useFinanceiro] navCache consolidado:", consolidatedNavCache);
-    console.log("[useFinanceiro] linhas navCache:", rows);
-
-    return consolidatedNavCache;
-  },
-  enabled: !!effectiveJvrisId,
-});
+      return consolidatedNavCache;
+    },
+    enabled: !!effectiveJvrisId,
+  });
 
   const {
     data: navItems = [],
     error: navItemsError,
     isLoading: isLoadingNavItems,
   } = useQuery({
-    queryKey: ["financeiro-nav-items", effectiveJvrisId],
+    queryKey: ["financeiro-nav-items", organizationId, effectiveJvrisId],
     queryFn: async () => {
       if (!effectiveJvrisId) {
         return [];
@@ -390,7 +391,9 @@ const {
       let msg = error.message;
 
       try {
-        const errWithContext = error as { context?: { json?: () => Promise<unknown>; error?: string | { message?: string } } };
+        const errWithContext = error as {
+          context?: { json?: () => Promise<unknown>; error?: string | { message?: string } };
+        };
         const ctx = errWithContext.context;
 
         if (ctx && typeof ctx.json === "function") {
@@ -497,10 +500,10 @@ const {
       queryClient.invalidateQueries({
         queryKey: ["organization-financial-info", organizationId],
       });
-      toast.success("Configurações atualizadas");
+      toast.success("Configurações actualizadas");
     },
     onError: (error) => {
-      toast.error("Erro ao atualizar configurações: " + error.message);
+      toast.error("Erro ao actualizar configurações: " + error.message);
     },
   });
 
@@ -586,10 +589,10 @@ const {
 
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: ["financeiro-nav-cache", normalizedId],
+            queryKey: ["financeiro-nav-cache", organizationId, normalizedId],
           }),
           queryClient.invalidateQueries({
-            queryKey: ["financeiro-nav-items", normalizedId],
+            queryKey: ["financeiro-nav-items", organizationId, normalizedId],
           }),
           queryClient.invalidateQueries({
             queryKey: ["available-jvris-ids", organizationId],
