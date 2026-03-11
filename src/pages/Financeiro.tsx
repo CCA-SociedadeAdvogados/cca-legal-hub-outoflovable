@@ -59,6 +59,8 @@ export default function Financeiro() {
   const { isCCAUser } = useLegalHubProfile();
   const queryClient = useQueryClient();
 
+  const effectiveSelectedJvrisId = cliente?.jvrisId?.trim() || null;
+
   const {
     accountSummary,
     navCache,
@@ -74,7 +76,7 @@ export default function Financeiro() {
     syncNavFromSharePoint,
     setJvrisId,
     organizationId,
-  } = useFinanceiro(cliente?.organizationId);
+  } = useFinanceiro(cliente?.organizationId, effectiveSelectedJvrisId);
 
   const [activeTab, setActiveTab] = useState("financeiro");
 
@@ -212,26 +214,14 @@ export default function Financeiro() {
   };
 
   const handleConfirmJvrisSelection = async () => {
-    console.log("[Financeiro] clique em Confirmar Selecção");
-    console.log("[Financeiro] selectedJvrisId:", selectedJvrisId);
-    console.log("[Financeiro] cliente?.organizationId:", cliente?.organizationId);
-    console.log("[Financeiro] organizationId efectivo:", organizationId);
-    console.log("[Financeiro] setJvrisId.isPending:", setJvrisId.isPending);
-
     if (!selectedJvrisId || !organizationId) {
-      console.warn("[Financeiro] confirmação abortada por falta de selectedJvrisId ou organizationId");
       return;
     }
 
     try {
       setIsConfirmingJvrisSelection(true);
 
-      console.log("[Financeiro] jvrisId actual antes de confirmar:", jvrisId);
-      console.log("[Financeiro] antes de mutateAsync");
-
       await setJvrisId.mutateAsync(selectedJvrisId);
-
-      console.log("[Financeiro] mutateAsync concluído com sucesso");
 
       setIsJvrisDialogOpen(false);
       setSelectedJvrisId(null);
@@ -243,19 +233,18 @@ export default function Financeiro() {
       });
 
       await queryClient.refetchQueries({
-        queryKey: ["financeiro-nav-cache", selectedJvrisId],
+        queryKey: ["financeiro-nav-cache", organizationId, selectedJvrisId],
         exact: true,
       });
 
       await queryClient.refetchQueries({
-        queryKey: ["financeiro-nav-items", selectedJvrisId],
+        queryKey: ["financeiro-nav-items", organizationId, selectedJvrisId],
         exact: true,
       });
     } catch (error) {
-      console.error("[Financeiro] erro ao confirmar seleção de jvris_id:", error);
+      console.error("[Financeiro] erro ao confirmar selecção de jvris_id:", error);
     } finally {
       setIsConfirmingJvrisSelection(false);
-      console.log("[Financeiro] fim do handleConfirmJvrisSelection");
     }
   };
 
@@ -808,7 +797,6 @@ export default function Financeiro() {
                         isSelected ? "bg-primary/10 text-primary font-semibold" : ""
                       }`}
                       onClick={() => {
-                        console.log("[Financeiro] ID seleccionado no modal:", normalizedId);
                         setSelectedJvrisId(normalizedId);
                       }}
                     >
@@ -821,6 +809,8 @@ export default function Financeiro() {
 
             <div className="text-xs text-muted-foreground space-y-1">
               <div>Seleccionado: {selectedJvrisId ?? "nenhum"}</div>
+              <div>jvris efectivo da página: {effectiveSelectedJvrisId ?? "null"}</div>
+              <div>jvris efectivo do hook: {jvrisId ?? "null"}</div>
               <div>isPending: {String(setJvrisId.isPending)}</div>
               <div>isConfirming: {String(isConfirmingJvrisSelection)}</div>
               <div>isJvrisDialogOpen: {String(isJvrisDialogOpen)}</div>
