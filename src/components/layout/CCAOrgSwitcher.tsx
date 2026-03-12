@@ -44,13 +44,21 @@ export function CCAOrgSwitcher() {
     );
   }, [accessibleOrganizations, search]);
 
-  const handleSwitch = (orgId: string) => {
-    if (orgId !== currentOrganization?.id) {
-      switchOrganization.mutate(orgId);
-    }
+  const handleSwitch = async (orgId: string) => {
+  if (orgId === currentOrganization?.id) {
     setOpen(false);
     setSearch('');
-  };
+    return;
+  }
+
+  try {
+    setOpen(false);
+    setSearch('');
+    await switchOrganization.mutateAsync(orgId);
+  } catch (error) {
+    console.error('Erro ao mudar organização:', error);
+  }
+};
 
   // Não mostrar se não tem acesso a múltiplas orgs ou está a carregar
   if (isLoading) return null;
