@@ -21,9 +21,13 @@ export default function CCAOrgSwitcher({ className }: Props) {
 
   const filteredClients = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return ccaClients;
 
-    return ccaClients.filter((client) => {
+    if (!q) {
+      console.log('Sem pesquisa, a devolver ccaClients:', ccaClients.length);
+      return ccaClients;
+    }
+
+    const result = ccaClients.filter((client) => {
       const haystack = [
         client.client_name,
         client.client_code,
@@ -36,12 +40,19 @@ export default function CCAOrgSwitcher({ className }: Props) {
 
       return haystack.includes(q);
     });
+
+    console.log('Pesquisa:', q, 'resultado:', result.length);
+    return result;
   }, [ccaClients, query]);
 
   const selected = useMemo(
     () => ccaClients.find((client) => client.organization_id === viewingOrganizationId) ?? null,
     [ccaClients, viewingOrganizationId],
   );
+
+  console.log('ccaClients total:', ccaClients.length);
+  console.log('filteredClients total:', filteredClients.length);
+  console.log('selected:', selected);
 
   if (!isCCAInternalAuthorized) return null;
 
