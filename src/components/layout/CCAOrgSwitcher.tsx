@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';className="flex items-center gap-2 max-w-[220px] shrink-0""
 import { useTranslation } from 'react-i18next';
 
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -70,7 +70,7 @@ export function CCAOrgSwitcher() {
         <Button
           variant="outline"
           size="sm"
-          className="flex items-center gap-2 max-w-[220px]"
+          className="flex items-center gap-2 max-w-[220px] shrink-0""
         >
           <Building2 className="h-4 w-4 shrink-0" />
           <span className="truncate text-xs">
