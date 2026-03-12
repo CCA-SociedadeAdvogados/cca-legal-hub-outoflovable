@@ -79,7 +79,7 @@ export function CCAOrgSwitcher() {
           <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 bg-popover">
+      <DropdownMenuContent align="end" className="w-72 max-w-[calc(100vw-2rem)] bg-popover">
         <DropdownMenuLabel className="text-xs">
           {hasUnrestrictedAccess
             ? t('cca.allOrganizations')
