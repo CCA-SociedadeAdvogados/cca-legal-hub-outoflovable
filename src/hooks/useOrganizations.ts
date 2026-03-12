@@ -194,34 +194,45 @@ export function useOrganizations() {
   });
 
   const switchOrganization = useMutation({
-    mutationFn: async (organizationId: string) => {
-      if (!user) throw new Error('Utilizador não autenticado');
+  mutationFn: async (organizationId: string) => {
+    if (!user) throw new Error('Utilizador não autenticado');
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ current_organization_id: organizationId })
-        .eq('id', user.id);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ current_organization_id: organizationId })
+      .eq('id', user.id);
 
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['current-organization'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-      queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] });
-      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
-      queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['invoices'] });
-      queryClient.invalidateQueries({ queryKey: ['client-folders'] });
-      queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] });
-      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] });
-      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] });
-      queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] });
-      toast.success('Organização alterada');
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Erro ao mudar organização');
-    },
-  });
+    if (error) throw error;
+
+    return organizationId;
+  },
+  onSuccess: async (organizationId) => {
+    queryClient.setQueryData(['current-organization', user?.id], () => {
+      return organizations?.find((o) => o.id === organizationId) ?? null;
+    });
+
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['current-organization', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['organizations', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['user-memberships', user?.id] }),
+      queryClient.invalidateQueries({ queryKey: ['profile'] }),
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] }),
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] }),
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] }),
+      queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+      queryClient.invalidateQueries({ queryKey: ['client-folders'] }),
+      queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
+      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
+      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
+      queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
+    ]);
+
+    toast.success('Organização alterada');
+  },
+  onError: (error: any) => {
+    toast.error(error.message || 'Erro ao mudar organização');
+  },
+});
 
   return {
     organizations,
