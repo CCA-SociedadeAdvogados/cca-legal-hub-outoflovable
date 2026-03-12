@@ -113,13 +113,21 @@ export function ClienteSelectorJvris() {
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <Button
+  variant="outline"
+  size="sm"
+  className="flex shrink-0 items-center gap-2"
+>
             <Search className="h-4 w-4" />
             {t("financial.searchByJvrisId")}
           </Button>
         </PopoverTrigger>
 
-        <PopoverContent className="w-96 p-0" align="end">
+        <PopoverContent
+  className="w-[380px] max-w-[calc(100vw-2rem)] p-0"
+  align="end"
+  sideOffset={8}
+>
           <div className="p-3 border-b">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -141,7 +149,7 @@ export function ClienteSelectorJvris() {
             </div>
           </div>
 
-          <div className="max-h-[420px] overflow-y-auto">
+         <div className="max-h-[420px] overflow-y-auto overscroll-contain">
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
