@@ -138,28 +138,37 @@ export function useOrganizations() {
     queryFn: async () => {
       if (!user || !isCCAInternalAuthorized) return [];
 
-      const { data, error } = await supabase
+      const { data, error, count } = await supabase
         .from('vw_cca_client_catalog_overview')
-        .select(`
-          organization_id,
-          client_code,
-          legacy_client_name,
-          group_code,
-          cost_center,
-          responsible,
-          responsible_email,
-          total_documentos,
-          total_pendente,
-          total_vencido,
-          total_a_vencer,
-          ultima_sincronizacao,
-          client_status,
-          can_open_in_platform
-        `)
+        .select(
+          `
+            organization_id,
+            client_code,
+            legacy_client_name,
+            group_code,
+            cost_center,
+            responsible,
+            responsible_email,
+            total_documentos,
+            total_pendente,
+            total_vencido,
+            total_a_vencer,
+            ultima_sincronizacao,
+            client_status,
+            can_open_in_platform
+          `,
+          { count: 'exact' },
+        )
         .eq('can_open_in_platform', true)
-        .order('legacy_client_name', { ascending: true });
+        .order('legacy_client_name', { ascending: true })
+        .range(0, 4999);
 
       if (error) throw error;
+
+      console.log('CCA SQL count exact:', count);
+      console.log('CCA rows received in frontend:', data?.length);
+      console.log('CCA first row:', data?.[0]);
+      console.log('CCA last row:', data?.[data.length - 1]);
 
       return (data ?? []).map((row: any) => ({
         organization_id: row.organization_id,
@@ -177,7 +186,7 @@ export function useOrganizations() {
         client_status: row.client_status,
       })) as CCAClientOption[];
     },
-    enabled: !!user,
+    enabled: !!user && isCCAInternalAuthorized,
   });
 
   const { data: userMemberships, isLoading: membershipsLoading } = useQuery({
@@ -254,11 +263,6 @@ export function useOrganizations() {
     }));
   }
 
-  /**
-   * Sincroniza automaticamente o cliente em visualização:
-   * - para utilizadores CCA: usa o primeiro cliente da lista, se não houver nenhum seleccionado;
-   * - para utilizadores externos: usa a organização identitária actual.
-   */
   useEffect(() => {
     if (!user) return;
 
@@ -320,11 +324,6 @@ export function useOrganizations() {
     },
   });
 
-  /**
-   * Mantém compatibilidade com o comportamento antigo.
-   * - Para utilizadores CCA autorizados, trocar cliente não altera profiles.current_organization_id;
-   * - Para utilizadores externos, mantém o comportamento anterior.
-   */
   const switchOrganization = useMutation({
     mutationFn: async (organizationId: string) => {
       if (!user) throw new Error('Utilizador não autenticado');
