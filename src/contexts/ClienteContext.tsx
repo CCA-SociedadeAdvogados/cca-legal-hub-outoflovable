@@ -3,17 +3,18 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 /**
  * Contexto global para o cliente em visualização.
  *
- * Mantém compatibilidade com o modelo anterior baseado em Jvris,
- * mas passa a tratar o organizationId como chave principal do
- * cliente actualmente aberto no frontend.
+ * No novo modelo:
+ * - organizationId é a chave principal do cliente aberto no frontend;
+ * - nome é o nome do cliente a apresentar;
+ * - jvrisId passa a funcionar como código funcional / client_code.
  */
 
 export interface ClienteJvris {
   /** ID da organização no Supabase */
   organizationId: string;
-  /** Nome da organização */
+  /** Nome do cliente */
   nome: string;
-  /** Código funcional / Jvris */
+  /** Código funcional do cliente (mantido por compatibilidade com o nome antigo) */
   jvrisId: string;
 }
 
