@@ -23,6 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     >
       <ImpersonationBanner />
       <Sidebar />
+
       <div
         className={cn(
           "min-h-screen w-full min-w-0 transition-all duration-300",
