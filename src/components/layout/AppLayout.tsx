@@ -4,7 +4,6 @@ import { Header } from './Header';
 import { ImpersonationBanner } from './ImpersonationBanner';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useSidebar } from '@/contexts/SidebarContext';
-import { useOrganizations } from '@/hooks/useOrganizations';
 import { cn } from '@/lib/utils';
 
 interface AppLayoutProps {
@@ -14,13 +13,9 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { isImpersonating } = useImpersonation();
   const { isCollapsed } = useSidebar();
-  const { currentOrganization } = useOrganizations();
 
   return (
-    <div
-      key={currentOrganization?.id ?? 'no-org'}
-      className="min-h-screen w-full overflow-x-hidden bg-background"
-    >
+    <div className="min-h-screen w-full overflow-x-hidden bg-background">
       <ImpersonationBanner />
       <Sidebar />
 
