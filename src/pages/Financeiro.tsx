@@ -251,8 +251,8 @@ export default function Financeiro() {
   if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
         </div>
       </AppLayout>
     );
@@ -262,27 +262,33 @@ export default function Financeiro() {
     <>
       <Card className={`border-2 ${statusColors[accountSummary.status]}`}>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center justify-between gap-4">
+            <div className="min-w-0">
+              <CardTitle className="flex min-w-0 items-center gap-2">
                 {statusIcons[accountSummary.status]}
-                {t("financial.accountStatus")}: {getStatusLabel(accountSummary.status)}
+                <span className="truncate">
+                  {t("financial.accountStatus")}: {getStatusLabel(accountSummary.status)}
+                </span>
               </CardTitle>
-              <CardDescription className="flex items-center gap-2 mt-1">
+
+              <CardDescription className="mt-1 flex min-w-0 items-center gap-2">
                 {accountSummary.tipoCliente === "pessoa_individual" ? (
                   <>
-                    <User className="h-4 w-4" />
-                    {t("financial.individualPerson")}
+                    <User className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{t("financial.individualPerson")}</span>
                   </>
                 ) : (
                   <>
-                    <Building2 className="h-4 w-4" />
-                    {t("financial.legalEntity", { days: accountSummary.prazoPagamentoDias })}
+                    <Building2 className="h-4 w-4 shrink-0" />
+                    <span className="truncate">
+                      {t("financial.legalEntity", { days: accountSummary.prazoPagamentoDias })}
+                    </span>
                   </>
                 )}
               </CardDescription>
             </div>
-            <div className="text-right">
+
+            <div className="shrink-0 text-right">
               <p className="text-sm text-muted-foreground">{t("financial.totalOpen")}</p>
               <p className="text-2xl font-bold">{formatCurrency(accountSummary.totalEmAberto)}</p>
             </div>
@@ -291,11 +297,11 @@ export default function Financeiro() {
 
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted rounded-lg">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="rounded-lg bg-muted p-2">
                 <Receipt className="h-5 w-5 text-muted-foreground" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t("financial.totalInDefault")}</p>
                 <p className="text-lg font-semibold">
                   {accountSummary.totalFaturasEmIncumprimento}
@@ -303,21 +309,21 @@ export default function Financeiro() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/20 rounded-lg">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="rounded-lg bg-primary/20 p-2">
                 <CreditCard className="h-5 w-5 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t("financial.openAmount")}</p>
                 <p className="text-lg font-semibold">{accountSummary.faturasEmAberto}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-destructive/20 rounded-lg">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="rounded-lg bg-destructive/20 p-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t("financial.overdueCount")}</p>
                 <p className="text-lg font-semibold">{accountSummary.faturasVencidas}</p>
               </div>
@@ -325,7 +331,7 @@ export default function Financeiro() {
           </div>
 
           {accountSummary.emIncumprimentoDesde && (
-            <div className="mt-4 pt-4 border-t flex items-center gap-2 text-sm">
+            <div className="mt-4 flex items-center gap-2 border-t pt-4 text-sm">
               <Calendar className="h-4 w-4 text-risk-high" />
               <span className="text-risk-high">{t("financial.defaultSince")}:</span>
               <span className="font-medium text-risk-high">
@@ -338,22 +344,24 @@ export default function Financeiro() {
             </div>
           )}
 
-          <div className="mt-4 pt-4 border-t space-y-3">
+          <div className="mt-4 space-y-3 border-t pt-4">
             {!isLoadingNav &&
               (navItems.length > 0 ||
                 (navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0)) && (
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                   <span>
                     {t("financial.pendingInvoices")}:{" "}
                     <strong className="text-foreground">
                       {accountSummary.totalFaturasEmIncumprimento}
                     </strong>
                   </span>
+
                   {accountSummary.faturasVencidas > 0 && (
                     <span className="text-destructive">
                       {accountSummary.faturasVencidas} {t("financial.overdue")}
                     </span>
                   )}
+
                   {accountSummary.faturasEmAberto > 0 && (
                     <span className="text-primary">
                       {accountSummary.faturasEmAberto} {t("financial.withinTerm")}
@@ -363,57 +371,84 @@ export default function Financeiro() {
               )}
 
             {navError && (
-              <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+              <div className="flex items-center gap-2 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>{t("financial.errorLoadingInvoices")}</span>
               </div>
             )}
 
-            <div className="max-h-[400px] overflow-y-auto rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("financial.invoiceNumber")}</TableHead>
-                    <TableHead>{t("financial.dueDate")}</TableHead>
-                    <TableHead className="text-right">{t("financial.amount")}</TableHead>
-                    <TableHead>{t("financial.invoiceStatus")}</TableHead>
-                  </TableRow>
-                </TableHeader>
+            <div className="w-full min-w-0 overflow-x-auto rounded-md border">
+              <div className="min-w-[720px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("financial.invoiceNumber")}</TableHead>
+                      <TableHead>{t("financial.dueDate")}</TableHead>
+                      <TableHead className="text-right">{t("financial.amount")}</TableHead>
+                      <TableHead>{t("financial.invoiceStatus")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
 
-                <TableBody>
-                  {isLoadingNav ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <TableRow key={`skeleton-${i}`}>
-                        <TableCell>
-                          <Skeleton className="h-5 w-24" />
+                  <TableBody>
+                    {isLoadingNav ? (
+                      Array.from({ length: 3 }).map((_, i) => (
+                        <TableRow key={`skeleton-${i}`}>
+                          <TableCell>
+                            <Skeleton className="h-5 w-24" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-20" />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Skeleton className="ml-auto h-5 w-16" />
+                          </TableCell>
+                          <TableCell>
+                            <Skeleton className="h-5 w-16" />
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : navItems.length > 0 ? (
+                      navItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-mono text-sm">
+                            {item.numero_documento || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {item.data_vencimento
+                              ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {item.valor != null ? formatCurrency(item.valor) : "—"}
+                          </TableCell>
+                          <TableCell>
+                            {item.data_vencimento && isOverdue(item.data_vencimento) ? (
+                              <Badge variant="destructive" className="text-xs">
+                                {t("financial.overdue")}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs">
+                                {t("financial.withinTerm")}
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
+                      <TableRow>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {t("financial.pendingBalance")}
                         </TableCell>
                         <TableCell>
-                          <Skeleton className="h-5 w-20" />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Skeleton className="h-5 w-16 ml-auto" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-5 w-16" />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : navItems.length > 0 ? (
-                    navItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-mono text-sm">
-                          {item.numero_documento || "—"}
-                        </TableCell>
-                        <TableCell>
-                          {item.data_vencimento
-                            ? format(new Date(item.data_vencimento), "dd/MM/yyyy")
+                          {navCache.data_vencimento
+                            ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
                             : "—"}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {item.valor != null ? formatCurrency(item.valor) : "—"}
+                          {formatCurrency(navCache.valor_pendente)}
                         </TableCell>
                         <TableCell>
-                          {item.data_vencimento && isOverdue(item.data_vencimento) ? (
+                          {navCache.data_vencimento && isOverdue(navCache.data_vencimento) ? (
                             <Badge variant="destructive" className="text-xs">
                               {t("financial.overdue")}
                             </Badge>
@@ -424,42 +459,17 @@ export default function Financeiro() {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : navCache && navCache.valor_pendente != null && navCache.valor_pendente > 0 ? (
-                    <TableRow>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {t("financial.pendingBalance")}
-                      </TableCell>
-                      <TableCell>
-                        {navCache.data_vencimento
-                          ? format(new Date(navCache.data_vencimento), "dd/MM/yyyy")
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(navCache.valor_pendente)}
-                      </TableCell>
-                      <TableCell>
-                        {navCache.data_vencimento && isOverdue(navCache.data_vencimento) ? (
-                          <Badge variant="destructive" className="text-xs">
-                            {t("financial.overdue")}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-xs">
-                            {t("financial.withinTerm")}
-                          </Badge>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ) : !navError ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
-                        <Receipt className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p>{t("financial.noInvoices")}</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-                </TableBody>
-              </Table>
+                    ) : !navError ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                          <Receipt className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                          <p>{t("financial.noInvoices")}</p>
+                        </TableCell>
+                      </TableRow>
+                    ) : null}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -472,87 +482,90 @@ export default function Financeiro() {
   const tabContratos = (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          {t("contracts.title")}
+        <CardTitle className="flex min-w-0 items-center gap-2">
+          <FileText className="h-5 w-5 shrink-0" />
+          <span className="truncate">{t("contracts.title")}</span>
           {cliente && (
-            <Badge variant="outline" className="font-mono text-xs ml-2">
-              <Hash className="h-3 w-3 mr-1" />
+            <Badge variant="outline" className="ml-2 font-mono text-xs">
+              <Hash className="mr-1 h-3 w-3" />
               {cliente.jvrisId}
             </Badge>
           )}
         </CardTitle>
-        <CardDescription>{cliente ? cliente.nome : ""}</CardDescription>
+        <CardDescription className="truncate">{cliente ? cliente.nome : ""}</CardDescription>
       </CardHeader>
 
       <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("contracts.title")}</TableHead>
-                <TableHead>{t("contracts.type")}</TableHead>
-                <TableHead>{t("contracts.status")}</TableHead>
-                <TableHead>{t("contracts.endDate")}</TableHead>
-                <TableHead>{t("contracts.risk")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoadingContratos ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
-                      <TableCell key={j}>
-                        <Skeleton className="h-5 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : contratosCliente.length === 0 ? (
+        <div className="w-full min-w-0 overflow-x-auto rounded-md border">
+          <div className="min-w-[720px]">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>{t("dashboard.noContracts")}</p>
-                  </TableCell>
+                  <TableHead>{t("contracts.title")}</TableHead>
+                  <TableHead>{t("contracts.type")}</TableHead>
+                  <TableHead>{t("contracts.status")}</TableHead>
+                  <TableHead>{t("contracts.endDate")}</TableHead>
+                  <TableHead>{t("contracts.risk")}</TableHead>
                 </TableRow>
-              ) : (
-                contratosCliente.map((c) => (
-                  <TableRow key={c.id} className="hover:bg-muted/30">
-                    <TableCell className="font-medium max-w-[200px] truncate">
-                      {c.titulo_contrato}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground capitalize">
-                      {c.tipo_contrato?.replace(/_/g, " ")}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs capitalize">
-                        {c.estado_contrato?.replace(/_/g, " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {c.data_termo ? format(new Date(c.data_termo), "dd/MM/yyyy") : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {c.nivel_risco && (
-                        <Badge
-                          variant="outline"
-                          className={`text-xs ${
-                            c.nivel_risco === "alto"
-                              ? "border-risk-high/50 text-risk-high"
-                              : c.nivel_risco === "medio"
-                                ? "border-risk-medium/50 text-risk-medium"
-                                : "border-risk-low/50 text-risk-low"
-                          }`}
-                        >
-                          {c.nivel_risco}
-                        </Badge>
-                      )}
+              </TableHeader>
+
+              <TableBody>
+                {isLoadingContratos ? (
+                  Array.from({ length: 4 }).map((_, i) => (
+                    <TableRow key={i}>
+                      {Array.from({ length: 5 }).map((__, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-5 w-full" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : contratosCliente.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                      <FileText className="mx-auto mb-2 h-8 w-8 opacity-50" />
+                      <p>{t("dashboard.noContracts")}</p>
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  contratosCliente.map((c) => (
+                    <TableRow key={c.id} className="hover:bg-muted/30">
+                      <TableCell className="max-w-[200px] truncate font-medium">
+                        {c.titulo_contrato}
+                      </TableCell>
+                      <TableCell className="text-sm capitalize text-muted-foreground">
+                        {c.tipo_contrato?.replace(/_/g, " ")}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {c.estado_contrato?.replace(/_/g, " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {c.data_termo ? format(new Date(c.data_termo), "dd/MM/yyyy") : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {c.nivel_risco && (
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${
+                              c.nivel_risco === "alto"
+                                ? "border-risk-high/50 text-risk-high"
+                                : c.nivel_risco === "medio"
+                                  ? "border-risk-medium/50 text-risk-medium"
+                                  : "border-risk-low/50 text-risk-low"
+                            }`}
+                          >
+                            {c.nivel_risco}
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -576,34 +589,38 @@ export default function Financeiro() {
           </div>
         ) : orgCliente ? (
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-4">
               {orgCliente.logo_url ? (
-                <img src={orgCliente.logo_url} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                <img
+                  src={orgCliente.logo_url}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                />
               ) : (
-                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted">
                   <Building2 className="h-8 w-8 text-muted-foreground" />
                 </div>
               )}
 
-              <div>
-                <h3 className="text-xl font-semibold">{orgCliente.name}</h3>
-                <p className="text-sm text-muted-foreground font-mono">{orgCliente.slug}</p>
+              <div className="min-w-0">
+                <h3 className="truncate text-xl font-semibold">{orgCliente.name}</h3>
+                <p className="truncate font-mono text-sm text-muted-foreground">{orgCliente.slug}</p>
               </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="space-y-1 rounded-lg border p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   {t("financial.jvrisId")}
                 </p>
                 <p className="font-mono font-medium">{orgCliente.jvris_id || "—"}</p>
               </div>
 
-              <div className="rounded-lg border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="space-y-1 rounded-lg border p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   {t("financial.clientType")}
                 </p>
-                <p className="font-medium flex items-center gap-1.5">
+                <p className="flex items-center gap-1.5 font-medium">
                   {orgCliente.tipo_cliente === "pessoa_individual" ? (
                     <>
                       <User className="h-4 w-4" />
@@ -618,8 +635,8 @@ export default function Financeiro() {
                 </p>
               </div>
 
-              <div className="rounded-lg border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="space-y-1 rounded-lg border p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   {t("financial.paymentTerm")}
                 </p>
                 <p className="font-medium">
@@ -627,8 +644,8 @@ export default function Financeiro() {
                 </p>
               </div>
 
-              <div className="rounded-lg border p-3 space-y-1">
-                <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              <div className="space-y-1 rounded-lg border p-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   {t("ccaNews.createdAt")}
                 </p>
                 <p className="font-medium">
@@ -638,7 +655,7 @@ export default function Financeiro() {
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">{t("dashboard.noData")}</p>
+          <p className="text-sm text-muted-foreground">{t("dashboard.noData")}</p>
         )}
       </CardContent>
     </Card>
@@ -648,14 +665,14 @@ export default function Financeiro() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t("financial.title")}</h1>
-            <p className="text-muted-foreground">{t("financial.subtitle")}</p>
+      <div className="min-w-0 space-y-6">
+        <div className="flex min-w-0 flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-3xl font-bold text-foreground">{t("financial.title")}</h1>
+            <p className="truncate text-muted-foreground">{t("financial.subtitle")}</p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 md:justify-end">
             {(isCCAUser || isPlatformAdmin) && <ClienteSelectorJvris />}
 
             {isPlatformAdmin && (
@@ -665,6 +682,7 @@ export default function Financeiro() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="shrink-0"
                       disabled={syncNavFromSharePoint.isPending}
                       onClick={() => syncNavFromSharePoint.mutate()}
                     >
@@ -678,6 +696,7 @@ export default function Financeiro() {
                         : t("financial.syncNav")}
                     </Button>
                   </TooltipTrigger>
+
                   <TooltipContent>
                     {navCache?.synced_at
                       ? `${t("financial.lastSync")}: ${format(
@@ -690,6 +709,7 @@ export default function Financeiro() {
 
                 <Button
                   variant="outline"
+                  className="shrink-0"
                   onClick={() => {
                     setConfigForm({
                       tipo_cliente: accountSummary.tipoCliente,
@@ -707,12 +727,13 @@ export default function Financeiro() {
         </div>
 
         {showClienteTabs ? (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="financeiro">
                 <Receipt className="mr-2 h-4 w-4" />
                 {t("financial.title")}
               </TabsTrigger>
+
               <TabsTrigger value="contratos">
                 <FileText className="mr-2 h-4 w-4" />
                 {t("contracts.title")}
@@ -722,24 +743,27 @@ export default function Financeiro() {
                   </Badge>
                 )}
               </TabsTrigger>
+
               <TabsTrigger value="ficha">
                 <Building2 className="mr-2 h-4 w-4" />
                 {t("organization.title")}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="financeiro" className="space-y-6 mt-4">
+            <TabsContent value="financeiro" className="mt-4 space-y-6 min-w-0">
               {tabFinanceiro}
             </TabsContent>
-            <TabsContent value="contratos" className="mt-4">
+
+            <TabsContent value="contratos" className="mt-4 min-w-0">
               {tabContratos}
             </TabsContent>
-            <TabsContent value="ficha" className="mt-4">
+
+            <TabsContent value="ficha" className="mt-4 min-w-0">
               {tabFicha}
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="space-y-6">{tabFinanceiro}</div>
+          <div className="min-w-0 space-y-6">{tabFinanceiro}</div>
         )}
       </div>
 
@@ -770,7 +794,7 @@ export default function Financeiro() {
 
           <div className="space-y-3">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t("financial.searchClientId")}
                 value={jvrisSearchQuery}
@@ -779,9 +803,9 @@ export default function Financeiro() {
               />
             </div>
 
-            <div className="max-h-60 overflow-y-auto border rounded-md">
+            <div className="max-h-60 overflow-y-auto rounded-md border">
               {filteredJvrisIds.length === 0 ? (
-                <p className="p-4 text-sm text-muted-foreground text-center">
+                <p className="p-4 text-center text-sm text-muted-foreground">
                   {t("financial.noMatchingIds")}
                 </p>
               ) : (
@@ -793,8 +817,8 @@ export default function Financeiro() {
                     <button
                       key={normalizedId}
                       type="button"
-                      className={`w-full text-left px-4 py-2.5 text-sm font-mono hover:bg-muted transition-colors border-b last:border-b-0 ${
-                        isSelected ? "bg-primary/10 text-primary font-semibold" : ""
+                      className={`w-full border-b px-4 py-2.5 text-left font-mono text-sm transition-colors last:border-b-0 hover:bg-muted ${
+                        isSelected ? "bg-primary/10 font-semibold text-primary" : ""
                       }`}
                       onClick={() => {
                         setSelectedJvrisId(normalizedId);
@@ -807,7 +831,7 @@ export default function Financeiro() {
               )}
             </div>
 
-            <div className="text-xs text-muted-foreground space-y-1">
+            <div className="space-y-1 text-xs text-muted-foreground">
               <div>Seleccionado: {selectedJvrisId ?? "nenhum"}</div>
               <div>jvris efectivo da página: {effectiveSelectedJvrisId ?? "null"}</div>
               <div>jvris efectivo do hook: {jvrisId ?? "null"}</div>
@@ -856,6 +880,7 @@ export default function Financeiro() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>{t("financial.clientType")}</Label>
+
               <Select
                 value={configForm.tipo_cliente}
                 onValueChange={(v) =>
@@ -868,6 +893,7 @@ export default function Financeiro() {
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectItem value="pessoa_individual">
                     <div className="flex items-center gap-2">
@@ -875,6 +901,7 @@ export default function Financeiro() {
                       {t("financial.individualPerson")}
                     </div>
                   </SelectItem>
+
                   <SelectItem value="pessoa_coletiva">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
@@ -894,6 +921,7 @@ export default function Financeiro() {
             {configForm.tipo_cliente === "pessoa_coletiva" && (
               <div className="space-y-2">
                 <Label>{t("financial.paymentTerm")}</Label>
+
                 <Select
                   value={configForm.prazo_pagamento_dias}
                   onValueChange={(v) =>
@@ -903,6 +931,7 @@ export default function Financeiro() {
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
+
                   <SelectContent>
                     <SelectItem value="30">30 {t("home.days")}</SelectItem>
                     <SelectItem value="45">45 {t("home.days")}</SelectItem>
@@ -918,6 +947,7 @@ export default function Financeiro() {
             <Button variant="outline" onClick={() => setConfigDialogOpen(false)}>
               {t("common.cancel")}
             </Button>
+
             <Button
               onClick={handleUpdateConfig}
               disabled={updateOrganizationFinancial.isPending}
