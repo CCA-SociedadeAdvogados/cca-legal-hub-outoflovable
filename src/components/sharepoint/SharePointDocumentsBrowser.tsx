@@ -75,7 +75,7 @@ export function SharePointDocumentsBrowser({
   const [pathHistory, setPathHistory] = useState<string[]>([]);
 
   const { data: config, isLoading: isLoadingConfig } = useSharePointConfig();
-  const { data: documents, isLoading: isLoadingDocs, refetch } = useSharePointDocuments(currentPath);
+  const { data: documents, isLoading: isLoadingDocs } = useSharePointDocuments(currentPath);
   const syncSharePoint = useSyncSharePoint();
   const uploadToSharePoint = useUploadToSharePoint();
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -96,10 +96,6 @@ export function SharePointDocumentsBrowser({
     }
   };
 
-  const handleSync = () => {
-    syncSharePoint.mutate({});
-  };
-
   const handleFullSync = () => {
     syncSharePoint.mutate({ force_full_sync: true });
   };
@@ -108,7 +104,6 @@ export function SharePointDocumentsBrowser({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  // Build breadcrumb path
   const breadcrumbParts = currentPath.split("/").filter(Boolean);
 
   if (isLoadingConfig) {
@@ -125,11 +120,11 @@ export function SharePointDocumentsBrowser({
     return (
       <Card className={className}>
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-          <Cloud className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="font-medium text-lg">
+          <Cloud className="mb-4 h-12 w-12 text-muted-foreground" />
+          <h3 className="text-lg font-medium">
             {t("sharepoint.browser.notConfigured", "SharePoint não configurado")}
           </h3>
-          <p className="text-muted-foreground text-sm mt-2">
+          <p className="mt-2 text-sm text-muted-foreground">
             {t(
               "sharepoint.browser.notConfiguredDesc",
               "Configure a integração SharePoint nas Definições para sincronizar documentos."
@@ -146,26 +141,33 @@ export function SharePointDocumentsBrowser({
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Cloud className="h-5 w-5" />
-              {t("sharepoint.browser.title", "Arquivo SharePoint")}
+    <Card className={cn("min-w-0 overflow-hidden", className)}>
+      <CardHeader className="min-w-0 pb-3">
+        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex min-w-0 flex-wrap items-center gap-2 text-base">
+              <Cloud className="h-5 w-5 shrink-0" />
+              <span className="truncate">
+                {t("sharepoint.browser.title", "Arquivo SharePoint")}
+              </span>
               {config.site_name && (
-                <Badge variant="secondary" className="font-normal">
-                  {config.site_name}
+                <Badge variant="secondary" className="max-w-full font-normal">
+                  <span className="truncate">{config.site_name}</span>
                 </Badge>
               )}
             </CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              {t("sharepoint.browser.archiveHint", "Guarde aqui os documentos ativos para manter tudo organizado e acessível.")}
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t(
+                "sharepoint.browser.archiveHint",
+                "Guarde aqui os documentos ativos para manter tudo organizado e acessível."
+              )}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex min-w-0 flex-wrap items-center gap-2 lg:justify-end">
             {config.last_sync_at && (
-              <span className="text-xs text-muted-foreground">
+              <span className="truncate text-xs text-muted-foreground">
                 {t("sharepoint.browser.lastSync", "Última sync:")}{" "}
                 {formatDistanceToNow(new Date(config.last_sync_at), {
                   addSuffix: true,
@@ -173,24 +175,28 @@ export function SharePointDocumentsBrowser({
                 })}
               </span>
             )}
+
             {currentPath !== "/" && (
               <Button
                 variant="default"
                 size="sm"
+                className="shrink-0"
                 onClick={() => setShowUploadDialog(true)}
                 disabled={uploadToSharePoint.isPending}
               >
                 {uploadToSharePoint.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                 ) : (
-                  <Upload className="h-4 w-4 mr-1" />
+                  <Upload className="mr-1 h-4 w-4" />
                 )}
                 {t("sharepoint.browser.upload", "Carregar")}
               </Button>
             )}
+
             <Button
               variant="outline"
               size="sm"
+              className="shrink-0"
               onClick={handleFullSync}
               disabled={syncSharePoint.isPending}
               title={t("sharepoint.browser.fullSync", "Sincronização completa")}
@@ -199,7 +205,7 @@ export function SharePointDocumentsBrowser({
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-1" />
+                  <RefreshCw className="mr-1 h-4 w-4" />
                   {t("sharepoint.browser.fullSync", "Sync completa")}
                 </>
               )}
@@ -207,48 +213,49 @@ export function SharePointDocumentsBrowser({
           </div>
         </div>
 
-        {/* Breadcrumb navigation */}
-        <div className="flex items-center gap-1 text-sm mt-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 px-2"
-            onClick={() => {
-              setCurrentPath("/");
-              setPathHistory([]);
-            }}
-            disabled={currentPath === "/"}
-          >
-            <FolderOpen className="h-4 w-4 mr-1" />
-            {t("sharepoint.browser.root", "Raiz")}
-          </Button>
-          {breadcrumbParts.map((part, index) => (
-            <div key={index} className="flex items-center">
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2"
-                onClick={() => {
-                  const newPath = "/" + breadcrumbParts.slice(0, index + 1).join("/");
-                  if (newPath !== currentPath) {
-                    setPathHistory([...pathHistory, currentPath]);
-                    setCurrentPath(newPath);
-                  }
-                }}
-              >
-                {part}
-              </Button>
-            </div>
-          ))}
+        <div className="min-w-0 overflow-x-auto">
+          <div className="mt-2 flex min-w-max items-center gap-1 text-sm">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 shrink-0 px-2"
+              onClick={() => {
+                setCurrentPath("/");
+                setPathHistory([]);
+              }}
+              disabled={currentPath === "/"}
+            >
+              <FolderOpen className="mr-1 h-4 w-4" />
+              {t("sharepoint.browser.root", "Raiz")}
+            </Button>
+
+            {breadcrumbParts.map((part, index) => (
+              <div key={index} className="flex items-center">
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 shrink-0 px-2"
+                  onClick={() => {
+                    const newPath = "/" + breadcrumbParts.slice(0, index + 1).join("/");
+                    if (newPath !== currentPath) {
+                      setPathHistory([...pathHistory, currentPath]);
+                      setCurrentPath(newPath);
+                    }
+                  }}
+                >
+                  {part}
+                </Button>
+              </div>
+            ))}
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent>
-        {/* Back button */}
+      <CardContent className="min-w-0">
         {pathHistory.length > 0 && (
-          <Button variant="ghost" size="sm" className="mb-2" onClick={navigateBack}>
-            <ChevronLeft className="h-4 w-4 mr-1" />
+          <Button variant="ghost" size="sm" className="mb-2 shrink-0" onClick={navigateBack}>
+            <ChevronLeft className="mr-1 h-4 w-4" />
             {t("sharepoint.browser.back", "Voltar")}
           </Button>
         )}
@@ -259,7 +266,7 @@ export function SharePointDocumentsBrowser({
           </div>
         ) : !documents || documents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Folder className="h-12 w-12 text-muted-foreground mb-2" />
+            <Folder className="mb-2 h-12 w-12 text-muted-foreground" />
             <p className="text-muted-foreground">
               {t("sharepoint.browser.empty", "Nenhum documento nesta pasta")}
             </p>
@@ -279,35 +286,37 @@ export function SharePointDocumentsBrowser({
                 <div
                   key={doc.id}
                   className={cn(
-                    "flex items-center justify-between py-3 px-2 hover:bg-muted/50 rounded-lg transition-colors",
+                    "flex min-w-0 items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50",
                     doc.is_folder && "cursor-pointer"
                   )}
                   onClick={() => {
                     if (doc.is_folder) {
-                      const targetPath = currentPath === "/" ? `/${doc.name}` : `${currentPath}/${doc.name}`;
+                      const targetPath =
+                        currentPath === "/" ? `/${doc.name}` : `${currentPath}/${doc.name}`;
                       navigateToFolder(targetPath);
                     } else if (onSelectDocument) {
                       onSelectDocument(doc);
                     }
                   }}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-lg",
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
                         doc.is_folder ? "bg-amber-100 text-amber-600" : "bg-blue-100 text-blue-600"
                       )}
                     >
                       <FileIcon className="h-5 w-5" />
                     </div>
+
                     <div className="min-w-0">
-                      <p className="font-medium truncate">{doc.name}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <p className="truncate font-medium">{doc.name}</p>
+                      <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         {!doc.is_folder && doc.size_bytes && (
-                          <span>{formatFileSize(doc.size_bytes)}</span>
+                          <span className="shrink-0">{formatFileSize(doc.size_bytes)}</span>
                         )}
                         {doc.sharepoint_modified_at && (
-                          <span>
+                          <span className="shrink-0">
                             {formatDistanceToNow(new Date(doc.sharepoint_modified_at), {
                               addSuffix: true,
                               locale: pt,
@@ -315,13 +324,15 @@ export function SharePointDocumentsBrowser({
                           </span>
                         )}
                         {doc.sharepoint_modified_by && (
-                          <span className="truncate max-w-[150px]">{doc.sharepoint_modified_by}</span>
+                          <span className="max-w-[150px] truncate">
+                            {doc.sharepoint_modified_by}
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     {doc.web_url && (
                       <Button
                         variant="ghost"
@@ -344,7 +355,6 @@ export function SharePointDocumentsBrowser({
         )}
       </CardContent>
 
-      {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent>
           <DialogHeader>
@@ -370,13 +380,14 @@ export function SharePointDocumentsBrowser({
                 if (file) setSelectedFile(file);
               }}
             />
+
             <div
-              className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              className="cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors hover:border-primary/50"
               onClick={() => fileInputRef.current?.click()}
             >
               {selectedFile ? (
                 <div className="space-y-2">
-                  <FileText className="h-8 w-8 mx-auto text-primary" />
+                  <FileText className="mx-auto h-8 w-8 text-primary" />
                   <p className="font-medium">{selectedFile.name}</p>
                   <p className="text-sm text-muted-foreground">
                     {(selectedFile.size / 1024).toFixed(1)} KB
@@ -384,7 +395,7 @@ export function SharePointDocumentsBrowser({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
                   <p className="text-muted-foreground">
                     {t("sharepoint.upload.dropzone", "Clique para selecionar um ficheiro")}
                   </p>
@@ -393,7 +404,7 @@ export function SharePointDocumentsBrowser({
             </div>
 
             {selectedFile && selectedFile.size > 4 * 1024 * 1024 && (
-              <p className="text-sm text-destructive flex items-center gap-1">
+              <p className="flex items-center gap-1 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
                 {t("sharepoint.upload.tooLarge", "Ficheiro demasiado grande. Limite: 4MB")}
               </p>
@@ -410,6 +421,7 @@ export function SharePointDocumentsBrowser({
             >
               {t("common.cancel", "Cancelar")}
             </Button>
+
             <Button
               onClick={() => {
                 if (!selectedFile) return;
@@ -426,9 +438,9 @@ export function SharePointDocumentsBrowser({
               disabled={!selectedFile || selectedFile.size > 4 * 1024 * 1024 || uploadToSharePoint.isPending}
             >
               {uploadToSharePoint.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
               ) : (
-                <Upload className="h-4 w-4 mr-1" />
+                <Upload className="mr-1 h-4 w-4" />
               )}
               {t("sharepoint.upload.submit", "Carregar")}
             </Button>
