@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCliente } from '@/contexts/ClienteContext';
 import { toast } from 'sonner';
 
 export interface Organization {
@@ -48,15 +49,32 @@ export interface UserMembership {
   };
 }
 
+export interface CCAClientOption {
+  organization_id: string;
+  client_code: string;
+  client_name: string;
+  group_code: string | null;
+  cost_center: string | null;
+  responsible: string | null;
+  responsible_email: string | null;
+  total_documentos: number;
+  total_pendente: number;
+  total_vencido: number;
+  total_a_vencer: number;
+  ultima_sincronizacao: string | null;
+  client_status: string;
+}
+
 export function useOrganizations() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { cliente, setCliente, clearCliente } = useCliente();
 
   const { data: organizations, isLoading } = useQuery({
     queryKey: ['organizations', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      
+
       const { data, error } = await supabase
         .from('organizations')
         .select('*')
@@ -73,32 +91,95 @@ export function useOrganizations() {
     queryFn: async () => {
       if (!user) return null;
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('current_organization_id')
         .eq('id', user.id)
         .maybeSingle();
 
+      if (profileError) throw profileError;
       if (!profile?.current_organization_id) return null;
 
-      const { data: org } = await supabase
+      const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
         .eq('id', profile.current_organization_id)
         .maybeSingle();
+
+      if (orgError) throw orgError;
 
       return (org ?? null) as Organization | null;
     },
     enabled: !!user,
   });
 
-  // Query to fetch all organizations the user is a member of
+  const { data: isCCAInternalAuthorized = false, isLoading: ccaAuthLoading } = useQuery({
+    queryKey: ['cca-internal-authorized', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+
+      const { data, error } = await supabase.rpc('fn_is_cca_internal_authorized', {
+        p_user_id: user.id,
+      });
+
+      if (error) throw error;
+      return Boolean(data);
+    },
+    enabled: !!user,
+  });
+
+  const { data: ccaClients = [], isLoading: ccaClientsLoading } = useQuery({
+    queryKey: ['cca-clients', user?.id, isCCAInternalAuthorized],
+    queryFn: async () => {
+      if (!user || !isCCAInternalAuthorized) return [];
+
+      const { data, error } = await supabase
+        .from('vw_cca_client_catalog_overview')
+        .select(`
+          organization_id,
+          client_code,
+          legacy_client_name,
+          group_code,
+          cost_center,
+          responsible,
+          responsible_email,
+          total_documentos,
+          total_pendente,
+          total_vencido,
+          total_a_vencer,
+          ultima_sincronizacao,
+          client_status,
+          can_open_in_platform
+        `)
+        .eq('can_open_in_platform', true)
+        .order('legacy_client_name', { ascending: true });
+
+      if (error) throw error;
+
+      return (data ?? []).map((row: any) => ({
+        organization_id: row.organization_id,
+        client_code: row.client_code,
+        client_name: row.legacy_client_name,
+        group_code: row.group_code,
+        cost_center: row.cost_center,
+        responsible: row.responsible,
+        responsible_email: row.responsible_email,
+        total_documentos: Number(row.total_documentos ?? 0),
+        total_pendente: Number(row.total_pendente ?? 0),
+        total_vencido: Number(row.total_vencido ?? 0),
+        total_a_vencer: Number(row.total_a_vencer ?? 0),
+        ultima_sincronizacao: row.ultima_sincronizacao,
+        client_status: row.client_status,
+      })) as CCAClientOption[];
+    },
+    enabled: !!user,
+  });
+
   const { data: userMemberships, isLoading: membershipsLoading } = useQuery({
     queryKey: ['user-memberships', user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      // Fetch memberships without join (organizations table schema may differ)
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('organization_id, role')
@@ -107,7 +188,6 @@ export function useOrganizations() {
       if (membersError) throw membersError;
 
       if (!membersData || membersData.length === 0) {
-        // Auto-healing: If no memberships but user has current_organization_id, create membership
         const { data: profile } = await supabase
           .from('profiles')
           .select('current_organization_id')
@@ -132,6 +212,7 @@ export function useOrganizations() {
             return buildMemberships(newData);
           }
         }
+
         return [];
       }
 
@@ -140,9 +221,8 @@ export function useOrganizations() {
     enabled: !!user,
   });
 
-  // Helper: enrich membership records with organization name
   async function buildMemberships(
-    members: { organization_id: string; role: string }[]
+    members: { organization_id: string; role: string }[],
   ): Promise<UserMembership[]> {
     const orgIds = members.map((m) => m.organization_id);
 
@@ -173,9 +253,10 @@ export function useOrganizations() {
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
       if (!user) throw new Error('Utilizador não autenticado');
 
-      // Use RPC function that bypasses RLS
-      const { data: org, error } = await supabase
-        .rpc('create_organization', { p_name: name, p_slug: slug });
+      const { data: org, error } = await supabase.rpc('create_organization', {
+        p_name: name,
+        p_slug: slug,
+      });
 
       if (error) throw error;
       return org;
@@ -185,6 +266,7 @@ export function useOrganizations() {
       queryClient.invalidateQueries({ queryKey: ['current-organization'] });
       queryClient.invalidateQueries({ queryKey: ['user-memberships'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['cca-clients'] });
       toast.success('Organização criada com sucesso!');
     },
     onError: (error: any) => {
@@ -193,55 +275,109 @@ export function useOrganizations() {
     },
   });
 
+  /**
+   * Mantém compatibilidade com o comportamento antigo.
+   * Para utilizadores CCA autorizados, a navegação entre clientes NÃO altera
+   * profiles.current_organization_id; apenas actualiza o cliente em visualização.
+   * Para utilizadores externos, mantém o comportamento anterior.
+   */
   const switchOrganization = useMutation({
-  mutationFn: async (organizationId: string) => {
-    if (!user) throw new Error('Utilizador não autenticado');
+    mutationFn: async (organizationId: string) => {
+      if (!user) throw new Error('Utilizador não autenticado');
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ current_organization_id: organizationId })
-      .eq('id', user.id);
+      if (isCCAInternalAuthorized) {
+        const selected = ccaClients.find((c) => c.organization_id === organizationId);
 
-    if (error) throw error;
+        if (!selected) {
+          throw new Error('Cliente não encontrado para visualização');
+        }
 
-    return organizationId;
-  },
-  onSuccess: async (organizationId) => {
-    queryClient.setQueryData(['current-organization', user?.id], () => {
-      return organizations?.find((o) => o.id === organizationId) ?? null;
+        setCliente({
+          organizationId: selected.organization_id,
+          nome: selected.client_name,
+          jvrisId: selected.client_code,
+        });
+
+        return organizationId;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ current_organization_id: organizationId })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      return organizationId;
+    },
+    onSuccess: async (organizationId) => {
+      if (isCCAInternalAuthorized) {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['cca-clients'] }),
+          queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
+          queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
+          queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
+          queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
+          queryClient.invalidateQueries({ queryKey: ['client-home'] }),
+          queryClient.invalidateQueries({ queryKey: ['financial-summary'] }),
+          queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
+          queryClient.invalidateQueries({ queryKey: ['financial-by-entity'] }),
+        ]);
+
+        toast.success('Cliente em visualização alterado');
+        return;
+      }
+
+      queryClient.setQueryData(['current-organization', user?.id], () => {
+        return organizations?.find((o) => o.id === organizationId) ?? null;
+      });
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['current-organization', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['organizations', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['user-memberships', user?.id] }),
+        queryClient.invalidateQueries({ queryKey: ['profile'] }),
+        queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] }),
+        queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] }),
+        queryClient.invalidateQueries({ queryKey: ['invoices'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-folders'] }),
+        queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
+        queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
+        queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
+      ]);
+
+      toast.success('Organização alterada');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Erro ao mudar organização');
+    },
+  });
+
+  const selectViewingClient = (client: CCAClientOption) => {
+    setCliente({
+      organizationId: client.organization_id,
+      nome: client.client_name,
+      jvrisId: client.client_code,
     });
+  };
 
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['current-organization', user?.id] }),
-      queryClient.invalidateQueries({ queryKey: ['organizations', user?.id] }),
-      queryClient.invalidateQueries({ queryKey: ['user-memberships', user?.id] }),
-      queryClient.invalidateQueries({ queryKey: ['profile'] }),
-      queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] }),
-      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] }),
-      queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs'] }),
-      queryClient.invalidateQueries({ queryKey: ['invoices'] }),
-      queryClient.invalidateQueries({ queryKey: ['client-folders'] }),
-      queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
-      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
-      queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
-      queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
-    ]);
-
-    toast.success('Organização alterada');
-  },
-  onError: (error: any) => {
-    toast.error(error.message || 'Erro ao mudar organização');
-  },
-});
+  const viewingOrganizationId = cliente?.organizationId ?? null;
 
   return {
     organizations,
     currentOrganization,
     userMemberships,
-    isLoading,
+    ccaClients,
+    isCCAInternalAuthorized,
+    viewingOrganizationId,
+    selectViewingClient,
+    isLoading: isLoading || ccaAuthLoading || ccaClientsLoading,
     membershipsLoading,
     createOrganization,
     switchOrganization,
+    clearViewingClient: clearCliente,
   };
 }
 
@@ -253,7 +389,6 @@ export function useOrganizationMembers(organizationId: string | undefined) {
     queryFn: async () => {
       if (!organizationId) return [];
 
-      // First get organization members
       const { data: membersData, error: membersError } = await supabase
         .from('organization_members')
         .select('*')
@@ -261,11 +396,9 @@ export function useOrganizationMembers(organizationId: string | undefined) {
         .order('created_at');
 
       if (membersError) throw membersError;
-      
-      // Then get profiles for each member using the secure view
-      const userIds = membersData.map(m => m.user_id);
-      
-      // Define the profile type for the secure view
+
+      const userIds = membersData.map((m) => m.user_id);
+
       type ProfileSafe = {
         id: string;
         nome_completo: string | null;
@@ -279,16 +412,17 @@ export function useOrganizationMembers(organizationId: string | undefined) {
         last_login_at: string | null;
         two_factor_enabled: boolean | null;
       };
-      
-      const { data: profilesData } = await supabase
-        .from('profiles_safe' as any)
-        .select('id, nome_completo, email, avatar_url, departamento, auth_method, sso_provider, login_attempts, locked_until, last_login_at, two_factor_enabled')
-        .in('id', userIds) as { data: ProfileSafe[] | null };
 
-      // Combine the data
-      const membersWithProfiles = membersData.map(member => ({
+      const { data: profilesData } = (await supabase
+        .from('profiles_safe' as any)
+        .select(
+          'id, nome_completo, email, avatar_url, departamento, auth_method, sso_provider, login_attempts, locked_until, last_login_at, two_factor_enabled',
+        )
+        .in('id', userIds)) as { data: ProfileSafe[] | null };
+
+      const membersWithProfiles = membersData.map((member) => ({
         ...member,
-        profiles: profilesData?.find(p => p.id === member.user_id) || null,
+        profiles: profilesData?.find((p) => p.id === member.user_id) || null,
       }));
 
       return membersWithProfiles as OrganizationMember[];
@@ -298,8 +432,6 @@ export function useOrganizationMembers(organizationId: string | undefined) {
 
   const inviteMember = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: 'admin' | 'editor' | 'viewer' }) => {
-      // For now, we need the user to exist first
-      // In a full implementation, you'd send an invitation email
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id, current_organization_id')
@@ -307,7 +439,9 @@ export function useOrganizationMembers(organizationId: string | undefined) {
         .maybeSingle();
 
       if (profileError) throw profileError;
-      if (!profile) throw new Error('Este utilizador não pertence à sua organização ou não tem conta registada.');
+      if (!profile) {
+        throw new Error('Este utilizador não pertence à sua organização ou não tem conta registada.');
+      }
 
       const { error } = await supabase
         .from('organization_members')
@@ -319,7 +453,6 @@ export function useOrganizationMembers(organizationId: string | undefined) {
 
       if (error) throw error;
 
-      // If the user doesn't have a current_organization_id, set it to this organization
       if (!profile.current_organization_id) {
         await supabase
           .from('profiles')
@@ -347,10 +480,10 @@ export function useOrganizationMembers(organizationId: string | undefined) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organization-members', organizationId] });
-      toast.success('Permissão atualizada');
+      toast.success('Permissão actualizada');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Erro ao atualizar permissão');
+      toast.error(error.message || 'Erro ao actualizar permissão');
     },
   });
 
