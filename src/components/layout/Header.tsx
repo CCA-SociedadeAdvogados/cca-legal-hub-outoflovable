@@ -13,15 +13,17 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import { CCAOrgSwitcher } from '@/components/layout/CCAOrgSwitcher';
+import CCAOrgSwitcher from '@/components/CCAOrgSwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCliente } from '@/contexts/ClienteContext';
 
 function formatTimeAgo(
   dateString: string,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -52,9 +54,14 @@ function getNotificationIcon(type: string) {
 export function Header() {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { isCCAInternalAuthorized, ccaClients, viewingOrganizationId } = useOrganizations();
+  const { cliente } = useCliente();
+
+  const selectedClient =
+    ccaClients.find((clientOption) => clientOption.organization_id === viewingOrganizationId) ?? null;
 
   const handleSignOut = async () => {
     await signOut();
@@ -83,7 +90,6 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 min-w-0 items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Search */}
       <div className="flex min-w-0 flex-1 items-center gap-4 max-w-md">
         <div className="relative w-full min-w-0">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -95,8 +101,21 @@ export function Header() {
         </div>
       </div>
 
-      {/* Right side */}
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+        {isCCAInternalAuthorized && (
+          <div className="hidden min-w-0 max-w-[380px] items-center md:flex">
+            <div className="mr-2 min-w-0 text-right">
+              <div className="truncate text-sm font-medium text-foreground">
+                {cliente?.nome || selectedClient?.client_name || 'Cliente'}
+              </div>
+              <div className="truncate text-xs text-muted-foreground">
+                {cliente?.jvrisId || selectedClient?.client_code || '—'}
+                {selectedClient?.group_code ? ` · ${selectedClient.group_code}` : ''}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="shrink-0">
           <CCAOrgSwitcher />
         </div>
@@ -105,7 +124,6 @@ export function Header() {
           <LanguageSelector />
         </div>
 
-        {/* Notifications */}
         <div className="shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -148,19 +166,14 @@ export function Header() {
                       key={notification.id}
                       className={cn(
                         'flex cursor-pointer items-start gap-3 p-3',
-                        !notification.read && 'bg-muted/50'
+                        !notification.read && 'bg-muted/50',
                       )}
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="mt-0.5 shrink-0">{getNotificationIcon(notification.type)}</div>
 
                       <div className="min-w-0 flex-1 space-y-1">
-                        <p
-                          className={cn(
-                            'text-sm leading-tight',
-                            !notification.read && 'font-medium'
-                          )}
-                        >
+                        <p className={cn('text-sm leading-tight', !notification.read && 'font-medium')}>
                           {notification.title}
                         </p>
                         <p className="line-clamp-2 text-xs text-muted-foreground">
@@ -191,7 +204,6 @@ export function Header() {
           </DropdownMenu>
         </div>
 
-        {/* User menu */}
         <div className="shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
