@@ -1,143 +1,129 @@
-import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Building2, Check, ChevronsUpDown } from 'lucide-react';
-
+import React, { useMemo, useState } from 'react';
+import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { useOrganizations } from '@/hooks/useOrganizations';
-import { useCCAAccess } from '@/hooks/useCCAAccess';
 import { cn } from '@/lib/utils';
 
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+type Props = {
+  className?: string;
+};
 
-export function CCAOrgSwitcher() {
-  const { t } = useTranslation();
-  const { currentOrganization, switchOrganization } = useOrganizations();
-  const { hasUnrestrictedAccess, accessibleOrganizations, isLoading } = useCCAAccess();
+export default function CCAOrgSwitcher({ className }: Props) {
+  const {
+    isLoading,
+    isCCAInternalAuthorized,
+    ccaClients,
+    viewingOrganizationId,
+    selectViewingClient,
+  } = useOrganizations();
 
+  const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
 
-  const filteredOrgs = useMemo(() => {
-    if (!search.trim()) return accessibleOrganizations;
+  const filteredClients = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return ccaClients;
 
-    const term = search.toLowerCase();
+    return ccaClients.filter((client) => {
+      const haystack = [
+        client.client_name,
+        client.client_code,
+        client.group_code ?? '',
+        client.responsible ?? '',
+        client.responsible_email ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
 
-    return accessibleOrganizations.filter(
-      (org) =>
-        org.name.toLowerCase().includes(term) ||
-        org.slug.toLowerCase().includes(term)
-    );
-  }, [accessibleOrganizations, search]);
+      return haystack.includes(q);
+    });
+  }, [ccaClients, query]);
 
-  const handleSwitch = async (orgId: string) => {
-    if (orgId === currentOrganization?.id) {
-      setOpen(false);
-      setSearch('');
-      return;
-    }
+  const selected = useMemo(
+    () => ccaClients.find((client) => client.organization_id === viewingOrganizationId) ?? null,
+    [ccaClients, viewingOrganizationId],
+  );
 
-    try {
-      await switchOrganization.mutateAsync(orgId);
-      setOpen(false);
-      setSearch('');
-    } catch (error) {
-      console.error('Erro ao mudar organização:', error);
-    }
-  };
-
-  if (isLoading) return null;
-  if (!hasUnrestrictedAccess && accessibleOrganizations.length <= 1) return null;
+  if (!isCCAInternalAuthorized) return null;
 
   return (
-    <Popover open={open} onOpenChange={(nextOpen) => {
-      setOpen(nextOpen);
-      if (!nextOpen) setSearch('');
-    }}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          role="combobox"
-          aria-expanded={open}
-          className="max-w-[220px] shrink-0 justify-between gap-2"
-        >
-          <div className="flex min-w-0 items-center gap-2">
-            <Building2 className="h-4 w-4 shrink-0" />
-            <span className="truncate text-xs">
-              {currentOrganization?.name || t('cca.selectOrg')}
-            </span>
-          </div>
-          <ChevronsUpDown className="h-3 w-3 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="w-[320px] max-w-[calc(100vw-2rem)] p-0"
+    <div className={cn('relative w-full min-w-0', className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left shadow-sm"
       >
-        <Command shouldFilter={false}>
-          {accessibleOrganizations.length > 5 && (
-            <CommandInput
-              placeholder={
-                hasUnrestrictedAccess
-                  ? t('cca.searchOrg')
-                  : t('cca.searchOrg')
-              }
-              value={search}
-              onValueChange={setSearch}
-            />
-          )}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-medium text-gray-900">
+            {selected?.client_name ?? 'Seleccionar cliente'}
+          </div>
+          <div className="truncate text-xs text-gray-500">
+            {selected
+              ? `${selected.client_code} · ${selected.group_code ?? 'NAO'}`
+              : 'Sem cliente seleccionado'}
+          </div>
+        </div>
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-gray-500" />
+      </button>
 
-          <CommandList className="max-h-[280px]">
-            <CommandEmpty>{t('cca.noOrgsFound')}</CommandEmpty>
+      {open && (
+        <div className="absolute z-50 mt-2 w-full min-w-0 rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="border-b border-gray-100 p-2">
+            <div className="flex items-center gap-2 rounded-md border border-gray-200 px-2 py-2">
+              <Search className="h-4 w-4 shrink-0 text-gray-400" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Pesquisar cliente, código, grupo ou responsável"
+                className="w-full min-w-0 border-0 bg-transparent text-sm outline-none"
+              />
+            </div>
+          </div>
 
-            <CommandGroup
-              heading={
-                hasUnrestrictedAccess
-                  ? t('cca.allOrganizations')
-                  : t('cca.myOrganizations')
-              }
-            >
-              {filteredOrgs.map((org) => (
-                <CommandItem
-                  key={org.id}
-                  value={`${org.name} ${org.slug}`}
-                  onSelect={() => handleSwitch(org.id)}
-                  className="flex cursor-pointer items-center gap-2"
-                >
-                  {org.logo_url ? (
-                    <img
-                      src={org.logo_url}
-                      alt=""
-                      className="h-5 w-5 shrink-0 rounded object-cover"
-                    />
-                  ) : (
-                    <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  )}
+          <div className="max-h-80 overflow-y-auto overflow-x-hidden p-1">
+            {isLoading ? (
+              <div className="px-3 py-2 text-sm text-gray-500">A carregar...</div>
+            ) : filteredClients.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-500">Sem resultados.</div>
+            ) : (
+              filteredClients.map((client) => {
+                const active = client.organization_id === viewingOrganizationId;
 
-                  <span className="flex-1 truncate text-sm">{org.name}</span>
-
-                  <Check
+                return (
+                  <button
+                    key={client.organization_id}
+                    type="button"
+                    onClick={() => {
+                      selectViewingClient(client);
+                      setOpen(false);
+                    }}
                     className={cn(
-                      'h-4 w-4 shrink-0 text-primary',
-                      org.id === currentOrganization?.id ? 'opacity-100' : 'opacity-0'
+                      'flex w-full min-w-0 items-start gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-50',
+                      active && 'bg-gray-50',
                     )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                  >
+                    <Check
+                      className={cn(
+                        'mt-0.5 h-4 w-4 shrink-0',
+                        active ? 'opacity-100 text-gray-900' : 'opacity-0',
+                      )}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-gray-900">
+                        {client.client_name}
+                      </div>
+                      <div className="truncate text-xs text-gray-500">
+                        {client.client_code}
+                        {client.group_code ? ` · Grupo ${client.group_code}` : ''}
+                        {client.responsible ? ` · Resp. ${client.responsible}` : ''}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
