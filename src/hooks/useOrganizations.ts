@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +15,11 @@ export interface Organization {
   industry_sectors: string[] | null;
   client_code: string | null;
   group: string | null;
+  cost_center: string | null;
   responsible: string | null;
+  responsible_email: string | null;
+  jvris_id: string | null;
+  org_type: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -249,6 +254,46 @@ export function useOrganizations() {
     }));
   }
 
+  /**
+   * Sincroniza automaticamente o cliente em visualização:
+   * - para utilizadores CCA: usa o primeiro cliente da lista, se não houver nenhum seleccionado;
+   * - para utilizadores externos: usa a organização identitária actual.
+   */
+  useEffect(() => {
+    if (!user) return;
+
+    if (isCCAInternalAuthorized) {
+      if (!ccaClients.length) return;
+
+      const selectedStillExists = cliente
+        ? ccaClients.some((c) => c.organization_id === cliente.organizationId)
+        : false;
+
+      if (!selectedStillExists) {
+        const first = ccaClients[0];
+        setCliente({
+          organizationId: first.organization_id,
+          nome: first.client_name,
+          jvrisId: first.client_code,
+        });
+      }
+
+      return;
+    }
+
+    if (currentOrganization) {
+      if (cliente?.organizationId !== currentOrganization.id) {
+        setCliente({
+          organizationId: currentOrganization.id,
+          nome: currentOrganization.name,
+          jvrisId: currentOrganization.client_code || currentOrganization.jvris_id || '',
+        });
+      }
+    } else {
+      clearCliente();
+    }
+  }, [user, isCCAInternalAuthorized, ccaClients, cliente, currentOrganization, setCliente, clearCliente]);
+
   const createOrganization = useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
       if (!user) throw new Error('Utilizador não autenticado');
@@ -277,9 +322,8 @@ export function useOrganizations() {
 
   /**
    * Mantém compatibilidade com o comportamento antigo.
-   * Para utilizadores CCA autorizados, a navegação entre clientes NÃO altera
-   * profiles.current_organization_id; apenas actualiza o cliente em visualização.
-   * Para utilizadores externos, mantém o comportamento anterior.
+   * - Para utilizadores CCA autorizados, trocar cliente não altera profiles.current_organization_id;
+   * - Para utilizadores externos, mantém o comportamento anterior.
    */
   const switchOrganization = useMutation({
     mutationFn: async (organizationId: string) => {
@@ -314,14 +358,11 @@ export function useOrganizations() {
       if (isCCAInternalAuthorized) {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['cca-clients'] }),
-          queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
-          queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
-          queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
-          queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
           queryClient.invalidateQueries({ queryKey: ['client-home'] }),
           queryClient.invalidateQueries({ queryKey: ['financial-summary'] }),
           queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
           queryClient.invalidateQueries({ queryKey: ['financial-by-entity'] }),
+          queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
         ]);
 
         toast.success('Cliente em visualização alterado');
@@ -343,9 +384,10 @@ export function useOrganizations() {
         queryClient.invalidateQueries({ queryKey: ['invoices'] }),
         queryClient.invalidateQueries({ queryKey: ['client-folders'] }),
         queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] }),
-        queryClient.invalidateQueries({ queryKey: ['financeiro-nav-cache'] }),
-        queryClient.invalidateQueries({ queryKey: ['financeiro-nav-items'] }),
-        queryClient.invalidateQueries({ queryKey: ['available-jvris-ids'] }),
+        queryClient.invalidateQueries({ queryKey: ['client-home'] }),
+        queryClient.invalidateQueries({ queryKey: ['financial-summary'] }),
+        queryClient.invalidateQueries({ queryKey: ['financial-items'] }),
+        queryClient.invalidateQueries({ queryKey: ['financial-by-entity'] }),
       ]);
 
       toast.success('Organização alterada');
@@ -361,6 +403,12 @@ export function useOrganizations() {
       nome: client.client_name,
       jvrisId: client.client_code,
     });
+
+    queryClient.invalidateQueries({ queryKey: ['client-home'] });
+    queryClient.invalidateQueries({ queryKey: ['financial-summary'] });
+    queryClient.invalidateQueries({ queryKey: ['financial-items'] });
+    queryClient.invalidateQueries({ queryKey: ['financial-by-entity'] });
+    queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] });
   };
 
   const viewingOrganizationId = cliente?.organizationId ?? null;
