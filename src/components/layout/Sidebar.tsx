@@ -15,15 +15,12 @@ import {
 } from "@/components/ui/tooltip";
 import {
   LayoutDashboard,
-  FileText,
-  Scale,
-  AlertTriangle,
   FileCheck,
+  AlertTriangle,
   Settings,
   LogOut,
   BookOpen,
   FolderOpen,
-  Users,
   Building2,
   Library,
   Crown,
@@ -59,12 +56,20 @@ interface NavItemProps {
   isSubmenu?: boolean;
 }
 
-function NavItem({ to, icon: Icon, label, isActive, isCollapsed, badge, isSubmenu = false }: NavItemProps) {
+function NavItem({
+  to,
+  icon: Icon,
+  label,
+  isActive,
+  isCollapsed,
+  badge,
+  isSubmenu = false,
+}: NavItemProps) {
   const content = (
     <Link
       to={to}
       className={cn(
-        "flex items-center gap-3 rounded-lg transition-all duration-200 relative",
+        "relative flex min-w-0 items-center gap-3 rounded-lg transition-all duration-200",
         isSubmenu ? "px-3 py-2 text-sm" : "px-3 py-2.5 text-sm font-medium",
         isActive
           ? isSubmenu
@@ -79,12 +84,13 @@ function NavItem({ to, icon: Icon, label, isActive, isCollapsed, badge, isSubmen
       <div className="relative shrink-0">
         <Icon className={cn(isSubmenu ? "h-4 w-4" : "h-5 w-5")} />
         {badge !== undefined && badge > 0 && (
-          <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
+          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
       </div>
-      {!isCollapsed && <span>{label}</span>}
+
+      {!isCollapsed && <span className="truncate">{label}</span>}
     </Link>
   );
 
@@ -93,7 +99,7 @@ function NavItem({ to, icon: Icon, label, isActive, isCollapsed, badge, isSubmen
       <Tooltip delayDuration={0}>
         <TooltipTrigger asChild>{content}</TooltipTrigger>
         <TooltipContent side="right" className="flex items-center gap-2">
-          {label}
+          <span>{label}</span>
           {badge !== undefined && badge > 0 && (
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
               {badge > 9 ? "9+" : badge}
@@ -116,7 +122,7 @@ export function Sidebar({ clientName }: SidebarProps) {
   const { resolvedTheme, toggleTheme } = useUserTheme();
   const badges = useSidebarBadges();
   const { can, isAppAdmin, isCCAUser, isOrgManager, isOrgUser } = usePermissions();
-  
+
   const [contractsExpanded, setContractsExpanded] = useState(
     location.pathname.startsWith("/contratos") || location.pathname === "/"
   );
@@ -127,53 +133,50 @@ export function Sidebar({ clientName }: SidebarProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/login');
+    navigate("/login");
   };
 
-  const isContractsActive = location.pathname.startsWith("/contratos") || 
-                            location.pathname === "/";
+  const isContractsActive =
+    location.pathname.startsWith("/contratos") || location.pathname === "/";
 
   const isAccountingActive = location.pathname.startsWith("/documentos");
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
+        "fixed left-0 top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
         isCollapsed ? "w-16" : "w-64"
       )}
       style={{ background: "var(--gradient-sidebar)" }}
     >
-      {/* Logo */}
-      <Link 
-        to="/home" 
+      <Link
+        to="/home"
         className={cn(
-          "flex h-16 items-center gap-3 border-b border-sidebar-border cursor-pointer hover:bg-sidebar-accent/30 transition-colors duration-200",
+          "flex h-16 items-center gap-3 border-b border-sidebar-border transition-colors duration-200 hover:bg-sidebar-accent/30",
           isCollapsed ? "justify-center px-2" : "px-6"
         )}
       >
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shrink-0 overflow-hidden">
-          <img 
-            src={ccaLogo} 
-            alt="CCA" 
-            className="h-7 w-7 object-contain"
-          />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+          <img src={ccaLogo} alt="CCA" className="h-7 w-7 object-contain" />
         </div>
+
         {!isCollapsed && (
-          <span className="font-sans text-lg font-semibold truncate">Legal Hub</span>
+          <span className="truncate font-sans text-lg font-semibold">
+            Legal Hub
+          </span>
         )}
       </Link>
 
-      {/* Client Name */}
       {clientName && !isCollapsed && (
         <div className="border-b border-sidebar-border px-6 py-3">
-          <p className="text-xs text-sidebar-foreground/60">{t("common.reservedArea")}</p>
-          <p className="font-medium text-sm truncate">{clientName}</p>
+          <p className="text-xs text-sidebar-foreground/60">
+            {t("common.reservedArea")}
+          </p>
+          <p className="truncate text-sm font-medium">{clientName}</p>
         </div>
       )}
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-hide px-3 py-4">
-        {/* 1. Início */}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4 scrollbar-hide">
         <NavItem
           to="/home"
           icon={Home}
@@ -182,7 +185,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* 2. Notificações */}
         <NavItem
           to="/notificacoes"
           icon={Bell}
@@ -192,7 +194,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           badge={badges.notifications}
         />
 
-        {/* 3. Minha Conta Corrente CCA (was Financeiro) */}
         <NavItem
           to="/financeiro"
           icon={Receipt}
@@ -201,7 +202,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* 4. Legal Tracker (was LegalBi) */}
         <NavItem
           to="/legalbi"
           icon={BarChart3}
@@ -210,7 +210,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* 5. Meus Contratos (was Contratos) with submenu */}
         <div>
           {isCollapsed ? (
             <NavItem
@@ -226,27 +225,28 @@ export function Sidebar({ clientName }: SidebarProps) {
               <button
                 onClick={() => setContractsExpanded(!contractsExpanded)}
                 className={cn(
-                  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
+                  "flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   isContractsActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 )}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="relative shrink-0">
                     <FileCheck className="h-5 w-5" />
                     {badges.contracts > 0 && (
-                      <span className="absolute -top-2 -right-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
+                      <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
                         {badges.contracts > 9 ? "9+" : badges.contracts}
                       </span>
                     )}
                   </div>
-                  {t("nav.contracts")}
+                  <span className="truncate">{t("nav.contracts")}</span>
                 </div>
+
                 {contractsExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 shrink-0" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4 shrink-0" />
                 )}
               </button>
 
@@ -256,7 +256,10 @@ export function Sidebar({ clientName }: SidebarProps) {
                     to="/contratos/visao-geral"
                     icon={LayoutDashboard}
                     label={t("nav.contractsOverview")}
-                    isActive={location.pathname === "/" || location.pathname === "/contratos/visao-geral"}
+                    isActive={
+                      location.pathname === "/" ||
+                      location.pathname === "/contratos/visao-geral"
+                    }
                     isCollapsed={false}
                     isSubmenu
                   />
@@ -268,7 +271,7 @@ export function Sidebar({ clientName }: SidebarProps) {
                     isCollapsed={false}
                     isSubmenu
                   />
-                  {can('contracts:bulk_upload') && (
+                  {can("contracts:bulk_upload") && (
                     <NavItem
                       to="/contratos/upload-massa"
                       icon={Upload}
@@ -284,7 +287,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        {/* 6. Serviços de Contabilidade (was Contabilidade) with submenu */}
         <div>
           {isCollapsed ? (
             <NavItem
@@ -299,20 +301,21 @@ export function Sidebar({ clientName }: SidebarProps) {
               <button
                 onClick={() => setAccountingExpanded(!accountingExpanded)}
                 className={cn(
-                  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 relative",
+                  "flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
                   isAccountingActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
+                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 )}
               >
-                <div className="flex items-center gap-3">
-                  <Calculator className="h-5 w-5" />
-                  {t("nav.accounting")}
+                <div className="flex min-w-0 items-center gap-3">
+                  <Calculator className="h-5 w-5 shrink-0" />
+                  <span className="truncate">{t("nav.accounting")}</span>
                 </div>
+
                 {accountingExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 shrink-0" />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4 shrink-0" />
                 )}
               </button>
 
@@ -322,7 +325,10 @@ export function Sidebar({ clientName }: SidebarProps) {
                     to="/documentos"
                     icon={FolderOpen}
                     label={t("nav.accountingDocuments")}
-                    isActive={location.pathname === "/documentos" || location.pathname.startsWith("/documentos/")}
+                    isActive={
+                      location.pathname === "/documentos" ||
+                      location.pathname.startsWith("/documentos/")
+                    }
                     isCollapsed={false}
                     isSubmenu
                   />
@@ -332,19 +338,16 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        {/* Divider */}
         <div className="my-2 border-t border-sidebar-border" />
 
-        {/* 7. Legal Insights */}
         <NavItem
           to="/eventos"
-          icon={Scale}
+          icon={Building2}
           label={t("nav.events")}
           isActive={location.pathname === "/eventos"}
           isCollapsed={isCollapsed}
         />
 
-        {/* 8. Novidades CCA */}
         <NavItem
           to="/novidades-cca"
           icon={Newspaper}
@@ -354,7 +357,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           badge={badges.news}
         />
 
-        {/* 9. Políticas */}
         <NavItem
           to="/politicas"
           icon={BookOpen}
@@ -363,17 +365,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* 10. Impactos (locked - future feature) */}
         <div
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium opacity-60 pointer-events-none",
-            "text-sidebar-foreground/80",
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 opacity-60 pointer-events-none",
             isCollapsed && "justify-center px-2"
           )}
         >
-          <div className="relative shrink-0">
-            <AlertTriangle className="h-5 w-5" />
-          </div>
+          <AlertTriangle className="h-5 w-5 shrink-0" />
           {!isCollapsed && (
             <>
               <span className="flex-1 truncate">{t("nav.impacts")}</span>
@@ -382,17 +380,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        {/* 11. Legislação & Jurisprudência (locked - future feature) */}
         <div
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium opacity-60 pointer-events-none",
-            "text-sidebar-foreground/80",
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 opacity-60 pointer-events-none",
             isCollapsed && "justify-center px-2"
           )}
         >
-          <div className="relative shrink-0">
-            <Library className="h-5 w-5" />
-          </div>
+          <Library className="h-5 w-5 shrink-0" />
           {!isCollapsed && (
             <>
               <span className="flex-1 truncate">{t("nav.normativos")}</span>
@@ -401,9 +395,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        {/* Contextual navigation by profile */}
-
-        {/* O Meu Departamento — CCA users and Org Managers */}
         {(isCCAUser || isOrgManager) && (
           <NavItem
             to="/meu-departamento"
@@ -414,7 +405,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* A Minha Organização — CCA users (org selecionada) + local users */}
         {(isCCAUser || isOrgManager || isOrgUser) && (
           <NavItem
             to="/minha-organizacao"
@@ -425,8 +415,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* Utilizadores (org-scoped) — cca_manager + org_manager + app_admin */}
-        {can('users:view_own_org') && (
+        {can("users:view_own_org") && (
           <NavItem
             to="/utilizadores-org"
             icon={UserCog}
@@ -436,8 +425,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           />
         )}
 
-        {/* Organização — Admin + CCA managers */}
-        {(isAppAdmin || can('org:view_all')) && (
+        {(isAppAdmin || can("org:view_all")) && (
           <NavItem
             to="/organizacao"
             icon={Building2}
@@ -448,15 +436,13 @@ export function Sidebar({ clientName }: SidebarProps) {
         )}
       </nav>
 
-      {/* Bottom section */}
-      <div className="border-t border-sidebar-border p-3 space-y-1">
-        {/* Theme Toggle */}
+      <div className="space-y-1 border-t border-sidebar-border p-3">
         {isCollapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
               <button
                 onClick={toggleTheme}
-                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               >
                 {resolvedTheme === "dark" ? (
                   <Sun className="h-5 w-5" />
@@ -466,20 +452,26 @@ export function Sidebar({ clientName }: SidebarProps) {
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              {resolvedTheme === "dark" ? t("common.lightMode") : t("common.darkMode")}
+              {resolvedTheme === "dark"
+                ? t("common.lightMode")
+                : t("common.darkMode")}
             </TooltipContent>
           </Tooltip>
         ) : (
           <button
             onClick={toggleTheme}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+            className="flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
             {resolvedTheme === "dark" ? (
-              <Sun className="h-5 w-5" />
+              <Sun className="h-5 w-5 shrink-0" />
             ) : (
-              <Moon className="h-5 w-5" />
+              <Moon className="h-5 w-5 shrink-0" />
             )}
-            {resolvedTheme === "dark" ? t("common.lightMode") : t("common.darkMode")}
+            <span className="truncate">
+              {resolvedTheme === "dark"
+                ? t("common.lightMode")
+                : t("common.darkMode")}
+            </span>
           </button>
         )}
 
@@ -492,7 +484,7 @@ export function Sidebar({ clientName }: SidebarProps) {
             isCollapsed={isCollapsed}
           />
         )}
-        
+
         <NavItem
           to="/definicoes"
           icon={Settings}
@@ -501,49 +493,51 @@ export function Sidebar({ clientName }: SidebarProps) {
           isCollapsed={isCollapsed}
         />
 
-        {/* Logout */}
         {isCollapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
-              <button 
+              <button
                 onClick={handleSignOut}
-                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               >
                 <LogOut className="h-5 w-5" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">{t("common.logout")}</TooltipContent>
+            <TooltipContent side="right">
+              {t("common.logout")}
+            </TooltipContent>
           </Tooltip>
         ) : (
-          <button 
+          <button
             onClick={handleSignOut}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+            className="flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
-            <LogOut className="h-5 w-5" />
-            {t("common.logout")}
+            <LogOut className="h-5 w-5 shrink-0" />
+            <span className="truncate">{t("common.logout")}</span>
           </button>
         )}
 
-        {/* Collapse Toggle */}
         {isCollapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
               <button
                 onClick={toggle}
-                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
               >
                 <ChevronsLeft className="h-5 w-5 rotate-180 transition-transform" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">{t("common.expand")}</TooltipContent>
+            <TooltipContent side="right">
+              {t("common.expand")}
+            </TooltipContent>
           </Tooltip>
         ) : (
           <button
             onClick={toggle}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-all duration-200"
+            className="flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
           >
-            <ChevronsLeft className="h-5 w-5 transition-transform" />
-            {t("common.collapse")}
+            <ChevronsLeft className="h-5 w-5 shrink-0 transition-transform" />
+            <span className="truncate">{t("common.collapse")}</span>
           </button>
         )}
       </div>
