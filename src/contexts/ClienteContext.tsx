@@ -16,6 +16,8 @@ export interface ClienteJvris {
   nome: string;
   /** Código funcional do cliente (mantido por compatibilidade com o nome antigo) */
   jvrisId: string;
+  /** Código de grupo económico (ex: "ABC"), se aplicável */
+  groupCode?: string | null;
 }
 
 interface ClienteContextType {

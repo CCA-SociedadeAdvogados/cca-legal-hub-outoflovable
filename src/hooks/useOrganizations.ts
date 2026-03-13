@@ -5,6 +5,68 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCliente } from '@/contexts/ClienteContext';
 import { toast } from 'sonner';
 
+// ─── helpers de mapeamento (module-level, reutilizados) ──────────────────────
+
+function mapCCARow(row: any): CCAClientOption {
+  return {
+    organization_id: row.organization_id,
+    client_code: row.client_code,
+    client_name: row.legacy_client_name,
+    group_code: row.group_code,
+    cost_center: row.cost_center,
+    responsible: row.responsible,
+    responsible_email: row.responsible_email,
+    total_documentos: Number(row.total_documentos ?? 0),
+    total_pendente: Number(row.total_pendente ?? 0),
+    total_vencido: Number(row.total_vencido ?? 0),
+    total_a_vencer: Number(row.total_a_vencer ?? 0),
+    ultima_sincronizacao: row.ultima_sincronizacao,
+    client_status: row.client_status,
+  };
+}
+
+const CCA_SELECT_FIELDS = `
+  organization_id,
+  client_code,
+  legacy_client_name,
+  group_code,
+  cost_center,
+  responsible,
+  responsible_email,
+  total_documentos,
+  total_pendente,
+  total_vencido,
+  total_a_vencer,
+  ultima_sincronizacao,
+  client_status
+`;
+
+/**
+ * Pesquisa server-side de clientes CCA.
+ * Filtra por nome, código, grupo e responsável com ILIKE (máx 50 resultados).
+ * Chamada directamente pelos componentes de selector via useQuery + debounce.
+ */
+export async function searchCCAClients(term: string): Promise<CCAClientOption[]> {
+  const clean = term.trim();
+  if (!clean) return [];
+
+  const { data, error } = await supabase
+    .from('vw_cca_client_catalog_overview')
+    .select(CCA_SELECT_FIELDS)
+    .eq('can_open_in_platform', true)
+    .or(
+      `legacy_client_name.ilike.%${clean}%,` +
+      `client_code.ilike.%${clean}%,` +
+      `responsible.ilike.%${clean}%,` +
+      `group_code.ilike.%${clean}%`,
+    )
+    .order('legacy_client_name', { ascending: true })
+    .limit(50);
+
+  if (error) throw error;
+  return (data ?? []).map(mapCCARow);
+}
+
 export interface Organization {
   id: string;
   name: string;
@@ -133,61 +195,6 @@ export function useOrganizations() {
     enabled: !!user,
   });
 
-  const { data: ccaClients = [], isLoading: ccaClientsLoading } = useQuery({
-    queryKey: ['cca-clients', user?.id, isCCAInternalAuthorized],
-    queryFn: async () => {
-      if (!user || !isCCAInternalAuthorized) return [];
-
-      const { data, error, count } = await supabase
-        .from('vw_cca_client_catalog_overview')
-        .select(
-          `
-            organization_id,
-            client_code,
-            legacy_client_name,
-            group_code,
-            cost_center,
-            responsible,
-            responsible_email,
-            total_documentos,
-            total_pendente,
-            total_vencido,
-            total_a_vencer,
-            ultima_sincronizacao,
-            client_status,
-            can_open_in_platform
-          `,
-          { count: 'exact' },
-        )
-        .eq('can_open_in_platform', true)
-        .order('legacy_client_name', { ascending: true })
-        .range(0, 4999);
-
-      if (error) throw error;
-
-      console.log('CCA SQL count exact:', count);
-      console.log('CCA rows received in frontend:', data?.length);
-      console.log('CCA first row:', data?.[0]);
-      console.log('CCA last row:', data?.[data.length - 1]);
-
-      return (data ?? []).map((row: any) => ({
-        organization_id: row.organization_id,
-        client_code: row.client_code,
-        client_name: row.legacy_client_name,
-        group_code: row.group_code,
-        cost_center: row.cost_center,
-        responsible: row.responsible,
-        responsible_email: row.responsible_email,
-        total_documentos: Number(row.total_documentos ?? 0),
-        total_pendente: Number(row.total_pendente ?? 0),
-        total_vencido: Number(row.total_vencido ?? 0),
-        total_a_vencer: Number(row.total_a_vencer ?? 0),
-        ultima_sincronizacao: row.ultima_sincronizacao,
-        client_status: row.client_status,
-      })) as CCAClientOption[];
-    },
-    enabled: !!user && isCCAInternalAuthorized,
-  });
 
   const { data: userMemberships, isLoading: membershipsLoading } = useQuery({
     queryKey: ['user-memberships', user?.id],
@@ -266,25 +273,11 @@ export function useOrganizations() {
   useEffect(() => {
     if (!user) return;
 
-    if (isCCAInternalAuthorized) {
-      if (!ccaClients.length) return;
+    // Utilizadores CCA gerem a sua selecção através do selector de pesquisa.
+    // O cliente escolhido é persistido em localStorage e restaurado no mount.
+    if (isCCAInternalAuthorized) return;
 
-      const selectedStillExists = cliente
-        ? ccaClients.some((c) => c.organization_id === cliente.organizationId)
-        : false;
-
-      if (!selectedStillExists) {
-        const first = ccaClients[0];
-        setCliente({
-          organizationId: first.organization_id,
-          nome: first.client_name,
-          jvrisId: first.client_code,
-        });
-      }
-
-      return;
-    }
-
+    // Utilizadores cliente: sincronizar com a organização actual do perfil.
     if (currentOrganization) {
       if (cliente?.organizationId !== currentOrganization.id) {
         setCliente({
@@ -296,7 +289,7 @@ export function useOrganizations() {
     } else {
       clearCliente();
     }
-  }, [user, isCCAInternalAuthorized, ccaClients, cliente, currentOrganization, setCliente, clearCliente]);
+  }, [user, isCCAInternalAuthorized, cliente, currentOrganization, setCliente, clearCliente]);
 
   const createOrganization = useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
@@ -329,16 +322,23 @@ export function useOrganizations() {
       if (!user) throw new Error('Utilizador não autenticado');
 
       if (isCCAInternalAuthorized) {
-        const selected = ccaClients.find((c) => c.organization_id === organizationId);
+        // Pesquisa pontual na vista para validar e obter os dados do cliente.
+        const { data, error } = await supabase
+          .from('vw_cca_client_catalog_overview')
+          .select(CCA_SELECT_FIELDS)
+          .eq('organization_id', organizationId)
+          .eq('can_open_in_platform', true)
+          .maybeSingle();
 
-        if (!selected) {
-          throw new Error('Cliente não encontrado para visualização');
-        }
+        if (error) throw error;
+        if (!data) throw new Error('Cliente não encontrado para visualização');
 
+        const client = mapCCARow(data);
         setCliente({
-          organizationId: selected.organization_id,
-          nome: selected.client_name,
-          jvrisId: selected.client_code,
+          organizationId: client.organization_id,
+          nome: client.client_name,
+          jvrisId: client.client_code,
+          groupCode: client.group_code,
         });
 
         return organizationId;
@@ -401,6 +401,7 @@ export function useOrganizations() {
       organizationId: client.organization_id,
       nome: client.client_name,
       jvrisId: client.client_code,
+      groupCode: client.group_code,
     });
 
     queryClient.invalidateQueries({ queryKey: ['client-home'] });
@@ -416,11 +417,10 @@ export function useOrganizations() {
     organizations,
     currentOrganization,
     userMemberships,
-    ccaClients,
     isCCAInternalAuthorized,
     viewingOrganizationId,
     selectViewingClient,
-    isLoading: isLoading || ccaAuthLoading || ccaClientsLoading,
+    isLoading: isLoading || ccaAuthLoading,
     membershipsLoading,
     createOrganization,
     switchOrganization,

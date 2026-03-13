@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Check, ChevronsUpDown, Search } from 'lucide-react';
-import { useOrganizations } from '@/hooks/useOrganizations';
+import React, { useEffect, useState } from 'react';
+import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { useOrganizations, searchCCAClients } from '@/hooks/useOrganizations';
+import { useCliente } from '@/contexts/ClienteContext';
 import { cn } from '@/lib/utils';
 
 type Props = {
@@ -8,51 +10,26 @@ type Props = {
 };
 
 export default function CCAOrgSwitcher({ className }: Props) {
-  const {
-    isLoading,
-    isCCAInternalAuthorized,
-    ccaClients,
-    viewingOrganizationId,
-    selectViewingClient,
-  } = useOrganizations();
+  const { isCCAInternalAuthorized, selectViewingClient } = useOrganizations();
+  const { cliente } = useCliente();
 
-  const [query, setQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [open, setOpen] = useState(false);
 
-  const filteredClients = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  // Debounce: dispara a query 300ms após o utilizador parar de escrever.
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(inputValue), 300);
+    return () => clearTimeout(id);
+  }, [inputValue]);
 
-    if (!q) {
-      console.log('Sem pesquisa, a devolver ccaClients:', ccaClients.length);
-      return ccaClients;
-    }
-
-    const result = ccaClients.filter((client) => {
-      const haystack = [
-        client.client_name,
-        client.client_code,
-        client.group_code ?? '',
-        client.responsible ?? '',
-        client.responsible_email ?? '',
-      ]
-        .join(' ')
-        .toLowerCase();
-
-      return haystack.includes(q);
-    });
-
-    console.log('Pesquisa:', q, 'resultado:', result.length);
-    return result;
-  }, [ccaClients, query]);
-
-  const selected = useMemo(
-    () => ccaClients.find((client) => client.organization_id === viewingOrganizationId) ?? null,
-    [ccaClients, viewingOrganizationId],
-  );
-
-  console.log('ccaClients total:', ccaClients.length);
-  console.log('filteredClients total:', filteredClients.length);
-  console.log('selected:', selected);
+  const { data: resultados = [], isFetching } = useQuery({
+    queryKey: ['cca-client-search', debouncedSearch],
+    queryFn: () => searchCCAClients(debouncedSearch),
+    enabled: isCCAInternalAuthorized && !!debouncedSearch.trim(),
+    staleTime: 30 * 1000,
+    placeholderData: (prev) => prev,
+  });
 
   if (!isCCAInternalAuthorized) return null;
 
@@ -65,11 +42,11 @@ export default function CCAOrgSwitcher({ className }: Props) {
       >
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium text-gray-900">
-            {selected?.client_name ?? 'Seleccionar cliente'}
+            {cliente?.nome ?? 'Seleccionar cliente'}
           </div>
           <div className="truncate text-xs text-gray-500">
-            {selected
-              ? `${selected.client_code} · ${selected.group_code ?? 'NAO'}`
+            {cliente
+              ? `${cliente.jvrisId}${cliente.groupCode ? ` · ${cliente.groupCode}` : ''}`
               : 'Sem cliente seleccionado'}
           </div>
         </div>
@@ -82,22 +59,32 @@ export default function CCAOrgSwitcher({ className }: Props) {
             <div className="flex items-center gap-2 rounded-md border border-gray-200 px-2 py-2">
               <Search className="h-4 w-4 shrink-0 text-gray-400" />
               <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                autoFocus
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Pesquisar cliente, código, grupo ou responsável"
                 className="w-full min-w-0 border-0 bg-transparent text-sm outline-none"
               />
+              {isFetching && (
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-gray-400" />
+              )}
             </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto overflow-x-hidden p-1">
-            {isLoading ? (
-              <div className="px-3 py-2 text-sm text-gray-500">A carregar...</div>
-            ) : filteredClients.length === 0 ? (
+            {!debouncedSearch.trim() ? (
+              <div className="px-3 py-4 text-center text-sm text-gray-400">
+                Escreva para pesquisar clientes
+              </div>
+            ) : isFetching && resultados.length === 0 ? (
+              <div className="px-3 py-4 text-center text-sm text-gray-400">
+                A pesquisar...
+              </div>
+            ) : resultados.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500">Sem resultados.</div>
             ) : (
-              filteredClients.map((client) => {
-                const active = client.organization_id === viewingOrganizationId;
+              resultados.map((client) => {
+                const active = client.organization_id === cliente?.organizationId;
 
                 return (
                   <button
@@ -106,6 +93,7 @@ export default function CCAOrgSwitcher({ className }: Props) {
                     onClick={() => {
                       selectViewingClient(client);
                       setOpen(false);
+                      setInputValue('');
                     }}
                     className={cn(
                       'flex w-full min-w-0 items-start gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-50',

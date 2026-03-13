@@ -57,11 +57,8 @@ export function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const { isCCAInternalAuthorized, ccaClients, viewingOrganizationId } = useOrganizations();
+  const { isCCAInternalAuthorized } = useOrganizations();
   const { cliente } = useCliente();
-
-  const selectedClient =
-    ccaClients.find((clientOption) => clientOption.organization_id === viewingOrganizationId) ?? null;
 
   const handleSignOut = async () => {
     await signOut();
@@ -102,15 +99,15 @@ export function Header() {
       </div>
 
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-        {isCCAInternalAuthorized && (
+        {isCCAInternalAuthorized && cliente && (
           <div className="hidden min-w-0 max-w-[380px] items-center md:flex">
             <div className="mr-2 min-w-0 text-right">
               <div className="truncate text-sm font-medium text-foreground">
-                {cliente?.nome || selectedClient?.client_name || 'Cliente'}
+                {cliente.nome}
               </div>
               <div className="truncate text-xs text-muted-foreground">
-                {cliente?.jvrisId || selectedClient?.client_code || '—'}
-                {selectedClient?.group_code ? ` · ${selectedClient.group_code}` : ''}
+                {cliente.jvrisId}
+                {cliente.groupCode ? ` · ${cliente.groupCode}` : ''}
               </div>
             </div>
           </div>
