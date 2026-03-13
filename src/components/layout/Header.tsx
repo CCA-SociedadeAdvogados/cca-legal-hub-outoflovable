@@ -13,7 +13,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import CCAOrgSwitcher from '@/components/CCAOrgSwitcher';
+import CCAOrgSwitcher from '@/components/layout/CCAOrgSwitcher';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { ScrollArea } from '@/components/ui/scroll-area';
