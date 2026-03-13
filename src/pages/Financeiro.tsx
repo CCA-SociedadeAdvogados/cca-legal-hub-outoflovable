@@ -367,7 +367,7 @@ export default function Financeiro() {
         </CardContent>
       </Card>
 
-      <SharePointDocumentsBrowser overrideOrgId={organizationId ?? undefined} />
+      <SharePointDocumentsBrowser />
     </>
   );
 

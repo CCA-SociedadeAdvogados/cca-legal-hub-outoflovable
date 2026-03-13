@@ -73,22 +73,36 @@ export function OrgJvrisIdConfig({ organizationId }: OrgJvrisIdConfigProps) {
 
       if (error) throw error;
 
+      // O ficheiro "Base NAV" está no SharePoint da CCA (C.0000), não no SharePoint
+      // do cliente. Precisamos do org_id da CCA para chamar sync-nav-excel.
+      const { data: ccaOrg, error: ccaOrgError } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("client_code", "C.0000")
+        .eq("org_type", "cca_owner")
+        .maybeSingle();
+
+      if (ccaOrgError) throw ccaOrgError;
+      if (!ccaOrg) {
+        throw new Error("Organização CCA não encontrada na base de dados.");
+      }
+
       const { data: spConfig, error: spConfigError } = await supabase
         .from("sharepoint_config")
         .select("id")
-        .eq("organization_id", organizationId)
+        .eq("organization_id", ccaOrg.id)
         .maybeSingle();
 
       if (spConfigError) throw spConfigError;
 
       if (!spConfig) {
         throw new Error(
-          "SharePoint não configurado para esta organização. Configure a integração SharePoint primeiro em Definições."
+          "SharePoint não configurado para a organização CCA. Configure a integração SharePoint em Definições."
         );
       }
 
       const { data, error: syncError } = await supabase.functions.invoke("sync-nav-excel", {
-        body: { organization_id: organizationId },
+        body: { organization_id: ccaOrg.id },
       });
 
       if (syncError) {

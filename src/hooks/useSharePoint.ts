@@ -1,14 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
-import { useCliente } from "@/contexts/ClienteContext";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
 function useEffectiveOrganizationId(overrideOrgId?: string) {
   const { profile } = useProfile();
-  const { viewingOrganizationId } = useCliente();
-  return overrideOrgId || viewingOrganizationId || profile?.current_organization_id || null;
+  return overrideOrgId || profile?.current_organization_id || null;
 }
 
 export interface SharePointConfig {
