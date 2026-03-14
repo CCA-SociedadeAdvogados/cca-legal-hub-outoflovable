@@ -60,6 +60,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateSlug } from "@/lib/utils";
 import { IndustrySectorSelect } from "@/components/organizations/IndustrySectorSelect";
 import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
+import { ClientOnboardingTab } from "@/components/admin/ClientOnboardingTab";
 import { DepartmentsConfig } from "@/components/admin/DepartmentsConfig";
 import { OrgSharePointConfig } from "@/components/admin/OrgSharePointConfig";
 import { OrgLegalBiConfig } from "@/components/admin/OrgLegalBiConfig";
@@ -755,6 +756,10 @@ export default function PlatformAdmin() {
               <Shield className="h-4 w-4 mr-2" />
               {t("admin.platformAdmins", "Platform Admins")}
             </TabsTrigger>
+            <TabsTrigger value="onboarding">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Onboarding Clientes
+            </TabsTrigger>
           </TabsList>
 
           {/* Impersonation Tab */}
@@ -1306,6 +1311,11 @@ export default function PlatformAdmin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Onboarding Tab */}
+          <TabsContent value="onboarding">
+            <ClientOnboardingTab organizations={allOrganizations ?? []} />
           </TabsContent>
         </Tabs>
 

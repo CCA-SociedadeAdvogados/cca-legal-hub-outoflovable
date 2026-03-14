@@ -54,18 +54,37 @@ serve(async (req) => {
     const {
       email,
       nome_completo,
-      organizationId,
+      organizationId: organizationIdRaw,
+      jvris_id,
       role,
       departamento,
       password,
       departmentIds, // NEW: array of department UUIDs
     } = await req.json();
 
-    if (!email || !nome_completo || !organizationId || !role) {
+    if (!email || !nome_completo || (!organizationIdRaw && !jvris_id) || !role) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, nome_completo, organizationId, role' }),
+        JSON.stringify({ error: 'Missing required fields: email, nome_completo, role, and either organizationId or jvris_id' }),
         { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       );
+    }
+
+    // Resolve organizationId from jvris_id if not provided directly
+    let organizationId = organizationIdRaw;
+    if (!organizationId && jvris_id) {
+      const { data: orgByJvris, error: jvrisError } = await supabaseAdmin
+        .from('organizations')
+        .select('id, name')
+        .eq('jvris_id', jvris_id.trim())
+        .maybeSingle();
+
+      if (jvrisError || !orgByJvris) {
+        return new Response(
+          JSON.stringify({ error: `Nenhuma organização encontrada com jvris_id: ${jvris_id}` }),
+          { status: 404, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+        );
+      }
+      organizationId = orgByJvris.id;
     }
 
     if (password && password.length < 8) {

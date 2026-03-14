@@ -9,7 +9,10 @@ type Departamento = Database["public"]["Enums"]["departamento"];
 export interface CreateUserPayload {
   email: string;
   nome_completo: string;
-  organizationId: string;
+  /** UUID da organização. Mutuamente exclusivo com jvris_id. */
+  organizationId?: string;
+  /** ID JVRIS do cliente — alternativa ao organizationId. A edge function resolve o UUID. */
+  jvris_id?: string;
   role: AppRole;
   departamento?: Departamento;
   password?: string;
