@@ -384,3 +384,42 @@ Nunca push directo para `main`. Máx ~200-300 linhas alteradas por PR.
 18. **Feature flags**: verificar `useFeatureFlags()` antes de adicionar features condicionais (SSO, 2FA, demo login)
 19. **Supabase Project ID é `scjxhhkutsiswsgsuiqo`** — usar este ID em referências ao projecto
 20. **Protecção do CLAUDE.md**: qualquer alteração a este ficheiro requer confirmação explícita do utilizador, listagem das secções afectadas e descrição do impacto. Nunca alterar silenciosamente.
+21. **CORS nas Edge Functions**: usar `Deno.env.get("ALLOWED_ORIGIN") ?? "*"` — nunca hardcode `"*"`. Configurar `ALLOWED_ORIGIN` nos Supabase secrets com o domínio de produção.
+22. **Gestão de utilizadores CCA internos**: usar a tabela `cca_internal_users` — nunca adicionar emails directamente em funções SQL ou migrations. Inserir via `INSERT INTO cca_internal_users (email) VALUES (...)`.
+23. **`.env` não é commitado**: está no `.gitignore`. Usar `npm run env:pull` para sincronizar com o Vercel.
+24. **Redirect SSO**: validar `authUrl` contra allowlist de hosts Microsoft antes de `window.location.href` — ver `Login.tsx:handleSSOLogin`.
+25. **Eventos legislativos scopados por organização**: `useEventosLegislativos` filtra por `organization_id` do utilizador corrente — manter este filtro em qualquer refactor.
+
+---
+
+## Registo de Alterações de Segurança
+
+### 2026-03-15 — Diagnóstico e correcções (pentester review)
+
+**C1 — CORS `*` → env var (23 edge functions)**
+- Ficheiros: todos os `supabase/functions/*/index.ts`
+- Alteração: `"Access-Control-Allow-Origin": "*"` → `Deno.env.get("ALLOWED_ORIGIN") ?? "*"`
+- Acção pendente: configurar `ALLOWED_ORIGIN=https://cca-legal-hub.vercel.app` nos Supabase secrets (produção)
+
+**C2 — Emails CCA internos hardcoded → tabela DB**
+- Migration: `20260315000001_cca_internal_users_table.sql`
+- Cria tabela `cca_internal_users` com RLS (só platform admins)
+- Actualiza `fn_is_cca_internal_authorized` para JOIN na tabela
+- Emails dos 4 utilizadores migrados para a tabela
+
+**C3 — `.env` removido do tracking git**
+- Executado: `git rm --cached .env`
+- Ficheiro já estava no `.gitignore` mas continuava tracked
+- Acção pendente: rodar a chave Supabase anon no dashboard (precaução)
+
+**A1 — `useEventosLegislativos` sem org scoping → corrigido**
+- Ficheiro: `src/hooks/useEventosLegislativos.ts`
+- Adicionado `.eq('organization_id', organizationId)` na query
+
+**A2 — Open redirect no fluxo SSO → validação adicionada**
+- Ficheiro: `src/pages/auth/Login.tsx:handleSSOLogin`
+- Validação de `authUrl` contra allowlist: `login.microsoftonline.com`, `login.microsoft.com`
+
+**M1 — `console.log` de env var em demo-login → removido**
+- Ficheiro: `supabase/functions/demo-login/index.ts`
+- Removida linha que logava o valor bruto de `DEMO_LOGIN_ENABLED`

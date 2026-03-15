@@ -162,6 +162,20 @@ export default function Login() {
         // Store state in sessionStorage for CSRF validation on callback
         sessionStorage.setItem("sso_state", data.state);
 
+        // Validate redirect URL to prevent open redirect attacks
+        const allowedHosts = ["login.microsoftonline.com", "login.microsoft.com"];
+        let redirectHost: string;
+        try {
+          redirectHost = new URL(data.authUrl).hostname;
+        } catch {
+          toast.error("URL de autenticação SSO inválido.");
+          return;
+        }
+        if (!allowedHosts.includes(redirectHost)) {
+          toast.error("URL de autenticação SSO inválido.");
+          return;
+        }
+
         // Redirect to IdP
         window.location.href = data.authUrl;
       } else {
