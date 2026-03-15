@@ -33,7 +33,7 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
         .from("organizations")
         .select("legalbi_url")
         .eq("id", organizationId)
-        .single();
+        .maybeSingle();
       const url = (data as any)?.legalbi_url as string | null | undefined;
       setCurrentSavedUrl(url ?? null);
       setLegalbiUrl(url ?? "");

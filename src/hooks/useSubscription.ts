@@ -103,9 +103,9 @@ export function useOrganizationSubscription() {
           plan:subscription_plans(*)
         `)
         .eq('organization_id', currentOrganization.id)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       if (!data) return null;
 
       const planData = data.plan as Record<string, unknown> | null;
