@@ -343,7 +343,7 @@ export default function PlatformAdmin() {
         .from("profiles")
         .select("id, email")
         .eq("email", searchEmail.trim())
-        .single();
+        .maybeSingle();
 
       if (error || !profile) {
         toast({

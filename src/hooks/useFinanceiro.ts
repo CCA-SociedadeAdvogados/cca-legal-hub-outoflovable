@@ -208,6 +208,7 @@ export function useFinanceiro(overrideOrgId?: string) {
         .from('organizations')
         .update({
           tipo_cliente: data.tipo_cliente,
+          updated_by_id: userId,
         })
         .eq('id', organizationId);
 

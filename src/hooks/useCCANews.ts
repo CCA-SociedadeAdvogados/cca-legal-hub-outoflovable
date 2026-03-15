@@ -87,8 +87,8 @@ export function useCCANews() {
       estado?: "rascunho" | "publicado" | "arquivado";
       data_publicacao?: string;
     }) => {
-      const updateData: Record<string, unknown> = { ...data };
-      
+      const updateData: Record<string, unknown> = { ...data, updated_by_id: user?.id };
+
       // Se está a publicar, definir data de publicação
       if (data.estado === "publicado" && !data.data_publicacao) {
         updateData.data_publicacao = new Date().toISOString();

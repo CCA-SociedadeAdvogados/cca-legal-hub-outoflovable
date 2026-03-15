@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import type { TablesUpdate } from "@/integrations/supabase/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Hash, CheckCircle, Loader2, Save } from "lucide-react";
 
@@ -16,6 +17,7 @@ interface OrgJvrisIdConfigProps {
 
 export function OrgJvrisIdConfig({ organizationId }: OrgJvrisIdConfigProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [jvrisId, setJvrisId] = useState("");
   const [currentSavedId, setCurrentSavedId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +66,7 @@ export function OrgJvrisIdConfig({ organizationId }: OrgJvrisIdConfigProps) {
 
       const payload: TablesUpdate<"organizations"> = {
         jvris_id: normalizedId,
+        updated_by_id: user?.id,
       };
 
       const { error } = await supabase

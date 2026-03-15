@@ -437,6 +437,7 @@ export function useOrganizationMembers(organizationId: string | undefined) {
 
   const { data: members, isLoading } = useQuery({
     queryKey: ['organization-members', organizationId],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!organizationId) return [];
 
