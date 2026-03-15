@@ -215,6 +215,7 @@ export default function PlatformAdmin() {
   // Query para histórico de impersonation
   const { data: impersonationHistory, isLoading: isLoadingHistory } = useQuery({
     queryKey: ['impersonation-history'],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       // Expire stale sessions before fetching history
       await supabase.rpc('expire_stale_impersonation_sessions');
