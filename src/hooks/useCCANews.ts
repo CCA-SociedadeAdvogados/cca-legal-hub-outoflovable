@@ -27,6 +27,7 @@ export function useCCANews() {
 
   const { data: news = [], isLoading } = useQuery({
     queryKey: ["cca-news"],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cca_news")

@@ -84,6 +84,7 @@ export function usePlatformAdmin() {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: platformAdmins, isLoading: isLoadingAdmins } = useQuery({

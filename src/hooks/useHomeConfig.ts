@@ -39,6 +39,7 @@ export function useHomeConfig(organizationId: string | null, primarySector?: str
 
   const { data: homeConfig, isLoading, error } = useQuery({
     queryKey: ['homeConfig', organizationId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<ClientHomeConfig | null> => {
       if (!organizationId) return null;
 

@@ -42,6 +42,7 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
 
   const { data: documentos = [], isLoading } = useQuery({
     queryKey: ["documentos-gerados", profile?.current_organization_id, options?.modulo],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       let query = supabase
         .from("documentos_gerados")

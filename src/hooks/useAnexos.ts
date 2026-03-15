@@ -13,6 +13,7 @@ export const useAnexos = (contratoId: string) => {
 
   const { data: anexos, isLoading, error } = useQuery({
     queryKey: ['anexos', contratoId],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('anexos_contrato')

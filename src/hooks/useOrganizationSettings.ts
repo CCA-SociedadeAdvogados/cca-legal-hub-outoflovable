@@ -31,6 +31,7 @@ export function useOrganizationSettings() {
 
   const { data: settings, isLoading, error } = useQuery({
     queryKey: ["organization-settings", organizationId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       if (!organizationId) return null;
 

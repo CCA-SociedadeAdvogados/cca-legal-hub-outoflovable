@@ -23,6 +23,7 @@ export const useEventosLegislativos = () => {
 
   const { data: eventos, isLoading, error } = useQuery({
     queryKey: ['eventos_legislativos'],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!user) return [];
       const organizationId = await getCurrentOrganizationId(user.id);

@@ -113,6 +113,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       return (data?.[0] ?? null) as FinancialHomeData | null;
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const { data: financialSummary, isLoading: isLoadingSummary } = useQuery({
@@ -129,6 +130,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       return (data?.[0] ?? null) as FinancialSummaryData | null;
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const { data: financialItems = [], isLoading: isLoadingItems, error: financialItemsError } = useQuery({
@@ -145,6 +147,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       return (data ?? []) as FinancialItem[];
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const { data: financialByEntity = [], isLoading: isLoadingByEntity } = useQuery({
@@ -161,6 +164,7 @@ export function useFinanceiro(overrideOrgId?: string) {
       return (data ?? []) as FinancialEntitySummary[];
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const accountSummary: AccountSummary = {

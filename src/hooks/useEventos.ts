@@ -25,6 +25,7 @@ export const useEventos = (contratoId?: string) => {
 
   const { data: eventos, isLoading, error } = useQuery({
     queryKey: ['eventos', contratoId],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       let query = supabase
         .from('eventos_ciclo_vida_contrato')

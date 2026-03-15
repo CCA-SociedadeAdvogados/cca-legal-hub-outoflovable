@@ -76,6 +76,7 @@ export function useSharePointConfig(overrideOrgId?: string) {
 
   return useQuery({
     queryKey: ["sharepoint-config", organizationId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<SharePointConfig | null> => {
       if (!organizationId) return null;
 

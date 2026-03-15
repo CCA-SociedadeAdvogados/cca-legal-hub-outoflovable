@@ -28,6 +28,7 @@ export function usePoliticas() {
 
   const { data: politicas = [], isLoading } = useQuery({
     queryKey: ["politicas", profile?.current_organization_id],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("politicas")

@@ -19,6 +19,7 @@ export function useAuthActivityLogs() {
 
   const { data: logs = [], isLoading, error } = useQuery({
     queryKey: ["auth-activity-logs", user?.id],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("auth_activity_logs")

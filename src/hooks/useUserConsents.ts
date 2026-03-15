@@ -40,6 +40,7 @@ export function useUserConsents() {
 
   const { data: consents = [], isLoading, error } = useQuery({
     queryKey: ["user-consents", user?.id],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       if (!user?.id) return [];
       

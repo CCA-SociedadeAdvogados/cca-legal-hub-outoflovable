@@ -17,6 +17,7 @@ export const useOrganizationSearch = () => {
 
   const { data: organizations, isLoading, error } = useQuery({
     queryKey: ['organization-search', debouncedSearch],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')

@@ -63,6 +63,7 @@ function parseJsonToFeatures(json: Json): string[] {
 export function useSubscriptionPlans() {
   return useQuery({
     queryKey: ['subscription-plans'],
+    staleTime: 10 * 60 * 1000, // planos raramente mudam
     queryFn: async () => {
       const { data, error } = await supabase
         .from('subscription_plans')
