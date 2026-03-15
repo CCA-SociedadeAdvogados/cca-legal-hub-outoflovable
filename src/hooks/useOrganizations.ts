@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 
 function mapCCARow(row: any): CCAClientOption {
   return {
-    organization_id: row.organization_id,
+    organization_id: row.organization_id ?? null,
     client_code: row.client_code,
     client_name: row.legacy_client_name,
     group_code: row.group_code,
@@ -22,6 +22,7 @@ function mapCCARow(row: any): CCAClientOption {
     total_a_vencer: Number(row.total_a_vencer ?? 0),
     ultima_sincronizacao: row.ultima_sincronizacao,
     client_status: row.client_status,
+    can_open_in_platform: row.can_open_in_platform ?? false,
   };
 }
 
@@ -38,22 +39,24 @@ const CCA_SELECT_FIELDS = `
   total_vencido,
   total_a_vencer,
   ultima_sincronizacao,
-  client_status
+  client_status,
+  can_open_in_platform
 `;
 
 /**
  * Pesquisa server-side de clientes CCA.
  * Filtra por nome, código, grupo e responsável com ILIKE (máx 50 resultados).
  * Chamada directamente pelos componentes de selector via useQuery + debounce.
+ * @param platformOnly se true (default), mostra apenas clientes activados na plataforma.
+ *                     Usar false para mostrar todos os clientes do catálogo legacy.
  */
-export async function searchCCAClients(term: string): Promise<CCAClientOption[]> {
+export async function searchCCAClients(term: string, platformOnly = true): Promise<CCAClientOption[]> {
   const clean = term.trim();
   if (!clean) return [];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('vw_cca_client_catalog_overview')
     .select(CCA_SELECT_FIELDS)
-    .eq('can_open_in_platform', true)
     .or(
       `legacy_client_name.ilike.%${clean}%,` +
       `client_code.ilike.%${clean}%,` +
@@ -63,6 +66,11 @@ export async function searchCCAClients(term: string): Promise<CCAClientOption[]>
     .order('legacy_client_name', { ascending: true })
     .limit(50);
 
+  if (platformOnly) {
+    query = query.eq('can_open_in_platform', true);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []).map(mapCCARow);
 }
@@ -117,7 +125,7 @@ export interface UserMembership {
 }
 
 export interface CCAClientOption {
-  organization_id: string;
+  organization_id: string | null;
   client_code: string;
   client_name: string;
   group_code: string | null;
@@ -130,6 +138,7 @@ export interface CCAClientOption {
   total_a_vencer: number;
   ultima_sincronizacao: string | null;
   client_status: string;
+  can_open_in_platform: boolean;
 }
 
 export function useOrganizations() {
@@ -338,8 +347,9 @@ export function useOrganizations() {
         if (!data) throw new Error('Cliente não encontrado para visualização');
 
         const client = mapCCARow(data);
+        // can_open_in_platform=true garante organization_id não-nulo aqui
         setCliente({
-          organizationId: client.organization_id,
+          organizationId: client.organization_id!,
           nome: client.client_name,
           clientCode: client.client_code,
           groupCode: client.group_code,
@@ -401,6 +411,7 @@ export function useOrganizations() {
   });
 
   const selectViewingClient = (client: CCAClientOption) => {
+    if (!client.organization_id) return;
     setCliente({
       organizationId: client.organization_id,
       nome: client.client_name,

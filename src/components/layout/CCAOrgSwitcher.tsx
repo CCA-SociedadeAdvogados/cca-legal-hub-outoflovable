@@ -88,7 +88,7 @@ export default function CCAOrgSwitcher({ className }: Props) {
 
                 return (
                   <button
-                    key={client.organization_id}
+                    key={client.organization_id ?? client.client_code}
                     type="button"
                     onClick={() => {
                       selectViewingClient(client);

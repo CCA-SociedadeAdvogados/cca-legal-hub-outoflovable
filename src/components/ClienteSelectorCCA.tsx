@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useCliente } from '@/contexts/ClienteContext';
 import { useOrganizations, searchCCAClients } from '@/hooks/useOrganizations';
 
@@ -31,8 +32,8 @@ export function ClienteSelectorCCA() {
   }, [inputValue]);
 
   const { data: resultados = [], isFetching } = useQuery({
-    queryKey: ['cca-client-search', debouncedSearch],
-    queryFn: () => searchCCAClients(debouncedSearch),
+    queryKey: ['cca-client-search', debouncedSearch, 'all'],
+    queryFn: () => searchCCAClients(debouncedSearch, false),
     enabled: isCCAInternalAuthorized && !!debouncedSearch.trim(),
     staleTime: 30 * 1000,
     placeholderData: (prev) => prev,
@@ -40,6 +41,10 @@ export function ClienteSelectorCCA() {
 
   const handleSelect = useCallback(
     (item: (typeof resultados)[number]) => {
+      if (!item.can_open_in_platform || !item.organization_id) {
+        toast.warning(`Cliente ${item.client_code} ainda não activado na plataforma`);
+        return;
+      }
       setCliente({
         organizationId: item.organization_id,
         nome: item.client_name,
@@ -131,12 +136,13 @@ export function ClienteSelectorCCA() {
             ) : (
               resultados.map((item) => (
                 <button
-                  key={item.organization_id}
+                  key={item.client_code}
                   type="button"
                   onClick={() => handleSelect(item)}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-b last:border-b-0 hover:bg-muted/50',
                     cliente?.organizationId === item.organization_id && 'bg-primary/5',
+                    !item.can_open_in_platform && 'opacity-60',
                   )}
                 >
                   <div className="h-8 w-8 rounded bg-muted flex items-center justify-center shrink-0">
@@ -144,7 +150,14 @@ export function ClienteSelectorCCA() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="truncate text-sm font-medium">{item.client_name}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="truncate text-sm font-medium">{item.client_name}</p>
+                      {!item.can_open_in_platform && (
+                        <span className="shrink-0 text-[10px] font-medium text-muted-foreground border rounded px-1">
+                          sem plataforma
+                        </span>
+                      )}
+                    </div>
                     <p className="font-mono text-xs text-muted-foreground">
                       {t('financial.clientCode')}: {item.client_code}
                     </p>
