@@ -46,7 +46,7 @@ export default function CCAOrgSwitcher({ className }: Props) {
           </div>
           <div className="truncate text-xs text-gray-500">
             {cliente
-              ? `${cliente.jvrisId}${cliente.groupCode ? ` · ${cliente.groupCode}` : ''}`
+              ? `${cliente.clientCode}${cliente.groupCode ? ` · ${cliente.groupCode}` : ''}`
               : 'Sem cliente seleccionado'}
           </div>
         </div>

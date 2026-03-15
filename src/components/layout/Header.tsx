@@ -106,7 +106,7 @@ export function Header() {
                 {cliente.nome}
               </div>
               <div className="truncate text-xs text-muted-foreground">
-                {cliente.jvrisId}
+                {cliente.clientCode}
                 {cliente.groupCode ? ` · ${cliente.groupCode}` : ''}
               </div>
             </div>

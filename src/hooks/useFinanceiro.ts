@@ -87,10 +87,9 @@ function calculateStatus(summary: FinancialSummaryData | null): AccountStatus {
 }
 
 /**
- * @param overrideOrgId organização efectiva a usar
- * @param _overrideJvrisId mantido apenas por compatibilidade, sem uso no novo modelo
+ * @param overrideOrgId organização efectiva a usar (override)
  */
-export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string | null) {
+export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
   const { currentOrganization } = useOrganizations();
@@ -240,8 +239,8 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
       estado: item.estado,
     })),
     navError: financialItemsError ?? null,
-    jvrisId: organizationInfo?.client_code ?? null,
-    baseOrganizationJvrisId: organizationInfo?.client_code ?? null,
+    clientCode: organizationInfo?.client_code ?? null,
+    baseOrganizationClientCode: organizationInfo?.client_code ?? null,
     availableJvrisIds: [],
     lastSyncResult: null,
     isLoading: isLoadingOrgInfo || isLoadingSummary,

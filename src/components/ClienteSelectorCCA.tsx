@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, Hash, Loader2, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export function ClienteSelectorJvris() {
+export function ClienteSelectorCCA() {
   const { t } = useTranslation();
   const { cliente, setCliente, clearCliente } = useCliente();
   const { isCCAInternalAuthorized } = useOrganizations();
@@ -43,7 +43,7 @@ export function ClienteSelectorJvris() {
       setCliente({
         organizationId: item.organization_id,
         nome: item.client_name,
-        jvrisId: item.client_code,
+        clientCode: item.client_code,
         groupCode: item.group_code,
       });
       setOpen(false);
@@ -64,7 +64,7 @@ export function ClienteSelectorJvris() {
       {cliente && (
         <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5">
           <Hash className="h-3 w-3" />
-          <span className="font-mono text-xs">{cliente.jvrisId}</span>
+          <span className="font-mono text-xs">{cliente.clientCode}</span>
           <span className="text-xs text-muted-foreground">— {cliente.nome}</span>
           <button
             onClick={handleClear}
@@ -83,7 +83,7 @@ export function ClienteSelectorJvris() {
             className="flex shrink-0 items-center gap-2"
           >
             <Search className="h-4 w-4" />
-            {t('financial.searchByJvrisId')}
+            {t('financial.searchByClientCode')}
           </Button>
         </PopoverTrigger>
 
@@ -146,7 +146,7 @@ export function ClienteSelectorJvris() {
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-sm font-medium">{item.client_name}</p>
                     <p className="font-mono text-xs text-muted-foreground">
-                      {t('financial.jvrisId')}: {item.client_code}
+                      {t('financial.clientCode')}: {item.client_code}
                     </p>
                     {item.group_code && (
                       <p className="text-[11px] text-muted-foreground">
@@ -163,3 +163,9 @@ export function ClienteSelectorJvris() {
     </div>
   );
 }
+
+/**
+ * @deprecated Use ClienteSelectorCCA instead.
+ * Alias mantido para compatibilidade com imports existentes.
+ */
+export const ClienteSelectorJvris = ClienteSelectorCCA;

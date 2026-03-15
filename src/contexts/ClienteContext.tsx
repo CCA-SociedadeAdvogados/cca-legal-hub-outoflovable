@@ -6,7 +6,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
  * No novo modelo:
  * - organizationId é a chave principal do cliente aberto no frontend;
  * - nome é o nome do cliente a apresentar;
- * - jvrisId passa a funcionar como código funcional / client_code.
+ * - clientCode é o código funcional do cliente (client_code da tabela organizations_legacy).
  */
 
 export interface ClienteJvris {
@@ -14,8 +14,8 @@ export interface ClienteJvris {
   organizationId: string;
   /** Nome do cliente */
   nome: string;
-  /** Código funcional do cliente (mantido por compatibilidade com o nome antigo) */
-  jvrisId: string;
+  /** Código funcional do cliente (client_code) */
+  clientCode: string;
   /** Código de grupo económico (ex: "ABC"), se aplicável */
   groupCode?: string | null;
 }

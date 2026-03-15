@@ -283,7 +283,7 @@ export function useOrganizations() {
         setCliente({
           organizationId: currentOrganization.id,
           nome: currentOrganization.name,
-          jvrisId: currentOrganization.client_code || currentOrganization.jvris_id || '',
+          clientCode: currentOrganization.client_code || currentOrganization.jvris_id || '',
         });
       }
     } else {
@@ -337,7 +337,7 @@ export function useOrganizations() {
         setCliente({
           organizationId: client.organization_id,
           nome: client.client_name,
-          jvrisId: client.client_code,
+          clientCode: client.client_code,
           groupCode: client.group_code,
         });
 
@@ -400,7 +400,7 @@ export function useOrganizations() {
     setCliente({
       organizationId: client.organization_id,
       nome: client.client_name,
-      jvrisId: client.client_code,
+      clientCode: client.client_code,
       groupCode: client.group_code,
     });
 

@@ -1023,8 +1023,8 @@
     "errorLoadingInvoices": "Error loading invoices. Check your connection and try again.",
     "emDia": "Up to Date",
     "emAberto": "Outstanding",
-    "searchByJvrisId": "Search by Jvris ID",
-    "jvrisId": "Jvris ID",
+    "searchByClientCode": "Select client",
+    "clientCode": "Client Code",
     "noMatchingClients": "No matching clients",
     "noClientsWithJvrisId": "No organizations with Jvris ID configured"
   },
