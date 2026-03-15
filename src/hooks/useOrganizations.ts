@@ -151,6 +151,7 @@ export function useOrganizations() {
       return data as Organization[];
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: currentOrganization } = useQuery({
@@ -178,6 +179,7 @@ export function useOrganizations() {
       return (org ?? null) as Organization | null;
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: isCCAInternalAuthorized = false, isLoading: ccaAuthLoading } = useQuery({
@@ -193,6 +195,7 @@ export function useOrganizations() {
       return Boolean(data);
     },
     enabled: !!user,
+    staleTime: 5 * 60 * 1000, // autorização CCA raramente muda
   });
 
 
@@ -240,6 +243,7 @@ export function useOrganizations() {
       return buildMemberships(membersData);
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
   });
 
   async function buildMemberships(

@@ -13,6 +13,7 @@ export const useProfile = () => {
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile', user?.id],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       if (!user?.id) return null;
       
