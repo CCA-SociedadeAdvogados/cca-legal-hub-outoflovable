@@ -117,6 +117,7 @@ export function useDSARRequests() {
 
   const { data: requests = [], isLoading, error } = useQuery({
     queryKey: ["dsar-requests", user?.id],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!user?.id) return [];
       
