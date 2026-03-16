@@ -235,7 +235,7 @@ export function useFinanceiro(overrideOrgId?: string) {
     navCache: null,
     navItems: financialItems.map((item, index) => ({
       id: `${item.numero_documento ?? 'doc'}-${index}`,
-      jvris_id: item.client_code,
+      client_code: item.client_code,
       numero_documento: item.numero_documento,
       valor: item.valor,
       data_vencimento: item.data_vencimento,

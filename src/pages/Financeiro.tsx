@@ -82,7 +82,7 @@ export default function Financeiro() {
       const { data, error } = await supabase
         .from('organizations')
         .select(
-          'id, name, slug, jvris_id, tipo_cliente, prazo_pagamento_dias, logo_url, industry_sectors, created_at',
+          'id, name, slug, client_code, tipo_cliente, prazo_pagamento_dias, logo_url, industry_sectors, created_at',
         )
         .eq('id', organizationId!)
         .maybeSingle();
