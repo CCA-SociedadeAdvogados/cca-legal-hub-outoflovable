@@ -2,11 +2,26 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // xlsx utilizado para ler o ficheiro SharePoint com o mapeamento email → ID Jvris
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGIN") ?? "*")
+  .split(",")
+  .map((o: string) => o.trim())
+  .filter(Boolean);
+
+function getCorsHeaders(requestOrigin: string | null): Record<string, string> {
+  let allowOrigin: string;
+  if (ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS[0] === "*") {
+    allowOrigin = "*";
+  } else if (requestOrigin && ALLOWED_ORIGINS.includes(requestOrigin)) {
+    allowOrigin = requestOrigin;
+  } else {
+    allowOrigin = ALLOWED_ORIGINS[0];
+  }
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 // SSO CCA Configuration (to be set via secrets)
 const SSO_CONFIG = {
@@ -534,6 +549,8 @@ function validateStateFormat(state: unknown): { valid: boolean; error?: string }
 
 Deno.serve(async (req) => {
   console.log(`[SSO-CCA] === Function invoked === method=${req.method} url=${req.url}`);
+
+  const corsHeaders = getCorsHeaders(req.headers.get("origin"));
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
