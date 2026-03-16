@@ -92,12 +92,14 @@ function calculateStatus(summary: FinancialSummaryData | null): AccountStatus {
 export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
-  const { currentOrganization } = useOrganizations();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   const { viewingOrganizationId } = useCliente();
   const queryClient = useQueryClient();
 
   const userId = profile?.id ?? null;
-  const organizationId = overrideOrgId || viewingOrganizationId || currentOrganization?.id || null;
+  // For CCA internal users, don't fall back to CCA org — financial RPCs filter
+  // org_type='client' so the CCA org (org_type='cca_owner') causes errors.
+  const organizationId = overrideOrgId || viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   const { data: organizationInfo, isLoading: isLoadingOrgInfo } = useQuery({
     queryKey: ['organization-financial-info', userId, organizationId],
@@ -232,7 +234,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     financialSummary,
     financialItems,
     financialByEntity,
-    navCache: null,
     navItems: financialItems.map((item, index) => ({
       id: `${item.numero_documento ?? 'doc'}-${index}`,
       client_code: item.client_code,
@@ -245,42 +246,9 @@ export function useFinanceiro(overrideOrgId?: string) {
     })),
     navError: financialItemsError ?? null,
     clientCode: organizationInfo?.client_code ?? null,
-    baseOrganizationClientCode: organizationInfo?.client_code ?? null,
-    availableJvrisIds: [],
-    lastSyncResult: null,
     isLoading: isLoadingOrgInfo || isLoadingSummary,
     isLoadingNav: isLoadingItems || isLoadingByEntity,
     isPlatformAdmin,
     updateOrganizationFinancial,
-    syncNavFromSharePoint: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    setJvrisId: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    createInvoice: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    updateInvoiceStatus: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    deleteInvoice: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    createFolder: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
   };
 }

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { toast } from '@/hooks/use-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -13,23 +15,20 @@ export type ImpactoWithRelations = Impacto & {
   contratos: Tables<'contratos'> | null;
 };
 
-const getCurrentOrganizationId = async (userId: string): Promise<string | null> => {
-  const { data } = await supabase
-    .from('profiles')
-    .select('current_organization_id')
-    .eq('id', userId)
-    .maybeSingle();
-  return data?.current_organization_id || null;
-};
-
 export const useImpactos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { viewingOrganizationId } = useCliente();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  // For CCA internal users, require explicit client selection
+  const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   const { data: impactos, isLoading, error } = useQuery({
-    queryKey: ['impactos'],
+    queryKey: ['impactos', organizationId],
     staleTime: 30 * 1000,
     queryFn: async () => {
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from('impactos')
         .select(`
@@ -37,19 +36,18 @@ export const useImpactos = () => {
           eventos_legislativos(*),
           contratos(id, titulo_contrato, id_interno)
         `)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data as ImpactoWithRelations[];
     },
-    enabled: !!user,
+    enabled: !!user && !!organizationId,
   });
 
   const createImpacto = useMutation({
     mutationFn: async (impacto: ImpactoInsert) => {
       if (!user) throw new Error('Utilizador não autenticado');
-      
-      const organizationId = await getCurrentOrganizationId(user.id);
       if (!organizationId) throw new Error('Nenhuma organização selecionada');
 
       const { data, error } = await supabase

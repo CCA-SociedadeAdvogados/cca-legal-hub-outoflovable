@@ -18,6 +18,8 @@ import { ContractAttachments } from '@/components/contracts/ContractAttachments'
 import { ContratoLegislacao } from '@/components/contracts/ContratoLegislacao';
 import { ContractComplianceResults } from '@/components/contracts/ContractComplianceResults';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { CheckCircle2, XCircle, Globe } from 'lucide-react';
 
 function InfoRow({ label, value, icon: Icon }: { label: string; value?: string | number | null; icon?: React.ElementType }) {
@@ -46,7 +48,11 @@ export default function ContratoDetalhe() {
   const { data: contrato, isLoading } = useContrato(id);
   const { validationStatus, triggerCCAValidation } = useContractExtractions(id);
   const { isLocal } = useLegalHubProfile();
+  const { viewingOrganizationId } = useCliente();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   useCCAStatus(id);
+
+  const effectiveOrgId = viewingOrganizationId || currentOrganization?.id || null;
 
   if (isLoading) {
     return (
@@ -63,6 +69,18 @@ export default function ContratoDetalhe() {
       <AppLayout>
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold">Contrato não encontrado</h2>
+          <Button asChild className="mt-4"><Link to="/contratos">Voltar à lista</Link></Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!isCCAInternalAuthorized && contrato.organization_id !== effectiveOrgId) {
+    return (
+      <AppLayout>
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold">Acesso não autorizado</h2>
+          <p className="mt-2 text-muted-foreground">Este contrato não pertence à sua organização.</p>
           <Button asChild className="mt-4"><Link to="/contratos">Voltar à lista</Link></Button>
         </div>
       </AppLayout>

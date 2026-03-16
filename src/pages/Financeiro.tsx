@@ -72,7 +72,7 @@ export default function Financeiro() {
       if (error) throw error;
       return (data || []) as Contrato[];
     },
-    enabled: !!organizationId && (isCCAUser || isPlatformAdmin),
+    enabled: !!organizationId,
     staleTime: 30 * 1000,
   });
 
@@ -90,7 +90,7 @@ export default function Financeiro() {
       if (error) throw error;
       return data;
     },
-    enabled: !!organizationId && (isCCAUser || isPlatformAdmin),
+    enabled: !!organizationId,
     staleTime: 60 * 1000,
   });
 
@@ -550,7 +550,7 @@ export default function Financeiro() {
     </Card>
   );
 
-  const showClienteTabs = !!(organizationId && (isCCAUser || isPlatformAdmin));
+  const showClienteTabs = !!(organizationId && (isCCAUser || isPlatformAdmin || orgCliente));
 
   return (
     <AppLayout>
