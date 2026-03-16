@@ -14,8 +14,9 @@ export const useContratos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { viewingOrganizationId } = useCliente();
-  const { currentOrganization } = useOrganizations();
-  const organizationId = viewingOrganizationId || currentOrganization?.id || null;
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  // For CCA internal users, require explicit client selection — don't fall back to CCA org
+  const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   const { data: contratos, isLoading, error, refetch } = useQuery({
     queryKey: ['contratos', organizationId],

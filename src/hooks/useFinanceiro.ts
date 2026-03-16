@@ -92,12 +92,14 @@ function calculateStatus(summary: FinancialSummaryData | null): AccountStatus {
 export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
-  const { currentOrganization } = useOrganizations();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   const { viewingOrganizationId } = useCliente();
   const queryClient = useQueryClient();
 
   const userId = profile?.id ?? null;
-  const organizationId = overrideOrgId || viewingOrganizationId || currentOrganization?.id || null;
+  // For CCA internal users, don't fall back to CCA org — financial RPCs filter
+  // org_type='client' so the CCA org (org_type='cca_owner') causes errors.
+  const organizationId = overrideOrgId || viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   const { data: organizationInfo, isLoading: isLoadingOrgInfo } = useQuery({
     queryKey: ['organization-financial-info', userId, organizationId],

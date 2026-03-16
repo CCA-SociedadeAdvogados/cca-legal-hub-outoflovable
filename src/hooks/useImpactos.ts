@@ -19,8 +19,9 @@ export const useImpactos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { viewingOrganizationId } = useCliente();
-  const { currentOrganization } = useOrganizations();
-  const organizationId = viewingOrganizationId || currentOrganization?.id || null;
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  // For CCA internal users, require explicit client selection
+  const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   const { data: impactos, isLoading, error } = useQuery({
     queryKey: ['impactos', organizationId],
