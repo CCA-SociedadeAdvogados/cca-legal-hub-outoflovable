@@ -424,6 +424,12 @@ export function useOrganizations() {
     queryClient.invalidateQueries({ queryKey: ['financial-items'] });
     queryClient.invalidateQueries({ queryKey: ['financial-by-entity'] });
     queryClient.invalidateQueries({ queryKey: ['organization-financial-info'] });
+    queryClient.invalidateQueries({ queryKey: ['contratos'] });
+    queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
+    queryClient.invalidateQueries({ queryKey: ['impactos'] });
+    queryClient.invalidateQueries({ queryKey: ['contratos-org-cliente'] });
+    queryClient.invalidateQueries({ queryKey: ['homeConfig'] });
+    queryClient.invalidateQueries({ queryKey: ['contentBlocks'] });
   };
 
   const viewingOrganizationId = cliente?.organizationId ?? null;

@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { toast } from '@/hooks/use-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -8,25 +10,17 @@ export type EventoLegislativo = Tables<'eventos_legislativos'>;
 export type EventoLegislativoInsert = TablesInsert<'eventos_legislativos'>;
 export type EventoLegislativoUpdate = TablesUpdate<'eventos_legislativos'>;
 
-const getCurrentOrganizationId = async (userId: string): Promise<string | null> => {
-  const { data } = await supabase
-    .from('profiles')
-    .select('current_organization_id')
-    .eq('id', userId)
-    .maybeSingle();
-  return data?.current_organization_id || null;
-};
-
 export const useEventosLegislativos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { viewingOrganizationId } = useCliente();
+  const { currentOrganization } = useOrganizations();
+  const organizationId = viewingOrganizationId || currentOrganization?.id || null;
 
   const { data: eventos, isLoading, error } = useQuery({
-    queryKey: ['eventos_legislativos'],
+    queryKey: ['eventos_legislativos', organizationId],
     staleTime: 30 * 1000,
     queryFn: async () => {
-      if (!user) return [];
-      const organizationId = await getCurrentOrganizationId(user.id);
       if (!organizationId) return [];
 
       const { data, error } = await supabase
@@ -38,14 +32,12 @@ export const useEventosLegislativos = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && !!organizationId,
   });
 
   const createEvento = useMutation({
     mutationFn: async (evento: EventoLegislativoInsert) => {
       if (!user) throw new Error('Utilizador não autenticado');
-      
-      const organizationId = await getCurrentOrganizationId(user.id);
       if (!organizationId) throw new Error('Nenhuma organização selecionada');
 
       const { data, error } = await supabase

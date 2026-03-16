@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { toast } from '@/hooks/use-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -8,44 +10,37 @@ export type Contrato = Tables<'contratos'>;
 export type ContratoInsert = TablesInsert<'contratos'>;
 export type ContratoUpdate = TablesUpdate<'contratos'>;
 
-const getCurrentOrganizationId = async (userId: string): Promise<string | null> => {
-  const { data } = await supabase
-    .from('profiles')
-    .select('current_organization_id')
-    .eq('id', userId)
-    .maybeSingle();
-  return data?.current_organization_id || null;
-};
-
 export const useContratos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { viewingOrganizationId } = useCliente();
+  const { currentOrganization } = useOrganizations();
+  const organizationId = viewingOrganizationId || currentOrganization?.id || null;
 
   const { data: contratos, isLoading, error, refetch } = useQuery({
-    queryKey: ['contratos'],
+    queryKey: ['contratos', organizationId],
     queryFn: async () => {
-      // Use contratos_safe view for field-level security based on user role
-      // Viewers see only contract metadata, editors/admins/owners see full details
+      if (!organizationId) return [];
+
       const { data, error } = await supabase
         .from('contratos')
         .select('*', { count: 'exact' })
+        .eq('organization_id', organizationId)
         .eq('arquivado', false)
         .order('created_at', { ascending: false })
         .range(0, 199);
-      
+
       if (error) throw error;
       return data as Contrato[];
     },
-    enabled: !!user,
-    staleTime: 30 * 1000, // Consider data stale after 30 seconds
-    refetchOnWindowFocus: true, // Revalidate when window gains focus
+    enabled: !!user && !!organizationId,
+    staleTime: 30 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const createContrato = useMutation({
     mutationFn: async (contrato: ContratoInsert) => {
       if (!user) throw new Error('Utilizador não autenticado');
-      
-      const organizationId = await getCurrentOrganizationId(user.id);
       if (!organizationId) throw new Error('Nenhuma organização selecionada');
 
       const { data, error } = await supabase

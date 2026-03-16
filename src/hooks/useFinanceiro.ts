@@ -232,7 +232,6 @@ export function useFinanceiro(overrideOrgId?: string) {
     financialSummary,
     financialItems,
     financialByEntity,
-    navCache: null,
     navItems: financialItems.map((item, index) => ({
       id: `${item.numero_documento ?? 'doc'}-${index}`,
       client_code: item.client_code,
@@ -245,42 +244,9 @@ export function useFinanceiro(overrideOrgId?: string) {
     })),
     navError: financialItemsError ?? null,
     clientCode: organizationInfo?.client_code ?? null,
-    baseOrganizationClientCode: organizationInfo?.client_code ?? null,
-    availableJvrisIds: [],
-    lastSyncResult: null,
     isLoading: isLoadingOrgInfo || isLoadingSummary,
     isLoadingNav: isLoadingItems || isLoadingByEntity,
     isPlatformAdmin,
     updateOrganizationFinancial,
-    syncNavFromSharePoint: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    setJvrisId: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    createInvoice: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    updateInvoiceStatus: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    deleteInvoice: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
-    createFolder: {
-      mutate: () => {},
-      mutateAsync: async () => null,
-      isPending: false,
-    },
   };
 }
