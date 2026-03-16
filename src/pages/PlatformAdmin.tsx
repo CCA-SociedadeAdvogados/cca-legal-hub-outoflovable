@@ -279,7 +279,7 @@ export default function PlatformAdmin() {
     ?.filter(
       (org) =>
         (org.name ?? '').toLowerCase().includes(orgSearch.toLowerCase()) ||
-        org.slug.toLowerCase().includes(orgSearch.toLowerCase())
+        (org.slug ?? '').toLowerCase().includes(orgSearch.toLowerCase())
     )
     .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt'));
 
