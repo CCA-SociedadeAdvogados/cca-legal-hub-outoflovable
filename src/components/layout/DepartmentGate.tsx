@@ -41,6 +41,13 @@ export function DepartmentGate({ children }: DepartmentGateProps) {
     return <>{children}</>;
   }
 
+  // SSO CCA users never need to choose a department manually —
+  // the SSO callback sets it when available; if not, default to 'juridico'.
+  // Blocking them here would prevent access to the entire platform.
+  if (profile?.auth_method === 'sso_cca') {
+    return <>{children}</>;
+  }
+
   const handleSave = async () => {
     if (!selectedDept) {
       toast({ title: t('department.selectRequired'), variant: 'destructive' });
