@@ -969,8 +969,21 @@ Deno.serve(async (req) => {
       // we keep admin ops first as a defensive measure.
       // ═══════════════════════════════════════════════════════════════════════
 
-      // Auto-assign SSO users to CCA_Teste organization using SECURITY DEFINER function
-      const CCA_TESTE_ORG_ID = "e33bf0c9-71b9-491b-8054-d4c88d8bb4ee";
+      // Lookup dinâmico da org CCA real (client_code = 'C.0000', org_type = 'cca_owner').
+      // O hardcode 'CCA_TESTE_ORG_ID' mantém-se apenas como fallback de emergência.
+      const CCA_TESTE_ORG_ID = "e33bf0c9-71b9-491b-8054-d4c88d8bb4ee"; // fallback
+      const { data: ccaOrgRow } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("client_code", "C.0000")
+        .eq("org_type", "cca_owner")
+        .maybeSingle();
+      const ccaOrgId: string = ccaOrgRow?.id ?? CCA_TESTE_ORG_ID;
+      if (!ccaOrgRow) {
+        console.warn("[SSO-CCA] Org CCA real (C.0000/cca_owner) não encontrada — fallback para CCA_TESTE_ORG_ID");
+      } else {
+        console.log(`[SSO-CCA] Org CCA real encontrada: ${ccaOrgId}`);
+      }
 
       // ── Step 1: Check sso_admin_emails table (highest priority) ──────────────
       const { data: emailAdminConfig, error: emailAdminError } = await supabase
@@ -1085,12 +1098,12 @@ Deno.serve(async (req) => {
       }
 
       // ── Step 4: Assign user to CCA organization ────────────────────────────
-      console.log(`[SSO-CCA] Assigning user to CCA_Teste organization via RPC with role: ${assignedRole}`);
+      console.log(`[SSO-CCA] Assigning user to CCA org (${ccaOrgId}) via RPC with role: ${assignedRole}`);
 
       const { error: assignError } = await supabase
         .rpc("assign_sso_user_to_organization", {
           p_user_id: userId,
-          p_organization_id: CCA_TESTE_ORG_ID,
+          p_organization_id: ccaOrgId,
           p_role: assignedRole
         });
 
@@ -1101,7 +1114,7 @@ Deno.serve(async (req) => {
         const { error: directInsertError } = await supabase
           .from("organization_members")
           .upsert(
-            { organization_id: CCA_TESTE_ORG_ID, user_id: userId, role: assignedRole },
+            { organization_id: ccaOrgId, user_id: userId, role: assignedRole },
             { onConflict: "organization_id,user_id" }
           );
         if (directInsertError) {
@@ -1120,7 +1133,7 @@ Deno.serve(async (req) => {
       const { error: orgUpdateError } = await supabase
         .from("profiles")
         .update({
-          current_organization_id: CCA_TESTE_ORG_ID,
+          current_organization_id: ccaOrgId,
         })
         .eq("id", userId)
         .is("current_organization_id", null);
