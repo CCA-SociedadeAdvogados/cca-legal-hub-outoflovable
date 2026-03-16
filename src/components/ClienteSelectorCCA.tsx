@@ -41,7 +41,8 @@ export function ClienteSelectorCCA() {
 
   const handleSelect = useCallback(
     (item: (typeof resultados)[number]) => {
-      if (!item.can_open_in_platform || !item.organization_id) {
+      if (!item.organization_id) {
+        // Pode ocorrer transitoriamente antes do próximo sync provisionar o cliente
         toast.warning(`Cliente ${item.client_code} ainda não activado na plataforma`);
         return;
       }

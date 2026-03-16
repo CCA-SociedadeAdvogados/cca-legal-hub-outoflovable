@@ -552,6 +552,20 @@ serve(async (req) => {
       if (insertError) throw insertError;
     }
 
+    // ── Auto-provision organizations for all synced clients ──────
+    // Garante que cada jvris_id processado tem uma organization na
+    // plataforma (can_open_in_platform=true). Idempotente — clientes
+    // já existentes são ignorados. Clientes novos ficam imediatamente
+    // acessíveis nos RPCs financeiros sem intervenção manual.
+    const { data: provisionedCount, error: provisionError } = await supabaseAdmin
+      .rpc("fn_provision_orgs_for_client_codes", { p_client_codes: syncedIds });
+    if (provisionError) {
+      // Não bloquear o sync por falhas de provisioning — apenas registar
+      console.warn("Provisioning warning:", provisionError.message);
+    } else {
+      console.log(`Provisioned ${provisionedCount ?? 0} new organizations`);
+    }
+
     const totalItems = itemRecords.length;
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
@@ -589,6 +603,7 @@ serve(async (req) => {
         jvris_ids: cacheRecords.map((r) => r.jvris_id),
         auto_linked: autoLinkedJvrisId,
         needs_jvris_config: !orgJvrisId && cacheRecords.length > 1,
+        provisioned: provisionedCount ?? 0,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
