@@ -275,10 +275,13 @@ export default function PlatformAdmin() {
   };
 
   // Filtra organizações pelo termo de pesquisa
-  const filteredOrganizations = allOrganizations?.filter(
-    (org) => org.name.toLowerCase().includes(orgSearch.toLowerCase()) ||
-             org.slug.toLowerCase().includes(orgSearch.toLowerCase())
-  );
+  const filteredOrganizations = allOrganizations
+    ?.filter(
+      (org) =>
+        (org.name ?? '').toLowerCase().includes(orgSearch.toLowerCase()) ||
+        org.slug.toLowerCase().includes(orgSearch.toLowerCase())
+    )
+    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt'));
 
   const getRoleLabel = (role: AppRole) => {
     const labels: Record<AppRole, string> = {
