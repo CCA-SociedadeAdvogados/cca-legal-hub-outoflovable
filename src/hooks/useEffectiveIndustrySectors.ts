@@ -11,6 +11,7 @@ export function useEffectiveIndustrySectors() {
 
   const { data: sectors, isLoading } = useQuery({
     queryKey: ['effective-industry-sectors', effectiveOrganizationId],
+    staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!effectiveOrganizationId) return [];
 

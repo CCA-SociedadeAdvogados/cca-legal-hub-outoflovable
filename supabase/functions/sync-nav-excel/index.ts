@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
@@ -342,11 +342,17 @@ serve(async (req) => {
       "documento", "fatura", "invoice_number", "doc_number",
       "referencia", "reference", "numero", "nº",
     ];
+    const NAME_CANDIDATES = [
+      "nome", "name", "nome_cliente", "nome cliente", "designacao", "designação",
+      "descricao", "descrição", "empresa", "razao_social", "razão social",
+      "denominacao", "denominação", "firma", "company_name", "cliente",
+    ];
 
     // ── Group rows into parent (Client ID) + children (invoices) ─
     type ClientGroup = {
       parentRow: Record<string, unknown>;
       valorPendente: number | null;
+      name: string | null;
       children: Array<{
         row: Record<string, unknown>;
         numero: string | null;
@@ -398,9 +404,12 @@ serve(async (req) => {
           }
         } else {
           // ── New client group ──
+          const rawName = findValue(row, NAME_CANDIDATES);
+          const extractedName = rawName ? String(rawName).trim() : null;
           const group: ClientGroup = {
             parentRow: row as Record<string, unknown>,
             valorPendente: validVp,
+            name: extractedName && extractedName !== rawIdStr ? extractedName : null,
             children: [],
           };
           // If this parent row also has invoice data (flat structure), add as child
@@ -552,6 +561,51 @@ serve(async (req) => {
       if (insertError) throw insertError;
     }
 
+    // ── Update client names in organizations_legacy + organizations ─
+    // Only updates rows where name is NULL or equals client_code (placeholder).
+    // Graceful: if the Excel has no name column, namesWithData is empty → no-op.
+    const namesWithData = [...groups.entries()]
+      .filter(([, g]) => g.name !== null)
+      .map(([jvrisId, g]) => ({ client_code: jvrisId, name: g.name as string }));
+
+    let namesUpdated = 0;
+    for (const { client_code, name } of namesWithData) {
+      // Update organizations_legacy — only if name is placeholder
+      const { error: legacyErr } = await supabaseAdmin
+        .from("organizations_legacy")
+        .update({ name, updated_at: now })
+        .eq("client_code", client_code)
+        .or(`name.is.null,name.eq.${client_code}`);
+      if (legacyErr) {
+        console.warn(`Failed to update legacy name for ${client_code}:`, legacyErr.message);
+      } else {
+        // Propagate to organizations table as well
+        await supabaseAdmin
+          .from("organizations")
+          .update({ name })
+          .eq("client_code", client_code)
+          .or(`name.is.null,name.eq.${client_code}`);
+        namesUpdated++;
+      }
+    }
+    if (namesUpdated > 0) {
+      console.log(`Updated names for ${namesUpdated} clients`);
+    }
+
+    // ── Auto-provision organizations for all synced clients ──────
+    // Garante que cada jvris_id processado tem uma organization na
+    // plataforma (can_open_in_platform=true). Idempotente — clientes
+    // já existentes são ignorados. Clientes novos ficam imediatamente
+    // acessíveis nos RPCs financeiros sem intervenção manual.
+    const { data: provisionedCount, error: provisionError } = await supabaseAdmin
+      .rpc("fn_provision_orgs_for_client_codes", { p_client_codes: syncedIds });
+    if (provisionError) {
+      // Não bloquear o sync por falhas de provisioning — apenas registar
+      console.warn("Provisioning warning:", provisionError.message);
+    } else {
+      console.log(`Provisioned ${provisionedCount ?? 0} new organizations`);
+    }
+
     const totalItems = itemRecords.length;
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
@@ -589,6 +643,8 @@ serve(async (req) => {
         jvris_ids: cacheRecords.map((r) => r.jvris_id),
         auto_linked: autoLinkedJvrisId,
         needs_jvris_config: !orgJvrisId && cacheRecords.length > 1,
+        provisioned: provisionedCount ?? 0,
+        names_updated: namesUpdated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

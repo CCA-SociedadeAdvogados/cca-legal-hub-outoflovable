@@ -27,6 +27,7 @@ export function useCCANews() {
 
   const { data: news = [], isLoading } = useQuery({
     queryKey: ["cca-news"],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("cca_news")
@@ -86,8 +87,8 @@ export function useCCANews() {
       estado?: "rascunho" | "publicado" | "arquivado";
       data_publicacao?: string;
     }) => {
-      const updateData: Record<string, unknown> = { ...data };
-      
+      const updateData: Record<string, unknown> = { ...data, updated_by_id: user?.id };
+
       // Se está a publicar, definir data de publicação
       if (data.estado === "publicado" && !data.data_publicacao) {
         updateData.data_publicacao = new Date().toISOString();

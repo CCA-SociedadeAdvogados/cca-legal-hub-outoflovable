@@ -28,6 +28,7 @@ interface ContratoNormativoWithDoc extends ContratoNormativo {
 export function useContratoNormativos(contratoId: string | undefined) {
   return useQuery({
     queryKey: ['contrato-normativos', contratoId],
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<ContratoNormativoWithDoc[]> => {
       if (!contratoId) return [];
 

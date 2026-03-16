@@ -60,6 +60,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateSlug } from "@/lib/utils";
 import { IndustrySectorSelect } from "@/components/organizations/IndustrySectorSelect";
 import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
+import { ClientOnboardingTab } from "@/components/admin/ClientOnboardingTab";
 import { DepartmentsConfig } from "@/components/admin/DepartmentsConfig";
 import { OrgSharePointConfig } from "@/components/admin/OrgSharePointConfig";
 import { OrgLegalBiConfig } from "@/components/admin/OrgLegalBiConfig";
@@ -214,6 +215,7 @@ export default function PlatformAdmin() {
   // Query para histórico de impersonation
   const { data: impersonationHistory, isLoading: isLoadingHistory } = useQuery({
     queryKey: ['impersonation-history'],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       // Expire stale sessions before fetching history
       await supabase.rpc('expire_stale_impersonation_sessions');
@@ -273,10 +275,13 @@ export default function PlatformAdmin() {
   };
 
   // Filtra organizações pelo termo de pesquisa
-  const filteredOrganizations = allOrganizations?.filter(
-    (org) => org.name.toLowerCase().includes(orgSearch.toLowerCase()) ||
-             org.slug.toLowerCase().includes(orgSearch.toLowerCase())
-  );
+  const filteredOrganizations = allOrganizations
+    ?.filter(
+      (org) =>
+        (org.name ?? '').toLowerCase().includes(orgSearch.toLowerCase()) ||
+        (org.slug ?? '').toLowerCase().includes(orgSearch.toLowerCase())
+    )
+    .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt'));
 
   const getRoleLabel = (role: AppRole) => {
     const labels: Record<AppRole, string> = {
@@ -341,7 +346,7 @@ export default function PlatformAdmin() {
         .from("profiles")
         .select("id, email")
         .eq("email", searchEmail.trim())
-        .single();
+        .maybeSingle();
 
       if (error || !profile) {
         toast({
@@ -754,6 +759,10 @@ export default function PlatformAdmin() {
             <TabsTrigger value="admins">
               <Shield className="h-4 w-4 mr-2" />
               {t("admin.platformAdmins", "Platform Admins")}
+            </TabsTrigger>
+            <TabsTrigger value="onboarding">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Onboarding Clientes
             </TabsTrigger>
           </TabsList>
 
@@ -1306,6 +1315,11 @@ export default function PlatformAdmin() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Onboarding Tab */}
+          <TabsContent value="onboarding">
+            <ClientOnboardingTab organizations={allOrganizations ?? []} />
           </TabsContent>
         </Tabs>
 

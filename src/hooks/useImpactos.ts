@@ -28,6 +28,7 @@ export const useImpactos = () => {
 
   const { data: impactos, isLoading, error } = useQuery({
     queryKey: ['impactos'],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('impactos')

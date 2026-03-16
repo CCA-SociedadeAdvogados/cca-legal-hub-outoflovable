@@ -9,7 +9,10 @@ type Departamento = Database["public"]["Enums"]["departamento"];
 export interface CreateUserPayload {
   email: string;
   nome_completo: string;
-  organizationId: string;
+  /** UUID da organização. Mutuamente exclusivo com jvris_id. */
+  organizationId?: string;
+  /** ID JVRIS do cliente — alternativa ao organizationId. A edge function resolve o UUID. */
+  jvris_id?: string;
   role: AppRole;
   departamento?: Departamento;
   password?: string;
@@ -81,10 +84,12 @@ export function usePlatformAdmin() {
       return data;
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: platformAdmins, isLoading: isLoadingAdmins } = useQuery({
     queryKey: ["platformAdmins"],
+    staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       // Get platform admins
       const { data: admins, error } = await supabase
@@ -112,6 +117,7 @@ export function usePlatformAdmin() {
 
   const { data: globalStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ["globalStats"],
+    staleTime: 60 * 1000,
     queryFn: async (): Promise<GlobalStats> => {
       const [orgsResult, contractsResult, profilesResult] = await Promise.all([
         supabase.from("organizations").select("id", { count: "exact", head: true }),
@@ -139,6 +145,7 @@ export function usePlatformAdmin() {
 
   const { data: allOrganizations, isLoading: isLoadingOrgs } = useQuery({
     queryKey: ["allOrganizations"],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations")
@@ -152,6 +159,7 @@ export function usePlatformAdmin() {
 
   const { data: allContracts, isLoading: isLoadingContracts } = useQuery({
     queryKey: ["allContracts"],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       // Platform admins use contratos_safe view which still shows all fields for admins
       // Views don't support PostgREST joins, so fetch org names separately
@@ -266,6 +274,7 @@ export function usePlatformAdmin() {
   const useOrganizationMembers = (orgId: string | null) => {
     return useQuery({
       queryKey: ["orgMembers", orgId],
+      staleTime: 30 * 1000,
       queryFn: async (): Promise<OrganizationMember[]> => {
         if (!orgId) return [];
         

@@ -31,6 +31,7 @@ interface Source {
 export function useLegalSources() {
   return useQuery({
     queryKey: ['legal-sources'],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<Source[]> => {
       // Use edge function to get sources since we can't directly query legal schema
       const { data, error } = await supabase.functions.invoke('legal-api', {
@@ -45,6 +46,7 @@ export function useLegalSources() {
 export function useLegalSearch(query: string, sourceKey: string | null, limit = 50, offset = 0) {
   return useQuery({
     queryKey: ['legal-documents', query, sourceKey, limit, offset],
+    staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<LegalDocument[]> => {
       const { data, error } = await supabase.functions.invoke('legal-api', {
         body: { 

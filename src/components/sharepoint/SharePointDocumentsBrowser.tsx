@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 interface SharePointDocumentsBrowserProps {
   onSelectDocument?: (document: any) => void;
   className?: string;
+  overrideOrgId?: string;
 }
 
 const FILE_ICONS: Record<string, React.ElementType> = {
@@ -69,14 +70,15 @@ function formatFileSize(bytes: number | null): string {
 export function SharePointDocumentsBrowser({
   onSelectDocument,
   className,
+  overrideOrgId,
 }: SharePointDocumentsBrowserProps) {
   const { t } = useTranslation();
   const [currentPath, setCurrentPath] = useState("/");
   const [pathHistory, setPathHistory] = useState<string[]>([]);
 
-  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig();
-  const { data: documents, isLoading: isLoadingDocs } = useSharePointDocuments(currentPath);
-  const syncSharePoint = useSyncSharePoint();
+  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(overrideOrgId);
+  const { data: documents, isLoading: isLoadingDocs } = useSharePointDocuments(currentPath, overrideOrgId);
+  const syncSharePoint = useSyncSharePoint(overrideOrgId);
   const uploadToSharePoint = useUploadToSharePoint();
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

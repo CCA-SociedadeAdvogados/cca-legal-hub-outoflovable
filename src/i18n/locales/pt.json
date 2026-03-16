@@ -1023,8 +1023,8 @@
     "errorLoadingInvoices": "Erro ao carregar faturas. Verifique a ligação e tente novamente.",
     "emDia": "Em Dia",
     "emAberto": "Em Aberto",
-    "searchByJvrisId": "Pesquisar por ID Jvris",
-    "jvrisId": "ID Jvris",
+    "searchByClientCode": "Seleccionar cliente",
+    "clientCode": "Código cliente",
     "noMatchingClients": "Nenhum cliente encontrado",
     "noClientsWithJvrisId": "Nenhuma organização com ID Jvris configurado"
   },

@@ -59,6 +59,7 @@ export function useContractComplianceAnalysis(contratoId?: string) {
 
   const { data: analysis, isLoading, error } = useQuery({
     queryKey,
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<SavedComplianceAnalysis | null> => {
       if (!contratoId) return null;
 

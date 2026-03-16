@@ -34,6 +34,7 @@ export function useAuditLogs(options: UseAuditLogsOptions = {}) {
 
   const { data: logs = [], isLoading, error, refetch } = useQuery({
     queryKey: ["audit_logs", profile?.current_organization_id, tableName, action, userId, recordId, startDate, endDate, limit],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       let query = supabase
         .from("audit_logs")

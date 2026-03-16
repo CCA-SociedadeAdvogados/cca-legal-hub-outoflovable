@@ -28,6 +28,7 @@ export function useDepartments(organizationId: string | null) {
 
   const { data: departments, isLoading } = useQuery({
     queryKey: ["departments", organizationId],
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<Department[]> => {
       if (!organizationId) return [];
       const { data, error } = await supabase

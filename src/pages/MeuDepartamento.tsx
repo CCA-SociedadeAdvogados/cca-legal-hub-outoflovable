@@ -27,6 +27,7 @@ export default function MeuDepartamento() {
 
   const { data: deptMembers, isLoading: membersLoading } = useQuery({
     queryKey: ['dept-members', deptIds],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!currentOrganization?.id || deptIds.length === 0) return [];
       const { data: ud, error } = await (supabase as any)

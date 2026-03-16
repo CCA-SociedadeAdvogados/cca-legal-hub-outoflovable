@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
@@ -9,7 +9,6 @@ const corsHeaders = {
 // Enable by setting DEMO_LOGIN_ENABLED=true (case-insensitive) in secrets.
 function isDemoEnabled(): boolean {
   const raw = (Deno.env.get("DEMO_LOGIN_ENABLED") ?? "").trim();
-  console.log(`[Demo-Login] DEMO_LOGIN_ENABLED raw value: "${raw}"`);
   return /^(true|1|yes|on)$/i.test(raw);
 }
 

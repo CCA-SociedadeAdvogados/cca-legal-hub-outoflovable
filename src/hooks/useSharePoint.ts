@@ -76,6 +76,7 @@ export function useSharePointConfig(overrideOrgId?: string) {
 
   return useQuery({
     queryKey: ["sharepoint-config", organizationId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<SharePointConfig | null> => {
       if (!organizationId) return null;
 
@@ -117,6 +118,7 @@ export function useSharePointDocuments(folderPath: string = "/", overrideOrgId?:
 
   return useQuery({
     queryKey: ["sharepoint-documents", organizationId, folderPath],
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<SharePointDocument[]> => {
       if (!organizationId) return [];
 
@@ -162,6 +164,7 @@ export function useSharePointSyncLogs(limit: number = 10, overrideOrgId?: string
 
   return useQuery({
     queryKey: ["sharepoint-sync-logs", organizationId, limit],
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<SharePointSyncLog[]> => {
       if (!organizationId) return [];
 
@@ -370,6 +373,7 @@ export function useDeleteSharePointConfig() {
 export function useSharePointConfigByOrgId(orgId: string | null) {
   return useQuery({
     queryKey: ["sharepoint-config", orgId],
+    staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<SharePointConfig | null> => {
       if (!orgId) return null;
 

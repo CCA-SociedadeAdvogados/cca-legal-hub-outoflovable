@@ -87,10 +87,9 @@ function calculateStatus(summary: FinancialSummaryData | null): AccountStatus {
 }
 
 /**
- * @param overrideOrgId organização efectiva a usar
- * @param _overrideJvrisId mantido apenas por compatibilidade, sem uso no novo modelo
+ * @param overrideOrgId organização efectiva a usar (override)
  */
-export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string | null) {
+export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
   const { isPlatformAdmin } = usePlatformAdmin();
   const { currentOrganization } = useOrganizations();
@@ -114,6 +113,7 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
       return (data?.[0] ?? null) as FinancialHomeData | null;
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const { data: financialSummary, isLoading: isLoadingSummary } = useQuery({
@@ -130,6 +130,7 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
       return (data?.[0] ?? null) as FinancialSummaryData | null;
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const { data: financialItems = [], isLoading: isLoadingItems, error: financialItemsError } = useQuery({
@@ -146,6 +147,7 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
       return (data ?? []) as FinancialItem[];
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const { data: financialByEntity = [], isLoading: isLoadingByEntity } = useQuery({
@@ -162,6 +164,7 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
       return (data ?? []) as FinancialEntitySummary[];
     },
     enabled: !!userId && !!organizationId,
+    staleTime: 60 * 1000,
   });
 
   const accountSummary: AccountSummary = {
@@ -205,6 +208,7 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
         .from('organizations')
         .update({
           tipo_cliente: data.tipo_cliente,
+          updated_by_id: userId,
         })
         .eq('id', organizationId);
 
@@ -240,8 +244,8 @@ export function useFinanceiro(overrideOrgId?: string, _overrideJvrisId?: string 
       estado: item.estado,
     })),
     navError: financialItemsError ?? null,
-    jvrisId: organizationInfo?.client_code ?? null,
-    baseOrganizationJvrisId: organizationInfo?.client_code ?? null,
+    clientCode: organizationInfo?.client_code ?? null,
+    baseOrganizationClientCode: organizationInfo?.client_code ?? null,
     availableJvrisIds: [],
     lastSyncResult: null,
     isLoading: isLoadingOrgInfo || isLoadingSummary,

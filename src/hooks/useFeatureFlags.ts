@@ -25,6 +25,7 @@ export function useFeatureFlags() {
       if (error) throw error;
       return data as FeatureFlag[];
     },
+    staleTime: 5 * 60 * 1000, // feature flags raramente mudam
   });
 
   const updateFlag = useMutation({
@@ -80,6 +81,7 @@ export function useFeatureFlag(flagName: string) {
       }
       return data?.enabled ?? false;
     },
+    staleTime: 5 * 60 * 1000,
   });
 
   return { enabled, isLoading };

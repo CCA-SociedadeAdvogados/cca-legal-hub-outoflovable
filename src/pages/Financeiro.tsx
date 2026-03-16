@@ -85,7 +85,7 @@ export default function Financeiro() {
           'id, name, slug, jvris_id, tipo_cliente, prazo_pagamento_dias, logo_url, industry_sectors, created_at',
         )
         .eq('id', organizationId!)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

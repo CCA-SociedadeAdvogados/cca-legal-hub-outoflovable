@@ -58,7 +58,6 @@ export default function SSOCallback() {
         );
 
         const result = await response.json();
-        console.log("[SSO Callback] Edge function result:", result);
 
         if (!response.ok || result.error) {
           setError({ code: result.error || "callback_failed", message: result.message || "Falha no processo de autenticação" });

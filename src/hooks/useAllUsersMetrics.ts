@@ -36,6 +36,7 @@ export interface AllMembersEntry {
 export function useAllUsersMetrics(isPlatformAdmin: boolean) {
   const { data: allMembers, isLoading: isLoadingMembers } = useQuery({
     queryKey: ["allMembersWithProfiles"],
+    staleTime: 30 * 1000,
     queryFn: async (): Promise<AllMembersEntry[]> => {
       // 1. Fetch ALL profiles (base list — every user in the system)
       const { data: allProfiles, error: profilesError } = await supabase

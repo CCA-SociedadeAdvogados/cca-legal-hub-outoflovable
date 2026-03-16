@@ -69,6 +69,7 @@ export function useContractExtractions(contratoId?: string) {
 
   const { data: extractions, isLoading } = useQuery({
     queryKey: ['contract-extractions', contratoId],
+    staleTime: 30 * 1000,
     queryFn: async () => {
       if (!contratoId) return [];
       const { data, error } = await supabase
