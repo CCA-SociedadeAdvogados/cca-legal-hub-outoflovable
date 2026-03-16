@@ -342,11 +342,17 @@ serve(async (req) => {
       "documento", "fatura", "invoice_number", "doc_number",
       "referencia", "reference", "numero", "nº",
     ];
+    const NAME_CANDIDATES = [
+      "nome", "name", "nome_cliente", "nome cliente", "designacao", "designação",
+      "descricao", "descrição", "empresa", "razao_social", "razão social",
+      "denominacao", "denominação", "firma", "company_name", "cliente",
+    ];
 
     // ── Group rows into parent (Client ID) + children (invoices) ─
     type ClientGroup = {
       parentRow: Record<string, unknown>;
       valorPendente: number | null;
+      name: string | null;
       children: Array<{
         row: Record<string, unknown>;
         numero: string | null;
@@ -398,9 +404,12 @@ serve(async (req) => {
           }
         } else {
           // ── New client group ──
+          const rawName = findValue(row, NAME_CANDIDATES);
+          const extractedName = rawName ? String(rawName).trim() : null;
           const group: ClientGroup = {
             parentRow: row as Record<string, unknown>,
             valorPendente: validVp,
+            name: extractedName && extractedName !== rawIdStr ? extractedName : null,
             children: [],
           };
           // If this parent row also has invoice data (flat structure), add as child
@@ -552,6 +561,37 @@ serve(async (req) => {
       if (insertError) throw insertError;
     }
 
+    // ── Update client names in organizations_legacy + organizations ─
+    // Only updates rows where name is NULL or equals client_code (placeholder).
+    // Graceful: if the Excel has no name column, namesWithData is empty → no-op.
+    const namesWithData = [...groups.entries()]
+      .filter(([, g]) => g.name !== null)
+      .map(([jvrisId, g]) => ({ client_code: jvrisId, name: g.name as string }));
+
+    let namesUpdated = 0;
+    for (const { client_code, name } of namesWithData) {
+      // Update organizations_legacy — only if name is placeholder
+      const { error: legacyErr } = await supabaseAdmin
+        .from("organizations_legacy")
+        .update({ name, updated_at: now })
+        .eq("client_code", client_code)
+        .or(`name.is.null,name.eq.${client_code}`);
+      if (legacyErr) {
+        console.warn(`Failed to update legacy name for ${client_code}:`, legacyErr.message);
+      } else {
+        // Propagate to organizations table as well
+        await supabaseAdmin
+          .from("organizations")
+          .update({ name })
+          .eq("client_code", client_code)
+          .or(`name.is.null,name.eq.${client_code}`);
+        namesUpdated++;
+      }
+    }
+    if (namesUpdated > 0) {
+      console.log(`Updated names for ${namesUpdated} clients`);
+    }
+
     // ── Auto-provision organizations for all synced clients ──────
     // Garante que cada jvris_id processado tem uma organization na
     // plataforma (can_open_in_platform=true). Idempotente — clientes
@@ -604,6 +644,7 @@ serve(async (req) => {
         auto_linked: autoLinkedJvrisId,
         needs_jvris_config: !orgJvrisId && cacheRecords.length > 1,
         provisioned: provisionedCount ?? 0,
+        names_updated: namesUpdated,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
