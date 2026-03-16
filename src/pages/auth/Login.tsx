@@ -159,6 +159,19 @@ export default function Login() {
       }
 
       if (data.authUrl) {
+        // Validate authUrl against Microsoft allowlist before redirect (A2 — open redirect fix)
+        try {
+          const parsed = new URL(data.authUrl);
+          const allowed = ["login.microsoftonline.com", "login.microsoft.com"];
+          if (parsed.protocol !== "https:" || !allowed.includes(parsed.hostname)) {
+            toast.error("URL de autenticação inválida. Contacte o administrador.");
+            return;
+          }
+        } catch {
+          toast.error("URL de autenticação inválida. Contacte o administrador.");
+          return;
+        }
+
         // Store state in sessionStorage for CSRF validation on callback
         sessionStorage.setItem("sso_state", data.state);
 

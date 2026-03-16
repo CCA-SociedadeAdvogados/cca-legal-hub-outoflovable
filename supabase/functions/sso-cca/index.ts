@@ -1114,15 +1114,16 @@ Deno.serve(async (req) => {
       }
 
       // ── Step 5: Update profile with org assignment ─────────────────────
-      // ALWAYS set current_organization_id to CCA (even if already set to something else).
-      // Do NOT force onboarding_completed — SSO users must go through onboarding
-      // to select their department and role on first login.
+      // Only set current_organization_id when NULL (first SSO login).
+      // Per CLAUDE.md rule #13: NEVER overwrite current_organization_id for
+      // CCA internal users — it is their identity anchor, not a viewing context.
       const { error: orgUpdateError } = await supabase
         .from("profiles")
         .update({
           current_organization_id: CCA_TESTE_ORG_ID,
         })
-        .eq("id", userId);
+        .eq("id", userId)
+        .is("current_organization_id", null);
 
       if (orgUpdateError) {
         console.error(`[SSO-CCA] Failed to set current_organization_id:`, orgUpdateError.message);

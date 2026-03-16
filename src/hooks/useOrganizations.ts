@@ -296,7 +296,7 @@ export function useOrganizations() {
         setCliente({
           organizationId: currentOrganization.id,
           nome: currentOrganization.name,
-          clientCode: currentOrganization.client_code || currentOrganization.jvris_id || '',
+          clientCode: currentOrganization.client_code || '',
         });
       }
     } else {
