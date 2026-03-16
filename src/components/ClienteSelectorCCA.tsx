@@ -152,16 +152,20 @@ export function ClienteSelectorCCA() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <p className="truncate text-sm font-medium">{item.client_name}</p>
+                      <p className="truncate text-sm font-medium">
+                        {item.client_name ?? item.client_code}
+                      </p>
                       {!item.can_open_in_platform && (
                         <span className="shrink-0 text-[10px] font-medium text-muted-foreground border rounded px-1">
                           sem plataforma
                         </span>
                       )}
                     </div>
-                    <p className="font-mono text-xs text-muted-foreground">
-                      {t('financial.clientCode')}: {item.client_code}
-                    </p>
+                    {item.client_name && (
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {t('financial.clientCode')}: {item.client_code}
+                      </p>
+                    )}
                     {item.group_code && (
                       <p className="text-[11px] text-muted-foreground">
                         grupo: {item.group_code}

@@ -108,13 +108,21 @@ export default function CCAOrgSwitcher({ className }: Props) {
                     />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium text-gray-900">
-                        {client.client_name}
+                        {client.client_name ?? client.client_code}
                       </div>
-                      <div className="truncate text-xs text-gray-500">
-                        {client.client_code}
-                        {client.group_code ? ` · Grupo ${client.group_code}` : ''}
-                        {client.responsible ? ` · Resp. ${client.responsible}` : ''}
-                      </div>
+                      {client.client_name && (
+                        <div className="truncate text-xs text-gray-500">
+                          {client.client_code}
+                          {client.group_code ? ` · Grupo ${client.group_code}` : ''}
+                          {client.responsible ? ` · Resp. ${client.responsible}` : ''}
+                        </div>
+                      )}
+                      {!client.client_name && (client.group_code || client.responsible) && (
+                        <div className="truncate text-xs text-gray-500">
+                          {client.group_code ? `Grupo ${client.group_code}` : ''}
+                          {client.responsible ? ` · Resp. ${client.responsible}` : ''}
+                        </div>
+                      )}
                     </div>
                   </button>
                 );
