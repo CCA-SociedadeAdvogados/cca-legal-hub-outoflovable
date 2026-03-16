@@ -162,16 +162,24 @@ export default function Login() {
         // Store state in sessionStorage for CSRF validation on callback
         sessionStorage.setItem("sso_state", data.state);
 
-        // Validate redirect URL to prevent open redirect attacks
-        const allowedHosts = ["login.microsoftonline.com", "login.microsoft.com"];
-        let redirectHost: string;
+        // Validate redirect URL to prevent open redirect attacks (defence-in-depth)
+        // Accepts any HTTPS Microsoft/Azure AD auth endpoint
+        let parsedUrl: URL;
         try {
-          redirectHost = new URL(data.authUrl).hostname;
+          parsedUrl = new URL(data.authUrl);
         } catch {
           toast.error("URL de autenticação SSO inválido.");
           return;
         }
-        if (!allowedHosts.includes(redirectHost)) {
+        const { protocol, hostname } = parsedUrl;
+        const isMicrosoftAuthHost =
+          protocol === "https:" &&
+          (hostname === "login.microsoftonline.com" ||
+            hostname === "login.microsoft.com" ||
+            hostname === "sts.windows.net" ||
+            hostname.endsWith(".microsoftonline.com") ||
+            hostname.endsWith(".microsoft.com"));
+        if (!isMicrosoftAuthHost) {
           toast.error("URL de autenticação SSO inválido.");
           return;
         }
