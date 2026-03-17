@@ -34,7 +34,7 @@ export function ClienteSelectorCCA() {
   const { data: resultados = [], isFetching } = useQuery({
     queryKey: ['cca-client-search', debouncedSearch, 'all'],
     queryFn: () => searchCCAClients(debouncedSearch, false),
-    enabled: isCCAInternalAuthorized && !!debouncedSearch.trim(),
+    enabled: isCCAInternalAuthorized && debouncedSearch.trim().length >= 2,
     staleTime: 30 * 1000,
     placeholderData: (prev) => prev,
   });
@@ -122,9 +122,13 @@ export function ClienteSelectorCCA() {
           </div>
 
           <div className="max-h-[420px] overflow-y-auto overscroll-contain">
-            {!debouncedSearch.trim() ? (
+            {debouncedSearch.trim().length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 Escreva para pesquisar clientes
+              </div>
+            ) : debouncedSearch.trim().length < 2 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                Escreva pelo menos 2 caracteres
               </div>
             ) : isFetching && resultados.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">

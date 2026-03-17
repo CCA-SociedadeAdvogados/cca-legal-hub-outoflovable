@@ -1,12 +1,19 @@
 // ALL external libraries are imported dynamically to avoid crashing the edge
 // function during module initialisation on Supabase Edge Runtime / Deno v2.x.
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Max-Age": "86400",
-};
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 const AI_MODELS = [
   { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
@@ -83,7 +90,7 @@ Deno.serve(async (req) => {
   console.log(`[parse-contract] v3 – verify_jwt=false – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
 
   try {
@@ -91,7 +98,7 @@ Deno.serve(async (req) => {
       console.warn(`[parse-contract] Unexpected method: ${req.method}`);
       return new Response(
         JSON.stringify({ error: `Method ${req.method} not allowed` }),
-        { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -166,7 +173,7 @@ Deno.serve(async (req) => {
         } else {
           return new Response(
             JSON.stringify({ error: "Formato de ficheiro não suportado. Use PDF, Word ou TXT." }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
           );
         }
       }
@@ -175,7 +182,7 @@ Deno.serve(async (req) => {
     if (!contractText) {
       return new Response(
         JSON.stringify({ error: "Conteúdo do contrato é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -303,7 +310,7 @@ INSTRUÇÕES IMPORTANTES:
 
     return new Response(
       JSON.stringify({ success: true, data: parsedData, extractedText: contractText }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
@@ -311,7 +318,7 @@ INSTRUÇÕES IMPORTANTES:
     const httpStatus = error.httpStatus ?? 500;
     return new Response(
       JSON.stringify({ error: error.message || "Erro ao processar contrato" }),
-      { status: httpStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: httpStatus, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

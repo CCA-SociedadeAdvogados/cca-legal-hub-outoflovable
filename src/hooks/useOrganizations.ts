@@ -52,7 +52,7 @@ const CCA_SELECT_FIELDS = `
  */
 export async function searchCCAClients(term: string, platformOnly = true): Promise<CCAClientOption[]> {
   const clean = term.trim();
-  if (!clean) return [];
+  if (!clean || clean.length < 2) return [];
 
   let query = supabase
     .from('vw_cca_client_catalog_overview')
