@@ -42,12 +42,9 @@ export async function syncDepartamento(
     })
     .eq('id', userId);
 
-  if (profileError) throw profileError;
+  if (profileError) throw new Error(profileError.message || 'Erro ao actualizar perfil');
 
-  // Step 2: Find or create department row in the org
-  const deptName = DEPT_ENUM_TO_NAME[departamentoSlug] || departamentoSlug;
-
-  // Try to find existing department with this slug
+  // Step 2: Find existing department row in the org (do NOT create — admin responsibility)
   const { data: existingDept } = await db
     .from('departments')
     .select('id')
@@ -55,39 +52,10 @@ export async function syncDepartamento(
     .eq('slug', departamentoSlug)
     .maybeSingle();
 
-  let departmentId: string;
-
-  if (existingDept?.id) {
-    departmentId = existingDept.id;
-  } else {
-    // Create the department
-    const { data: newDept, error: createError } = await db
-      .from('departments')
-      .insert({
-        organization_id: organizationId,
-        name: deptName,
-        slug: departamentoSlug,
-        is_default: false,
-        is_system: false,
-        created_by_id: userId,
-      })
-      .select('id')
-      .single();
-
-    if (createError) {
-      // Race condition: another request created it — try to fetch again
-      const { data: retryDept } = await db
-        .from('departments')
-        .select('id')
-        .eq('organization_id', organizationId)
-        .eq('slug', departamentoSlug)
-        .maybeSingle();
-
-      if (!retryDept?.id) throw createError;
-      departmentId = retryDept.id;
-    } else {
-      departmentId = newDept.id;
-    }
+  if (!existingDept?.id) {
+    // Department doesn't exist yet in this org — profiles.departamento is saved,
+    // user_departments sync is skipped until the department is created by an admin.
+    return;
   }
 
   // Step 3: Insert into user_departments (idempotent)
@@ -96,11 +64,11 @@ export async function syncDepartamento(
     .insert({
       user_id: userId,
       organization_id: organizationId,
-      department_id: departmentId,
+      department_id: existingDept.id,
     });
 
   // Ignore unique constraint violations (user already in this department)
-  if (udError && !udError.message?.includes('duplicate key')) {
-    throw udError;
+  if (udError && !udError.message?.includes('duplicate key') && !udError.code?.includes('23505')) {
+    throw new Error(udError.message || 'Erro ao associar utilizador ao departamento');
   }
 }
