@@ -396,7 +396,7 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
       (o) =>
         o.jvris_id?.toLowerCase() === ref.toLowerCase() ||
         o.client_code?.toLowerCase() === ref.toLowerCase() ||
-        o.name.toLowerCase().includes(ref.toLowerCase())
+        (o.name ?? '').toLowerCase().includes(ref.toLowerCase())
     );
 
   const handleParse = () => {
