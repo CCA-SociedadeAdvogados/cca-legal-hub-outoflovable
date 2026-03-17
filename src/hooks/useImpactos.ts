@@ -52,9 +52,10 @@ export const useImpactos = () => {
 
       const { data, error } = await supabase
         .from('impactos')
-        .insert([{ 
-          ...impacto, 
+        .insert([{
+          ...impacto,
           created_by_id: user.id,
+          updated_by_id: user.id,
           organization_id: organizationId,
         }])
         .select()
@@ -74,8 +75,8 @@ export const useImpactos = () => {
 
   const updateImpacto = useMutation({
     mutationFn: async ({ id, ...updates }: ImpactoUpdate & { id: string }) => {
-      const updateData: ImpactoUpdate = { ...updates };
-      
+      const updateData: ImpactoUpdate = { ...updates, updated_by_id: user?.id };
+
       // If resolving, set resolution data
       if (updates.estado === 'resolvido') {
         updateData.data_resolucao = new Date().toISOString().split('T')[0];

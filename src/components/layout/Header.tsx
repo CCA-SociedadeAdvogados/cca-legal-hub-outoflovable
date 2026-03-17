@@ -13,13 +13,11 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector } from '@/components/LanguageSelector';
-import CCAOrgSwitcher from '@/components/layout/CCAOrgSwitcher';
+import { ClienteSelectorCCA } from '@/components/ClienteSelectorCCA';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { useOrganizations } from '@/hooks/useOrganizations';
-import { useCliente } from '@/contexts/ClienteContext';
 
 function formatTimeAgo(
   dateString: string,
@@ -57,9 +55,6 @@ export function Header() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const { isCCAInternalAuthorized } = useOrganizations();
-  const { cliente } = useCliente();
-
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
@@ -99,22 +94,8 @@ export function Header() {
       </div>
 
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-        {isCCAInternalAuthorized && cliente && (
-          <div className="hidden min-w-0 max-w-[380px] items-center md:flex">
-            <div className="mr-2 min-w-0 text-right">
-              <div className="truncate text-sm font-medium text-foreground">
-                {cliente.nome}
-              </div>
-              <div className="truncate text-xs text-muted-foreground">
-                {cliente.clientCode}
-                {cliente.groupCode ? ` · ${cliente.groupCode}` : ''}
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="shrink-0">
-          <CCAOrgSwitcher />
+          <ClienteSelectorCCA />
         </div>
 
         <div className="shrink-0">
