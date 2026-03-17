@@ -1205,5 +1205,68 @@
     "searchOrg": "Search organization...",
     "noOrgsFound": "No organizations found",
     "viewingOrg": "Viewing organization"
+  },
+  "ai": {
+    "assistant": "AI Assistant",
+    "chat": {
+      "title": "AI Assistant",
+      "placeholder": "Type your question... (Enter to send)",
+      "send": "Send",
+      "clear": "Clear conversation",
+      "greeting": "Hello! I can answer questions about this contract. How can I help?",
+      "suggestions": "Suggestions"
+    },
+    "executiveSummary": {
+      "title": "AI Executive Summary",
+      "generate": "Generate Summary",
+      "regenerate": "Regenerate",
+      "generating": "Generating...",
+      "description": "Generate a plain-language summary, ideal for sharing with non-legal managers and clients.",
+      "inSummary": "In summary",
+      "parties": "The parties",
+      "whatMatters": "What you need to know",
+      "importantDates": "Important dates",
+      "nextAction": "Next action",
+      "alerts": "Alerts",
+      "cached": "Cached"
+    },
+    "redline": {
+      "title": "Clause Analysis",
+      "analyze": "Analyse Clauses",
+      "analyzing": "Analysing...",
+      "description": "Analyse each contract clause for risk and balance. Identifies unbalanced clauses and suggests alternatives.",
+      "score": "Score",
+      "good": "Good",
+      "fair": "Fair",
+      "poor": "Poor",
+      "favorable": "Favourable",
+      "standard": "Standard",
+      "attention": "Attention",
+      "risk": "Risk",
+      "positives": "Positive Points",
+      "negatives": "Identified Risks",
+      "negotiation": "Negotiation Recommendations",
+      "suggestion": "Alternative suggestion"
+    },
+    "generate": {
+      "title": "Generate Contract",
+      "generating": "Generating...",
+      "description": "Generate a contract draft in legal Portuguese from a template."
+    },
+    "multiAnalysis": {
+      "title": "Portfolio Analysis",
+      "placeholder": "Question about the contract portfolio...",
+      "analyze": "Analyse",
+      "analyzing": "Analysing...",
+      "contractsAnalyzed": "{{count}} contracts analysed",
+      "referenced": "Referenced contracts"
+    },
+    "sharepoint": {
+      "provision": "Provision SharePoint + LegalBI",
+      "provisioning": "Provisioning...",
+      "provisionDescription": "Automatically creates the SharePoint folder structure for this client and configures the LegalBI link.",
+      "provisionSuccess": "SharePoint provisioned successfully! LegalBI configured automatically.",
+      "provisionError": "Error provisioning SharePoint"
+    }
   }
 }

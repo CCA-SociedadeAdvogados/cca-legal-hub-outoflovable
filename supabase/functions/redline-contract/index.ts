@@ -1,0 +1,191 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+/**
+ * redline-contract
+ *
+ * Análise cláusula a cláusula com anotações de risco (redlining).
+ * Modelo: Claude Sonnet 4.6 (análise jurídica complexa)
+ * Resultado guardado em contract_extractions com source = 'redline'
+ */
+
+const CLAUDE_SONNET = "claude-sonnet-4-6";
+
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
+
+async function callClaude(apiKey: string, system: string, user: string, maxTokens = 4096): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_SONNET,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  const text = data.content?.[0]?.text;
+  if (!text) throw new Error("Claude retornou resposta vazia");
+  return text;
+}
+
+function parseJSONResponse(content: string): unknown {
+  let jsonStr = content.trim();
+  const m = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (m) jsonStr = m[1].trim();
+  const fb = jsonStr.indexOf("{");
+  const lb = jsonStr.lastIndexOf("}");
+  if (fb !== -1 && lb > fb) jsonStr = jsonStr.slice(fb, lb + 1);
+  return JSON.parse(jsonStr);
+}
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders(req) });
+  }
+
+  try {
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY não configurada");
+
+    const { contract_id, contract_text, force_regenerate } = await req.json();
+    if (!contract_id) {
+      return new Response(
+        JSON.stringify({ error: "contract_id é obrigatório" }),
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verificar cache
+    if (!force_regenerate) {
+      const { data: existing } = await supabase
+        .from("contract_extractions")
+        .select("extraction_data")
+        .eq("contrato_id", contract_id)
+        .eq("source", "redline")
+        .maybeSingle();
+
+      if (existing?.extraction_data) {
+        return new Response(
+          JSON.stringify({ success: true, data: existing.extraction_data, cached: true }),
+          { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    // Obter dados do contrato e extracção anterior se não passados
+    const { data: contrato } = await supabase
+      .from("contratos")
+      .select("titulo_contrato, tipo_contrato, objeto_resumido, clausulas_importantes, obrigacoes_parte_a, obrigacoes_parte_b")
+      .eq("id", contract_id)
+      .maybeSingle();
+
+    const { data: extraction } = await supabase
+      .from("contract_extractions")
+      .select("extraction_data")
+      .eq("contrato_id", contract_id)
+      .in("source", ["cca_agent", "groq"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const contextText = contract_text || JSON.stringify({
+      contrato,
+      extraction: extraction?.extraction_data,
+    }, null, 2);
+
+    const MAX_CHARS = 80000;
+    const truncatedText = contextText.length > MAX_CHARS
+      ? contextText.substring(0, MAX_CHARS) + "\n[truncado]"
+      : contextText;
+
+    const systemPrompt = `Você é um advogado sénior especializado em revisão de contratos portugueses.
+Analise as cláusulas do contrato e classifique cada uma quanto ao risco e equilíbrio.
+
+Responda APENAS com JSON válido, sem markdown.
+
+Estrutura de resposta:
+{
+  "score_geral": <number 0-100 — pontuação geral do contrato (100 = ideal para o cliente)>,
+  "sumario": "string - avaliação geral do contrato em 2 frases",
+  "clausulas": [
+    {
+      "titulo": "string - nome/título da cláusula",
+      "texto_original": "string - excerto relevante do texto (máx 200 chars)",
+      "classificacao": "favoravel | standard | atencao | risco",
+      "justificacao": "string - porque esta classificação",
+      "sugestao": "string ou null - redacção alternativa sugerida (apenas para atencao/risco)"
+    }
+  ],
+  "pontos_positivos": ["array de pontos favoráveis ao cliente"],
+  "pontos_negativos": ["array de riscos ou desequilíbrios identificados"],
+  "recomendacoes_negociacao": ["array de sugestões de negociação prioritárias"]
+}
+
+Classificações:
+- favoravel: cláusula protege claramente o cliente / favorável
+- standard: cláusula standard de mercado, sem risco especial
+- atencao: cláusula que deve ser revista ou esclarecida
+- risco: cláusula desequilibrada, restritiva ou potencialmente prejudicial`;
+
+    const userMessage = `Analise as cláusulas deste contrato e faça o redlining:\n\n${truncatedText}`;
+
+    console.log(`[redline-contract] Analyzing contract ${contract_id}`);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 4096);
+
+    let redlineData;
+    try {
+      redlineData = parseJSONResponse(content);
+    } catch {
+      throw new Error("Erro ao processar análise de redlining");
+    }
+
+    // Guardar em cache
+    await supabase.from("contract_extractions").upsert({
+      contrato_id: contract_id,
+      source: "redline",
+      status: "success",
+      extraction_data: redlineData as any,
+      job_started_at: new Date().toISOString(),
+      job_completed_at: new Date().toISOString(),
+    }, { onConflict: "contrato_id,source" });
+
+    return new Response(
+      JSON.stringify({ success: true, data: redlineData, cached: false }),
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+    );
+  } catch (error: any) {
+    console.error("[redline-contract] Error:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+    );
+  }
+});

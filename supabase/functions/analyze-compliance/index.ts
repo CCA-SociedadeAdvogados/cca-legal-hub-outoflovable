@@ -1,5 +1,8 @@
 // ALL external libraries are imported dynamically to avoid crashing the edge
 // function during module initialisation on Supabase Edge Runtime / Deno v2.x.
+//
+// AI: Claude Sonnet 4.6 (claude-sonnet-4-6) via Anthropic Messages API
+// Context window: 1M tokens — análise jurídica complexa em português
 
 const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
 function corsHeaders(req: Request): Record<string, string> {
@@ -15,78 +18,43 @@ function corsHeaders(req: Request): Record<string, string> {
   };
 }
 
-const AI_MODELS = [
-  { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
-  { model: "llama-3.1-8b-instant",    name: "Llama 3.1 8B" },
-];
+const CLAUDE_SONNET = "claude-sonnet-4-6";
 
-async function callAIWithFallback(
+async function callClaude(
   apiKey: string,
-  messages: Array<{ role: string; content: string }>,
-  functionName: string
-): Promise<{ content: string; model: string }> {
-  let lastError: Error | null = null;
+  system: string,
+  user: string,
+  maxTokens = 4096,
+): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_SONNET,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
 
-  for (const { model, name } of AI_MODELS) {
-    try {
-      console.log(`[${functionName}] Trying ${name} (${model})...`);
-
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model, messages }),
-      });
-
-      if (response.status === 429) {
-        const body = await response.text();
-        console.warn(`[${functionName}] ${name} rate limited: ${body}`);
-        lastError = new Error(`${name} rate limited`);
-        continue;
-      }
-
-      if (response.status === 413) {
-        console.warn(`[${functionName}] ${name} payload too large, trying next model...`);
-        lastError = new Error(`${name} payload too large`);
-        continue;
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.warn(`[${functionName}] ${name} failed (${response.status}): ${errorText}`);
-        lastError = new Error(`${name} error: ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-
-      if (!content) {
-        console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
-        lastError = new Error(`${name} returned empty content`);
-        continue;
-      }
-
-      console.log(`[${functionName}] Success with ${name}`);
-      return { content, model: name };
-    } catch (error: any) {
-      console.warn(`[${functionName}] ${name} exception:`, error.message);
-      lastError = error;
-      continue;
-    }
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Claude API ${res.status}: ${err.slice(0, 400)}`);
   }
 
-  if (lastError?.message?.includes("payload too large")) {
-    throw new Error("O documento é demasiado grande para análise. Tente com um ficheiro mais curto ou cole apenas as secções mais relevantes.");
-  }
-  throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
+  const data = await res.json();
+  const text = data.content?.[0]?.text;
+  if (!text) throw new Error("Claude retornou resposta vazia");
+  return text;
 }
 
 // Input validation constants
-const MAX_TEXT_CONTENT_LENGTH = 500000; // 500KB of text (validation only — truncation happens before AI call)
-const MAX_CHARS_AI = 30000; // ~7 500 tokens — safe limit for Groq/Llama models
+const MAX_TEXT_CONTENT_LENGTH = 500000; // 500KB (validação — truncação acontece antes da chamada IA)
+const MAX_CHARS_AI = 100000; // ~25K tokens — seguro para Sonnet 1M context
 const MAX_ARRAY_LENGTH = 100;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_TYPES = ["parse_contract", "analyze_event_impact", "compliance_check", "contract_compliance_check"] as const;
@@ -116,11 +84,10 @@ function validateTextContent(text: unknown): { valid: boolean; error?: string } 
   return { valid: true };
 }
 
-// Truncate text for Groq/Llama models
 function truncateForAI(text: string): string {
   if (text.length <= MAX_CHARS_AI) return text;
-  console.warn(`Text truncated from ${text.length} to ${MAX_CHARS_AI} chars for AI analysis`);
-  return text.substring(0, MAX_CHARS_AI) + "\n\n[Nota: texto truncado — apenas os primeiros 30 000 caracteres foram analisados]";
+  console.warn(`[analyze-compliance] Text truncated from ${text.length} to ${MAX_CHARS_AI} chars`);
+  return text.substring(0, MAX_CHARS_AI) + "\n\n[Nota: texto truncado após 100 000 caracteres]";
 }
 
 interface AnalysisRequest {
@@ -268,9 +235,9 @@ Deno.serve(async (req) => {
       model: typeof requestedModel === "string" ? requestedModel : undefined,
     };
 
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY não está configurada");
     }
 
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
@@ -400,16 +367,9 @@ Deno.serve(async (req) => {
       throw new Error("Tipo de análise não suportado");
     }
 
-    console.log(`Processing ${request.type} analysis...`);
+    console.log(`[analyze-compliance] Processing ${request.type} with Claude Sonnet...`);
 
-    const { content } = await callAIWithFallback(
-      GROQ_API_KEY,
-      [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      "analyze-compliance"
-    );
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userPrompt, 4096);
 
     let parsedData;
     try {
@@ -418,16 +378,16 @@ Deno.serve(async (req) => {
       if (codeBlockMatch) {
         jsonStr = codeBlockMatch[1].trim();
       } else {
-        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
       }
-      const firstBrace = jsonStr.indexOf('{');
-      const lastBrace  = jsonStr.lastIndexOf('}');
+      const firstBrace = jsonStr.indexOf("{");
+      const lastBrace = jsonStr.lastIndexOf("}");
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
         jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
       }
       parsedData = JSON.parse(jsonStr);
     } catch {
-      console.error("Failed to parse AI response as JSON:", content.substring(0, 500));
+      console.error("[analyze-compliance] Failed to parse AI response as JSON:", content.substring(0, 500));
       throw new Error("Não foi possível processar a resposta da IA");
     }
 

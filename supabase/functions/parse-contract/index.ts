@@ -1,5 +1,8 @@
 // ALL external libraries are imported dynamically to avoid crashing the edge
 // function during module initialisation on Supabase Edge Runtime / Deno v2.x.
+//
+// AI: Claude Haiku 4.5 (claude-haiku-4-5-20251001) via Anthropic Messages API
+// Context window: 200K tokens — sem truncagem forçada de documentos
 
 const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
 function corsHeaders(req: Request): Record<string, string> {
@@ -15,79 +18,61 @@ function corsHeaders(req: Request): Record<string, string> {
   };
 }
 
-const AI_MODELS = [
-  { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
-  { model: "llama-3.1-8b-instant",    name: "Llama 3.1 8B" },
-];
+const CLAUDE_HAIKU = "claude-haiku-4-5-20251001";
+// 150K chars ≈ 37K tokens — seguro para Haiku 200K context.
+// Apenas como salvaguarda; a maioria dos contratos fica bem abaixo disto.
+const MAX_CHARS = 150000;
 
-async function callAIWithFallback(
+async function callClaude(
   apiKey: string,
-  messages: Array<{ role: string; content: string }>,
-  functionName: string,
-  modelsOverride?: typeof AI_MODELS
-): Promise<{ content: string; model: string }> {
-  const models = modelsOverride ?? AI_MODELS;
-  let lastError: Error | null = null;
+  system: string,
+  user: string,
+  maxTokens = 4096,
+): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      model: CLAUDE_HAIKU,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: "user", content: user }],
+    }),
+  });
 
-  for (const { model, name } of models) {
-    try {
-      console.log(`[${functionName}] Trying ${name} (${model})...`);
-
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model, messages }),
-      });
-
-      if (response.status === 429) {
-        const body = await response.text();
-        console.warn(`[${functionName}] ${name} rate limited: ${body}`);
-        lastError = new Error(`${name} rate limited`);
-        continue;
-      }
-
-      if (response.status === 413) {
-        console.warn(`[${functionName}] ${name} payload too large, trying next model...`);
-        lastError = new Error(`${name} payload too large`);
-        continue;
-      }
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.warn(`[${functionName}] ${name} failed (${response.status}): ${errorText}`);
-        lastError = new Error(`${name} error: ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
-
-      if (!content) {
-        console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
-        lastError = new Error(`${name} returned empty content`);
-        continue;
-      }
-
-      console.log(`[${functionName}] Success with ${name}`);
-      return { content, model: name };
-    } catch (error: any) {
-      console.warn(`[${functionName}] ${name} exception:`, error.message);
-      lastError = error;
-      continue;
-    }
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Claude API ${res.status}: ${err.slice(0, 400)}`);
   }
 
-  if (lastError?.message?.includes("payload too large")) {
-    throw new Error("O documento é demasiado grande para análise. Tente com um ficheiro mais curto ou cole apenas as secções mais relevantes.");
+  const data = await res.json();
+  const text = data.content?.[0]?.text;
+  if (!text) throw new Error("Claude retornou resposta vazia");
+  return text;
+}
+
+function parseJSONResponse(content: string): unknown {
+  let jsonStr = content.trim();
+  const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+  if (codeBlockMatch) {
+    jsonStr = codeBlockMatch[1].trim();
+  } else {
+    jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   }
-  throw lastError || new Error("Todos os modelos de IA falharam. Tente novamente mais tarde.");
+  const firstBrace = jsonStr.indexOf("{");
+  const lastBrace = jsonStr.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
+  }
+  return JSON.parse(jsonStr);
 }
 
 Deno.serve(async (req) => {
-  console.log(`[parse-contract] v3 – verify_jwt=false – ${req.method} request received`);
+  console.log(`[parse-contract] v4-claude – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders(req) });
@@ -95,25 +80,24 @@ Deno.serve(async (req) => {
 
   try {
     if (req.method !== "POST") {
-      console.warn(`[parse-contract] Unexpected method: ${req.method}`);
       return new Response(
         JSON.stringify({ error: `Method ${req.method} not allowed` }),
-        { status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+        { status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
     const body = await req.json();
     const { textContent, fileContent, fileName, mimeType, storagePath } = body;
 
-    console.log(`[parse-contract] POST payload keys: ${Object.keys(body).join(", ")}`);
-    console.log(`[parse-contract] textContent: ${textContent ? `${String(textContent).length} chars` : "absent"}, fileContent: ${fileContent ? `${String(fileContent).length} chars` : "absent"}, storagePath: ${storagePath ?? "absent"}, fileName: ${fileName ?? "absent"}`);
+    console.log(`[parse-contract] payload keys: ${Object.keys(body).join(", ")}`);
 
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY não está configurada");
     }
 
     let contractText = textContent as string | undefined;
+    let isScannedPDF = false;
 
     // ── 1. Obter conteúdo do ficheiro ──────────────────────────────────────
     if (!contractText) {
@@ -141,15 +125,14 @@ Deno.serve(async (req) => {
 
         if (!resolvedMime) {
           const lower = (resolvedName ?? storagePath).toLowerCase();
-          if (lower.endsWith(".pdf"))  resolvedMime = "application/pdf";
+          if (lower.endsWith(".pdf")) resolvedMime = "application/pdf";
           else if (lower.endsWith(".docx")) resolvedMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-          else if (lower.endsWith(".doc"))  resolvedMime = "application/msword";
-          else if (lower.endsWith(".txt"))  resolvedMime = "text/plain";
+          else if (lower.endsWith(".doc")) resolvedMime = "application/msword";
+          else if (lower.endsWith(".txt")) resolvedMime = "text/plain";
         }
         if (!resolvedName) {
           resolvedName = storagePath.split("/").pop() ?? "document";
         }
-
       } else if (fileContent) {
         console.log("Processing file from base64:", resolvedName, "Type:", resolvedMime);
         const binaryStr = atob(fileContent as string);
@@ -161,7 +144,9 @@ Deno.serve(async (req) => {
 
       if (fileBytes) {
         if (resolvedMime === "application/pdf" || resolvedName?.endsWith(".pdf")) {
-          contractText = await extractTextFromPDF(fileBytes);
+          const extracted = await extractTextFromPDF(fileBytes);
+          contractText = extracted.text;
+          isScannedPDF = extracted.isScanned;
         } else if (
           resolvedMime?.includes("word") ||
           resolvedName?.endsWith(".docx") ||
@@ -173,7 +158,7 @@ Deno.serve(async (req) => {
         } else {
           return new Response(
             JSON.stringify({ error: "Formato de ficheiro não suportado. Use PDF, Word ou TXT." }),
-            { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+            { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
           );
         }
       }
@@ -182,12 +167,20 @@ Deno.serve(async (req) => {
     if (!contractText) {
       return new Response(
         JSON.stringify({ error: "Conteúdo do contrato é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
-    // ── 2. Analisar contrato com IA ────────────────────────────────────────
-    console.log("Parsing contract text, length:", contractText.length);
+    // ── 2. Analisar contrato com Claude Haiku 4.5 ─────────────────────────
+    console.log(`[parse-contract] Text length: ${contractText.length} chars, scanned: ${isScannedPDF}`);
+
+    const truncatedText = contractText.length > MAX_CHARS
+      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado após 150 000 caracteres]"
+      : contractText;
+
+    if (contractText.length > MAX_CHARS) {
+      console.warn(`[parse-contract] Text truncated from ${contractText.length} to ${MAX_CHARS} chars`);
+    }
 
     const systemPrompt = `Você é um assistente jurídico sénior especializado em análise detalhada de contratos portugueses e europeus.
 Analise CUIDADOSAMENTE o texto do contrato fornecido e extraia TODAS as informações relevantes de forma estruturada e completa.
@@ -246,13 +239,23 @@ O JSON deve ter esta estrutura exata:
     "resolucao_litigios": "string ou null - forma de resolução (tribunais, arbitragem, mediação)"
   },
 
+  "tratamento_dados_pessoais": "boolean - o contrato envolve tratamento de dados pessoais",
+  "existe_dpa_anexo_rgpd": "boolean - existe DPA ou anexo de proteção de dados",
+  "transferencia_internacional": "boolean - há transferência internacional de dados pessoais",
+  "papel_entidade": "string ou null - responsavel, subcontratante, corresponsavel (papel da parte A no tratamento de dados)",
+  "categorias_dados_pessoais": "string ou null - categorias de dados pessoais tratados",
+
   "riscos_identificados": ["array de strings - potenciais riscos, lacunas ou pontos de atenção para revisão jurídica"],
   "recomendacoes": ["array de strings - sugestões de melhorias ou cláusulas em falta"],
 
   "foro_competente": "string ou null - tribunal ou foro competente",
-  "lei_aplicavel": "string ou null - lei aplicável ao contrato (ex: Lei Portuguesa)",
+  "lei_aplicavel": "string ou null - lei aplicável ao contrato (ex: Lei Portuguesa, RGPD)",
+  "prazos_denuncia_rescisao": "string ou null - condições e prazos de denúncia ou rescisão",
+  "aviso_previo_nao_renovacao_dias": "number ou null - dias de antecedência para não renovar",
+  "tipo_renovacao_detail": "string ou null - detalhe adicional sobre renovação",
+  "classificacao_juridica": "string ou null - classificação jurídica do contrato",
 
-  "sumario_executivo": "string - resumo executivo do contrato em 2-3 frases para leitura rápida",
+  "sumario_executivo": "string - resumo executivo do contrato em 2-3 frases para leitura rápida, em linguagem clara e acessível",
   "confianca": "number - nível de confiança da extração de 0 a 100 (baseado na qualidade do texto e clareza das informações)"
 }
 
@@ -263,83 +266,59 @@ INSTRUÇÕES IMPORTANTES:
 4. Para valores monetários, extraia apenas o número (sem € ou símbolos)
 5. Identifique corretamente quem é Parte A (geralmente o contratante/cliente) e Parte B (prestador/fornecedor)
 6. Nas cláusulas importantes, seja específico sobre o conteúdo
-7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades`;
+7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades
+8. O sumario_executivo deve ser em português simples, percetível por um não-advogado`;
 
-    // Limitar o texto para evitar exceder os limites de payload da API Groq
-    // (~30 000 chars ≈ 7 500 tokens — margem segura para modelos menores)
-    const MAX_CHARS = 30000;
-    const truncatedText = contractText.length > MAX_CHARS
-      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado — apenas os primeiros 30 000 caracteres foram analisados]"
-      : contractText;
+    const userMessage = isScannedPDF
+      ? `ATENÇÃO: Este PDF contém pouco texto extraível — pode ser um documento digitalizado. Analise o texto disponível com o máximo detalhe possível.\n\nContrato:\n\n${truncatedText}`
+      : `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`;
 
-    if (contractText.length > MAX_CHARS) {
-      console.warn(`Contract text truncated from ${contractText.length} to ${MAX_CHARS} chars`);
-    }
-
-    const { content } = await callAIWithFallback(
-      GROQ_API_KEY,
-      [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}` }
-      ],
-      "parse-contract"
-    );
+    console.log(`[parse-contract] Calling Claude Haiku...`);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 4096);
 
     // ── 3. Parsear resposta JSON ───────────────────────────────────────────
     let parsedData;
     try {
-      let jsonStr = content.trim();
-      const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
-      if (codeBlockMatch) {
-        jsonStr = codeBlockMatch[1].trim();
-      } else {
-        jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
-      }
-      const firstBrace = jsonStr.indexOf('{');
-      const lastBrace  = jsonStr.lastIndexOf('}');
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
-      }
-      parsedData = JSON.parse(jsonStr);
+      parsedData = parseJSONResponse(content);
     } catch {
-      console.error("Failed to parse AI response as JSON:", content.substring(0, 500));
+      console.error("[parse-contract] Failed to parse AI response as JSON:", content.substring(0, 500));
       throw new Error("Não foi possível processar a resposta da IA");
     }
 
-    console.log("Contract parsed successfully");
+    console.log("[parse-contract] Contract parsed successfully");
 
     return new Response(
-      JSON.stringify({ success: true, data: parsedData, extractedText: contractText }),
-      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      JSON.stringify({
+        success: true,
+        data: parsedData,
+        extractedText: contractText,
+        isScannedPDF,
+      }),
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-
   } catch (error: any) {
-    console.error("Error in parse-contract function:", error);
-    const httpStatus = error.httpStatus ?? 500;
+    console.error("[parse-contract] Error:", error);
     return new Response(
       JSON.stringify({ error: error.message || "Erro ao processar contrato" }),
-      { status: httpStatus, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
 });
 
-// ── Extracção de texto de PDF via pdfjs-dist (sem IA, sem custos) ─────────
-async function extractTextFromPDF(fileBytes: Uint8Array): Promise<string> {
-  console.log("Extracting text from PDF, size:", fileBytes.length);
+// ── Extracção de texto de PDF via pdfjs-dist ──────────────────────────────
+async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string; isScanned: boolean }> {
+  console.log("[parse-contract] Extracting text from PDF, size:", fileBytes.length);
 
   let pdfjs: any;
   try {
     pdfjs = await import("https://esm.sh/pdfjs-dist@4.0.379/build/pdf.min.mjs?external=canvas");
   } catch (importErr: any) {
-    console.error("Failed to import pdfjs-dist:", importErr.message);
+    console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
     throw new Error(
-      "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt e voltar a carregar."
+      "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt.",
     );
   }
 
-  // Apontar para o módulo worker real — necessário mesmo em ambientes
-  // edge/serverless porque o pdfjs-dist v4 exige um workerSrc truthy
-  // para inicializar o "fake worker" (fallback sem Web Worker).
   pdfjs.GlobalWorkerOptions.workerSrc =
     "https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs?external=canvas";
 
@@ -357,17 +336,22 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<string> {
 
   const fullText = pages.join("\n\n");
 
-  if (!fullText || fullText.trim().length === 0) {
-    throw new Error("Não foi possível extrair texto do PDF. O ficheiro pode ser uma imagem digitalizada — tente converter para Word ou TXT.");
+  // PDF digitalizado: texto extraído vazio ou muito curto
+  const isScanned = !fullText || fullText.trim().length < 100;
+
+  if (isScanned) {
+    console.warn("[parse-contract] PDF parece ser digitalizado (texto < 100 chars). A tentar análise com o texto disponível.");
+    // Não lançar erro — deixar Claude tentar com o texto disponível (pode ter algum OCR embutido)
+    return { text: fullText || "[PDF digitalizado — texto não extraível]", isScanned: true };
   }
 
-  console.log("PDF text extracted, length:", fullText.length);
-  return fullText;
+  console.log("[parse-contract] PDF text extracted, length:", fullText.length);
+  return { text: fullText, isScanned: false };
 }
 
 // ── Extracção de texto de Word (.docx) via zip.js ─────────────────────────
 async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Promise<string> {
-  console.log("Extracting text from Word document:", fileName);
+  console.log("[parse-contract] Extracting text from Word document:", fileName);
 
   try {
     const { BlobReader, ZipReader, TextWriter } = await import(
@@ -379,7 +363,7 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
     const entries = await zipReader.getEntries();
 
     const documentEntry = entries.find(
-      (e: any) => e.filename === "word/document.xml" || e.filename === "word\\document.xml"
+      (e: any) => e.filename === "word/document.xml" || e.filename === "word\\document.xml",
     );
 
     if (!documentEntry || !documentEntry.getData) {
@@ -396,20 +380,19 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
       throw new Error("Não foi possível extrair texto do documento Word");
     }
 
-    console.log("Word text extracted, length:", text.length);
+    console.log("[parse-contract] Word text extracted, length:", text.length);
     return text;
-
   } catch (error: any) {
-    console.error("Error extracting text from Word:", error);
+    console.error("[parse-contract] Error extracting text from Word:", error);
 
     if (fileName?.endsWith(".doc") && !fileName?.endsWith(".docx")) {
       throw new Error(
-        "Ficheiros .doc (formato antigo) não são suportados. Por favor, converta para .docx ou PDF."
+        "Ficheiros .doc (formato antigo) não são suportados. Por favor, converta para .docx ou PDF.",
       );
     }
 
     throw new Error(
-      "Não foi possível ler o ficheiro Word. Verifique se não está corrompido ou tente converter para PDF."
+      "Não foi possível ler o ficheiro Word. Verifique se não está corrompido ou tente converter para PDF.",
     );
   }
 }
@@ -427,12 +410,10 @@ function extractTextFromXml(xml: string): string {
 
   const decode = (s: string) =>
     s.replace(/&amp;/g, "&")
-     .replace(/&lt;/g,  "<")
-     .replace(/&gt;/g,  ">")
-     .replace(/&quot;/g, '"')
-     .replace(/&apos;/g, "'");
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&apos;/g, "'");
 
-  const finalText = allText.map(decode).join("");
-
-  return finalText.replace(/\n{3,}/g, "\n\n").trim();
+  return allText.map(decode).join("").replace(/\n{3,}/g, "\n\n").trim();
 }

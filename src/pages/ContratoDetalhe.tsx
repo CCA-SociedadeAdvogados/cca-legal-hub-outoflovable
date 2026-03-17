@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Edit, Download, Building2, Calendar, Euro, User, Shield, FileText, Clock, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Edit, Download, Building2, Calendar, Euro, User, Shield, FileText, Clock, AlertTriangle, Loader2, RefreshCw, Bot, Gavel } from 'lucide-react';
 import { ValidationBadge } from '@/components/contracts/ValidationBadge';
 import { useContractExtractions } from '@/hooks/useContractExtractions';
 import { format, differenceInDays } from 'date-fns';
@@ -17,6 +17,9 @@ import { ContractTimeline } from '@/components/contracts/ContractTimeline';
 import { ContractAttachments } from '@/components/contracts/ContractAttachments';
 import { ContratoLegislacao } from '@/components/contracts/ContratoLegislacao';
 import { ContractComplianceResults } from '@/components/contracts/ContractComplianceResults';
+import { ContractChat } from '@/components/contracts/ContractChat';
+import { ExecutiveSummary } from '@/components/contracts/ExecutiveSummary';
+import { ContractRedline } from '@/components/contracts/ContractRedline';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { useCliente } from '@/contexts/ClienteContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -142,11 +145,13 @@ export default function ContratoDetalhe() {
 
         {/* Tabs */}
         <Tabs defaultValue="geral" className="space-y-6">
-          <TabsList className={`grid w-full ${isLocal ? 'grid-cols-4' : 'grid-cols-5'}`}>
+          <TabsList className={`grid w-full ${isLocal ? 'grid-cols-4' : 'grid-cols-6'}`}>
             <TabsTrigger value="geral">Contrato</TabsTrigger>
             <TabsTrigger value="partes">Partes</TabsTrigger>
             {!isLocal && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
             <TabsTrigger value="conformidade">{isLocal ? 'RGPD' : 'Conformidade'}</TabsTrigger>
+            {!isLocal && <TabsTrigger value="clausulas" className="flex items-center gap-1"><Gavel className="h-3 w-3" />Cláusulas</TabsTrigger>}
+            <TabsTrigger value="assistente" className="flex items-center gap-1"><Bot className="h-3 w-3" />IA</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
 
@@ -328,6 +333,21 @@ export default function ContratoDetalhe() {
                 <ContractComplianceResults contratoId={id || ''} />
               </>
             )}
+          </TabsContent>
+
+          {/* Tab: Análise de Cláusulas (Redlining) — apenas utilizadores internos */}
+          {!isLocal && (
+            <TabsContent value="clausulas" className="space-y-6">
+              <ContractRedline contractId={id || ''} />
+            </TabsContent>
+          )}
+
+          {/* Tab: Assistente IA */}
+          <TabsContent value="assistente" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <ContractChat contractId={id || ''} />
+              <ExecutiveSummary contractId={id || ''} />
+            </div>
           </TabsContent>
 
           <TabsContent value="historico" className="space-y-6">

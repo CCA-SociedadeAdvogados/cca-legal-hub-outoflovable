@@ -1205,5 +1205,68 @@
     "searchOrg": "Pesquisar organização...",
     "noOrgsFound": "Nenhuma organização encontrada",
     "viewingOrg": "A visualizar organização"
+  },
+  "ai": {
+    "assistant": "Assistente IA",
+    "chat": {
+      "title": "Assistente IA",
+      "placeholder": "Escreva a sua pergunta... (Enter para enviar)",
+      "send": "Enviar",
+      "clear": "Limpar conversa",
+      "greeting": "Olá! Posso responder a perguntas sobre este contrato. Como posso ajudar?",
+      "suggestions": "Sugestões"
+    },
+    "executiveSummary": {
+      "title": "Resumo Executivo IA",
+      "generate": "Gerar Resumo",
+      "regenerate": "Regenerar",
+      "generating": "A gerar...",
+      "description": "Gere um resumo em linguagem simples, ideal para partilhar com gestores e clientes não jurídicos.",
+      "inSummary": "Em resumo",
+      "parties": "As partes",
+      "whatMatters": "O que precisa de saber",
+      "importantDates": "Datas importantes",
+      "nextAction": "Próxima acção",
+      "alerts": "Alertas",
+      "cached": "Em cache"
+    },
+    "redline": {
+      "title": "Análise de Cláusulas",
+      "analyze": "Analisar Cláusulas",
+      "analyzing": "A analisar...",
+      "description": "Analise cada cláusula do contrato quanto ao risco e equilíbrio. Identifica cláusulas desequilibradas e sugere alternativas.",
+      "score": "Score",
+      "good": "Bom",
+      "fair": "Razoável",
+      "poor": "Fraco",
+      "favorable": "Favorável",
+      "standard": "Standard",
+      "attention": "Atenção",
+      "risk": "Risco",
+      "positives": "Pontos Positivos",
+      "negatives": "Riscos Identificados",
+      "negotiation": "Recomendações de Negociação",
+      "suggestion": "Sugestão alternativa"
+    },
+    "generate": {
+      "title": "Gerar Contrato",
+      "generating": "A gerar...",
+      "description": "Gere um rascunho de contrato em português jurídico a partir de um template."
+    },
+    "multiAnalysis": {
+      "title": "Análise de Portefólio",
+      "placeholder": "Pergunta sobre o portefólio de contratos...",
+      "analyze": "Analisar",
+      "analyzing": "A analisar...",
+      "contractsAnalyzed": "{{count}} contratos analisados",
+      "referenced": "Contratos referenciados"
+    },
+    "sharepoint": {
+      "provision": "Provisionar SharePoint + LegalBI",
+      "provisioning": "A provisionar...",
+      "provisionDescription": "Cria automaticamente a estrutura de pastas SharePoint para este cliente e configura o link LegalBI.",
+      "provisionSuccess": "SharePoint provisionado com sucesso! LegalBI configurado automaticamente.",
+      "provisionError": "Erro ao provisionar SharePoint"
+    }
   }
 }
