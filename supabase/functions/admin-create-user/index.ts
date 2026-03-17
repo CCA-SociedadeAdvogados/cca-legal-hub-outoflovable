@@ -105,8 +105,9 @@ serve(async (req) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    const existingAuthUser = existingUsers?.users?.find(
+    // Fetch up to 10 000 users to reliably detect duplicate emails
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 10000 });
+    const existingAuthUser = (existingUsers?.users ?? []).find(
       (u) => u.email?.toLowerCase() === normalizedEmail
     );
 
