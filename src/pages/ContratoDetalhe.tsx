@@ -52,7 +52,7 @@ export default function ContratoDetalhe() {
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   useCCAStatus(id);
 
-  const effectiveOrgId = viewingOrganizationId || currentOrganization?.id || null;
+  const effectiveOrgId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   if (isLoading) {
     return (
