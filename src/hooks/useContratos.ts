@@ -5,15 +5,43 @@ import { useCliente } from '@/contexts/ClienteContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { toast } from '@/hooks/use-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 export type Contrato = Tables<'contratos'>;
 export type ContratoInsert = TablesInsert<'contratos'>;
 export type ContratoUpdate = TablesUpdate<'contratos'>;
 
+// Fire-and-forget SharePoint folder creation (non-blocking)
+function createContractSharePointFolders(
+  organizationId: string,
+  contratoId: string,
+  clientCode?: string,
+  tipoContrato?: string
+) {
+  supabaseClient.functions
+    .invoke("sync-sharepoint", {
+      body: {
+        action: "create_contract_folders",
+        organization_id: organizationId,
+        contrato_id: contratoId,
+        client_code: clientCode,
+        tipo_contrato: tipoContrato,
+      },
+    })
+    .then((res) => {
+      if (res.data?.success && !res.data?.skipped) {
+        console.log(`[SharePoint] Contract folders created for ${contratoId}`);
+      }
+    })
+    .catch((err) => {
+      console.warn("[SharePoint] Contract folder creation failed (non-blocking):", err?.message);
+    });
+}
+
 export const useContratos = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const { viewingOrganizationId } = useCliente();
+  const { viewingOrganizationId, cliente } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   // For CCA internal users, require explicit client selection — don't fall back to CCA org
   const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
@@ -58,9 +86,19 @@ export const useContratos = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
       toast({ title: 'Contrato criado com sucesso' });
+
+      // Fire-and-forget: create SharePoint folder structure
+      if (data && organizationId) {
+        createContractSharePointFolders(
+          organizationId,
+          data.id,
+          cliente?.clientCode,
+          data.tipo_contrato ?? undefined
+        );
+      }
     },
     onError: (error: Error) => {
       toast({ title: 'Erro ao criar contrato', description: error.message, variant: 'destructive' });

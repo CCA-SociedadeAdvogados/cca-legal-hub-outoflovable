@@ -16,8 +16,8 @@ function corsHeaders(req: Request): Record<string, string> {
 }
 
 const AI_MODELS = [
-  { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
-  { model: "llama-3.1-8b-instant",    name: "Llama 3.1 8B" },
+  { model: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
+  { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
 ];
 
 async function callAIWithFallback(
@@ -27,17 +27,31 @@ async function callAIWithFallback(
 ): Promise<{ content: string; model: string }> {
   let lastError: Error | null = null;
 
+  // Separate system message from user messages
+  const systemMsg = messages.find(m => m.role === "system");
+  const userMsgs = messages.filter(m => m.role !== "system");
+
   for (const { model, name } of AI_MODELS) {
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const requestBody: Record<string, unknown> = {
+        model,
+        max_tokens: 8192,
+        messages: userMsgs.map(m => ({ role: m.role, content: m.content })),
+      };
+      if (systemMsg) {
+        requestBody.system = systemMsg.content;
+      }
+
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model, messages }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.status === 429) {
@@ -61,7 +75,7 @@ async function callAIWithFallback(
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+      const content = data.content?.[0]?.text;
 
       if (!content) {
         console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
@@ -86,7 +100,7 @@ async function callAIWithFallback(
 
 // Input validation constants
 const MAX_TEXT_CONTENT_LENGTH = 500000; // 500KB of text (validation only — truncation happens before AI call)
-const MAX_CHARS_AI = 30000; // ~7 500 tokens — safe limit for Groq/Llama models
+const MAX_CHARS_AI = 100000; // ~25 000 tokens — Claude supports much larger contexts
 const MAX_ARRAY_LENGTH = 100;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const VALID_TYPES = ["parse_contract", "analyze_event_impact", "compliance_check", "contract_compliance_check"] as const;
@@ -116,11 +130,11 @@ function validateTextContent(text: unknown): { valid: boolean; error?: string } 
   return { valid: true };
 }
 
-// Truncate text for Groq/Llama models
+// Truncate text for AI analysis
 function truncateForAI(text: string): string {
   if (text.length <= MAX_CHARS_AI) return text;
   console.warn(`Text truncated from ${text.length} to ${MAX_CHARS_AI} chars for AI analysis`);
-  return text.substring(0, MAX_CHARS_AI) + "\n\n[Nota: texto truncado — apenas os primeiros 30 000 caracteres foram analisados]";
+  return text.substring(0, MAX_CHARS_AI) + "\n\n[Nota: texto truncado — apenas os primeiros 100 000 caracteres foram analisados]";
 }
 
 interface AnalysisRequest {
@@ -268,9 +282,9 @@ Deno.serve(async (req) => {
       model: typeof requestedModel === "string" ? requestedModel : undefined,
     };
 
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
@@ -403,7 +417,7 @@ Deno.serve(async (req) => {
     console.log(`Processing ${request.type} analysis...`);
 
     const { content } = await callAIWithFallback(
-      GROQ_API_KEY,
+      ANTHROPIC_API_KEY,
       [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }

@@ -16,8 +16,7 @@ function corsHeaders(req: Request): Record<string, string> {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY")!;
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!;
 
 interface ContractData {
   id: string;
@@ -113,21 +112,9 @@ Transferência Internacional: ${contrato.transferencia_internacional ? 'Sim' : '
       `[${i}] ID: ${d.id}\nTítulo: ${d.title}\nFonte: ${d.source_key}\nExcerto: ${d.content_text?.slice(0, 500) || 'Sem conteúdo'}`
     ).join('\n\n');
 
-    console.log(`Calling AI Gateway for contract ${contrato_id} with ${docsWithContent.length} documents`);
+    console.log(`Calling Anthropic API for contract ${contrato_id} with ${docsWithContent.length} documents`);
 
-    // Call AI Gateway for matching
-    const aiResponse = await fetch(`${GEMINI_API_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GEMINI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gemini-2.0-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `És um especialista em direito português. A tua tarefa é identificar quais documentos legais são relevantes para um determinado contrato.
+    const systemPrompt = `És um especialista em direito português. A tua tarefa é identificar quais documentos legais são relevantes para um determinado contrato.
 
 Analisa o contrato e os documentos disponíveis. Retorna APENAS um array JSON com os IDs dos documentos relevantes e o motivo.
 
@@ -138,28 +125,39 @@ Formato de resposta obrigatório:
 
 Se nenhum documento for relevante, retorna: []
 
-Não incluas explicações fora do JSON.`
-          },
+Não incluas explicações fora do JSON.`;
+
+    const aiResponse = await fetch("https://api.anthropic.com/v1/messages", {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        system: systemPrompt,
+        messages: [
           {
             role: 'user',
             content: `CONTRATO:\n${contractContext}\n\nDOCUMENTOS DISPONÍVEIS:\n${docsListForAI}\n\nIdentifica os documentos relevantes para este contrato.`
           }
         ],
-        max_completion_tokens: 2000
       })
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
       console.error('AI API error:', aiResponse.status, errorText);
-      
+
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
           { status: 429, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
         );
       }
-      
+
       return new Response(
         JSON.stringify({ error: 'AI service unavailable' }),
         { status: 500, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
@@ -167,7 +165,7 @@ Não incluas explicações fora do JSON.`
     }
 
     const aiData = await aiResponse.json();
-    const aiContent = aiData.choices?.[0]?.message?.content || '[]';
+    const aiContent = aiData.content?.[0]?.text || '[]';
     
     console.log('AI response:', aiContent);
 

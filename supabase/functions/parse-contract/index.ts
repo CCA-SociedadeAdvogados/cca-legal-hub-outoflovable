@@ -16,8 +16,8 @@ function corsHeaders(req: Request): Record<string, string> {
 }
 
 const AI_MODELS = [
-  { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
-  { model: "llama-3.1-8b-instant",    name: "Llama 3.1 8B" },
+  { model: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
+  { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
 ];
 
 async function callAIWithFallback(
@@ -29,17 +29,31 @@ async function callAIWithFallback(
   const models = modelsOverride ?? AI_MODELS;
   let lastError: Error | null = null;
 
+  // Separate system message from user messages
+  const systemMsg = messages.find(m => m.role === "system");
+  const userMsgs = messages.filter(m => m.role !== "system");
+
   for (const { model, name } of models) {
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const requestBody: Record<string, unknown> = {
+        model,
+        max_tokens: 8192,
+        messages: userMsgs.map(m => ({ role: m.role, content: m.content })),
+      };
+      if (systemMsg) {
+        requestBody.system = systemMsg.content;
+      }
+
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model, messages }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.status === 429) {
@@ -63,7 +77,7 @@ async function callAIWithFallback(
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content;
+      const content = data.content?.[0]?.text;
 
       if (!content) {
         console.warn(`[${functionName}] ${name} returned empty content, trying next...`);
@@ -108,9 +122,9 @@ Deno.serve(async (req) => {
     console.log(`[parse-contract] POST payload keys: ${Object.keys(body).join(", ")}`);
     console.log(`[parse-contract] textContent: ${textContent ? `${String(textContent).length} chars` : "absent"}, fileContent: ${fileContent ? `${String(fileContent).length} chars` : "absent"}, storagePath: ${storagePath ?? "absent"}, fileName: ${fileName ?? "absent"}`);
 
-    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    if (!GROQ_API_KEY) {
-      throw new Error("GROQ_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
     let contractText = textContent as string | undefined;
@@ -265,11 +279,10 @@ INSTRUÇÕES IMPORTANTES:
 6. Nas cláusulas importantes, seja específico sobre o conteúdo
 7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades`;
 
-    // Limitar o texto para evitar exceder os limites de payload da API Groq
-    // (~30 000 chars ≈ 7 500 tokens — margem segura para modelos menores)
-    const MAX_CHARS = 30000;
+    // Claude supports much larger contexts — 100K chars is safe
+    const MAX_CHARS = 100000;
     const truncatedText = contractText.length > MAX_CHARS
-      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado — apenas os primeiros 30 000 caracteres foram analisados]"
+      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado — apenas os primeiros 100 000 caracteres foram analisados]"
       : contractText;
 
     if (contractText.length > MAX_CHARS) {
@@ -277,7 +290,7 @@ INSTRUÇÕES IMPORTANTES:
     }
 
     const { content } = await callAIWithFallback(
-      GROQ_API_KEY,
+      ANTHROPIC_API_KEY,
       [
         { role: "system", content: systemPrompt },
         { role: "user", content: `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}` }
