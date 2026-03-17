@@ -21,10 +21,10 @@ serve(async (req) => {
 
   try {
     const { texts, targetLang, context } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
     // Filter empty texts and track their indices
@@ -39,7 +39,7 @@ serve(async (req) => {
     }
 
     const targetLanguage = targetLang === 'en' ? 'English' : 'Portuguese';
-    const systemPrompt = `You are a professional translator specializing in legal and corporate content. 
+    const systemPrompt = `You are a professional translator specializing in legal and corporate content.
 Translate the following texts to ${targetLanguage}.
 Context: ${context || 'general content'}
 
@@ -52,16 +52,18 @@ IMPORTANT RULES:
 
     console.log(`Translating ${nonEmptyTexts.length} texts to ${targetLanguage}`);
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${GEMINI_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gemini-2.0-flash-lite",
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          { role: "system", content: systemPrompt },
           { role: "user", content: JSON.stringify(nonEmptyTexts) }
         ]
       })
@@ -74,19 +76,13 @@ IMPORTANT RULES:
           headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Translation service unavailable. Please try again later." }), {
-          status: 402,
-          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
-        });
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      throw new Error(`AI gateway error: ${response.status}`);
+      console.error("Anthropic API error:", response.status, errorText);
+      throw new Error(`Anthropic API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
+    const content = data.content?.[0]?.text;
 
     if (!content) {
       throw new Error("No translation content received");

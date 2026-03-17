@@ -616,6 +616,391 @@ serve(async (req) => {
       );
     }
 
+    // ============ CREATE FOLDER ACTION ============
+    if (action === "create_folder") {
+      const { folder_path: newFolderPath } = body;
+      if (!newFolderPath) {
+        throw new Error("folder_path is required for create_folder");
+      }
+
+      const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
+      const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
+      const tenantId = Deno.env.get("SHAREPOINT_TENANT_ID");
+      if (!clientId || !clientSecret || !tenantId) {
+        throw new Error("SharePoint credentials not configured.");
+      }
+
+      const { data: spCfg } = await supabase
+        .from("sharepoint_config")
+        .select("*")
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+      if (!spCfg) throw new Error("No SharePoint config found");
+
+      const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
+      let driveId = spCfg.drive_id;
+      if (!driveId) {
+        driveId = await getDriveId(accessToken, spCfg.site_id);
+        await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
+      }
+
+      // Build full path: root_folder_path + requested path
+      const rootPath = spCfg.root_folder_path || "/";
+      const fullPath = rootPath === "/"
+        ? newFolderPath
+        : `${rootPath}${newFolderPath.startsWith("/") ? "" : "/"}${newFolderPath}`;
+
+      // Create folders recursively (each segment)
+      const segments = fullPath.split("/").filter(Boolean);
+      let parentId = "root";
+      let createdWebUrl = "";
+
+      for (const segment of segments) {
+        // Check if folder already exists
+        const childrenUrl = parentId === "root"
+          ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+          : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
+
+        const existsResp = await fetch(childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder,webUrl`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        if (existsResp.ok) {
+          const existsData = await existsResp.json();
+          const existing = (existsData.value || []).find(
+            (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
+          );
+          if (existing) {
+            parentId = existing.id;
+            createdWebUrl = existing.webUrl || "";
+            console.log(`Folder "${segment}" already exists: id=${parentId}`);
+            continue;
+          }
+        }
+
+        // Create folder
+        const createUrl = parentId === "root"
+          ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+          : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
+
+        console.log(`Creating folder "${segment}" under ${parentId}`);
+        const createResp = await fetch(createUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: segment,
+            folder: {},
+            "@microsoft.graph.conflictBehavior": "fail",
+          }),
+        });
+
+        if (!createResp.ok) {
+          const errText = await createResp.text();
+          // 409 = already exists (race condition) — try to resolve it
+          if (createResp.status === 409) {
+            console.warn(`Folder "${segment}" conflict (409), resolving...`);
+            const retryResp = await fetch(childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder,webUrl`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (retryResp.ok) {
+              const retryData = await retryResp.json();
+              const found = (retryData.value || []).find(
+                (item: any) => item.folder !== undefined
+              );
+              if (found) {
+                parentId = found.id;
+                createdWebUrl = found.webUrl || "";
+                continue;
+              }
+            }
+          }
+          throw new Error(`Failed to create folder "${segment}": ${createResp.status} - ${errText}`);
+        }
+
+        const created: GraphDriveItem = await createResp.json();
+        parentId = created.id;
+        createdWebUrl = created.webUrl || "";
+        console.log(`Created folder "${segment}": id=${parentId}`);
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          folder: { id: parentId, webUrl: createdWebUrl, path: fullPath },
+        }),
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ CREATE CONTRACT FOLDERS ACTION ============
+    if (action === "create_contract_folders") {
+      const { client_code, tipo_contrato, contrato_id } = body;
+      if (!contrato_id) {
+        throw new Error("contrato_id is required");
+      }
+
+      const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
+      const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
+      const tenantId = Deno.env.get("SHAREPOINT_TENANT_ID");
+      if (!clientId || !clientSecret || !tenantId) {
+        throw new Error("SharePoint credentials not configured.");
+      }
+
+      const { data: spCfg } = await supabase
+        .from("sharepoint_config")
+        .select("*")
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+      if (!spCfg) {
+        // No SharePoint config — skip silently (not all orgs have SP)
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: "No SharePoint config for organization" }),
+          { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
+      const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
+      let driveId = spCfg.drive_id;
+      if (!driveId) {
+        driveId = await getDriveId(accessToken, spCfg.site_id);
+        await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
+      }
+
+      // Build structure: Contratos/{ClientCode}/{TipoContrato}/{ContratoId}/[subfolders]
+      const rootPath = spCfg.root_folder_path || "/";
+      const clientFolder = client_code || "Sem_Codigo";
+      const tipoFolder = tipo_contrato || "outro";
+      const basePath = rootPath === "/"
+        ? `/Contratos/${clientFolder}/${tipoFolder}/${contrato_id}`
+        : `${rootPath}/Contratos/${clientFolder}/${tipoFolder}/${contrato_id}`;
+
+      const subfolders = ["Documentos", "Assinaturas", "Correspondencia", "Analise_IA"];
+      const allPaths = [basePath, ...subfolders.map((sf) => `${basePath}/${sf}`)];
+
+      let contractFolderWebUrl = "";
+
+      for (const folderFullPath of allPaths) {
+        const segments = folderFullPath.split("/").filter(Boolean);
+        let parentId = "root";
+
+        for (const segment of segments) {
+          const childrenUrl = parentId === "root"
+            ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+            : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
+
+          // Try to create directly (faster than check-then-create)
+          const createResp = await fetch(childrenUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: segment,
+              folder: {},
+              "@microsoft.graph.conflictBehavior": "fail",
+            }),
+          });
+
+          if (createResp.ok) {
+            const created: GraphDriveItem = await createResp.json();
+            parentId = created.id;
+            if (folderFullPath === basePath && segment === contrato_id) {
+              contractFolderWebUrl = created.webUrl || "";
+            }
+          } else if (createResp.status === 409) {
+            // Already exists — resolve ID
+            await createResp.text(); // consume body
+            const listResp = await fetch(childrenUrl + `?$select=id,name,folder,webUrl`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            });
+            if (listResp.ok) {
+              const listData = await listResp.json();
+              const found = (listData.value || []).find(
+                (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
+              );
+              if (found) {
+                parentId = found.id;
+                if (folderFullPath === basePath && segment === contrato_id) {
+                  contractFolderWebUrl = found.webUrl || "";
+                }
+              } else {
+                throw new Error(`Folder "${segment}" conflict but not found in children`);
+              }
+            }
+          } else {
+            const errText = await createResp.text();
+            throw new Error(`Failed to create folder "${segment}": ${createResp.status} - ${errText}`);
+          }
+        }
+      }
+
+      // Store the SharePoint folder URL on the contract
+      if (contractFolderWebUrl) {
+        await supabase
+          .from("contratos")
+          .update({ sharepoint_folder_url: contractFolderWebUrl })
+          .eq("id", contrato_id);
+      }
+
+      console.log(`Contract folders created for ${contrato_id}: ${basePath}`);
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          folder_url: contractFolderWebUrl,
+          base_path: basePath,
+          subfolders,
+        }),
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ UPLOAD LARGE FILE ACTION (>4MB via upload session) ============
+    if (action === "upload_large_file") {
+      const { file_base64, file_name, folder_path: uploadLargeFolderPath } = body;
+      if (!file_base64 || !file_name) {
+        throw new Error("file_base64 and file_name are required");
+      }
+
+      const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
+      const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
+      const tenantId = Deno.env.get("SHAREPOINT_TENANT_ID");
+      if (!clientId || !clientSecret || !tenantId) {
+        throw new Error("SharePoint credentials not configured.");
+      }
+
+      const { data: spCfg } = await supabase
+        .from("sharepoint_config")
+        .select("*")
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+      if (!spCfg) throw new Error("No SharePoint config found");
+
+      const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
+      let driveId = spCfg.drive_id;
+      if (!driveId) {
+        driveId = await getDriveId(accessToken, spCfg.site_id);
+        await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
+      }
+
+      // Build full path
+      const rootPath = spCfg.root_folder_path || "/";
+      const currentFolder = uploadLargeFolderPath || "/";
+      let fullPath: string;
+      if (rootPath === "/") {
+        fullPath = currentFolder === "/" ? `/${file_name}` : `${currentFolder}/${file_name}`;
+      } else {
+        fullPath = currentFolder === "/" ? `${rootPath}/${file_name}` : `${rootPath}${currentFolder}/${file_name}`;
+      }
+
+      // Decode base64 to binary
+      const binaryString = atob(file_base64);
+      const fileBytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        fileBytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const fileSize = fileBytes.length;
+      console.log(`Large file upload: ${file_name}, size: ${fileSize} bytes`);
+
+      // Create upload session
+      const encodedPath = fullPath.split("/").map((s: string) => s ? encodeURIComponent(s) : "").join("/");
+      const sessionUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${encodedPath}:/createUploadSession`;
+
+      const sessionResp = await fetch(sessionUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          item: {
+            "@microsoft.graph.conflictBehavior": "replace",
+            name: file_name,
+          },
+        }),
+      });
+
+      if (!sessionResp.ok) {
+        const errText = await sessionResp.text();
+        throw new Error(`Failed to create upload session: ${sessionResp.status} - ${errText}`);
+      }
+
+      const sessionData = await sessionResp.json();
+      const uploadUrl = sessionData.uploadUrl;
+
+      // Upload in 10MB chunks
+      const CHUNK_SIZE = 10 * 1024 * 1024;
+      let offset = 0;
+      let uploadedItem: GraphDriveItem | null = null;
+
+      while (offset < fileSize) {
+        const end = Math.min(offset + CHUNK_SIZE, fileSize);
+        const chunk = fileBytes.slice(offset, end);
+
+        const chunkResp = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Length": String(chunk.length),
+            "Content-Range": `bytes ${offset}-${end - 1}/${fileSize}`,
+          },
+          body: chunk,
+        });
+
+        if (chunkResp.status === 200 || chunkResp.status === 201) {
+          // Upload complete
+          uploadedItem = await chunkResp.json();
+          console.log(`Upload complete: ${uploadedItem!.name}`);
+        } else if (chunkResp.status === 202) {
+          // More chunks needed
+          console.log(`Chunk uploaded: ${offset}-${end - 1}/${fileSize}`);
+        } else {
+          const errText = await chunkResp.text();
+          throw new Error(`Chunk upload failed at ${offset}: ${chunkResp.status} - ${errText}`);
+        }
+
+        offset = end;
+      }
+
+      if (!uploadedItem) {
+        throw new Error("Upload completed but no item returned");
+      }
+
+      // Insert record in sharepoint_documents
+      const docData = {
+        organization_id: spCfg.organization_id,
+        config_id: spCfg.id,
+        sharepoint_item_id: uploadedItem.id,
+        sharepoint_drive_id: driveId,
+        name: uploadedItem.name,
+        file_extension: getFileExtension(uploadedItem.name),
+        mime_type: uploadedItem.file?.mimeType || null,
+        size_bytes: uploadedItem.size || null,
+        web_url: uploadedItem.webUrl || null,
+        download_url: uploadedItem["@microsoft.graph.downloadUrl"] || null,
+        folder_path: currentFolder,
+        is_folder: false,
+        sharepoint_modified_at: uploadedItem.lastModifiedDateTime || null,
+        sharepoint_modified_by: uploadedItem.lastModifiedBy?.user?.displayName || null,
+        etag: uploadedItem.eTag || null,
+        synced_at: new Date().toISOString(),
+        is_deleted: false,
+      };
+
+      await supabase.from("sharepoint_documents").upsert(docData, {
+        onConflict: "config_id,sharepoint_item_id",
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, item: { id: uploadedItem.id, name: uploadedItem.name, webUrl: uploadedItem.webUrl, size: uploadedItem.size } }),
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
     // ============ UPLOAD FILE ACTION ============
     if (action === "upload_file") {
       const { file_base64, file_name, folder_path: uploadFolderPath } = body;
