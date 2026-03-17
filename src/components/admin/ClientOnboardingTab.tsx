@@ -304,7 +304,6 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
               <SelectValue placeholder="Seleccionar (opcional)" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">— Nenhum —</SelectItem>
               {(Object.entries(DEPARTAMENTO_LABELS) as [Departamento, string][]).map(([v, l]) => (
                 <SelectItem key={v} value={v}>{l}</SelectItem>
               ))}
