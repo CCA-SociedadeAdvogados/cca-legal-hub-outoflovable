@@ -1,9 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 // Security: Demo login is disabled by default.
 // Enable by setting DEMO_LOGIN_ENABLED=true (case-insensitive) in secrets.
@@ -188,7 +197,7 @@ function getClientIP(req: Request): string {
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   if (req.method !== "POST") {
@@ -196,7 +205,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "method_not_allowed" }),
       {
         status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }
@@ -214,7 +223,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -231,7 +240,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         },
       );
     }
@@ -249,7 +258,7 @@ Deno.serve(async (req) => {
         {
           status: 429,
           headers: { 
-            ...corsHeaders, 
+            ...corsHeaders(req), 
             "Content-Type": "application/json",
             "Retry-After": String(rateLimit.retryAfter)
           },
@@ -282,7 +291,7 @@ Deno.serve(async (req) => {
         }),
         {
           status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
         }
       );
     }
@@ -319,7 +328,7 @@ Deno.serve(async (req) => {
         message: "Sessão demo iniciada com sucesso."
       }),
       {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
 
@@ -332,7 +341,7 @@ Deno.serve(async (req) => {
       }),
       {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

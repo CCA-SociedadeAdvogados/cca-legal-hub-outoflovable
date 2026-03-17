@@ -1,13 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
@@ -25,7 +34,7 @@ serve(async (req) => {
 
     if (nonEmptyTexts.length === 0) {
       return new Response(JSON.stringify({ translations: texts }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
       });
     }
 
@@ -62,13 +71,13 @@ IMPORTANT RULES:
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
           status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "Translation service unavailable. Please try again later." }), {
           status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
         });
       }
       const errorText = await response.text();
@@ -93,7 +102,7 @@ IMPORTANT RULES:
       console.error("Failed to parse translation response:", content);
       // Fallback: return original texts
       return new Response(JSON.stringify({ translations: texts }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
       });
     }
 
@@ -107,14 +116,14 @@ IMPORTANT RULES:
     console.log(`Successfully translated ${nonEmptyTexts.length} texts`);
 
     return new Response(JSON.stringify({ translations }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
     console.error("Translation error:", error);
     return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Translation failed" }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
     });
   }
 });

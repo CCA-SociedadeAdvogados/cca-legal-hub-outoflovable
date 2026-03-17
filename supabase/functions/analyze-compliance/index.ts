@@ -1,12 +1,19 @@
 // ALL external libraries are imported dynamically to avoid crashing the edge
 // function during module initialisation on Supabase Edge Runtime / Deno v2.x.
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Max-Age": "86400",
-};
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 const AI_MODELS = [
   { model: "llama-3.3-70b-versatile", name: "Llama 3.3 70B" },
@@ -133,7 +140,7 @@ Deno.serve(async (req) => {
   console.log(`[analyze-compliance] v4 – verify_jwt=false – ${req.method} request received`);
 
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
 
   try {
@@ -143,14 +150,14 @@ Deno.serve(async (req) => {
     } catch {
       return new Response(
         JSON.stringify({ error: "Invalid JSON body" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
     if (typeof body !== "object" || body === null) {
       return new Response(
         JSON.stringify({ error: "Request body must be an object" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -160,7 +167,7 @@ Deno.serve(async (req) => {
     if (!type || !VALID_TYPES.includes(type as typeof VALID_TYPES[number])) {
       return new Response(
         JSON.stringify({ error: "Invalid or missing analysis type" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -168,7 +175,7 @@ Deno.serve(async (req) => {
     if (!data || typeof data !== "object") {
       return new Response(
         JSON.stringify({ error: "Missing or invalid data object" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -179,7 +186,7 @@ Deno.serve(async (req) => {
     if (!textValidation.valid) {
       return new Response(
         JSON.stringify({ error: textValidation.error }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -187,7 +194,7 @@ Deno.serve(async (req) => {
     if (analysisData.eventoId !== undefined && !validateUUID(analysisData.eventoId)) {
       return new Response(
         JSON.stringify({ error: "Invalid eventoId format" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -195,7 +202,7 @@ Deno.serve(async (req) => {
     if (analysisData.contratoId !== undefined && !validateUUID(analysisData.contratoId)) {
       return new Response(
         JSON.stringify({ error: "Invalid contratoId format" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -204,19 +211,19 @@ Deno.serve(async (req) => {
       if (!Array.isArray(analysisData.contratoIds)) {
         return new Response(
           JSON.stringify({ error: "contratoIds must be an array" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       if (analysisData.contratoIds.length > MAX_ARRAY_LENGTH) {
         return new Response(
           JSON.stringify({ error: `contratoIds exceeds maximum length of ${MAX_ARRAY_LENGTH}` }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       if (!analysisData.contratoIds.every(validateUUID)) {
         return new Response(
           JSON.stringify({ error: "Invalid UUID in contratoIds" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
     }
@@ -226,13 +233,13 @@ Deno.serve(async (req) => {
       if (typeof analysisData.tipoContrato !== "string") {
         return new Response(
           JSON.stringify({ error: "tipoContrato must be a string" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       if (!VALID_TIPO_CONTRATO.includes(analysisData.tipoContrato as typeof VALID_TIPO_CONTRATO[number])) {
         return new Response(
           JSON.stringify({ error: "Invalid tipoContrato value" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
     }
@@ -242,7 +249,7 @@ Deno.serve(async (req) => {
       if (!validateStringArray(analysisData.areasDireitoAplicaveis, 20)) {
         return new Response(
           JSON.stringify({ error: "Invalid areasDireitoAplicaveis format" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
     }
@@ -278,7 +285,7 @@ Deno.serve(async (req) => {
       if (!request.data.textContent) {
         return new Response(
           JSON.stringify({ error: "textContent is required for parse_contract" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       systemPrompt = getContractParsingPrompt();
@@ -287,7 +294,7 @@ Deno.serve(async (req) => {
       if (!request.data.eventoId) {
         return new Response(
           JSON.stringify({ error: "eventoId is required for analyze_event_impact" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -328,7 +335,7 @@ Deno.serve(async (req) => {
       if (!request.data.eventoId) {
         return new Response(
           JSON.stringify({ error: "eventoId is required for compliance_check" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -383,7 +390,7 @@ Deno.serve(async (req) => {
               confianca: 100
             }
           }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -428,14 +435,14 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ success: true, data: parsedData }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in analyze-compliance function:", errorMessage);
     return new Response(
       JSON.stringify({ error: errorMessage || "Erro ao processar análise" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

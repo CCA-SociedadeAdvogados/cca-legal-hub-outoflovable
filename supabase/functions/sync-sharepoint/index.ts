@@ -1,10 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 interface SharePointConfig {
   id: string;
@@ -406,7 +415,7 @@ function getFileExtension(filename: string): string | null {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -489,7 +498,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, site_name: siteInfo.name, site_url: siteInfo.webUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -520,7 +529,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -553,7 +562,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, drives, current_drive_id: spCfg.drive_id }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -603,7 +612,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, path: browsePath, items: folders }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -702,7 +711,7 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true, item: { id: uploadedItem.id, name: uploadedItem.name, webUrl: uploadedItem.webUrl } }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -733,7 +742,7 @@ serve(async (req) => {
           success: false,
           error: "No SharePoint configuration found. Please configure SharePoint integration first.",
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -937,7 +946,7 @@ serve(async (req) => {
             site_url: siteInfo.webUrl,
           },
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     } catch (syncError: any) {
       console.error("Sync error:", syncError);
@@ -968,7 +977,7 @@ serve(async (req) => {
     console.error("Error in sync-sharepoint function:", error);
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

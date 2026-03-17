@@ -1,11 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": Deno.env.get("ALLOWED_ORIGIN") ?? "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allow = _allowedOrigins.includes("*")
+    ? "*"
+    : _allowedOrigins.includes(origin)
+    ? origin
+    : _allowedOrigins[0] ?? "*";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
+}
 
 /**
  * Edge function para obter a foto de perfil de um utilizador do Azure AD
@@ -21,7 +29,7 @@ const corsHeaders = {
  */
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders(req) });
   }
 
   try {
@@ -30,7 +38,7 @@ serve(async (req: Request) => {
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: "Autenticação necessária" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -44,7 +52,7 @@ serve(async (req: Request) => {
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Token inválido" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -53,7 +61,7 @@ serve(async (req: Request) => {
     if (!sso_external_id) {
       return new Response(
         JSON.stringify({ error: "sso_external_id é obrigatório" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -68,7 +76,7 @@ serve(async (req: Request) => {
       if (profile?.avatar_url) {
         return new Response(
           JSON.stringify({ photo_url: profile.avatar_url }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
         );
       }
     }
@@ -82,7 +90,7 @@ serve(async (req: Request) => {
       console.warn("[fetch-azure-photo] Microsoft Graph credentials not configured");
       return new Response(
         JSON.stringify({ photo_url: null, reason: "Graph API credentials not configured" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -103,7 +111,7 @@ serve(async (req: Request) => {
       console.error("[fetch-azure-photo] Failed to get Graph token:", await tokenResponse.text());
       return new Response(
         JSON.stringify({ photo_url: null, reason: "Failed to authenticate with Graph API" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -122,7 +130,7 @@ serve(async (req: Request) => {
       console.warn(`[fetch-azure-photo] Graph API photo not found (${status}) for OID: ${sso_external_id}`);
       return new Response(
         JSON.stringify({ photo_url: null, reason: `Photo not available (HTTP ${status})` }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -147,7 +155,7 @@ serve(async (req: Request) => {
       const dataUrl = `data:${contentType};base64,${base64}`;
       return new Response(
         JSON.stringify({ photo_url: dataUrl }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -164,13 +172,13 @@ serve(async (req: Request) => {
 
     return new Response(
       JSON.stringify({ photo_url: publicUrl }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("[fetch-azure-photo] Unexpected error:", err);
     return new Response(
       JSON.stringify({ photo_url: null, error: err.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
