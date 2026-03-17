@@ -290,6 +290,11 @@ export function useOrganizations() {
     // O cliente escolhido é persistido em localStorage e restaurado no mount.
     if (isCCAInternalAuthorized) return;
 
+    // Aguardar que a verificação CCA termine antes de qualquer reset.
+    // Sem isto, o clearCliente() seria chamado durante o loading inicial,
+    // destruindo o cliente restaurado do localStorage para utilizadores CCA.
+    if (ccaAuthLoading) return;
+
     // Utilizadores cliente: sincronizar com a organização actual do perfil.
     if (currentOrganization) {
       if (cliente?.organizationId !== currentOrganization.id) {
@@ -302,7 +307,7 @@ export function useOrganizations() {
     } else {
       clearCliente();
     }
-  }, [user, isCCAInternalAuthorized, cliente, currentOrganization, setCliente, clearCliente]);
+  }, [user, isCCAInternalAuthorized, ccaAuthLoading, cliente, currentOrganization, setCliente, clearCliente]);
 
   const createOrganization = useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
