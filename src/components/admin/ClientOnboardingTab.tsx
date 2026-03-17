@@ -144,10 +144,10 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
   const filteredOrgs = organizations.filter((o) => {
     const q = orgSearch.toLowerCase();
     return (
-      o.name.toLowerCase().includes(q) ||
+      (o.name ?? '').toLowerCase().includes(q) ||
       (o.jvris_id ?? '').toLowerCase().includes(q) ||
       (o.client_code ?? '').toLowerCase().includes(q) ||
-      o.slug.toLowerCase().includes(q)
+      (o.slug ?? '').toLowerCase().includes(q)
     );
   });
 
