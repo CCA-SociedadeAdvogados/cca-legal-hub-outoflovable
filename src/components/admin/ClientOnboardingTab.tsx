@@ -176,7 +176,15 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
         },
       });
 
-      if (error || data?.error) throw new Error(data?.error || error?.message);
+      if (error) {
+        let msg = error.message;
+        try {
+          const body = await (error as any).context?.json?.();
+          if (body?.error) msg = body.error;
+        } catch {}
+        throw new Error(msg);
+      }
+      if (data?.error) throw new Error(data.error);
 
       if (data.existingUser) {
         toast({ title: 'Utilizador adicionado', description: 'O utilizador já existia e foi adicionado à organização.' });
@@ -439,7 +447,15 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
           },
         });
 
-        if (error || data?.error) throw new Error(data?.error || error?.message);
+        if (error) {
+          let msg = error.message;
+          try {
+            const body = await (error as any).context?.json?.();
+            if (body?.error) msg = body.error;
+          } catch {}
+          throw new Error(msg);
+        }
+        if (data?.error) throw new Error(data.error);
 
         updated[i] = {
           ...row,
