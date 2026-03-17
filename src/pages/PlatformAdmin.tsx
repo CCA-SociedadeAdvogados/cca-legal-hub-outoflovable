@@ -664,8 +664,8 @@ export default function PlatformAdmin() {
 
   const filteredContracts = allContracts?.filter(
     (c) =>
-      c.titulo_contrato.toLowerCase().includes(contractSearch.toLowerCase()) ||
-      c.id_interno.toLowerCase().includes(contractSearch.toLowerCase())
+      (c.titulo_contrato ?? '').toLowerCase().includes(contractSearch.toLowerCase()) ||
+      (c.id_interno ?? '').toLowerCase().includes(contractSearch.toLowerCase())
   );
 
   return (
