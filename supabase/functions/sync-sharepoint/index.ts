@@ -616,6 +616,115 @@ serve(async (req) => {
       );
     }
 
+    // ============ CREATE FOLDER ACTION ============
+    if (action === "create_folder") {
+      const { folder_name, parent_folder_path } = body;
+      if (!folder_name) {
+        throw new Error("folder_name is required");
+      }
+
+      const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
+      const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
+      const tenantId = Deno.env.get("SHAREPOINT_TENANT_ID");
+      if (!clientId || !clientSecret || !tenantId) {
+        throw new Error("SharePoint credentials not configured.");
+      }
+
+      const { data: spCfg } = await supabase
+        .from("sharepoint_config")
+        .select("*")
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+      if (!spCfg) throw new Error("No SharePoint config found");
+
+      const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
+      let driveId = spCfg.drive_id;
+      if (!driveId) {
+        driveId = await getDriveId(accessToken, spCfg.site_id);
+        await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
+      }
+
+      const rootPath = spCfg.root_folder_path || "/";
+      const parentPath = parent_folder_path || "/";
+
+      // Determine parent folder ID
+      let parentId: string;
+      let fullParentPath: string;
+      if (rootPath === "/") {
+        fullParentPath = parentPath === "/" ? "/" : parentPath;
+      } else {
+        fullParentPath = parentPath === "/" ? rootPath : `${rootPath}${parentPath}`;
+      }
+
+      if (fullParentPath === "/") {
+        parentId = "root";
+      } else {
+        const folderInfo = await resolveFolderPathToId(accessToken, driveId, fullParentPath);
+        parentId = folderInfo.id;
+      }
+
+      const createUrl = parentId === "root"
+        ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+        : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
+
+      console.log(`Creating folder "${folder_name}" under parentId=${parentId}`);
+
+      const createResp = await fetch(createUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: folder_name,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "rename",
+        }),
+      });
+
+      if (!createResp.ok) {
+        const errText = await createResp.text();
+        console.error("Create folder error:", errText);
+        throw new Error(`Create folder failed: ${createResp.status} - ${errText}`);
+      }
+
+      const createdFolder: GraphDriveItem = await createResp.json();
+      console.log(`Folder created: id=${createdFolder.id}, name=${createdFolder.name}`);
+
+      // Insert into sharepoint_documents so it appears immediately in the UI
+      const folderData = {
+        organization_id: spCfg.organization_id,
+        config_id: spCfg.id,
+        sharepoint_item_id: createdFolder.id,
+        sharepoint_drive_id: driveId,
+        name: createdFolder.name,
+        file_extension: null,
+        mime_type: null,
+        size_bytes: null,
+        web_url: createdFolder.webUrl || null,
+        download_url: null,
+        folder_path: parentPath,
+        is_folder: true,
+        sharepoint_modified_at: createdFolder.lastModifiedDateTime || null,
+        sharepoint_modified_by: createdFolder.lastModifiedBy?.user?.displayName || null,
+        etag: createdFolder.eTag || null,
+        synced_at: new Date().toISOString(),
+        is_deleted: false,
+      };
+
+      await supabase.from("sharepoint_documents").upsert(folderData, {
+        onConflict: "config_id,sharepoint_item_id",
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          folder: { id: createdFolder.id, name: createdFolder.name, webUrl: createdFolder.webUrl },
+        }),
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
     // ============ UPLOAD FILE ACTION ============
     if (action === "upload_file") {
       const { file_base64, file_name, folder_path: uploadFolderPath } = body;
@@ -661,27 +770,89 @@ serve(async (req) => {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Upload via Graph API PUT (up to 4MB)
       const encodedPath = fullPath.split("/").map((s: string) => s ? encodeURIComponent(s) : "").join("/");
-      const uploadUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${encodedPath}:/content`;
-      console.log(`Uploading file to: ${uploadUrl}`);
+      const SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024; // 4MB
 
-      const uploadResp = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/octet-stream",
-        },
-        body: bytes,
-      });
+      let uploadedItem: GraphDriveItem;
 
-      if (!uploadResp.ok) {
-        const errText = await uploadResp.text();
-        console.error("Upload error:", errText);
-        throw new Error(`Upload failed: ${uploadResp.status} - ${errText}`);
+      if (bytes.length <= SIMPLE_UPLOAD_LIMIT) {
+        // Simple PUT upload for files ≤4MB
+        const uploadUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${encodedPath}:/content`;
+        console.log(`Simple upload to: ${uploadUrl} (${bytes.length} bytes)`);
+
+        const uploadResp = await fetch(uploadUrl, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/octet-stream",
+          },
+          body: bytes,
+        });
+
+        if (!uploadResp.ok) {
+          const errText = await uploadResp.text();
+          console.error("Upload error:", errText);
+          throw new Error(`Upload failed: ${uploadResp.status} - ${errText}`);
+        }
+
+        uploadedItem = await uploadResp.json();
+      } else {
+        // Upload session for files >4MB
+        console.log(`Large file upload session: ${bytes.length} bytes`);
+
+        const sessionUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${encodedPath}:/createUploadSession`;
+        const sessionResp = await fetch(sessionUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            item: { "@microsoft.graph.conflictBehavior": "replace" },
+          }),
+        });
+
+        if (!sessionResp.ok) {
+          const errText = await sessionResp.text();
+          throw new Error(`Upload session creation failed: ${sessionResp.status} - ${errText}`);
+        }
+
+        const { uploadUrl: sessionUploadUrl } = await sessionResp.json();
+        const CHUNK_SIZE = 3 * 320 * 1024; // 960KB (must be multiple of 320KB)
+        let offset = 0;
+
+        while (offset < bytes.length) {
+          const chunk = bytes.slice(offset, offset + CHUNK_SIZE);
+          const end = offset + chunk.length - 1;
+
+          const chunkResp = await fetch(sessionUploadUrl, {
+            method: "PUT",
+            headers: {
+              "Content-Length": String(chunk.length),
+              "Content-Range": `bytes ${offset}-${end}/${bytes.length}`,
+            },
+            body: chunk,
+          });
+
+          if (!chunkResp.ok && chunkResp.status !== 202) {
+            const errText = await chunkResp.text();
+            throw new Error(`Chunk upload failed at offset ${offset}: ${chunkResp.status} - ${errText}`);
+          }
+
+          if (chunkResp.status === 201 || chunkResp.status === 200) {
+            uploadedItem = await chunkResp.json();
+            console.log(`Upload session completed: id=${uploadedItem.id}`);
+            break;
+          }
+
+          offset += chunk.length;
+          console.log(`Uploaded chunk: ${offset}/${bytes.length} bytes`);
+        }
+
+        if (!uploadedItem!) {
+          throw new Error("Upload session completed but no item returned");
+        }
       }
-
-      const uploadedItem: GraphDriveItem = await uploadResp.json();
       console.log(`File uploaded: id=${uploadedItem.id}, name=${uploadedItem.name}`);
 
       // Insert record in sharepoint_documents so it appears immediately
