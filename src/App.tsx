@@ -47,6 +47,7 @@ import UtilizadoresOrg from "./pages/UtilizadoresOrg";
 import LegalBi from "./pages/LegalBi";
 import OrganizationsPage from "./pages/OrganizationsPage";
 import { PlatformAdminRoute } from "./components/layout/PlatformAdminRoute";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -181,7 +182,7 @@ const AppRoutes = () => {
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/organizacao" element={<ProtectedRoute><Organizacao /></ProtectedRoute>} />
       <Route path="/definicoes" element={<ProtectedRoute><Definicoes /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><PlatformAdminRoute><PlatformAdmin /></PlatformAdminRoute></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><PlatformAdminRoute><ErrorBoundary><PlatformAdmin /></ErrorBoundary></PlatformAdminRoute></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
