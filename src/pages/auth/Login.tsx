@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Mail, Lock, ArrowRight, Building2, Loader2, KeyRound, AlertTriangle } from "lucide-react";
@@ -37,6 +38,9 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDemoLoading, setIsDemoLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetLoading, setIsResetLoading] = useState(false);
 
   const validateEmail = (value: string) => {
     const result = emailSchema.safeParse(value);
@@ -76,6 +80,26 @@ export default function Login() {
       toast.error("Ocorreu um erro. Tente novamente.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+    setIsResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Email de recuperação enviado. Verifique a sua caixa de entrada.");
+        setShowReset(false);
+        setResetEmail("");
+      }
+    } finally {
+      setIsResetLoading(false);
     }
   };
 
@@ -285,9 +309,13 @@ export default function Login() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Palavra-passe</Label>
-                    <a href="#" className="text-sm text-accent hover:underline">
+                    <button
+                      type="button"
+                      className="text-sm text-accent hover:underline"
+                      onClick={() => { setShowReset(true); setResetEmail(email); }}
+                    >
                       Esqueceu a palavra-passe?
-                    </a>
+                    </button>
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -356,6 +384,45 @@ export default function Login() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Reset Password Dialog */}
+          <Dialog open={showReset} onOpenChange={setShowReset}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Recuperar palavra-passe</DialogTitle>
+                <DialogDescription>
+                  Introduza o seu e-mail para receber um link de recuperação.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleResetPassword} className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">E-mail</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="exemplo@empresa.pt"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="pl-9"
+                      required
+                      disabled={isResetLoading}
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setShowReset(false)} disabled={isResetLoading}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={isResetLoading || !resetEmail.trim()}>
+                    {isResetLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />A enviar...</> : 'Enviar link'}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
