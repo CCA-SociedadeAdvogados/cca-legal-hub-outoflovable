@@ -5,6 +5,8 @@ import { pt } from 'date-fns/locale';
 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useLegalBiStats } from '@/hooks/useLegalBiStats';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +18,7 @@ import {
 import {
   BarChart3, Loader2, FileText, TrendingUp, Shield, Euro,
   AlertTriangle, Clock, CalendarClock, CheckCircle2,
-  Scale, ShieldCheck, ArrowUpRight, ArrowDownRight,
+  Scale, ShieldCheck, ArrowUpRight, ArrowDownRight, ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -654,6 +656,8 @@ function ExpirationsTab({ data }: { data: ReturnType<typeof useLegalBiStats> }) 
 export default function LegalBi() {
   const { t } = useTranslation();
   const data = useLegalBiStats();
+  const { currentOrganization } = useOrganizations();
+  const legalbiUrl = (currentOrganization as any)?.legalbi_url as string | null | undefined;
 
   if (data.isLoading) {
     return (
@@ -668,14 +672,26 @@ export default function LegalBi() {
   return (
     <AppLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-3xl font-bold font-serif flex items-center gap-3">
-            <BarChart3 className="h-8 w-8 text-primary" />
-            {t('legalbi.title', 'LegalBI')}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            {t('legalbi.subtitle', 'Business Intelligence jurídico — visão integrada da carteira')}
-          </p>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold font-serif flex items-center gap-3">
+              <BarChart3 className="h-8 w-8 text-primary" />
+              {t('legalbi.title', 'LegalBI')}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {t('legalbi.subtitle', 'Business Intelligence jurídico — visão integrada da carteira')}
+            </p>
+          </div>
+          {legalbiUrl && (
+            <Button
+              variant="outline"
+              onClick={() => window.open(legalbiUrl, '_blank', 'noopener,noreferrer')}
+              className="shrink-0 flex items-center gap-2"
+            >
+              <ExternalLink className="h-4 w-4" />
+              {t('legalbi.openExternal', 'Abrir LegalBI externo')}
+            </Button>
+          )}
         </div>
 
         <Tabs defaultValue="portfolio" className="w-full">

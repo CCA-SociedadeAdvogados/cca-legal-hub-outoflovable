@@ -1329,6 +1329,7 @@
     "valor": "Value",
     "expira": "Expires",
     "dias": "Days",
-    "renovacao": "Renewal"
+    "renovacao": "Renewal",
+    "openExternal": "Open external LegalBI"
   }
 }
