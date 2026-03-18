@@ -145,7 +145,7 @@ export default function ContratoDetalhe() {
 
         {/* Tabs */}
         <Tabs defaultValue="geral" className="space-y-6">
-          <TabsList className={`grid w-full ${isLocal ? 'grid-cols-4' : 'grid-cols-6'}`}>
+          <TabsList className={`grid w-full ${isLocal ? 'grid-cols-5' : 'grid-cols-7'}`}>
             <TabsTrigger value="geral">Contrato</TabsTrigger>
             <TabsTrigger value="partes">Partes</TabsTrigger>
             {!isLocal && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
