@@ -6,6 +6,9 @@ import { pt } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useLegalBiStats } from '@/hooks/useLegalBiStats';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -656,8 +659,33 @@ function ExpirationsTab({ data }: { data: ReturnType<typeof useLegalBiStats> }) 
 export default function LegalBi() {
   const { t } = useTranslation();
   const data = useLegalBiStats();
-  const { currentOrganization } = useOrganizations();
-  const legalbiUrl = (currentOrganization as any)?.legalbi_url as string | null | undefined;
+  const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } = useOrganizations();
+  const { cliente } = useCliente();
+
+  // Para utilizadores CCA internos, usar o org do cliente em visualização.
+  // Para utilizadores externos, currentOrganization é o correcto.
+  const effectiveOrgId = isCCAInternalAuthorized
+    ? (viewingOrganizationId ?? cliente?.organizationId ?? null)
+    : currentOrganization?.id ?? null;
+
+  const { data: viewingOrg } = useQuery({
+    queryKey: ['legalbi-org-url', effectiveOrgId],
+    queryFn: async () => {
+      if (!effectiveOrgId) return null;
+      const { data } = await supabase
+        .from('organizations')
+        .select('legalbi_url')
+        .eq('id', effectiveOrgId)
+        .maybeSingle();
+      return data as { legalbi_url?: string | null } | null;
+    },
+    enabled: !!effectiveOrgId,
+    staleTime: 2 * 60 * 1000,
+  });
+
+  const legalbiUrl = isCCAInternalAuthorized
+    ? (viewingOrg?.legalbi_url ?? null)
+    : ((currentOrganization as any)?.legalbi_url as string | null | undefined);
 
   if (data.isLoading) {
     return (
