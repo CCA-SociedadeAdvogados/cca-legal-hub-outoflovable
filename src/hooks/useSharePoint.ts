@@ -367,6 +367,106 @@ export function useDeleteSharePointConfig() {
   });
 }
 
+// Hook para criar pasta no SharePoint
+export function useCreateSharePointFolder() {
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async (params: { organization_id: string; folder_path: string }) => {
+      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+        body: {
+          action: "create_folder",
+          organization_id: params.organization_id,
+          folder_path: params.folder_path,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Failed to create folder");
+      return data;
+    },
+    onError: (error: Error) => {
+      console.error("Create folder error:", error);
+      toast.error(t("sharepoint.createFolder.error", "Erro ao criar pasta: {{message}}", { message: error.message }));
+    },
+  });
+}
+
+// Hook para criar pastas de contrato automaticamente no SharePoint
+export function useCreateContractFolders() {
+  return useMutation({
+    mutationFn: async (params: {
+      organization_id: string;
+      contrato_id: string;
+      client_code?: string;
+      tipo_contrato?: string;
+    }) => {
+      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+        body: {
+          action: "create_contract_folders",
+          organization_id: params.organization_id,
+          contrato_id: params.contrato_id,
+          client_code: params.client_code,
+          tipo_contrato: params.tipo_contrato,
+        },
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onError: (error: Error) => {
+      // Non-blocking — don't show error to user, just log
+      console.warn("SharePoint contract folder creation failed (non-blocking):", error.message);
+    },
+  });
+}
+
+// Hook para upload de ficheiros grandes (>4MB) via upload session
+export function useUploadLargeToSharePoint() {
+  const queryClient = useQueryClient();
+  const { profile } = useProfile();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async ({ file, folderPath }: { file: File; folderPath: string }) => {
+      if (!profile?.current_organization_id) {
+        throw new Error("Organization not found");
+      }
+
+      // Convert file to base64
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+        body: {
+          action: "upload_large_file",
+          organization_id: profile.current_organization_id,
+          file_base64: base64,
+          file_name: file.name,
+          folder_path: folderPath,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Upload failed");
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents"] });
+      toast.success(t("sharepoint.upload.success", "Ficheiro carregado com sucesso"));
+    },
+    onError: (error: Error) => {
+      console.error("Large upload error:", error);
+      toast.error(t("sharepoint.upload.error", "Erro ao carregar ficheiro: {{message}}", { message: error.message }));
+    },
+  });
+}
+
 // ====== Admin-specific hooks ======
 
 // Hook para obter config SharePoint por orgId (para admins)
