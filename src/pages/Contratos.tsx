@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Plus, Download, Sparkles, Table as TableIcon, Upload, Archive, ArchiveRestore, Cloud } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useContratos } from '@/hooks/useContratos';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCliente } from '@/contexts/ClienteContext';
 import { ContractFilters, ContractFiltersState } from '@/components/contracts/ContractFilters';
 import { ContractsTable } from '@/components/contracts/ContractsTable';
 import { ContractAIParser } from '@/components/contracts/ContractAIParser';
+import { GenerateContractDialog } from '@/components/contracts/GenerateContractDialog';
+import { MultiContractAnalysis } from '@/components/contracts/MultiContractAnalysis';
 import { exportContratosToCSV } from '@/lib/exportUtils';
 import { toast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -26,9 +30,15 @@ const initialFilters: ContractFiltersState = {
 export default function Contratos() {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<ContractFiltersState>(initialFilters);
-  const [activeTab, setActiveTab] = useState<'contratos' | 'arquivo'>('contratos');
+  const [activeTab, setActiveTab] = useState<'contratos' | 'ia' | 'arquivo'>('contratos');
   const [showArchived, setShowArchived] = useState(false);
   const { contratos, isLoading, archiveContrato, restoreContrato, deleteContrato } = useContratos();
+  const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } = useOrganizations();
+  const { cliente } = useCliente();
+
+  const effectiveOrgId = isCCAInternalAuthorized
+    ? (viewingOrganizationId ?? cliente?.organizationId ?? null)
+    : (currentOrganization?.id ?? null);
 
   const filteredContracts = useMemo(() => {
     if (!contratos) return [];
@@ -90,6 +100,7 @@ export default function Contratos() {
   };
 
   const isArquivoTab = activeTab === 'arquivo';
+  const isIaTab = activeTab === 'ia';
 
   return (
     <AppLayout>
@@ -99,8 +110,9 @@ export default function Contratos() {
             <h1 className="text-3xl font-bold font-serif">{t('contracts.title')}</h1>
             <p className="text-muted-foreground mt-1">{t('contracts.subtitle')}</p>
           </div>
-          {!isArquivoTab && (
-            <div className="flex gap-2">
+          {!isArquivoTab && !isIaTab && (
+            <div className="flex gap-2 flex-wrap">
+              <GenerateContractDialog />
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline">
@@ -146,11 +158,15 @@ export default function Contratos() {
           )}
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'contratos' | 'arquivo')}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'contratos' | 'ia' | 'arquivo')}>
           <TabsList>
             <TabsTrigger value="contratos" className="gap-2">
               <TableIcon className="h-4 w-4" />
               {t('contracts.contractsTab')}
+            </TabsTrigger>
+            <TabsTrigger value="ia" className="gap-2">
+              <Sparkles className="h-4 w-4" />
+              Análise IA
             </TabsTrigger>
             <TabsTrigger value="arquivo" className="gap-2">
               <Cloud className="h-4 w-4" />
@@ -194,6 +210,10 @@ export default function Contratos() {
               showArchived={showArchived}
               isLoading={isLoading}
             />
+          </TabsContent>
+
+          <TabsContent value="ia" className="mt-6">
+            <MultiContractAnalysis organizationId={effectiveOrgId} />
           </TabsContent>
 
           <TabsContent value="arquivo" className="mt-6">
