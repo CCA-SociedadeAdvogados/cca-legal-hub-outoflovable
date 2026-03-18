@@ -5,20 +5,32 @@
 -- ============================================================================
 
 -- ── platform_users ─────────────────────────────────────────────────────────
+-- Table is created in 20260305000010_create_platform_users_table.sql.
+-- Guard here with a DO block so this migration is safe on any environment.
 
-ALTER TABLE IF EXISTS platform_users ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'platform_users'
+  ) THEN
+    ALTER TABLE platform_users ENABLE ROW LEVEL SECURITY;
 
--- Drop any existing policies to avoid conflicts
-DROP POLICY IF EXISTS "Users read own platform_users record" ON platform_users;
-DROP POLICY IF EXISTS "Service role manages platform_users" ON platform_users;
+    DROP POLICY IF EXISTS "Users read own platform_users record" ON platform_users;
+    DROP POLICY IF EXISTS "Service role manages platform_users" ON platform_users;
 
--- Authenticated user can only read their own record (simple direct comparison)
-CREATE POLICY "Users read own platform_users record"
-  ON platform_users FOR SELECT
-  TO authenticated
-  USING (email = current_setting('request.jwt.claims', true)::json ->> 'email');
+    -- Authenticated user can only read their own record (simple direct comparison)
+    EXECUTE $pol$
+      CREATE POLICY "Users read own platform_users record"
+        ON platform_users FOR SELECT
+        TO authenticated
+        USING (email = current_setting('request.jwt.claims', true)::json ->> 'email')
+    $pol$;
 
--- NOTE: service_role bypasses RLS by default in Supabase — no explicit policy needed
+    -- NOTE: service_role bypasses RLS by default in Supabase — no explicit policy needed
+  END IF;
+END
+$$;
 
 -- ── organizations ──────────────────────────────────────────────────────────
 -- CCA internal users (auth_method = 'sso_cca') can read all organizations.
