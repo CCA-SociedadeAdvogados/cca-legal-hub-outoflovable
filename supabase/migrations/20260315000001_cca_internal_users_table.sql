@@ -13,11 +13,14 @@
 -- ── 1. Tabela cca_internal_users ──────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS public.cca_internal_users (
-  id   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email text NOT NULL,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT cca_internal_users_email_unique UNIQUE (lower(email))
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now()
 );
+
+-- Unique index on lowercased email (expressions not allowed in inline UNIQUE constraints)
+CREATE UNIQUE INDEX IF NOT EXISTS cca_internal_users_email_unique
+  ON public.cca_internal_users (lower(email));
 
 -- RLS: apenas admins da plataforma conseguem gerir; a própria função
 -- usa SECURITY DEFINER pelo que não precisa de SELECT policy extra.

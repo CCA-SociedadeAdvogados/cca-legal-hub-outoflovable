@@ -60,5 +60,26 @@ verify_jwt = false
 [functions.sync-nav-excel]
 verify_jwt = false
 
-[functions.triage-contract]
+[functions.validate-contract]
+verify_jwt = false
+
+[functions.contract-chat]
+verify_jwt = false
+
+[functions.executive-summary]
+verify_jwt = false
+
+[functions.redline-contract]
+verify_jwt = false
+
+[functions.generate-contract]
+verify_jwt = false
+
+[functions.multi-contract-analysis]
+verify_jwt = false
+
+[functions.provision-client-sharepoint]
+verify_jwt = false
+
+[functions.fetch-azure-photo]
 verify_jwt = false

@@ -65,6 +65,7 @@ import { DepartmentsConfig } from "@/components/admin/DepartmentsConfig";
 import { OrgSharePointConfig } from "@/components/admin/OrgSharePointConfig";
 import { OrgLegalBiConfig } from "@/components/admin/OrgLegalBiConfig";
 import { OrgJvrisIdConfig } from "@/components/admin/OrgJvrisIdConfig";
+import { useProvisionSharePoint } from "@/hooks/useProvisionSharePoint";
 import {
   Building2,
   FileCheck,
@@ -90,6 +91,7 @@ import {
   Check,
   Briefcase,
   Folders,
+  Wand2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -205,6 +207,8 @@ export default function PlatformAdmin() {
     createUser,
     isPlatformAdmin,
   } = usePlatformAdmin();
+
+  const { provision: provisionSharePoint } = useProvisionSharePoint();
 
   // Query para métricas globais de utilizadores
   const { allMembers, isLoadingMembers: isLoadingAllMembers, userMetrics, isLoadingMetrics } = useAllUsersMetrics(isPlatformAdmin);
@@ -1133,6 +1137,32 @@ export default function PlatformAdmin() {
                     selectedSectors={editOrgSectors}
                     onSectorsChange={setEditOrgSectors}
                   />
+                  {/* Botão de provisionamento automático SharePoint + LegalBI */}
+                  {editingOrg && (
+                    <div className="rounded-lg border border-dashed p-4 space-y-2">
+                      <p className="text-sm font-medium">Provisionamento Automático</p>
+                      <p className="text-xs text-muted-foreground">
+                        Cria automaticamente a estrutura de pastas SharePoint para este cliente e configura o link LegalBI.
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={provisionSharePoint.isPending}
+                        onClick={() => {
+                          const org = allOrganizations?.find((o: any) => o.id === editingOrg.id);
+                          const clientCode = (org as any)?.client_code ?? editingOrg.id.slice(0, 8).toUpperCase();
+                          provisionSharePoint.mutate({
+                            organizationId: editingOrg.id,
+                            clientCode,
+                            clientName: editingOrg.name,
+                          });
+                        }}
+                      >
+                        <Wand2 className={`mr-2 h-4 w-4 ${provisionSharePoint.isPending ? "animate-spin" : ""}`} />
+                        {provisionSharePoint.isPending ? "A provisionar..." : "Provisionar SharePoint + LegalBI"}
+                      </Button>
+                    </div>
+                  )}
                   <OrgSharePointConfig organizationId={editingOrg?.id || null} />
                   <OrgLegalBiConfig organizationId={editingOrg?.id || null} />
                   <OrgJvrisIdConfig organizationId={editingOrg?.id || null} />

@@ -56,8 +56,8 @@ Após criar a aplicação, será redirecionado para a página de Overview. **Gua
 
 | Permissão | Descrição |
 |-----------|-----------|
-| `Sites.Read.All` | Ler todos os sites SharePoint |
-| `Files.Read.All` | Ler todos os ficheiros |
+| `Sites.ReadWrite.All` | Ler e escrever em todos os sites SharePoint |
+| `Files.ReadWrite.All` | Ler e escrever ficheiros em todas as bibliotecas |
 
 6. Clique em **"Add permissions"**
 
@@ -184,7 +184,7 @@ A sincronização irá replicar esta estrutura na plataforma CCA Legal.
 - O **Client Secret** é sensível - nunca o partilhe
 - O secret expira após o período configurado (recomendado: 24 meses)
 - Configure um lembrete para renovar o secret antes de expirar
-- As permissões são **read-only** - a aplicação não pode modificar ficheiros no SharePoint
+- As permissões são **ReadWrite** — a aplicação pode criar pastas e carregar ficheiros no SharePoint
 
 ## Suporte
 
