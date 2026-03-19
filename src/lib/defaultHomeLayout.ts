@@ -7,7 +7,7 @@ export interface WidgetConfig {
   config: Record<string, unknown>;
 }
 
-export type WidgetType = 
+export type WidgetType =
   | 'ORGANIZATION_CARD'
   | 'LAWYER_CARD'
   | 'CCA_NEWS'
@@ -16,7 +16,8 @@ export type WidgetType =
   | 'EXPIRING_CONTRACTS'
   | 'QUICK_LINKS'
   | 'WELCOME_MESSAGE'
-  | 'LEGAL_INSIGHTS';
+  | 'LEGAL_INSIGHTS'
+  | 'MONTHLY_SUMMARY';
 
 export interface HomeLayout {
   widgets: WidgetConfig[];
@@ -97,6 +98,14 @@ export const DEFAULT_HOME_LAYOUT: HomeLayout = {
       },
     },
     {
+      id: 'default-monthly-summary',
+      type: 'MONTHLY_SUMMARY',
+      order: 8,
+      visible: true,
+      title: 'Resumo Mensal',
+      config: {},
+    },
+    {
       id: 'default-links',
       type: 'QUICK_LINKS',
       order: 7,
@@ -169,5 +178,10 @@ export const WIDGET_TYPES: WidgetTypeInfo[] = [
     label: 'Legal Insights',
     description: 'Últimas alterações legislativas',
     requiredSectors: ['servicos_financeiros', 'legal', 'saude_farmaceutica', 'seguros_resseguros'],
+  },
+  {
+    type: 'MONTHLY_SUMMARY',
+    label: 'Resumo Mensal',
+    description: 'Resumo automático do mês actual',
   },
 ];

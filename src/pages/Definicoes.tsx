@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
 import { PrivacySettings } from "@/components/settings/PrivacySettings";
 import { SecuritySettings } from "@/components/settings/SecuritySettings";
+import { NotificationPreferencesPanel } from "@/components/settings/NotificationPreferencesPanel";
 import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
 import {
   Settings,
@@ -594,6 +595,9 @@ export default function Definicoes() {
 
           {/* Notifications Settings */}
           <TabsContent value="notifications" className="space-y-6">
+            {/* Configurable Notification Preferences */}
+            <NotificationPreferencesPanel />
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

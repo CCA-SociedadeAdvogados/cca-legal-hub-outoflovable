@@ -7,6 +7,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useLegalBiStats } from '@/hooks/useLegalBiStats';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
+import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -22,8 +23,10 @@ import {
   BarChart3, Loader2, FileText, TrendingUp, Shield, Euro,
   AlertTriangle, Clock, CalendarClock, CheckCircle2,
   Scale, ShieldCheck, ArrowUpRight, ArrowDownRight, ExternalLink,
+  ClipboardCheck, XCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExportPDFButton } from '@/components/shared/ExportPDFButton';
 
 const ESTADO_COLORS: Record<string, string> = {
   rascunho: 'hsl(220, 14%, 60%)',
@@ -654,13 +657,147 @@ function ExpirationsTab({ data }: { data: ReturnType<typeof useLegalBiStats> }) 
   );
 }
 
+// ─── Documents Tab ─────────────────────────────────────────────────────────
+
+function DocumentsTab({ checklistItems, i18nLang }: {
+  checklistItems: ReturnType<typeof useDocumentChecklist>['items'];
+  i18nLang: string;
+}) {
+  const { t } = useTranslation();
+
+  const uploaded = checklistItems.filter(i => i.entry?.status === 'uploaded').length;
+  const expired = checklistItems.filter(i => i.entry?.status === 'expired').length;
+  const expiringSoon = checklistItems.filter(i => i.entry?.status === 'expiring_soon').length;
+  const missing = checklistItems.filter(i => !i.entry || i.entry.status === 'missing').length;
+  const total = checklistItems.length;
+  const percent = total > 0 ? Math.round((uploaded / total) * 100) : 0;
+
+  const statusData = [
+    { name: t('docChecklist.uploaded'), value: uploaded, color: 'hsl(142, 71%, 45%)' },
+    { name: t('docChecklist.expiringSoon'), value: expiringSoon, color: 'hsl(38, 92%, 50%)' },
+    { name: t('docChecklist.expired'), value: expired, color: 'hsl(0, 84%, 60%)' },
+    { name: t('docChecklist.missing'), value: missing, color: 'hsl(220, 14%, 60%)' },
+  ].filter(d => d.value > 0);
+
+  return (
+    <div className="space-y-6">
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <KpiCard
+          title={t('legalbi.docTotal', 'Total Documentos')}
+          value={total}
+          icon={ClipboardCheck}
+        />
+        <KpiCard
+          title={t('docChecklist.uploaded')}
+          value={uploaded}
+          subtitle={`${percent}%`}
+          icon={CheckCircle2}
+          variant="success"
+        />
+        <KpiCard
+          title={t('docChecklist.expired')}
+          value={expired + expiringSoon}
+          icon={AlertTriangle}
+          variant={expired > 0 ? 'danger' : expiringSoon > 0 ? 'warning' : 'default'}
+        />
+        <KpiCard
+          title={t('docChecklist.missing')}
+          value={missing}
+          icon={XCircle}
+          variant={missing > 0 ? 'warning' : 'default'}
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Status Chart */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{t('legalbi.docByStatus', 'Documentos por Estado')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {statusData.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">{t('legalbi.semDados')}</p>
+            ) : (
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={statusData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} paddingAngle={2} dataKey="value">
+                      {statusData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={chartTooltipStyle} />
+                    <Legend formatter={(v) => <span className="text-xs">{v}</span>} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Compliance progress */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">{t('legalbi.docProgress', 'Progresso de Conformidade')}</CardTitle>
+            <CardDescription>{t('docChecklist.subtitle')}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">{t('docChecklist.progress', { count: uploaded, total })}</span>
+                <span className="font-bold">{percent}%</span>
+              </div>
+              <div className="h-3 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${percent === 100 ? 'bg-emerald-500' : percent >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+            </div>
+            <div className="space-y-3 pt-2">
+              {checklistItems.map(item => {
+                const status = item.entry?.status || 'missing';
+                const StatusIcon = status === 'uploaded' ? CheckCircle2 : status === 'expired' ? XCircle : status === 'expiring_soon' ? AlertTriangle : XCircle;
+                const statusColor = status === 'uploaded' ? 'text-emerald-500' : status === 'expired' ? 'text-red-500' : status === 'expiring_soon' ? 'text-amber-500' : 'text-muted-foreground';
+                return (
+                  <div key={item.id} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <StatusIcon className={`h-4 w-4 shrink-0 ${statusColor}`} />
+                      <span className="text-sm truncate">{i18nLang === 'en' && item.name_en ? item.name_en : item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {item.entry?.validity_date && (
+                        <span className="text-xs text-muted-foreground">
+                          {format(new Date(item.entry.validity_date), 'dd/MM/yyyy')}
+                        </span>
+                      )}
+                      <Badge
+                        variant={status === 'uploaded' ? 'default' : status === 'expired' ? 'destructive' : 'secondary'}
+                        className="text-[10px]"
+                      >
+                        {t(`docChecklist.${status === 'expiring_soon' ? 'expiringSoon' : status}`)}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function LegalBi() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const data = useLegalBiStats();
   const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } = useOrganizations();
   const { cliente } = useCliente();
+  const { items: checklistItems, isTableAvailable: checklistAvailable } = useDocumentChecklist();
 
   // Para utilizadores CCA internos, usar o org do cliente em visualização.
   // Para utilizadores externos, currentOrganization é o correcto.
@@ -710,18 +847,22 @@ export default function LegalBi() {
               {t('legalbi.subtitle', 'Business Intelligence jurídico — visão integrada da carteira')}
             </p>
           </div>
-          {legalbiUrl && (
-            <Button
-              variant="outline"
-              onClick={() => window.open(legalbiUrl, '_blank', 'noopener,noreferrer')}
-              className="shrink-0 flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t('legalbi.openExternal', 'Abrir LegalBI externo')}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <ExportPDFButton contentId="legalbi-content" filename="LegalBI" />
+            {legalbiUrl && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(legalbiUrl, '_blank', 'noopener,noreferrer')}
+                className="shrink-0 flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {t('legalbi.openExternal', 'Abrir LegalBI externo')}
+              </Button>
+            )}
+          </div>
         </div>
 
+        <div id="legalbi-content">
         <Tabs defaultValue="portfolio" className="w-full">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="portfolio" className="flex items-center gap-1.5">
@@ -740,6 +881,12 @@ export default function LegalBi() {
               <CalendarClock className="h-4 w-4" />
               {t('legalbi.tabExpirations', 'Expirações')}
             </TabsTrigger>
+            {checklistAvailable && checklistItems.length > 0 && (
+              <TabsTrigger value="documents" className="flex items-center gap-1.5">
+                <ClipboardCheck className="h-4 w-4" />
+                {t('legalbi.tabDocuments', 'Documentos')}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="portfolio" className="mt-6">
@@ -754,7 +901,13 @@ export default function LegalBi() {
           <TabsContent value="expirations" className="mt-6">
             <ExpirationsTab data={data} />
           </TabsContent>
+          {checklistAvailable && checklistItems.length > 0 && (
+            <TabsContent value="documents" className="mt-6">
+              <DocumentsTab checklistItems={checklistItems} i18nLang={i18n.language} />
+            </TabsContent>
+          )}
         </Tabs>
+        </div>
       </div>
     </AppLayout>
   );

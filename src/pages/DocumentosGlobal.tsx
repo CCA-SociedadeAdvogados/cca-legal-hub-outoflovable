@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
+import { DocumentChecklistPanel } from '@/components/documents/DocumentChecklistPanel';
 
 export default function DocumentosGlobal() {
   const { t } = useTranslation();
@@ -16,6 +17,9 @@ export default function DocumentosGlobal() {
             {t('documentsGlobal.subtitle')}
           </p>
         </div>
+
+        {/* Document Checklist */}
+        <DocumentChecklistPanel />
 
         <div className="mt-6">
           <SharePointDocumentsBrowser />

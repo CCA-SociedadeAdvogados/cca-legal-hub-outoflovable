@@ -112,7 +112,8 @@
     "admin": "Administration",
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
-    "legalbi": "Legal Tracker"
+    "legalbi": "Legal Tracker",
+    "prazos": "Deadlines & Dates"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -683,7 +684,8 @@
       "recentDocuments": "Recent Documents",
       "expiringContracts": "Expiring Contracts",
       "quickLinks": "Quick Links",
-      "legalInsights": "Legal Insights"
+      "legalInsights": "Legal Insights",
+      "monthlySummary": "Monthly Summary"
     },
     "noLegalInsights": "No legal insights available",
     "quickLinks": {
@@ -1330,6 +1332,108 @@
     "expira": "Expires",
     "dias": "Days",
     "renovacao": "Renewal",
-    "openExternal": "Open external LegalBI"
+    "openExternal": "Open external LegalBI",
+    "tabDocuments": "Documents",
+    "docTotal": "Total Documents",
+    "docByStatus": "Documents by Status",
+    "docProgress": "Compliance Progress"
+  },
+  "healthScore": {
+    "title": "Contract Health",
+    "complete": "Complete",
+    "hasTitle": "Title filled in",
+    "hasType": "Contract type defined",
+    "hasParties": "Contracting parties identified",
+    "hasDates": "Start and end dates defined",
+    "hasValue": "Estimated value filled in",
+    "hasRenewal": "Renewal type defined",
+    "hasDPA": "DPA/GDPR verified",
+    "hasSignature": "Signature method defined",
+    "hasDepartment": "Responsible department defined",
+    "hasObject": "Object summary filled in"
+  },
+  "prazos": {
+    "title": "Deadlines & Critical Dates",
+    "subtitle": "Timeline of all important dates from your contracts",
+    "totalEvents": "Total Events",
+    "next30Days": "Next 30 Days",
+    "critical": "Critical",
+    "warnings": "Warnings",
+    "allTypes": "All",
+    "contractExpiry": "Expiration",
+    "contractRenewal": "Renewal",
+    "financialDue": "Financial",
+    "guaranteeExpiry": "Guarantee",
+    "exportCalendar": "Export Calendar (.ics)",
+    "noEvents": "No deadlines found",
+    "noEventsDescription": "No critical dates in the next 180 days",
+    "daysRemaining": "{{count}}d remaining",
+    "viewContract": "View contract",
+    "criticalLabel": "Critical",
+    "warningLabel": "Warning"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "disclaimer": "This information is for guidance only and does not replace professional legal advice.",
+    "defaultQuestions": {
+      "whatIsContract": "What is a contract?",
+      "whatIsContractAnswer": "A contract is a legally binding agreement between two or more parties that establishes mutual rights and obligations.",
+      "howToRenew": "How does renewal work?",
+      "howToRenewAnswer": "Renewal can be automatic or by mutual agreement, depending on what is stipulated in the contract. Check the renewal clauses and notice periods.",
+      "whatIfBreach": "What happens in case of breach?",
+      "whatIfBreachAnswer": "Breach of contract may result in damages, contract termination or other consequences as specified in the clauses. Consult your lawyer for specific guidance."
+    }
+  },
+  "monthlySummary": {
+    "title": "Monthly Summary",
+    "activeContracts": "Active Contracts",
+    "createdThisMonth": "Created this month",
+    "terminatedThisMonth": "Terminated this month",
+    "renewedThisMonth": "Renewed this month",
+    "legislativeEvents": "Legislative Events",
+    "financialPending": "Financial Pending",
+    "financialOverdue": "Financial Overdue",
+    "noActivity": "No activity this month"
+  },
+  "docChecklist": {
+    "title": "Document Checklist",
+    "subtitle": "Organization mandatory documents",
+    "progress": "{{count}} of {{total}} complete",
+    "missing": "Missing",
+    "uploaded": "Uploaded",
+    "expired": "Expired",
+    "expiringSoon": "Expiring Soon",
+    "validUntil": "Valid until",
+    "editDocument": "Edit Document",
+    "aiSuggestedDate": "AI suggested date",
+    "confirmDate": "I confirm the validity of this document",
+    "confirmRequired": "You must confirm the validity date before saving",
+    "notAvailable": "Document checklist not available. Contact the administrator.",
+    "selectDate": "Select validity date"
+  },
+  "notifPrefs": {
+    "title": "Notification Preferences",
+    "subtitle": "Configure which alerts you want to receive and when",
+    "expiryDays": "Alert X days before expiry",
+    "days": "days",
+    "addDays": "Add days...",
+    "types": "Alert Types",
+    "contractExpiry": "Contract Expiry",
+    "contractExpiryDesc": "Alerts when contracts approach their end date",
+    "financialDue": "Financial Due Dates",
+    "financialDueDesc": "Alerts for invoices approaching due date",
+    "legislativeEvents": "Legislative Events",
+    "legislativeEventsDesc": "New relevant legislative events",
+    "ccaNews": "CCA News",
+    "ccaNewsDesc": "Communications published by CCA",
+    "documentChecklist": "Expired Documents",
+    "documentChecklistDesc": "Alerts when checklist documents expire",
+    "channels": "Channels",
+    "inApp": "In-App",
+    "email": "Email",
+    "emailDesc": "Coming soon"
+  },
+  "export": {
+    "pdf": "Export PDF"
   }
 }
