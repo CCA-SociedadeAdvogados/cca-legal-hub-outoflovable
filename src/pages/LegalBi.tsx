@@ -24,6 +24,7 @@ import {
   Scale, ShieldCheck, ArrowUpRight, ArrowDownRight, ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ExportPDFButton } from '@/components/shared/ExportPDFButton';
 
 const ESTADO_COLORS: Record<string, string> = {
   rascunho: 'hsl(220, 14%, 60%)',
@@ -710,18 +711,22 @@ export default function LegalBi() {
               {t('legalbi.subtitle', 'Business Intelligence jurídico — visão integrada da carteira')}
             </p>
           </div>
-          {legalbiUrl && (
-            <Button
-              variant="outline"
-              onClick={() => window.open(legalbiUrl, '_blank', 'noopener,noreferrer')}
-              className="shrink-0 flex items-center gap-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-              {t('legalbi.openExternal', 'Abrir LegalBI externo')}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <ExportPDFButton contentId="legalbi-content" filename="LegalBI" />
+            {legalbiUrl && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(legalbiUrl, '_blank', 'noopener,noreferrer')}
+                className="shrink-0 flex items-center gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {t('legalbi.openExternal', 'Abrir LegalBI externo')}
+              </Button>
+            )}
+          </div>
         </div>
 
+        <div id="legalbi-content">
         <Tabs defaultValue="portfolio" className="w-full">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="portfolio" className="flex items-center gap-1.5">
@@ -755,6 +760,7 @@ export default function LegalBi() {
             <ExpirationsTab data={data} />
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </AppLayout>
   );

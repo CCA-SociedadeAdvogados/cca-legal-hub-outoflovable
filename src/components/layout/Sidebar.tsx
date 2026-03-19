@@ -39,6 +39,7 @@ import {
   Briefcase,
   UserCog,
   BarChart3,
+  CalendarClock,
   Lock,
 } from "lucide-react";
 
@@ -207,6 +208,14 @@ export function Sidebar({ clientName }: SidebarProps) {
           icon={BarChart3}
           label={t("nav.legalbi")}
           isActive={location.pathname === "/legalbi"}
+          isCollapsed={isCollapsed}
+        />
+
+        <NavItem
+          to="/prazos"
+          icon={CalendarClock}
+          label={t("nav.prazos", "Prazos e Datas")}
+          isActive={location.pathname === "/prazos"}
           isCollapsed={isCollapsed}
         />
 

@@ -20,6 +20,8 @@ import { ContractComplianceResults } from '@/components/contracts/ContractCompli
 import { ContractChat } from '@/components/contracts/ContractChat';
 import { ExecutiveSummary } from '@/components/contracts/ExecutiveSummary';
 import { ContractRedline } from '@/components/contracts/ContractRedline';
+import { ContractHealthScore } from '@/components/contracts/ContractHealthScore';
+import { ContractFAQ } from '@/components/contracts/ContractFAQ';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { useCliente } from '@/contexts/ClienteContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -156,6 +158,14 @@ export default function ContratoDetalhe() {
           </TabsList>
 
           <TabsContent value="geral" className="space-y-6">
+            {/* Health Score */}
+            <div className="grid gap-6 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <ContractHealthScore contrato={contrato} />
+              </div>
+              <ContractFAQ tipoContrato={contrato.tipo_contrato} />
+            </div>
+
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader><CardTitle className="text-lg">Identificação</CardTitle></CardHeader>

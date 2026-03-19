@@ -45,6 +45,7 @@ import MeuDepartamento from "./pages/MeuDepartamento";
 import MinhaOrganizacao from "./pages/MinhaOrganizacao";
 import UtilizadoresOrg from "./pages/UtilizadoresOrg";
 import LegalBi from "./pages/LegalBi";
+import PrazosTimeline from "./pages/PrazosTimeline";
 import OrganizationsPage from "./pages/OrganizationsPage";
 import { PlatformAdminRoute } from "./components/layout/PlatformAdminRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -161,6 +162,7 @@ const AppRoutes = () => {
       <Route path="/novidades-cca" element={<ProtectedRoute><NovidadesCCA /></ProtectedRoute>} />
       <Route path="/financeiro" element={<ProtectedRoute><Financeiro /></ProtectedRoute>} />
       <Route path="/legalbi" element={<ProtectedRoute><LegalBi /></ProtectedRoute>} />
+      <Route path="/prazos" element={<ProtectedRoute><PrazosTimeline /></ProtectedRoute>} />
       <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
       
       {/* Novas páginas do módulo de utilizadores */}

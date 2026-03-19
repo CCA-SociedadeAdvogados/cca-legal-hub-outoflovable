@@ -112,7 +112,8 @@
     "admin": "Administração",
     "ccaNews": "Novidades CCA",
     "financial": "Minha Conta Corrente CCA",
-    "legalbi": "Legal Tracker"
+    "legalbi": "Legal Tracker",
+    "prazos": "Prazos e Datas"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -683,7 +684,8 @@
       "recentDocuments": "Documentos Recentes",
       "expiringContracts": "Contratos a Expirar",
       "quickLinks": "Atalhos Rápidos",
-      "legalInsights": "Legal Insights"
+      "legalInsights": "Legal Insights",
+      "monthlySummary": "Resumo Mensal"
     },
     "noLegalInsights": "Sem novidades em Legal Insights",
     "quickLinks": {
@@ -1331,5 +1333,103 @@
     "dias": "Dias",
     "renovacao": "Renovação",
     "openExternal": "Abrir LegalBI externo"
+  },
+  "healthScore": {
+    "title": "Saúde do Contrato",
+    "complete": "Completo",
+    "hasTitle": "Título preenchido",
+    "hasType": "Tipo de contrato definido",
+    "hasParties": "Partes contratantes identificadas",
+    "hasDates": "Datas de início e termo definidas",
+    "hasValue": "Valor estimado preenchido",
+    "hasRenewal": "Tipo de renovação definido",
+    "hasDPA": "DPA/RGPD verificado",
+    "hasSignature": "Método de assinatura definido",
+    "hasDepartment": "Departamento responsável definido",
+    "hasObject": "Objecto resumido preenchido"
+  },
+  "prazos": {
+    "title": "Prazos e Datas Críticas",
+    "subtitle": "Cronologia de todas as datas importantes dos seus contratos",
+    "totalEvents": "Total Eventos",
+    "next30Days": "Próximos 30 Dias",
+    "critical": "Críticos",
+    "warnings": "Alertas",
+    "allTypes": "Todos",
+    "contractExpiry": "Expiração",
+    "contractRenewal": "Renovação",
+    "financialDue": "Financeiro",
+    "guaranteeExpiry": "Garantia",
+    "exportCalendar": "Exportar Calendário (.ics)",
+    "noEvents": "Nenhum prazo encontrado",
+    "noEventsDescription": "Não existem datas críticas nos próximos 180 dias",
+    "daysRemaining": "{{count}}d restantes",
+    "viewContract": "Ver contrato",
+    "criticalLabel": "Crítico",
+    "warningLabel": "Atenção"
+  },
+  "faq": {
+    "title": "Perguntas Frequentes",
+    "disclaimer": "Esta informação é meramente orientativa e não substitui aconselhamento jurídico profissional.",
+    "defaultQuestions": {
+      "whatIsContract": "O que é um contrato?",
+      "whatIsContractAnswer": "Um contrato é um acordo juridicamente vinculativo entre duas ou mais partes que estabelece direitos e obrigações recíprocas.",
+      "howToRenew": "Como funciona a renovação?",
+      "howToRenewAnswer": "A renovação pode ser automática ou mediante acordo das partes, dependendo do que está estipulado no contrato. Verifique as cláusulas de renovação e os prazos de denúncia.",
+      "whatIfBreach": "O que acontece em caso de incumprimento?",
+      "whatIfBreachAnswer": "O incumprimento contratual pode resultar em indemnizações, rescisão do contrato ou outras consequências previstas nas cláusulas. Consulte o seu advogado para orientação específica."
+    }
+  },
+  "monthlySummary": {
+    "title": "Resumo Mensal",
+    "activeContracts": "Contratos Activos",
+    "createdThisMonth": "Criados este mês",
+    "terminatedThisMonth": "Terminados este mês",
+    "renewedThisMonth": "Renovados este mês",
+    "legislativeEvents": "Eventos Legislativos",
+    "financialPending": "Financeiro Pendente",
+    "financialOverdue": "Financeiro Vencido",
+    "noActivity": "Sem actividade este mês"
+  },
+  "docChecklist": {
+    "title": "Checklist de Documentos",
+    "subtitle": "Documentos obrigatórios da organização",
+    "progress": "{{count}} de {{total}} completos",
+    "missing": "Em Falta",
+    "uploaded": "Carregado",
+    "expired": "Expirado",
+    "expiringSoon": "A Expirar",
+    "validUntil": "Válido até",
+    "editDocument": "Editar Documento",
+    "aiSuggestedDate": "Data sugerida pela IA",
+    "confirmDate": "Confirmo a validade deste documento",
+    "confirmRequired": "Tem de confirmar a data de validade antes de guardar",
+    "notAvailable": "Checklist de documentos não disponível. Contacte o administrador.",
+    "selectDate": "Seleccionar data de validade"
+  },
+  "notifPrefs": {
+    "title": "Preferências de Notificação",
+    "subtitle": "Configure quais alertas pretende receber e quando",
+    "expiryDays": "Alertar X dias antes da expiração",
+    "days": "dias",
+    "addDays": "Adicionar dias...",
+    "types": "Tipos de Alerta",
+    "contractExpiry": "Expiração de Contratos",
+    "contractExpiryDesc": "Alertas quando contratos se aproximam do termo",
+    "financialDue": "Vencimentos Financeiros",
+    "financialDueDesc": "Alertas de faturas próximas do vencimento",
+    "legislativeEvents": "Eventos Legislativos",
+    "legislativeEventsDesc": "Novos eventos legislativos relevantes",
+    "ccaNews": "Novidades CCA",
+    "ccaNewsDesc": "Comunicações publicadas pela CCA",
+    "documentChecklist": "Documentos Expirados",
+    "documentChecklistDesc": "Alertas quando documentos da checklist expiram",
+    "channels": "Canais",
+    "inApp": "Na Plataforma",
+    "email": "Email",
+    "emailDesc": "Em breve"
+  },
+  "export": {
+    "pdf": "Exportar PDF"
   }
 }

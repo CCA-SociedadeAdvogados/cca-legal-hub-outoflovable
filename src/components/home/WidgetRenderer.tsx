@@ -15,6 +15,7 @@ const ExpiringContractsWidget = lazy(() => import('./widgets/ExpiringContractsWi
 const QuickLinksWidget = lazy(() => import('./widgets/QuickLinksWidget'));
 const WelcomeMessageWidget = lazy(() => import('./widgets/WelcomeMessageWidget'));
 const LegalInsightsWidget = lazy(() => import('./widgets/LegalInsightsWidget'));
+const MonthlySummaryWidget = lazy(() => import('./widgets/MonthlySummaryWidget'));
 
 interface WidgetRendererProps {
   widget: WidgetConfig;
@@ -62,6 +63,7 @@ const widgetTitleKeyMap: Record<WidgetType, string> = {
   'EXPIRING_CONTRACTS': 'home.widgetTitles.expiringContracts',
   'QUICK_LINKS': 'home.widgetTitles.quickLinks',
   'LEGAL_INSIGHTS': 'home.widgetTitles.legalInsights',
+  'MONTHLY_SUMMARY': 'home.widgetTitles.monthlySummary',
 };
 
 export function WidgetRenderer({ widget, organizationId }: WidgetRendererProps) {
@@ -143,6 +145,14 @@ export function WidgetRenderer({ widget, organizationId }: WidgetRendererProps) 
       case 'LEGAL_INSIGHTS':
         return (
           <LegalInsightsWidget
+            title={translatedTitle}
+            config={widget.config}
+            organizationId={organizationId}
+          />
+        );
+      case 'MONTHLY_SUMMARY':
+        return (
+          <MonthlySummaryWidget
             title={translatedTitle}
             config={widget.config}
             organizationId={organizationId}
