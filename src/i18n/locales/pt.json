@@ -1332,7 +1332,11 @@
     "expira": "Expira",
     "dias": "Dias",
     "renovacao": "Renovação",
-    "openExternal": "Abrir LegalBI externo"
+    "openExternal": "Abrir LegalBI externo",
+    "tabDocuments": "Documentos",
+    "docTotal": "Total Documentos",
+    "docByStatus": "Documentos por Estado",
+    "docProgress": "Progresso de Conformidade"
   },
   "healthScore": {
     "title": "Saúde do Contrato",
