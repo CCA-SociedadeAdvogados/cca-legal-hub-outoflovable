@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -33,6 +34,7 @@ export interface ContractTriageAnalysis {
 
 export const useContractTriage = (contratoId?: string) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: analysis, isLoading, error, refetch } = useQuery({
@@ -69,7 +71,7 @@ export const useContractTriage = (contratoId?: string) => {
       // Force immediate refetch after invalidation
       await queryClient.invalidateQueries({ queryKey: ['contract-triage', contratoId] });
       await refetch();
-      toast({ title: 'Análise de triagem concluída com sucesso' });
+      toast({ title: t('toasts.triageCompleted') });
     },
     onError: (error: Error) => {
       toast({ 

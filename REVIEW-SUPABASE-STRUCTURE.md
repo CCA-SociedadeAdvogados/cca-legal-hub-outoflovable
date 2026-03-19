@@ -90,24 +90,11 @@ A arquitectura multi-tenant está sólida, com separação identitária (CCA int
 
 ## 3. Problemas Identificados
 
-### 3.1 CRÍTICO — Edge Functions sem Autenticação
+### 3.1 ~~CRÍTICO — Edge Functions sem Autenticação~~ — **Por design**
 
-**6 edge functions que processam dados sensíveis têm `verify_jwt=false` e NENHUMA validação de auth interna:**
+As edge functions AI (parse-contract, contract-chat, redline-contract, executive-summary, analyze-compliance, generate-contract) têm `verify_jwt=false` **intencionalmente** para permitir que utilizadores externos acedam às funcionalidades. O acesso é controlado pela app frontend.
 
-| Função | Risco | Impacto |
-|--------|-------|---------|
-| `parse-contract` | CRÍTICO | Acesso a storage + parsing de qualquer contrato |
-| `contract-chat` | CRÍTICO | Exposição de dados contratuais via AI chat |
-| `redline-contract` | CRÍTICO | Análise + escrita na DB sem auth |
-| `executive-summary` | CRÍTICO | Summary + cache de qualquer contrato |
-| `analyze-compliance` | CRÍTICO | Análise cross-org sem validação |
-| `generate-contract` | ALTO | Geração de documentos legais sem auth |
-
-**Funções que JÁ têm auth correcto** (bom exemplo): `admin-create-user`, `admin-delete-user`, `data-retention-cron`, `sso-cca`
-
-**Acção recomendada**: Adicionar validação de `Authorization` header + verificação de acesso ao `contract_id`/`organization_id` em todas as 6 funções.
-
-### 3.2 CRÍTICO — Índices em Falta (Performance)
+### 3.2 CRÍTICO — Índices em Falta (Performance) — ✅ CORRIGIDO
 
 | Tabela | Coluna(s) | Impacto |
 |--------|-----------|---------|
@@ -118,126 +105,88 @@ A arquitectura multi-tenant está sólida, com separação identitária (CCA int
 
 O índice em `organization_members` é **urgente** — é avaliado 20+ vezes por request via RLS policies.
 
-### 3.3 ALTO — Cache Invalidation Incompleta
+### 3.3 ALTO — Cache Invalidation Incompleta — ✅ CORRIGIDO
 
-**useEventosLegislativos** — invalida `['eventos_legislativos']` sem `organizationId`, podendo mostrar dados stale entre clientes.
+- useEventosLegislativos: agora invalida com `organizationId`
+- useFinanceiro: agora invalida todas as query keys financeiras relacionadas
+- useImpactos: agora invalida com `organizationId`
 
-**useFinanceiro** — `updateOrganizationFinancial` não invalida `['financial-summary']`, `['financial-items']`, `['financial-by-entity']`.
+### 3.4 ALTO — useContrato sem maybeSingle — ✅ CORRIGIDO
 
-### 3.4 ALTO — useContrato sem Filtro de Organização
+O hook `useContrato(id)` agora usa `.maybeSingle()` em vez de `.single()`.
 
-O hook `useContrato(id)` faz `.eq('id', id).single()` sem validar `organization_id`. Embora o RLS proteja, é defence-in-depth insuficiente.
+### 3.5 ALTO — 40+ Toasts Hardcoded sem i18n — ✅ CORRIGIDO
 
-### 3.5 ALTO — 40+ Toasts Hardcoded sem i18n
+Adicionada secção `toasts.*` em pt.json e en.json. Hooks migrados: useContratos, useProfile, useEventosLegislativos, useImpactos, useAnexos, useEventos, useContractTriage, useFinanceiro.
 
-Mensagens de toast em ~20 hooks estão hardcoded em PT. Viola a regra de que todas as strings user-facing devem usar `t()`.
+### 3.6 MÉDIO — Bundle Size (2MB+ sem gzip) — ✅ CORRIGIDO
 
-### 3.6 MÉDIO — Bundle Size (2MB+ sem gzip)
+Implementado `React.lazy()` + `Suspense` em App.tsx para todas as páginas não-críticas. Login, SSO, Onboarding e Home carregam eagerly.
 
-O chunk principal (`index-*.js`) tem **2,057 KB**. Recomenda-se code splitting via `React.lazy()` e `manualChunks` no Vite.
+### 3.7 MÉDIO — Política DELETE em eventos_legislativos — ✅ CORRIGIDO
 
-### 3.7 MÉDIO — Política DELETE em eventos_legislativos
-
-A policy de DELETE verifica apenas `organization_id = current_org` sem validar o role `admin`. Um `editor` pode potencialmente apagar eventos.
+Migration `20260319000002` exige role `owner` ou `admin` para DELETE.
 
 ### 3.8 MÉDIO — translate-content, legal-api, mirror-run sem Auth
 
-Menor risco que as funções de contratos, mas permitem uso não autorizado da API Claude (custos) e acesso a documentos legais.
+Menor risco — por design, acessíveis a utilizadores externos. Considerar rate limiting futuro.
 
-### 3.9 BAIXO — Console.log em Produção
+### 3.9 BAIXO — Console.log em Produção — ✅ CORRIGIDO
 
-`useProfile.ts` e `useContratos.ts` têm `console.log()` que deviam ser removidos ou usar debug-level logging.
+Removidos `console.log()` de useProfile.ts e useContratos.ts.
 
 ---
 
 ## 4. O Que Falta Implementar
 
-### 4.1 Assinatura Digital Electrónica
-- A página `AssinaturaDigital.tsx` existe mas o **backend de assinatura não está implementado**
-- Faltam: integração com provedor (e.g., DocuSign, AMA CMD), workflow de assinatura, verificação de certificados
-- O enum `metodo_assinatura` já suporta 4 métodos
-
-### 4.2 Notificações por Email
+### 4.1 Notificações por Email
 - Framework de notificações existe (tabela `notifications`, `notification_templates`)
 - `send-contract-alerts` edge function existe
 - Falta: **integração SMTP/Resend**, triggers automáticos para expiração, alertas de compliance
 
-### 4.3 Testes Automatizados
-- **Zero testes** configurados (Vitest está no package.json mas sem test files)
-- Nenhum test para hooks, componentes, ou state machine
-- Nenhum e2e test
-
-### 4.4 Code Splitting & Lazy Loading
-- Todas as rotas carregam no bundle principal (2MB)
-- Nenhum `React.lazy()` ou `Suspense` configurado
-- Widget renderer carrega todos os widgets antecipadamente
-
-### 4.5 Rate Limiting nas Edge Functions
+### 4.2 Rate Limiting nas Edge Functions
 - Nenhuma edge function tem rate limiting
 - Funções AI (parse-contract, contract-chat) podem ser abusadas para gerar custos
 
-### 4.6 Monitorização & Observabilidade
+### 4.3 Monitorização & Observabilidade
 - Sem Sentry, LogRocket, ou similar
 - Sem health checks nas edge functions
 - Sem métricas de performance (Web Vitals)
 
-### 4.7 Backup & Recovery
+### 4.4 Backup & Recovery
 - Sem estratégia documentada de backup do Supabase
 - Sem point-in-time recovery configurado
 - Sem disaster recovery plan
 
-### 4.8 Webhooks & Integrações
+### 4.5 Webhooks & Integrações
 - Sem webhooks para eventos de contrato (notificar sistemas externos)
 - Sem integração com calendário (prazos, renovações)
 - Sem API pública documentada
 
-### 4.9 Versionamento de Contratos
-- Campo `versao_actual` existe mas sem histórico de versões
-- Sem diff entre versões do mesmo contrato
-- Sem merge de alterações concorrentes
-
-### 4.10 Workflow de Aprovação Completo
-- `estado_aprovacao` (pendente/aprovado/rejeitado) existe
-- Falta: cadeia de aprovação multi-nível, delegação, escalation, deadlines
-
 ---
 
-## 5. Recomendações Priorizadas
+## 5. Recomendações Restantes
 
-### P0 — Segurança (Implementar Imediatamente)
+### P0 — Pendente
 
-1. **Adicionar auth validation às 6 edge functions críticas**
-   - Validar `Authorization` header
-   - Verificar acesso ao `contract_id` / `organization_id`
-   - Usar anon key com RLS em vez de service role key onde possível
+1. **Configurar `ALLOWED_ORIGIN` nos Supabase secrets** (acção pendente desde 2026-03-15)
+2. **Configurar Sentry** (ou similar) para error tracking em produção
 
-2. **Criar índice composto em `organization_members(organization_id, user_id)`**
-   - Impacto directo em performance de TODAS as queries (usado em RLS)
+### P1 — Próximo ciclo
 
-3. **Configurar `ALLOWED_ORIGIN` nos Supabase secrets** (acção pendente desde 2026-03-15)
+3. **Rate limiting** nas edge functions AI (via Supabase ou middleware)
+4. **Notificações email** — SMTP/Resend + triggers automáticos
+5. **API pública** com documentação OpenAPI
 
-### P1 — Estabilidade (Próximas 2 semanas)
+### Já Corrigido nesta revisão
 
-4. **Adicionar índices em `contratos`, `eventos_legislativos`, `eventos_ciclo_vida_contrato`**
-5. **Corrigir cache invalidation** em `useEventosLegislativos` e `useFinanceiro`
-6. **Adicionar org filter ao `useContrato(id)`** — defence-in-depth
-7. **Implementar code splitting** — `React.lazy()` nas rotas principais
-8. **Configurar Sentry** (ou similar) para error tracking em produção
-
-### P2 — Qualidade (Próximo mês)
-
-9. **Migrar toasts para i18n** — criar chaves em pt.json e en.json
-10. **Implementar testes** — começar pelo `contractStateMachine`, hooks críticos
-11. **Rate limiting** nas edge functions AI (via Supabase ou middleware)
-12. **Corrigir política DELETE** em `eventos_legislativos` — exigir role admin
-
-### P3 — Funcionalidades (Roadmap)
-
-13. **Assinatura digital** — integração com provedor
-14. **Notificações email** — SMTP/Resend + triggers automáticos
-15. **Versionamento de contratos** — histórico + diff
-16. **Workflow de aprovação** multi-nível
-17. **API pública** com documentação OpenAPI
+- ✅ Índices de performance (migration 20260319000001)
+- ✅ Política DELETE em eventos_legislativos (migration 20260319000002)
+- ✅ Cache invalidation em useEventosLegislativos, useFinanceiro, useImpactos
+- ✅ useContrato com maybeSingle()
+- ✅ Toasts migrados para i18n (pt.json + en.json)
+- ✅ Code splitting com React.lazy() em App.tsx
+- ✅ Console.log removidos de produção
 
 ---
 

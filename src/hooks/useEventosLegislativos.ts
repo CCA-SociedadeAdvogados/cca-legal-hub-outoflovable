@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCliente } from '@/contexts/ClienteContext';
@@ -12,6 +13,7 @@ export type EventoLegislativoUpdate = TablesUpdate<'eventos_legislativos'>;
 
 export const useEventosLegislativos = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { viewingOrganizationId } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
@@ -56,11 +58,11 @@ export const useEventosLegislativos = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
-      toast({ title: 'Evento criado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
+      toast({ title: t('toasts.eventCreated') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao criar evento', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.eventCreateError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -72,16 +74,16 @@ export const useEventosLegislativos = () => {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
-      toast({ title: 'Evento atualizado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
+      toast({ title: t('toasts.eventUpdated') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar evento', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.eventUpdateError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -91,15 +93,15 @@ export const useEventosLegislativos = () => {
         .from('eventos_legislativos')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
-      toast({ title: 'Evento eliminado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
+      toast({ title: t('toasts.eventDeleted') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao eliminar evento', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.eventDeleteError'), description: error.message, variant: 'destructive' });
     },
   });
 

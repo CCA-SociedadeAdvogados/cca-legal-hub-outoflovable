@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCliente } from '@/contexts/ClienteContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { toast } from '@/hooks/use-toast';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
-import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
 export type Contrato = Tables<'contratos'>;
 export type ContratoInsert = TablesInsert<'contratos'>;
@@ -18,7 +18,7 @@ function createContractSharePointFolders(
   clientCode?: string,
   tipoContrato?: string
 ) {
-  supabaseClient.functions
+  supabase.functions
     .invoke("sync-sharepoint", {
       body: {
         action: "create_contract_folders",
@@ -28,18 +28,14 @@ function createContractSharePointFolders(
         tipo_contrato: tipoContrato,
       },
     })
-    .then((res) => {
-      if (res.data?.success && !res.data?.skipped) {
-        console.log(`[SharePoint] Contract folders created for ${contratoId}`);
-      }
-    })
-    .catch((err) => {
-      console.warn("[SharePoint] Contract folder creation failed (non-blocking):", err?.message);
+    .catch(() => {
+      // Non-blocking — SharePoint folder creation is best-effort
     });
 }
 
 export const useContratos = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { viewingOrganizationId, cliente } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
@@ -87,8 +83,8 @@ export const useContratos = () => {
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-      toast({ title: 'Contrato criado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['contratos', organizationId] });
+      toast({ title: t('toasts.contractCreated') });
 
       // Fire-and-forget: create SharePoint folder structure
       if (data && organizationId) {
@@ -101,7 +97,7 @@ export const useContratos = () => {
       }
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao criar contrato', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.contractCreateError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -113,16 +109,16 @@ export const useContratos = () => {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-      toast({ title: 'Contrato atualizado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['contratos', organizationId] });
+      toast({ title: t('toasts.contractUpdated') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar contrato', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.contractUpdateError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -132,15 +128,15 @@ export const useContratos = () => {
         .from('contratos')
         .update({ arquivado: true, updated_by_id: user?.id })
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-      toast({ title: 'Contrato arquivado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['contratos', organizationId] });
+      toast({ title: t('toasts.contractArchived') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao arquivar contrato', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.contractArchiveError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -150,15 +146,15 @@ export const useContratos = () => {
         .from('contratos')
         .update({ arquivado: false, updated_by_id: user?.id })
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-      toast({ title: 'Contrato restaurado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['contratos', organizationId] });
+      toast({ title: t('toasts.contractRestored') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao restaurar contrato', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.contractRestoreError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -168,15 +164,15 @@ export const useContratos = () => {
         .from('contratos')
         .delete()
         .eq('id', id);
-      
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-      toast({ title: 'Contrato eliminado com sucesso' });
+      queryClient.invalidateQueries({ queryKey: ['contratos', organizationId] });
+      toast({ title: t('toasts.contractDeleted') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao eliminar contrato', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.contractDeleteError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -186,16 +182,16 @@ export const useContratos = () => {
         .from('contratos')
         .insert(contratos)
         .select();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-      toast({ title: `${data?.length || 0} contrato(s) criado(s) com sucesso` });
+      queryClient.invalidateQueries({ queryKey: ['contratos', organizationId] });
+      toast({ title: t('toasts.contractCreatedBulk', { count: data?.length || 0 }) });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao criar contratos', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.contractCreateBulkError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -216,7 +212,7 @@ export const useContratos = () => {
 // Hook for fetching a single contract with fresh data
 export const useContrato = (id?: string) => {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: ['contrato', id],
     queryFn: async () => {
@@ -224,13 +220,13 @@ export const useContrato = (id?: string) => {
         .from('contratos')
         .select('*')
         .eq('id', id!)
-        .single();
-      
+        .maybeSingle();
+
       if (error) throw error;
       return data as Contrato;
     },
     enabled: !!id && !!user,
-    staleTime: 10 * 1000, // 10 seconds
-    refetchOnWindowFocus: true, // Revalidate when window gains focus
+    staleTime: 10 * 1000,
+    refetchOnWindowFocus: true,
   });
 };

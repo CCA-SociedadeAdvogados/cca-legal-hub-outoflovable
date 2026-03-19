@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
@@ -91,6 +92,7 @@ function calculateStatus(summary: FinancialSummaryData | null): AccountStatus {
  */
 export function useFinanceiro(overrideOrgId?: string) {
   const { profile } = useProfile();
+  const { t } = useTranslation();
   const { isPlatformAdmin } = usePlatformAdmin();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   const { viewingOrganizationId } = useCliente();
@@ -217,13 +219,14 @@ export function useFinanceiro(overrideOrgId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['organization-financial-info', userId, organizationId],
-      });
-      toast.success('Configurações actualizadas');
+      queryClient.invalidateQueries({ queryKey: ['organization-financial-info', userId, organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['financial-summary', userId, organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['financial-items', userId, organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['financial-by-entity', userId, organizationId] });
+      toast.success(t('toasts.financialConfigUpdated'));
     },
     onError: (error) => {
-      toast.error('Erro ao actualizar configurações: ' + error.message);
+      toast.error(t('toasts.financialConfigError') + ': ' + error.message);
     },
   });
 

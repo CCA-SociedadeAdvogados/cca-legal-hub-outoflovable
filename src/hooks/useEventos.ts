@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -21,6 +22,7 @@ export type TipoEvento =
 
 export const useEventos = (contratoId?: string) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: eventos, isLoading, error } = useQuery({
@@ -69,7 +71,7 @@ export const useEventos = (contratoId?: string) => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['eventos', variables.contrato_id] });
       queryClient.invalidateQueries({ queryKey: ['eventos'] });
-      toast({ title: 'Evento registado com sucesso' });
+      toast({ title: t('toasts.lifecycleEventCreated') });
     },
     onError: (error: Error) => {
       toast({ 

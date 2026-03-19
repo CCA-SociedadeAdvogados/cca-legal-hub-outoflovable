@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -9,6 +10,7 @@ export type ProfileUpdate = TablesUpdate<'profiles'>;
 
 export const useProfile = () => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: profile, isLoading, error } = useQuery({
@@ -39,7 +41,6 @@ export const useProfile = () => {
       
       // If profile doesn't exist, create it (self-healing)
       if (!data) {
-        console.log('Profile not found, creating...');
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -92,10 +93,10 @@ export const useProfile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
-      toast({ title: 'Perfil atualizado com sucesso' });
+      toast({ title: t('toasts.profileUpdated') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar perfil', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.profileUpdateError'), description: error.message, variant: 'destructive' });
     },
   });
 
@@ -131,10 +132,10 @@ export const useProfile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
-      toast({ title: 'Avatar atualizado com sucesso' });
+      toast({ title: t('toasts.avatarUpdated') });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao carregar avatar', description: error.message, variant: 'destructive' });
+      toast({ title: t('toasts.avatarUploadError'), description: error.message, variant: 'destructive' });
     },
   });
 

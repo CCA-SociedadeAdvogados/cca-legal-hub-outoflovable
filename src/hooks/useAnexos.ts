@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -9,6 +10,7 @@ export type AnexoInsert = TablesInsert<'anexos_contrato'>;
 
 export const useAnexos = (contratoId: string) => {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: anexos, isLoading, error } = useQuery({
@@ -76,7 +78,7 @@ export const useAnexos = (contratoId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['anexos', contratoId] });
-      toast({ title: 'Ficheiro carregado com sucesso' });
+      toast({ title: t('toasts.fileUploaded') });
     },
     onError: (error: Error) => {
       toast({ 
@@ -115,7 +117,7 @@ export const useAnexos = (contratoId: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['anexos', contratoId] });
-      toast({ title: 'Ficheiro eliminado com sucesso' });
+      toast({ title: t('toasts.fileDeleted') });
     },
     onError: (error: Error) => {
       toast({ 
