@@ -49,6 +49,7 @@ const MinhaOrganizacao = React.lazy(() => import("./pages/MinhaOrganizacao"));
 const UtilizadoresOrg = React.lazy(() => import("./pages/UtilizadoresOrg"));
 const LegalBi = React.lazy(() => import("./pages/LegalBi"));
 const OrganizationsPage = React.lazy(() => import("./pages/OrganizationsPage"));
+const ManagementDocs = React.lazy(() => import("./pages/ManagementDocs"));
 
 import { PlatformAdminRoute } from "./components/layout/PlatformAdminRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -156,6 +157,9 @@ const AppRoutes = () => {
 
         {/* Nova página global de Documentos */}
         <Route path="/documentos" element={<ProtectedRoute><DocumentosGlobal /></ProtectedRoute>} />
+
+        {/* Management Docs - documentos de gestão do cliente */}
+        <Route path="/management-docs" element={<ProtectedRoute><ManagementDocs /></ProtectedRoute>} />
 
         <Route path="/eventos" element={<ProtectedRoute><Eventos /></ProtectedRoute>} />
         <Route path="/impactos" element={<ProtectedRoute><Impactos /></ProtectedRoute>} />

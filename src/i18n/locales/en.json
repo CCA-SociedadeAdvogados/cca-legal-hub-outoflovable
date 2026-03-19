@@ -112,7 +112,8 @@
     "admin": "Administration",
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
-    "legalbi": "Legal Tracker"
+    "legalbi": "Legal Tracker",
+    "managementDocs": "Management Docs"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -142,7 +143,20 @@
     "noData": "No data",
     "financialSummary": "Financial Summary",
     "totalEstimatedValue": "Total Estimated Value",
-    "annualRecurringValue": "Annual Recurring Value"
+    "annualRecurringValue": "Annual Recurring Value",
+    "evolution12Months": "Trend (12 months)",
+    "created": "Created",
+    "terminated": "Terminated",
+    "byDepartment": "By Department",
+    "autoRenewal": "Auto Renewal",
+    "manualRenewal": "Manual Renewal",
+    "noRenewal": "No Renewal",
+    "fixedTerm": "Fixed Term",
+    "openEnded": "Open-ended",
+    "expirationPipeline": "Expiration Pipeline",
+    "next180Days": "Next 180 days",
+    "days": "Days",
+    "renewal": "Renewal"
   },
   "contractsOld": {},
   "events": {
@@ -1267,6 +1281,16 @@
       "provisionDescription": "Automatically creates the SharePoint folder structure for this client and configures the LegalBI link.",
       "provisionSuccess": "SharePoint provisioned successfully! LegalBI configured automatically.",
       "provisionError": "Error provisioning SharePoint"
+    }
+  },
+  "managementDocs": {
+    "title": "Management Documents",
+    "subtitle": "Corporate and identification documents for your organization",
+    "docTypes": {
+      "certidao_permanente": "Permanent Certificate",
+      "rcbe": "RCBE",
+      "identification": "Identification Documents",
+      "proof_of_address": "Proof of Address"
     }
   },
   "toasts": {

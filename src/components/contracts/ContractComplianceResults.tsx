@@ -285,6 +285,11 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
         </Card>
       )}
 
+      {/* AI Disclaimer */}
+      <p className="text-[10px] text-muted-foreground/60 text-center">
+        Esta análise é gerada por inteligência artificial e tem carácter meramente informativo. Não constitui aconselhamento jurídico. Consulte sempre o seu advogado para decisões legais.
+      </p>
+
       {/* Re-analyze button */}
       <div className="flex justify-end">
         <Button asChild variant="outline">

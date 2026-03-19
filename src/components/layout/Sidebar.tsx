@@ -40,6 +40,7 @@ import {
   UserCog,
   BarChart3,
   Lock,
+  FolderArchive,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -337,6 +338,14 @@ export function Sidebar({ clientName }: SidebarProps) {
             </>
           )}
         </div>
+
+        <NavItem
+          to="/management-docs"
+          icon={FolderArchive}
+          label={t("nav.managementDocs")}
+          isActive={location.pathname === "/management-docs"}
+          isCollapsed={isCollapsed}
+        />
 
         <div className="my-2 border-t border-sidebar-border" />
 

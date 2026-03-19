@@ -51,7 +51,7 @@ export interface ContractExtraction {
   confidence: number | null;
   evidence: any[];
   review_notes: string | null;
-  diff_from_draft: Record<string, { draft: any; canonical: any }> | null;
+  diff_from_draft: Record<string, { draft: any; validated: any }> | null;
   classificacao_juridica: any;
   prazos: any;
   denuncia_rescisao: any;
@@ -84,16 +84,16 @@ export function useContractExtractions(contratoId?: string) {
   });
 
   const draft = extractions?.find(e => e.source === 'ai_extraction') || null;
-  const canonical = extractions?.find(e => e.source === 'cca_agent') || null;
-  const activeExtraction = (canonical && canonical.status !== 'failed') ? canonical : draft;
+  const validated = extractions?.find(e => e.source === 'cca_agent') || null;
+  const activeExtraction = (validated && validated.status !== 'failed') ? validated : draft;
 
   const validationStatus: ValidationStatus =
-    !draft && !canonical ? 'none' :
-    canonical?.status === 'validated' ? 'validated' :
-    canonical?.status === 'needs_review' ? 'needs_review' :
-    canonical?.status === 'failed' ? 'failed' :
-    canonical?.status === 'provisional' ? 'validating' :
-    draft && !canonical ? 'draft_only' :
+    !draft && !validated ? 'none' :
+    validated?.status === 'validated' ? 'validated' :
+    validated?.status === 'needs_review' ? 'needs_review' :
+    validated?.status === 'failed' ? 'failed' :
+    validated?.status === 'provisional' ? 'validating' :
+    draft && !validated ? 'draft_only' :
     'none';
 
   const saveDraft = useMutation({
@@ -153,7 +153,8 @@ export function useContractExtractions(contratoId?: string) {
 
   return {
     draft,
-    canonical,
+    canonical: validated,
+    validated,
     activeExtraction,
     validationStatus,
     extractions,

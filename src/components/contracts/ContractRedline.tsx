@@ -220,6 +220,11 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Disclaimer */}
+      <p className="text-[10px] text-muted-foreground/60 text-center mt-2">
+        Esta análise é gerada por inteligência artificial e tem carácter meramente informativo. Não constitui aconselhamento jurídico. Consulte sempre o seu advogado para decisões legais.
+      </p>
     </div>
   );
 }

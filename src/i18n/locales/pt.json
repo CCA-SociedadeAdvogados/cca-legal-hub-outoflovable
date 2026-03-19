@@ -112,7 +112,8 @@
     "admin": "Administração",
     "ccaNews": "Novidades CCA",
     "financial": "Minha Conta Corrente CCA",
-    "legalbi": "Legal Tracker"
+    "legalbi": "Legal Tracker",
+    "managementDocs": "Docs de Gestão"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -142,7 +143,20 @@
     "noData": "Sem dados",
     "financialSummary": "Resumo Financeiro",
     "totalEstimatedValue": "Valor Total Estimado",
-    "annualRecurringValue": "Valor Anual Recorrente"
+    "annualRecurringValue": "Valor Anual Recorrente",
+    "evolution12Months": "Evolução (12 meses)",
+    "created": "Criados",
+    "terminated": "Terminados",
+    "byDepartment": "Por Departamento",
+    "autoRenewal": "Renovação Automática",
+    "manualRenewal": "Renovação por Acordo",
+    "noRenewal": "Sem Renovação",
+    "fixedTerm": "Prazo Determinado",
+    "openEnded": "Prazo Indeterminado",
+    "expirationPipeline": "Pipeline de Expirações",
+    "next180Days": "Próximos 180 dias",
+    "days": "Dias",
+    "renewal": "Renovação"
   },
   "contractsOld": {},
   "events": {
@@ -1267,6 +1281,16 @@
       "provisionDescription": "Cria automaticamente a estrutura de pastas SharePoint para este cliente e configura o link LegalBI.",
       "provisionSuccess": "SharePoint provisionado com sucesso! LegalBI configurado automaticamente.",
       "provisionError": "Erro ao provisionar SharePoint"
+    }
+  },
+  "managementDocs": {
+    "title": "Documentos de Gestão",
+    "subtitle": "Documentos corporativos e de identificação da organização",
+    "docTypes": {
+      "certidao_permanente": "Certidão Permanente",
+      "rcbe": "RCBE",
+      "identification": "Documentos de Identificação",
+      "proof_of_address": "Comprovativo de Morada"
     }
   },
   "toasts": {
