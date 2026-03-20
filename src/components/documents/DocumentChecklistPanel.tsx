@@ -195,29 +195,54 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
       const validityMonths = suggestValidityMonths(editItem.name);
 
       if (selectedFile) {
-        // Convert file to base64 and ask Claude to extract the emission date
-        const arrayBuffer = await selectedFile.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuffer);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        const base64 = btoa(binary);
+        // Limit: 5 MB — larger files cause edge function timeouts
+        if (selectedFile.size > 5 * 1024 * 1024) {
+          toast({
+            title: t('docChecklist.fileTooLarge', 'Ficheiro demasiado grande para análise IA'),
+            description: t('docChecklist.fileTooLargeDesc', 'Limite 5 MB. A usar data de hoje como base.'),
+          });
+        } else {
+          // Use FileReader — avoids btoa stack-overflow on large binary files
+          const base64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const result = reader.result as string;
+              resolve(result.split(',')[1] ?? '');
+            };
+            reader.onerror = () => reject(new Error('FileReader failed'));
+            reader.readAsDataURL(selectedFile);
+          });
 
-        const { data: scanData, error: scanError } = await supabase.functions.invoke('scan-document-date', {
-          body: {
-            file_base64: base64,
-            file_name: selectedFile.name,
-            mime_type: selectedFile.type || 'application/pdf',
-          },
-        });
+          const { data: scanData, error: scanError } = await supabase.functions.invoke('scan-document-date', {
+            body: {
+              file_base64: base64,
+              file_name: selectedFile.name,
+              mime_type: selectedFile.type || 'application/pdf',
+            },
+          });
 
-        if (!scanError && scanData?.emission_date) {
-          // Parse ISO date returned by the function
-          const emissionDate = new Date(scanData.emission_date + 'T12:00:00');
-          if (!isNaN(emissionDate.getTime())) {
-            emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
-            setValidityDate(emissionDate.toISOString().split('T')[0]);
-            toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
-            return;
+          if (scanError) {
+            console.error('[scan-document-date] invoke error:', scanError);
+            toast({
+              title: t('docChecklist.aiDateError', 'IA não conseguiu ler a data'),
+              description: scanError.message ?? String(scanError),
+              variant: 'destructive',
+            });
+          } else if (scanData?.emission_date) {
+            const emissionDate = new Date(scanData.emission_date + 'T12:00:00');
+            if (!isNaN(emissionDate.getTime())) {
+              emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
+              setValidityDate(emissionDate.toISOString().split('T')[0]);
+              toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
+              return;
+            }
+          } else {
+            // Function returned but no date found (e.g. scanned doc with no readable date)
+            console.warn('[scan-document-date] no emission_date:', scanData);
+            toast({
+              title: t('docChecklist.aiDateNotFound', 'Data não detectada no documento'),
+              description: t('docChecklist.aiDateNotFoundDesc', 'A usar data de hoje como base. Ajuste manualmente se necessário.'),
+            });
           }
         }
       }
