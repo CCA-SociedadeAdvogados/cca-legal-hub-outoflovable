@@ -345,9 +345,9 @@ export default function PlatformAdmin() {
     if (!searchEmail.trim()) return;
 
     try {
-      // Find user by email
+      // Find user by email (use profiles_safe — direct profiles table access is restricted by RLS)
       const { data: profile, error } = await supabase
-        .from("profiles")
+        .from("profiles_safe")
         .select("id, email")
         .eq("email", searchEmail.trim())
         .maybeSingle();
