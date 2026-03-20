@@ -112,8 +112,8 @@
     "admin": "Administration",
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
-    "legalbi": "Legal Tracker",
-    "prazos": "Deadlines & Dates"
+    "legalbi": "LegalBI",
+    "documents": "Documents"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1553,6 +1553,15 @@
     "inApp": "In-App",
     "email": "Email",
     "emailDesc": "Coming soon"
+  },
+  "docValidity": {
+    "title": "Document Validity",
+    "valid": "Valid",
+    "expiringSoon": "Expiring soon",
+    "expired": "Expired",
+    "advisory": "Advisory",
+    "advisoryLabel": "Advisory",
+    "missing": "Missing"
   },
   "export": {
     "pdf": "Export PDF"

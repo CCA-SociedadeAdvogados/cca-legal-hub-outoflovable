@@ -112,8 +112,8 @@
     "admin": "Administração",
     "ccaNews": "Novidades CCA",
     "financial": "Minha Conta Corrente CCA",
-    "legalbi": "Legal Tracker",
-    "prazos": "Prazos e Datas"
+    "legalbi": "LegalBI",
+    "documents": "Documentos"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1553,6 +1553,15 @@
     "inApp": "Na Plataforma",
     "email": "Email",
     "emailDesc": "Em breve"
+  },
+  "docValidity": {
+    "title": "Validade Documental",
+    "valid": "Válidos",
+    "expiringSoon": "A expirar",
+    "expired": "Expirados",
+    "advisory": "Recomendação",
+    "advisoryLabel": "Recomendação",
+    "missing": "Em falta"
   },
   "export": {
     "pdf": "Exportar PDF"

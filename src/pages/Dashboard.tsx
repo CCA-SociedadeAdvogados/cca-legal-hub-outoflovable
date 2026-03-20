@@ -1,15 +1,18 @@
+import { useMemo } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ContractsExpiringList } from '@/components/dashboard/ContractsExpiringList';
 import { ContractsByStateChart } from '@/components/dashboard/ContractsByStateChart';
+import { DocumentValidityAlerts } from '@/components/dashboard/DocumentValidityAlerts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
+import { useContratos } from '@/hooks/useContratos';
+import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useEventosLegislativos } from '@/hooks/useEventosLegislativos';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import {
   FileCheck,
@@ -21,24 +24,95 @@ import {
   Loader2,
   FileText,
   Clock,
-  CheckCircle2,
-  XCircle,
+  CalendarClock,
   Scale,
-  ClipboardCheck,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TIPO_CONTRATO_LABELS } from '@/types/contracts';
+import { cn } from '@/lib/utils';
+
+interface TimelineEvent {
+  id: string;
+  date: Date;
+  daysUntil: number;
+  title: string;
+  subtitle?: string;
+  type: 'expiration' | 'renewal_deadline' | 'financial' | 'guarantee';
+  contractId?: string;
+  urgency: 'critical' | 'warning' | 'normal';
+}
 
 export default function Dashboard() {
   const { stats, contratosAExpirar, contratos, isLoading } = useDashboardStats();
-  const { items: checklistItems, isTableAvailable: checklistAvailable } = useDocumentChecklist();
+  const { contratos: allContratos } = useContratos();
+  const { financialItems } = useFinanceiro();
   const { eventos } = useEventosLegislativos();
   const { t, i18n } = useTranslation();
 
-  const checklistUploaded = checklistItems.filter(i => i.entry?.status === 'uploaded').length;
-  const checklistTotal = checklistItems.length;
-  const checklistPercent = checklistTotal > 0 ? Math.round((checklistUploaded / checklistTotal) * 100) : 0;
-  const checklistExpired = checklistItems.filter(i => i.entry?.status === 'expired' || i.entry?.status === 'expiring_soon').length;
+  // Build timeline events (same logic as PrazosTimeline)
+  const timelineEvents = useMemo<TimelineEvent[]>(() => {
+    const now = new Date();
+    const result: TimelineEvent[] = [];
+
+    (allContratos ?? []).filter(c => !c.arquivado && c.estado_contrato === 'activo').forEach(c => {
+      if (c.data_termo) {
+        const date = new Date(c.data_termo);
+        const daysUntil = differenceInDays(date, now);
+        if (daysUntil > 0 && daysUntil <= 180) {
+          result.push({
+            id: `exp-${c.id}`, date, daysUntil,
+            title: c.titulo_contrato,
+            subtitle: c.parte_b_nome_legal || undefined,
+            type: 'expiration', contractId: c.id,
+            urgency: daysUntil <= 30 ? 'critical' : daysUntil <= 90 ? 'warning' : 'normal',
+          });
+        }
+      }
+      if (c.data_limite_decisao_renovacao) {
+        const date = new Date(c.data_limite_decisao_renovacao);
+        const daysUntil = differenceInDays(date, now);
+        if (daysUntil > 0 && daysUntil <= 180) {
+          result.push({
+            id: `ren-${c.id}`, date, daysUntil,
+            title: `${t('prazos.renewalDeadline', 'Limite decisão renovação')}: ${c.titulo_contrato}`,
+            subtitle: c.parte_b_nome_legal || undefined,
+            type: 'renewal_deadline', contractId: c.id,
+            urgency: daysUntil <= 15 ? 'critical' : daysUntil <= 45 ? 'warning' : 'normal',
+          });
+        }
+      }
+      if (c.garantia_existente && c.garantia_data_validade) {
+        const date = new Date(c.garantia_data_validade);
+        const daysUntil = differenceInDays(date, now);
+        if (daysUntil > 0 && daysUntil <= 180) {
+          result.push({
+            id: `gar-${c.id}`, date, daysUntil,
+            title: `${t('prazos.guaranteeExpiry', 'Garantia expira')}: ${c.titulo_contrato}`,
+            type: 'guarantee', contractId: c.id,
+            urgency: daysUntil <= 30 ? 'critical' : daysUntil <= 60 ? 'warning' : 'normal',
+          });
+        }
+      }
+    });
+
+    (financialItems ?? []).forEach(item => {
+      if (item.data_vencimento && item.estado !== 'pago') {
+        const date = new Date(item.data_vencimento);
+        const daysUntil = differenceInDays(date, now);
+        if (daysUntil > -30 && daysUntil <= 90) {
+          result.push({
+            id: `fin-${item.id}`, date, daysUntil,
+            title: `${t('prazos.invoiceDue', 'Fatura')}: ${item.numero_documento || item.id}`,
+            subtitle: item.valor_pendente ? `€${Number(item.valor_pendente).toLocaleString('pt-PT')}` : undefined,
+            type: 'financial',
+            urgency: daysUntil <= 0 ? 'critical' : daysUntil <= 15 ? 'warning' : 'normal',
+          });
+        }
+      }
+    });
+
+    return result.sort((a, b) => a.daysUntil - b.daysUntil);
+  }, [allContratos, financialItems, t]);
 
   const recentEventos = (eventos ?? [])
     .filter(e => e.estado === 'activo')
@@ -183,6 +257,66 @@ export default function Dashboard() {
               maxItems={5}
             />
 
+            {/* Prazos e Datas Críticas */}
+            {timelineEvents.length > 0 && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <CalendarClock className="h-5 w-5 text-primary" />
+                    {t('prazos.title', 'Prazos e Datas Críticas')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {timelineEvents.slice(0, 8).map((event) => {
+                    const typeIcons: Record<string, React.ReactNode> = {
+                      expiration: <CalendarClock className="h-4 w-4" />,
+                      renewal_deadline: <Clock className="h-4 w-4" />,
+                      financial: <Euro className="h-4 w-4" />,
+                      guarantee: <AlertTriangle className="h-4 w-4" />,
+                    };
+                    return (
+                      <div
+                        key={event.id}
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg border p-2.5 transition-colors',
+                          event.urgency === 'critical' && 'border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10',
+                          event.urgency === 'warning' && 'border-amber-300 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10',
+                        )}
+                      >
+                        <div className={cn(
+                          'flex items-center justify-center w-8 h-8 rounded-full shrink-0',
+                          event.urgency === 'critical' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' :
+                          event.urgency === 'warning' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30' :
+                          'bg-muted text-muted-foreground'
+                        )}>
+                          {typeIcons[event.type]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {event.contractId ? (
+                            <Link to={`/contratos/${event.contractId}`} className="font-medium text-sm hover:underline truncate block">
+                              {event.title}
+                            </Link>
+                          ) : (
+                            <span className="font-medium text-sm truncate block">{event.title}</span>
+                          )}
+                          {event.subtitle && <p className="text-xs text-muted-foreground truncate">{event.subtitle}</p>}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs text-muted-foreground">{format(event.date, 'd MMM', { locale: pt })}</p>
+                          <Badge
+                            variant={event.urgency === 'critical' ? 'destructive' : event.urgency === 'warning' ? 'default' : 'secondary'}
+                            className="text-[10px]"
+                          >
+                            {event.daysUntil <= 0 ? t('prazos.overdue', 'Vencido') : `${event.daysUntil}d`}
+                          </Badge>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Recent Legislative Events */}
             {recentEventos.length > 0 && (
               <Card>
@@ -275,53 +409,8 @@ export default function Dashboard() {
           <div className="space-y-6">
             <ContractsByStateChart data={stats.contratosPorEstado} />
 
-            {/* Document Checklist Progress */}
-            {checklistAvailable && checklistTotal > 0 && (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <ClipboardCheck className="h-5 w-5 text-primary" />
-                    {t('docChecklist.title')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {t('docChecklist.progress', { count: checklistUploaded, total: checklistTotal })}
-                    </span>
-                    <span className="font-bold">{checklistPercent}%</span>
-                  </div>
-                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${checklistPercent === 100 ? 'bg-emerald-500' : checklistPercent >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
-                      style={{ width: `${checklistPercent}%` }}
-                    />
-                  </div>
-                  <div className="space-y-2 pt-1">
-                    {checklistItems.map(item => {
-                      const status = item.entry?.status || 'missing';
-                      const StatusIcon = status === 'uploaded' ? CheckCircle2 : status === 'expired' ? XCircle : status === 'expiring_soon' ? AlertTriangle : XCircle;
-                      const statusColor = status === 'uploaded' ? 'text-emerald-500' : status === 'expired' ? 'text-red-500' : status === 'expiring_soon' ? 'text-amber-500' : 'text-muted-foreground';
-                      return (
-                        <div key={item.id} className="flex items-center gap-2 text-sm">
-                          <StatusIcon className={`h-4 w-4 shrink-0 ${statusColor}`} />
-                          <span className="flex-1 truncate">{i18n.language === 'en' && item.name_en ? item.name_en : item.name}</span>
-                          {item.is_required && status === 'missing' && (
-                            <Badge variant="destructive" className="text-[10px]">{t('docChecklist.missing')}</Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {checklistExpired > 0 && (
-                    <div className="flex items-center gap-2 pt-2 text-xs text-red-500">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      {checklistExpired} {t('docChecklist.expired').toLowerCase()}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {/* Document Validity Alerts */}
+            <DocumentValidityAlerts />
 
             {/* Quick Stats */}
             <Card>
