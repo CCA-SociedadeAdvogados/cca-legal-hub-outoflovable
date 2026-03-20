@@ -122,7 +122,7 @@ serve(async (req) => {
       const errText = await response.text();
       console.error("[scan-document-date] Anthropic error:", response.status, errText.slice(0, 500));
       return new Response(
-        JSON.stringify({ emission_date: null, confidence: "none", reason: "ai_error" }),
+        JSON.stringify({ emission_date: null, confidence: "none", reason: "ai_error", detail: `HTTP ${response.status}: ${errText.slice(0, 300)}` }),
         { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
