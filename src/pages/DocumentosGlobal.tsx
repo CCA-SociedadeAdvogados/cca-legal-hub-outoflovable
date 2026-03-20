@@ -13,13 +13,22 @@ export default function DocumentosGlobal() {
   const { viewingOrganizationId } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
 
-  // Same org resolution pattern as useDocumentChecklist
+  // Org being viewed (client or own org for external users)
   const effectiveOrgId =
     viewingOrganizationId ||
     (isCCAInternalAuthorized ? null : currentOrganization?.id) ||
     null;
 
-  const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(effectiveOrgId);
+  // Org that owns the SharePoint config:
+  // - CCA users: always CCA's own org (the SharePoint is configured there)
+  // - External users: their own org
+  const configOrgId = isCCAInternalAuthorized
+    ? (currentOrganization?.id ?? null)
+    : effectiveOrgId;
+
+  // folderPath derived from the viewed client's client_code (e.g. /C.4859)
+  // configOrgId provides the SharePoint connection to use
+  const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(effectiveOrgId, configOrgId);
 
   return (
     <AppLayout>
@@ -33,10 +42,10 @@ export default function DocumentosGlobal() {
           </p>
         </div>
 
-        {/* Document Checklist — folderPath always has a value (defaults to /Documentos) */}
+        {/* Document Checklist — upload uses configOrgId (has SharePoint) + client subfolder */}
         <DocumentChecklistPanel
           uploadFolderPath={effectiveOrgId ? folderPath : undefined}
-          uploadOrgId={effectiveOrgId ?? undefined}
+          uploadOrgId={configOrgId ?? undefined}
         />
 
         <div className="mt-6">
@@ -46,7 +55,7 @@ export default function DocumentosGlobal() {
             </div>
           ) : (
             <SharePointDocumentsBrowser
-              overrideOrgId={effectiveOrgId ?? undefined}
+              overrideOrgId={configOrgId ?? undefined}
               initialPath={isReady ? folderPath : undefined}
             />
           )}

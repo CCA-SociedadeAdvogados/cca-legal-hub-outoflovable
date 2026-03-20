@@ -5,8 +5,6 @@ import { pt } from 'date-fns/locale';
 
 import { useDocumentChecklist, ChecklistItemWithType } from '@/hooks/useDocumentChecklist';
 import { useUploadToSharePoint } from '@/hooks/useSharePoint';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +53,29 @@ function statusBadgeVariant(status: string): 'active' | 'destructive' | 'default
   }
 }
 
+// Rule-based validity suggestion (mirrors edge function logic, runs client-side)
+const VALIDITY_RULES: Record<string, number> = {
+  'certidão permanente': 12,
+  'certidao permanente': 12,
+  'rcbe': 12,
+  'registo central do beneficiário efetivo': 12,
+  'documentos de identificação': 60,
+  'documentos de identificacao': 60,
+  'comprovativo de morada': 3,
+  'certidão de não dívida at': 3,
+  'certidao de nao divida at': 3,
+  'certidão de não dívida ss': 3,
+  'certidao de nao divida ss': 3,
+};
+
+function suggestValidityMonths(docName: string): number {
+  const n = docName.toLowerCase().trim();
+  for (const [key, months] of Object.entries(VALIDITY_RULES)) {
+    if (n.includes(key)) return months;
+  }
+  return 12; // default
+}
+
 interface DocumentChecklistPanelProps {
   uploadFolderPath?: string;
   uploadOrgId?: string;
@@ -62,8 +83,7 @@ interface DocumentChecklistPanelProps {
 
 export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: DocumentChecklistPanelProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { items, isLoading, upsertEntry, isTableAvailable, organizationId } = useDocumentChecklist();
+  const { items, isLoading, upsertEntry, isTableAvailable } = useDocumentChecklist();
   const uploadToSharePoint = useUploadToSharePoint(uploadOrgId);
   const [editItem, setEditItem] = useState<ChecklistItemWithType | null>(null);
   const [validityDate, setValidityDate] = useState('');
@@ -149,24 +169,15 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
     handleCloseEdit();
   };
 
-  const handleSuggestDate = async () => {
-    if (!editItem || !organizationId || !user) return;
+  const handleSuggestDate = () => {
+    if (!editItem) return;
     setIsSuggestingDate(true);
     try {
-      const { data, error } = await supabase.functions.invoke('suggest-document-validity', {
-        body: { organization_id: organizationId, checklist_type_id: editItem.id },
-      });
-      if (error) throw error;
-      if (data?.ai_suggested_date) {
-        setValidityDate(data.ai_suggested_date);
-        toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
-      }
-    } catch (err) {
-      toast({
-        title: t('docChecklist.aiSuggestError', 'Erro ao sugerir data'),
-        description: err instanceof Error ? err.message : String(err),
-        variant: 'destructive',
-      });
+      const validityMonths = suggestValidityMonths(editItem.name);
+      const suggested = new Date();
+      suggested.setMonth(suggested.getMonth() + validityMonths);
+      setValidityDate(suggested.toISOString().split('T')[0]);
+      toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
     } finally {
       setIsSuggestingDate(false);
     }

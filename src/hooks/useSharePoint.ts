@@ -469,21 +469,23 @@ export function useUploadLargeToSharePoint() {
 }
 
 // Hook para garantir que a pasta do cliente existe no SharePoint (auto-criação na primeira visita)
-export function useEnsureClientFolder(organizationId: string | null) {
+// configOrgId: org que tem o SharePoint configurado (ex: CCA). Se omitido, usa dataOrgId.
+export function useEnsureClientFolder(dataOrgId: string | null, configOrgId?: string | null) {
   const queryClient = useQueryClient();
+  const effectiveConfigOrgId = configOrgId ?? dataOrgId;
 
-  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(organizationId ?? undefined);
+  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(effectiveConfigOrgId ?? undefined);
 
   const { data: orgData } = useQuery({
-    queryKey: ['organization-client-code', organizationId],
+    queryKey: ['organization-client-code', dataOrgId],
     staleTime: 10 * 60 * 1000,
-    enabled: !!organizationId,
+    enabled: !!dataOrgId,
     queryFn: async () => {
-      if (!organizationId) return null;
+      if (!dataOrgId) return null;
       const { data, error } = await supabase
         .from('organizations')
         .select('name, client_code')
-        .eq('id', organizationId)
+        .eq('id', dataOrgId)
         .maybeSingle();
       if (error) {
         console.error('Error fetching org data for folder creation:', error);
@@ -499,14 +501,14 @@ export function useEnsureClientFolder(organizationId: string | null) {
   const folderPath = `/${folderName}`;
 
   const { data: ensured } = useQuery({
-    queryKey: ['sharepoint-client-folder-ensured', organizationId, folderPath],
+    queryKey: ['sharepoint-client-folder-ensured', effectiveConfigOrgId, folderPath],
     staleTime: Infinity,
-    enabled: !!organizationId && !!config && !!orgData && !createFolder.isPending,
+    enabled: !!effectiveConfigOrgId && !!config && !!orgData && !createFolder.isPending,
     queryFn: async () => {
-      if (!organizationId || !config) return false;
+      if (!effectiveConfigOrgId || !config) return false;
       try {
-        await createFolder.mutateAsync({ organization_id: organizationId, folder_path: folderPath });
-        queryClient.invalidateQueries({ queryKey: ['sharepoint-documents', organizationId] });
+        await createFolder.mutateAsync({ organization_id: effectiveConfigOrgId, folder_path: folderPath });
+        queryClient.invalidateQueries({ queryKey: ['sharepoint-documents', effectiveConfigOrgId] });
       } catch {
         // Folder may already exist — not an error
       }
