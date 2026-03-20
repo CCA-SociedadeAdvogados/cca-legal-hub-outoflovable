@@ -303,8 +303,12 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                       <p className="text-sm text-muted-foreground">
                         {editItem?.entry?.file_reference
                           ? t('docChecklist.replaceFile', 'Clique para substituir: {{name}}', { name: editItem.entry.file_reference })
-                          : t('docChecklist.selectFile', 'Clique para selecionar o ficheiro')}
-                      </p>
+                          : t('docChecklist.selectFile', 'Clique para selecionar o ficheiro')}</p>
+                      {uploadFolderPath && (
+                        <p className="text-xs text-muted-foreground/70">
+                          SharePoint: <span className="font-mono">{uploadFolderPath}</span>
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

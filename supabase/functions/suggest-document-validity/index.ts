@@ -59,6 +59,7 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -68,12 +69,15 @@ serve(async (req) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    // User client — for auth + access checks only
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+    // Service client — for DB writes that bypass RLS (CCA users are not org members)
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verify user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
         status: 401,
@@ -93,18 +97,18 @@ serve(async (req) => {
       );
     }
 
-    // Verify user has access to this organization
-    const { data: membership } = await supabase
+    // Verify user has access to this organization (member OR CCA internal)
+    const { data: membership } = await supabaseUser
       .from("organization_members")
       .select("role")
       .eq("organization_id", organization_id)
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const { data: ccaUser } = await supabase
+    const { data: ccaUser } = await supabaseAdmin
       .from("cca_internal_users")
       .select("email")
-      .eq("email", user.email)
+      .eq("email", user.email!)
       .maybeSingle();
 
     if (!membership && !ccaUser) {
@@ -114,8 +118,8 @@ serve(async (req) => {
       });
     }
 
-    // Fetch document type name
-    const { data: docType, error: docTypeError } = await supabase
+    // Fetch document type name (admin client to avoid RLS on lookup tables)
+    const { data: docType, error: docTypeError } = await supabaseAdmin
       .from("document_checklist_types" as any)
       .select("name, name_en")
       .eq("id", checklist_type_id)
@@ -133,8 +137,8 @@ serve(async (req) => {
     const suggestedDate = addMonths(new Date(), validityMonths);
     const suggestedDateStr = suggestedDate.toISOString().split("T")[0];
 
-    // Upsert the suggested date into the checklist entry
-    const { error: upsertError } = await supabase
+    // Upsert the suggested date — use admin client so CCA users can write to client orgs
+    const { error: upsertError } = await supabaseAdmin
       .from("organization_document_checklist" as any)
       .upsert(
         {
