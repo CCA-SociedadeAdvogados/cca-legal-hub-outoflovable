@@ -45,6 +45,8 @@ or
 {"emission_date": null, "confidence": "none"}`;
 
 serve(async (req) => {
+  console.log("[scan-document-date] request received, method:", req.method);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req) });
   }
@@ -55,11 +57,13 @@ serve(async (req) => {
     const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
 
     if (!anthropicKey) {
+      console.error("[scan-document-date] ANTHROPIC_API_KEY not configured — add it in Supabase project secrets");
       return new Response(
         JSON.stringify({ error: "ANTHROPIC_API_KEY not configured" }),
         { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
+    console.log("[scan-document-date] API key present, proceeding");
 
     // Auth check
     const authHeader = req.headers.get("Authorization");
@@ -80,11 +84,13 @@ serve(async (req) => {
       });
     }
 
-    const { file_base64, file_name, mime_type } = await req.json() as {
+    const body = await req.json() as {
       file_base64: string;
       file_name: string;
       mime_type: string;
     };
+    const { file_base64, file_name, mime_type } = body;
+    console.log("[scan-document-date] file:", file_name, "mime:", mime_type, "base64 length:", file_base64?.length ?? 0);
 
     if (!file_base64) {
       return new Response(JSON.stringify({ error: "file_base64 obrigatório" }), {
@@ -108,11 +114,13 @@ serve(async (req) => {
       ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: file_base64 } }
       : { type: "image", source: { type: "base64", media_type: mime_type, data: file_base64 } };
 
+    console.log("[scan-document-date] calling Anthropic API, isPdf:", isPdf, "isImage:", isImage);
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "x-api-key": anthropicKey,
         "anthropic-version": "2023-06-01",
+        "anthropic-beta": "pdfs-2024-09-25",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -131,9 +139,10 @@ serve(async (req) => {
       }),
     });
 
+    console.log("[scan-document-date] Anthropic response status:", response.status);
     if (!response.ok) {
       const errText = await response.text();
-      console.error("[scan-document-date] Anthropic error:", response.status, errText.slice(0, 300));
+      console.error("[scan-document-date] Anthropic error:", response.status, errText.slice(0, 500));
       return new Response(
         JSON.stringify({ emission_date: null, confidence: "none", reason: "ai_error" }),
         { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
@@ -152,6 +161,7 @@ serve(async (req) => {
       console.warn("[scan-document-date] Could not parse Claude response:", rawText.slice(0, 200));
     }
 
+    console.log("[scan-document-date] result:", JSON.stringify(parsed));
     return new Response(JSON.stringify(parsed), {
       status: 200,
       headers: { ...corsHeaders(req), "Content-Type": "application/json" },
