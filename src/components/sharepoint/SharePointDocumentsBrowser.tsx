@@ -41,6 +41,7 @@ interface SharePointDocumentsBrowserProps {
   onSelectDocument?: (document: any) => void;
   className?: string;
   overrideOrgId?: string;
+  initialPath?: string;
 }
 
 const FILE_ICONS: Record<string, React.ElementType> = {
@@ -71,9 +72,10 @@ export function SharePointDocumentsBrowser({
   onSelectDocument,
   className,
   overrideOrgId,
+  initialPath,
 }: SharePointDocumentsBrowserProps) {
   const { t } = useTranslation();
-  const [currentPath, setCurrentPath] = useState("/");
+  const [currentPath, setCurrentPath] = useState(initialPath ?? "/");
   const [pathHistory, setPathHistory] = useState<string[]>([]);
 
   const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(overrideOrgId);
