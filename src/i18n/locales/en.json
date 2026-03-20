@@ -1530,7 +1530,8 @@
     "selectDate": "Select validity date",
     "aiSuggestedApplied": "AI-suggested date applied",
     "aiSuggestError": "Error getting date suggestion",
-    "suggestDate": "Suggest date (AI)"
+    "suggestDate": "Suggest date (AI)",
+    "noClient": "Select a client to manage the document checklist."
   },
   "notifPrefs": {
     "title": "Notification Preferences",
