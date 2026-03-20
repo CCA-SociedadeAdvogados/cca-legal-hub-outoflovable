@@ -237,11 +237,12 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
               return;
             }
           } else {
-            // Function returned but no date found (e.g. scanned doc with no readable date)
-            console.warn('[scan-document-date] no emission_date:', scanData);
+            // Function returned but no date found — show reason for debug
+            console.warn('[scan-document-date] response:', JSON.stringify(scanData));
+            const reason = scanData?.reason ?? scanData?.confidence ?? 'unknown';
             toast({
               title: t('docChecklist.aiDateNotFound', 'Data não detectada no documento'),
-              description: t('docChecklist.aiDateNotFoundDesc', 'A usar data de hoje como base. Ajuste manualmente se necessário.'),
+              description: `reason: ${reason} — ${t('docChecklist.aiDateNotFoundDesc', 'Ajuste manualmente se necessário.')}`,
             });
           }
         }
