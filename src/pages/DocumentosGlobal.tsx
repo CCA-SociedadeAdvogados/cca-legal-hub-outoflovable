@@ -3,15 +3,23 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
 import { DocumentChecklistPanel } from '@/components/documents/DocumentChecklistPanel';
 import { useEnsureClientFolder } from '@/hooks/useSharePoint';
-import { useProfile } from '@/hooks/useProfile';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCliente } from '@/contexts/ClienteContext';
 import { Loader2 } from 'lucide-react';
 
 export default function DocumentosGlobal() {
   const { t } = useTranslation();
-  const { profile } = useProfile();
 
-  const organizationId = profile?.current_organization_id ?? null;
-  const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(organizationId);
+  const { viewingOrganizationId } = useCliente();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+
+  // Same org resolution pattern as useDocumentChecklist
+  const effectiveOrgId =
+    viewingOrganizationId ||
+    (isCCAInternalAuthorized ? null : currentOrganization?.id) ||
+    null;
+
+  const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(effectiveOrgId);
 
   return (
     <AppLayout>
@@ -25,8 +33,11 @@ export default function DocumentosGlobal() {
           </p>
         </div>
 
-        {/* Document Checklist */}
-        <DocumentChecklistPanel />
+        {/* Document Checklist — passes upload folder so "Registar" can upload to SharePoint */}
+        <DocumentChecklistPanel
+          uploadFolderPath={isReady ? folderPath : undefined}
+          uploadOrgId={effectiveOrgId ?? undefined}
+        />
 
         <div className="mt-6">
           {isEnsuring && !isReady ? (
@@ -35,6 +46,7 @@ export default function DocumentosGlobal() {
             </div>
           ) : (
             <SharePointDocumentsBrowser
+              overrideOrgId={effectiveOrgId ?? undefined}
               initialPath={isReady ? folderPath : undefined}
             />
           )}

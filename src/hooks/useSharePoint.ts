@@ -285,14 +285,15 @@ export function useSyncSharePoint(overrideOrgId?: string) {
 }
 
 // Hook para fazer upload de ficheiros para o SharePoint
-export function useUploadToSharePoint() {
+export function useUploadToSharePoint(overrideOrgId?: string) {
   const queryClient = useQueryClient();
   const { profile } = useProfile();
   const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async ({ file, folderPath }: { file: File; folderPath: string }) => {
-      if (!profile?.current_organization_id) {
+      const organizationId = overrideOrgId || profile?.current_organization_id;
+      if (!organizationId) {
         throw new Error("Organization not found");
       }
 
@@ -312,7 +313,7 @@ export function useUploadToSharePoint() {
       const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
         body: {
           action: "upload_file",
-          organization_id: profile.current_organization_id,
+          organization_id: organizationId,
           file_base64: base64,
           file_name: file.name,
           folder_path: folderPath,

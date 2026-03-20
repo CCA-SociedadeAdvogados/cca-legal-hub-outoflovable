@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
 import { useDocumentChecklist, ChecklistItemWithType } from '@/hooks/useDocumentChecklist';
+import { useUploadToSharePoint } from '@/hooks/useSharePoint';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -20,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, AlertTriangle, FileCheck, Upload, CalendarClock, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, FileCheck, Upload, CalendarClock, Loader2, Sparkles, FileText, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function statusIcon(status: string) {
@@ -54,14 +55,22 @@ function statusBadgeVariant(status: string): 'active' | 'destructive' | 'default
   }
 }
 
-export function DocumentChecklistPanel() {
+interface DocumentChecklistPanelProps {
+  uploadFolderPath?: string;
+  uploadOrgId?: string;
+}
+
+export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: DocumentChecklistPanelProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { items, isLoading, upsertEntry, isTableAvailable, organizationId } = useDocumentChecklist();
+  const uploadToSharePoint = useUploadToSharePoint(uploadOrgId);
   const [editItem, setEditItem] = useState<ChecklistItemWithType | null>(null);
   const [validityDate, setValidityDate] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [isSuggestingDate, setIsSuggestingDate] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (isLoading) {
     return (
@@ -99,19 +108,35 @@ export function DocumentChecklistPanel() {
     setEditItem(item);
     setValidityDate(item.entry?.validity_date ?? item.entry?.ai_suggested_date ?? '');
     setConfirmed(item.entry?.confirmed_by_user ?? false);
+    setSelectedFile(null);
   };
 
-  const handleSave = () => {
+  const handleCloseEdit = () => {
+    setEditItem(null);
+    setSelectedFile(null);
+  };
+
+  const handleSave = async () => {
     if (!editItem) return;
 
     let status = 'uploaded';
-    if (!validityDate) {
-      status = 'uploaded';
-    } else {
+    if (validityDate) {
       const daysUntil = differenceInDays(new Date(validityDate), new Date());
       if (daysUntil < 0) status = 'expired';
       else if (daysUntil <= 45) status = 'expiring_soon';
-      else status = 'uploaded';
+    }
+
+    let fileReference: string | null = editItem.entry?.file_reference ?? null;
+
+    // Upload file to SharePoint first if one was selected
+    if (selectedFile && uploadFolderPath) {
+      try {
+        await uploadToSharePoint.mutateAsync({ file: selectedFile, folderPath: uploadFolderPath });
+        fileReference = selectedFile.name;
+      } catch {
+        // Upload error already toasted by the hook — abort save
+        return;
+      }
     }
 
     upsertEntry.mutate({
@@ -119,8 +144,9 @@ export function DocumentChecklistPanel() {
       status,
       validity_date: validityDate || null,
       confirmed_by_user: confirmed,
+      file_reference: fileReference,
     });
-    setEditItem(null);
+    handleCloseEdit();
   };
 
   const handleSuggestDate = async () => {
@@ -236,16 +262,61 @@ export function DocumentChecklistPanel() {
       </Card>
 
       {/* Edit dialog */}
-      <Dialog open={!!editItem} onOpenChange={(open) => !open && setEditItem(null)}>
+      <Dialog open={!!editItem} onOpenChange={(open) => !open && handleCloseEdit()}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{editItem?.name}</DialogTitle>
             <DialogDescription>
-              {t('docChecklist.editDescription', 'Confirme a data de validade do documento. A data poderá ser sugerida por IA, mas deve ser sempre confirmada pelo utilizador.')}
+              {t('docChecklist.editDescription', 'Carregue o ficheiro e confirme a data de validade do documento.')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {/* File upload zone */}
+            {uploadFolderPath && (
+              <div>
+                <Label className="mb-1 block">{t('docChecklist.uploadFile', 'Ficheiro')}</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) setSelectedFile(file);
+                  }}
+                />
+                <div
+                  className="cursor-pointer rounded-lg border-2 border-dashed p-4 text-center transition-colors hover:border-primary/50"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {selectedFile ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <FileText className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-sm font-medium truncate">{selectedFile.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">
+                        ({(selectedFile.size / 1024).toFixed(0)} KB)
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1">
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        {editItem?.entry?.file_reference
+                          ? t('docChecklist.replaceFile', 'Clique para substituir: {{name}}', { name: editItem.entry.file_reference })
+                          : t('docChecklist.selectFile', 'Clique para selecionar o ficheiro')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {selectedFile && selectedFile.size > 4 * 1024 * 1024 && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
+                    <AlertCircle className="h-3 w-3" />
+                    {t('sharepoint.upload.tooLarge', 'Ficheiro demasiado grande. Limite: 4MB')}
+                  </p>
+                )}
+              </div>
+            )}
+
             {editItem?.entry?.ai_suggested_date && !editItem.entry.confirmed_by_user && (
               <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
                 <CalendarClock className="h-4 w-4 text-blue-500 shrink-0" />
@@ -305,11 +376,26 @@ export function DocumentChecklistPanel() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditItem(null)}>
+            <Button variant="outline" onClick={handleCloseEdit}>
               {t('common.cancel', 'Cancelar')}
             </Button>
-            <Button onClick={handleSave} disabled={!confirmed || upsertEntry.isPending}>
-              {upsertEntry.isPending ? t('common.saving', 'A guardar...') : t('common.save', 'Guardar')}
+            <Button
+              onClick={handleSave}
+              disabled={
+                !confirmed ||
+                upsertEntry.isPending ||
+                uploadToSharePoint.isPending ||
+                (!!selectedFile && selectedFile.size > 4 * 1024 * 1024)
+              }
+            >
+              {(upsertEntry.isPending || uploadToSharePoint.isPending) ? (
+                <>
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                  {uploadToSharePoint.isPending
+                    ? t('docChecklist.uploading', 'A carregar...')
+                    : t('common.saving', 'A guardar...')}
+                </>
+              ) : t('common.save', 'Guardar')}
             </Button>
           </DialogFooter>
         </DialogContent>
