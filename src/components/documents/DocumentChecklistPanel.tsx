@@ -214,10 +214,19 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
           },
         });
 
-        if (!error && data?.data?.dados_extraidos?.data_documento) {
-          // Emission date found — validity = emission date + document validity period
-          const emissionDate = new Date(data.data.dados_extraidos.data_documento);
-          if (!isNaN(emissionDate.getTime())) {
+        if (!error) {
+          // Extract date — Claude may return YYYY-MM-DD or DD/MM/YYYY
+          const raw: string | null | undefined = data?.data?.dados_extraidos?.data_documento;
+          let emissionDate: Date | null = null;
+          if (raw) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+              emissionDate = new Date(raw + 'T12:00:00');
+            } else if (/^\d{2}[\/.-]\d{2}[\/.-]\d{4}$/.test(raw)) {
+              const parts = raw.split(/[\/.-]/);
+              emissionDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`);
+            }
+          }
+          if (emissionDate && !isNaN(emissionDate.getTime())) {
             emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
             setValidityDate(emissionDate.toISOString().split('T')[0]);
             toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
