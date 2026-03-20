@@ -112,8 +112,8 @@
     "admin": "Administration",
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
-    "legalbi": "Legal Tracker",
-    "prazos": "Deadlines & Dates"
+    "legalbi": "LegalBI",
+    "documents": "Documents"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -220,19 +220,87 @@
     "title": "Policies",
     "subtitle": "Internal organization policies management",
     "newPolicy": "New Policy",
-    "noPolicies": "No policies found"
+    "editPolicy": "Edit Policy",
+    "noPolicies": "No policies found",
+    "noPoliciesDescription": "Start by creating your first internal policy",
+    "createPolicy": "Create Policy",
+    "status": {
+      "draft": "Draft",
+      "inReview": "In Review",
+      "approved": "Approved",
+      "archived": "Archived"
+    },
+    "policyContent": "Policy Content",
+    "policyContentPlaceholder": "Write policy content...",
+    "attachDocument": "Attach Document",
+    "dragOrClick": "Drag a file or click to select",
+    "confirmDelete": "Are you sure you want to delete this policy?",
+    "analyzeWithAI": "Analyze with AI",
+    "aiAnalysisInDevelopment": "AI analysis in development",
+    "searchPlaceholder": "Search policies...",
+    "allStatuses": "All statuses"
   },
   "templates": {
     "title": "Templates",
     "subtitle": "Parameterizable document templates",
     "newTemplate": "New Template",
-    "noTemplates": "No templates found"
+    "editTemplate": "Edit Template",
+    "noTemplates": "No templates found",
+    "noTemplatesDescription": "Start by creating your first template",
+    "createTemplate": "Create Template",
+    "templateName": "Template Name",
+    "templateContent": "Template Content",
+    "templateContentPlaceholder": "Write template content with placeholders...",
+    "availablePlaceholders": "Available Placeholders",
+    "placeholderHint": "Click a placeholder to insert it into the content",
+    "confirmDelete": "Are you sure you want to delete this template?",
+    "generateWithAI": "Generate with AI",
+    "aiGenerationInDevelopment": "AI generation in development",
+    "searchPlaceholder": "Search templates...",
+    "allTypes": "All types",
+    "types": {
+      "contract": "Contract",
+      "amendment": "Amendment",
+      "policy": "Policy",
+      "communication": "Communication",
+      "other": "Other"
+    }
   },
   "documents": {
     "title": "Documents",
-    "subtitle": "Generated documents management",
-    "newDocument": "New Document",
-    "noDocuments": "No documents found"
+    "subtitle": "Generated documents and signatures management",
+    "uploadDocument": "Upload Document",
+    "noDocuments": "No documents found",
+    "noDocumentsDescription": "Start by uploading your first document",
+    "dragOrClick": "Drag files or click to select",
+    "fileTypes": "PDF, Word, Excel (max. 10MB)",
+    "selectFile": "Select File",
+    "upload": "Upload",
+    "uploadInDevelopment": "Upload in development",
+    "confirmDelete": "Are you sure you want to delete this document?",
+    "createdOn": "Created on",
+    "sendForSignature": "Send for Signature",
+    "signers": "Signers",
+    "signatureDeadline": "Signature Deadline",
+    "days": "{{count}} days",
+    "messageOptional": "Message (optional)",
+    "messagePlaceholder": "Add a message for signers...",
+    "searchPlaceholder": "Search documents...",
+    "signatureStatusLabel": "Signature Status",
+    "signatureStatus": {
+      "pending": "Pending",
+      "sent": "Sent",
+      "signed": "Signed",
+      "refused": "Refused",
+      "expired": "Expired"
+    },
+    "types": {
+      "contract": "Contract",
+      "amendment": "Amendment",
+      "policy": "Policy",
+      "communication": "Communication",
+      "other": "Other"
+    }
   },
   "digitalSignature": {
     "title": "Digital Signature",
@@ -571,92 +639,6 @@
     "generalDocTitle": "Upload Document",
     "generalDocDescription": "Upload a document for AI analysis"
   },
-  "policies": {
-    "title": "Policies",
-    "subtitle": "Internal organization policies management",
-    "newPolicy": "New Policy",
-    "editPolicy": "Edit Policy",
-    "noPolicies": "No policies found",
-    "noPoliciesDescription": "Start by creating your first internal policy",
-    "createPolicy": "Create Policy",
-    "status": {
-      "draft": "Draft",
-      "inReview": "In Review",
-      "approved": "Approved",
-      "archived": "Archived"
-    },
-    "policyContent": "Policy Content",
-    "policyContentPlaceholder": "Write policy content...",
-    "attachDocument": "Attach Document",
-    "dragOrClick": "Drag a file or click to select",
-    "confirmDelete": "Are you sure you want to delete this policy?",
-    "analyzeWithAI": "Analyze with AI",
-    "aiAnalysisInDevelopment": "AI analysis in development",
-    "searchPlaceholder": "Search policies...",
-    "allStatuses": "All statuses"
-  },
-  "templates": {
-    "title": "Templates",
-    "subtitle": "Parameterizable document templates",
-    "newTemplate": "New Template",
-    "editTemplate": "Edit Template",
-    "noTemplates": "No templates found",
-    "noTemplatesDescription": "Start by creating your first template",
-    "createTemplate": "Create Template",
-    "templateName": "Template Name",
-    "templateContent": "Template Content",
-    "templateContentPlaceholder": "Write template content with placeholders...",
-    "availablePlaceholders": "Available Placeholders",
-    "placeholderHint": "Click a placeholder to insert it into the content",
-    "confirmDelete": "Are you sure you want to delete this template?",
-    "generateWithAI": "Generate with AI",
-    "aiGenerationInDevelopment": "AI generation in development",
-    "searchPlaceholder": "Search templates...",
-    "allTypes": "All types",
-    "types": {
-      "contract": "Contract",
-      "amendment": "Amendment",
-      "policy": "Policy",
-      "communication": "Communication",
-      "other": "Other"
-    }
-  },
-"documents": {
-    "title": "Documents",
-    "subtitle": "Generated documents and signatures management",
-    "uploadDocument": "Upload Document",
-    "noDocuments": "No documents found",
-    "noDocumentsDescription": "Start by uploading your first document",
-    "dragOrClick": "Drag files or click to select",
-    "fileTypes": "PDF, Word, Excel (max. 10MB)",
-    "selectFile": "Select File",
-    "upload": "Upload",
-    "uploadInDevelopment": "Upload in development",
-    "confirmDelete": "Are you sure you want to delete this document?",
-    "createdOn": "Created on",
-    "sendForSignature": "Send for Signature",
-    "signers": "Signers",
-    "signatureDeadline": "Signature Deadline",
-    "days": "{{count}} days",
-    "messageOptional": "Message (optional)",
-    "messagePlaceholder": "Add a message for signers...",
-    "searchPlaceholder": "Search documents...",
-    "signatureStatusLabel": "Signature Status",
-    "signatureStatus": {
-      "pending": "Pending",
-      "sent": "Sent",
-      "signed": "Signed",
-      "refused": "Refused",
-      "expired": "Expired"
-    },
-    "types": {
-      "contract": "Contract",
-      "amendment": "Amendment",
-      "policy": "Policy",
-      "communication": "Communication",
-      "other": "Other"
-    }
-  },
   "home": {
     "title": "Home",
     "subtitle": "Welcome to the legal management platform",
@@ -973,7 +955,7 @@
     "total": "Total",
     "newInvoiceDialog": "New Invoice",
     "newInvoiceDescription": "Create a new invoice for this organization",
-    "invoiceNumber": "Invoice Number",
+    "invoiceNumber": "Invoice No.",
     "periodStart": "Period Start",
     "periodEnd": "Period End",
     "currency": "Currency",
@@ -1010,9 +992,7 @@
     "lastSync": "Last sync",
     "pendingInvoices": "Pending invoices",
     "pendingBalance": "Pending balance",
-    "overdue": "Overdue",
     "withinTerm": "Within term",
-    "invoiceNumber": "Invoice No.",
     "dueDate": "Due Date",
     "amount": "Amount",
     "invoiceStatus": "Status",
@@ -1375,14 +1355,152 @@
   "faq": {
     "title": "Frequently Asked Questions",
     "disclaimer": "This information is for guidance only and does not replace professional legal advice.",
-    "defaultQuestions": {
-      "whatIsContract": "What is a contract?",
-      "whatIsContractAnswer": "A contract is a legally binding agreement between two or more parties that establishes mutual rights and obligations.",
-      "howToRenew": "How does renewal work?",
-      "howToRenewAnswer": "Renewal can be automatic or by mutual agreement, depending on what is stipulated in the contract. Check the renewal clauses and notice periods.",
-      "whatIfBreach": "What happens in case of breach?",
-      "whatIfBreachAnswer": "Breach of contract may result in damages, contract termination or other consequences as specified in the clauses. Consult your lawyer for specific guidance."
-    }
+    "nda": [
+      {
+        "q": "What happens if confidential information is disclosed?",
+        "a": "The disclosing party may be held liable for damages. Check the indemnification clauses and liability limits in the contract."
+      },
+      {
+        "q": "Does the NDA have an expiration date?",
+        "a": "Yes, check the term date. Many NDAs have confidentiality obligations that extend beyond the contract term."
+      },
+      {
+        "q": "What information is covered by the NDA?",
+        "a": "This is usually defined in the 'Confidential Information' clause. Look for possible exclusions (publicly available information, received from third parties, etc.)."
+      }
+    ],
+    "prestacao_servicos": [
+      {
+        "q": "What happens if SLAs are not met?",
+        "a": "Check the penalty clauses and resolution mechanisms. There may be credit rights or termination options."
+      },
+      {
+        "q": "How does the renewal of this contract work?",
+        "a": "Depends on the renewal type. If automatic, it renews unless notice is given within the notice period."
+      },
+      {
+        "q": "Can I subcontract part of the services?",
+        "a": "Check the subcontracting clause. Some contracts expressly prohibit this."
+      }
+    ],
+    "fornecimento": [
+      {
+        "q": "What are the delivery and acceptance conditions?",
+        "a": "Check the delivery clauses, deadlines, locations and conditions for acceptance or rejection of goods."
+      },
+      {
+        "q": "How are non-conformities handled?",
+        "a": "The contract should define the claims process, warranty periods and liability for defects."
+      },
+      {
+        "q": "Who bears the transport costs?",
+        "a": "Check the Incoterms or transport clauses to understand who bears the risks and costs of shipping."
+      }
+    ],
+    "saas": [
+      {
+        "q": "Is my data protected?",
+        "a": "Check if there is a DPA (Data Processing Agreement) attached and if data categories are defined."
+      },
+      {
+        "q": "What happens if the provider ceases operations?",
+        "a": "Check continuity and data portability clauses. Having an exit plan is recommended."
+      },
+      {
+        "q": "Can I cancel at any time?",
+        "a": "Depends on duration and renewal type. Fixed-term contracts typically require fulfilment until the end."
+      }
+    ],
+    "arrendamento": [
+      {
+        "q": "What is the notice period for non-renewal?",
+        "a": "Check the 'Notice Period' field. Portuguese law defines legal minimums that may prevail."
+      },
+      {
+        "q": "Who is responsible for renovations?",
+        "a": "Check each party's obligations. Typically structural works are the landlord's and non-structural the tenant's."
+      },
+      {
+        "q": "Can the landlord enter the property?",
+        "a": "Yes, but under specific conditions defined in the contract and law. Advance notice and consent are usually required."
+      }
+    ],
+    "trabalho": [
+      {
+        "q": "What is the probation period?",
+        "a": "The probation period varies by contract type and role. Check the contract and current labor legislation."
+      },
+      {
+        "q": "How does contract termination work?",
+        "a": "Termination follows specific Labor Code rules, with minimum notice periods based on seniority."
+      },
+      {
+        "q": "What are the rights to holidays and allowances?",
+        "a": "Check the contract and applicable CCT. The law guarantees minimums (22 working days of holidays, holiday and Christmas allowances)."
+      }
+    ],
+    "licenciamento": [
+      {
+        "q": "Can I sublicense to third parties?",
+        "a": "Depends on the licence terms. Check if the contract is exclusive and whether sublicensing is permitted."
+      },
+      {
+        "q": "What happens when the licence expires?",
+        "a": "Check obligations to cease use, return materials and renewal rights."
+      },
+      {
+        "q": "Is the licence territorial?",
+        "a": "Yes, generally. Check the geographic and use restrictions in the contract."
+      }
+    ],
+    "parceria": [
+      {
+        "q": "How are profits and costs distributed?",
+        "a": "Check the revenue sharing and cost responsibility clauses. They should be explicit and quantified."
+      },
+      {
+        "q": "How is a dispute between partners resolved?",
+        "a": "Check the dispute resolution clause (mediation, arbitration or court). Mediation is preferred for speed."
+      },
+      {
+        "q": "Can I exit the partnership early?",
+        "a": "Check the exit clauses, lock-in provisions and financial consequences of early exit."
+      }
+    ],
+    "consultoria": [
+      {
+        "q": "Are the deliverables clearly defined?",
+        "a": "Check that the contract specifies deliverables, acceptance criteria and deadlines clearly."
+      },
+      {
+        "q": "Is there a non-compete clause?",
+        "a": "Some contracts prohibit the consultant from working for competitors during and after the contract. Check the scope and duration."
+      },
+      {
+        "q": "Who owns the intellectual property created?",
+        "a": "Check the IP clause. By default it may belong to the consultant unless otherwise agreed contractually."
+      }
+    ],
+    "outro": [
+      {
+        "q": "How can I renew this contract?",
+        "a": "Check the renewal type. If automatic, the contract renews automatically unless notice is given within the deadline."
+      },
+      {
+        "q": "Where can I find attached documents?",
+        "a": "Documents are available in the 'History' > 'Attachments' tab on the contract page."
+      }
+    ],
+    "default": [
+      {
+        "q": "How can I renew this contract?",
+        "a": "Check the renewal type. If automatic, the contract renews automatically unless notice is given within the deadline."
+      },
+      {
+        "q": "Where can I find attached documents?",
+        "a": "Documents are available in the 'History' > 'Attachments' tab on the contract page."
+      }
+    ]
   },
   "monthlySummary": {
     "title": "Monthly Summary",
@@ -1409,7 +1527,10 @@
     "confirmDate": "I confirm the validity of this document",
     "confirmRequired": "You must confirm the validity date before saving",
     "notAvailable": "Document checklist not available. Contact the administrator.",
-    "selectDate": "Select validity date"
+    "selectDate": "Select validity date",
+    "aiSuggestedApplied": "AI-suggested date applied",
+    "aiSuggestError": "Error getting date suggestion",
+    "suggestDate": "Suggest date (AI)"
   },
   "notifPrefs": {
     "title": "Notification Preferences",
@@ -1432,6 +1553,15 @@
     "inApp": "In-App",
     "email": "Email",
     "emailDesc": "Coming soon"
+  },
+  "docValidity": {
+    "title": "Document Validity",
+    "valid": "Valid",
+    "expiringSoon": "Expiring soon",
+    "expired": "Expired",
+    "advisory": "Advisory",
+    "advisoryLabel": "Advisory",
+    "missing": "Missing"
   },
   "export": {
     "pdf": "Export PDF"

@@ -4,6 +4,9 @@ import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
 import { useDocumentChecklist, ChecklistItemWithType } from '@/hooks/useDocumentChecklist';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +20,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, AlertTriangle, FileCheck, Upload, CalendarClock, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, FileCheck, Upload, CalendarClock, Loader2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function statusIcon(status: string) {
@@ -53,10 +56,12 @@ function statusBadgeVariant(status: string): 'active' | 'destructive' | 'default
 
 export function DocumentChecklistPanel() {
   const { t } = useTranslation();
-  const { items, isLoading, upsertEntry, isTableAvailable } = useDocumentChecklist();
+  const { user } = useAuth();
+  const { items, isLoading, upsertEntry, isTableAvailable, organizationId } = useDocumentChecklist();
   const [editItem, setEditItem] = useState<ChecklistItemWithType | null>(null);
   const [validityDate, setValidityDate] = useState('');
   const [confirmed, setConfirmed] = useState(false);
+  const [isSuggestingDate, setIsSuggestingDate] = useState(false);
 
   if (isLoading) {
     return (
@@ -116,6 +121,29 @@ export function DocumentChecklistPanel() {
       confirmed_by_user: confirmed,
     });
     setEditItem(null);
+  };
+
+  const handleSuggestDate = async () => {
+    if (!editItem || !organizationId || !user) return;
+    setIsSuggestingDate(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('suggest-document-validity', {
+        body: { organization_id: organizationId, checklist_type_id: editItem.id },
+      });
+      if (error) throw error;
+      if (data?.ai_suggested_date) {
+        setValidityDate(data.ai_suggested_date);
+        toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
+      }
+    } catch (err) {
+      toast({
+        title: t('docChecklist.aiSuggestError', 'Erro ao sugerir data'),
+        description: err instanceof Error ? err.message : String(err),
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSuggestingDate(false);
+    }
   };
 
   const handleMarkMissing = (item: ChecklistItemWithType) => {
@@ -239,12 +267,26 @@ export function DocumentChecklistPanel() {
             )}
 
             <div>
-              <Label>{t('docChecklist.validityDate', 'Data de Validade')}</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label>{t('docChecklist.validityDate', 'Data de Validade')}</Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs gap-1 text-blue-600 hover:text-blue-700"
+                  onClick={handleSuggestDate}
+                  disabled={isSuggestingDate}
+                >
+                  {isSuggestingDate
+                    ? <Loader2 className="h-3 w-3 animate-spin" />
+                    : <Sparkles className="h-3 w-3" />
+                  }
+                  {t('docChecklist.suggestDate', 'Sugerir data')}
+                </Button>
+              </div>
               <Input
                 type="date"
                 value={validityDate}
                 onChange={(e) => setValidityDate(e.target.value)}
-                className="mt-1"
               />
             </div>
 

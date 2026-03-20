@@ -467,6 +467,59 @@ export function useUploadLargeToSharePoint() {
   });
 }
 
+// Hook para garantir que a pasta do cliente existe no SharePoint (auto-criação na primeira visita)
+export function useEnsureClientFolder(organizationId: string | null) {
+  const queryClient = useQueryClient();
+
+  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(organizationId ?? undefined);
+
+  const { data: orgData } = useQuery({
+    queryKey: ['organization-client-code', organizationId],
+    staleTime: 10 * 60 * 1000,
+    enabled: !!organizationId,
+    queryFn: async () => {
+      if (!organizationId) return null;
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('name, client_code')
+        .eq('id', organizationId)
+        .maybeSingle();
+      if (error) {
+        console.error('Error fetching org data for folder creation:', error);
+        return null;
+      }
+      return data;
+    },
+  });
+
+  const createFolder = useCreateSharePointFolder();
+
+  const folderName = orgData?.client_code || orgData?.name || 'Documentos';
+  const folderPath = `/${folderName}`;
+
+  const { data: ensured } = useQuery({
+    queryKey: ['sharepoint-client-folder-ensured', organizationId, folderPath],
+    staleTime: Infinity,
+    enabled: !!organizationId && !!config && !!orgData && !createFolder.isPending,
+    queryFn: async () => {
+      if (!organizationId || !config) return false;
+      try {
+        await createFolder.mutateAsync({ organization_id: organizationId, folder_path: folderPath });
+        queryClient.invalidateQueries({ queryKey: ['sharepoint-documents', organizationId] });
+      } catch {
+        // Folder may already exist — not an error
+      }
+      return true;
+    },
+  });
+
+  return {
+    folderPath,
+    isReady: !!config && !!orgData,
+    isEnsuring: isLoadingConfig || (!!config && !!orgData && !ensured),
+  };
+}
+
 // ====== Admin-specific hooks ======
 
 // Hook para obter config SharePoint por orgId (para admins)

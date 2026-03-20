@@ -35,11 +35,9 @@ import {
   Moon,
   Sun,
   Bell,
-  Calculator,
   Briefcase,
   UserCog,
   BarChart3,
-  CalendarClock,
   Lock,
 } from "lucide-react";
 
@@ -128,10 +126,6 @@ export function Sidebar({ clientName }: SidebarProps) {
     location.pathname.startsWith("/contratos") || location.pathname === "/"
   );
 
-  const [accountingExpanded, setAccountingExpanded] = useState(
-    location.pathname.startsWith("/documentos")
-  );
-
   const handleSignOut = async () => {
     await signOut();
     navigate("/login");
@@ -139,8 +133,6 @@ export function Sidebar({ clientName }: SidebarProps) {
 
   const isContractsActive =
     location.pathname.startsWith("/contratos") || location.pathname === "/";
-
-  const isAccountingActive = location.pathname.startsWith("/documentos");
 
   return (
     <aside
@@ -208,14 +200,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           icon={BarChart3}
           label={t("nav.legalbi")}
           isActive={location.pathname === "/legalbi"}
-          isCollapsed={isCollapsed}
-        />
-
-        <NavItem
-          to="/prazos"
-          icon={CalendarClock}
-          label={t("nav.prazos", "Prazos e Datas")}
-          isActive={location.pathname === "/prazos"}
           isCollapsed={isCollapsed}
         />
 
@@ -296,56 +280,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           )}
         </div>
 
-        <div>
-          {isCollapsed ? (
-            <NavItem
-              to="/documentos"
-              icon={Calculator}
-              label={t("nav.accounting")}
-              isActive={isAccountingActive}
-              isCollapsed={isCollapsed}
-            />
-          ) : (
-            <>
-              <button
-                onClick={() => setAccountingExpanded(!accountingExpanded)}
-                className={cn(
-                  "flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  isAccountingActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                )}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <Calculator className="h-5 w-5 shrink-0" />
-                  <span className="truncate">{t("nav.accounting")}</span>
-                </div>
-
-                {accountingExpanded ? (
-                  <ChevronDown className="h-4 w-4 shrink-0" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0" />
-                )}
-              </button>
-
-              {accountingExpanded && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
-                  <NavItem
-                    to="/documentos"
-                    icon={FolderOpen}
-                    label={t("nav.accountingDocuments")}
-                    isActive={
-                      location.pathname === "/documentos" ||
-                      location.pathname.startsWith("/documentos/")
-                    }
-                    isCollapsed={false}
-                    isSubmenu
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <NavItem
+          to="/documentos"
+          icon={FolderOpen}
+          label={t("nav.documents")}
+          isActive={location.pathname === "/documentos" || location.pathname.startsWith("/documentos/")}
+          isCollapsed={isCollapsed}
+        />
 
         <div className="my-2 border-t border-sidebar-border" />
 

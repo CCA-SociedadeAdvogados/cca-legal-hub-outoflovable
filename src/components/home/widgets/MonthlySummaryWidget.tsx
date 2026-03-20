@@ -2,11 +2,11 @@ import { forwardRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, FileText, Euro, Scale, CheckCircle2, AlertTriangle, Newspaper } from 'lucide-react';
+import { CalendarDays, FileText, Euro, Scale, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useContratos } from '@/hooks/useContratos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useEventosLegislativos } from '@/hooks/useEventosLegislativos';
-import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
 
 interface MonthlySummaryWidgetProps {
@@ -28,10 +28,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
       const now = new Date();
       const monthStart = startOfMonth(now);
       const monthEnd = endOfMonth(now);
-      const prevMonthStart = startOfMonth(subMonths(now, 1));
-      const prevMonthEnd = endOfMonth(subMonths(now, 1));
       const interval = { start: monthStart, end: monthEnd };
-      const prevInterval = { start: prevMonthStart, end: prevMonthEnd };
 
       const list = contratos?.filter(c => !c.arquivado) ?? [];
 
@@ -45,12 +42,14 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
         ['expirado', 'rescindido', 'denunciado'].includes(c.estado_contrato)
       ).length;
 
-      // Renewed this month (created this month and have previous version or are renovacao)
+      // Renewed this month: contracts that became active this month (data_inicio_vigencia within
+      // current month) but were created before this month — best available proxy for renewals
       const renewedThisMonth = list.filter(c =>
+        c.data_inicio_vigencia &&
+        isWithinInterval(new Date(c.data_inicio_vigencia), interval) &&
         c.created_at &&
-        isWithinInterval(new Date(c.created_at), interval) &&
-        c.estado_contrato === 'activo' &&
-        c.tipo_renovacao === 'renovacao_automatica'
+        !isWithinInterval(new Date(c.created_at), interval) &&
+        c.estado_contrato === 'activo'
       ).length;
 
       // Events published this month
@@ -120,7 +119,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-              <span>{t('monthlySummary.created', 'Criados este mês')}</span>
+              <span>{t('monthlySummary.createdThisMonth')}</span>
             </div>
             <Badge variant="secondary">{summary.createdThisMonth}</Badge>
           </div>
@@ -129,7 +128,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                <span>{t('monthlySummary.terminated', 'Terminados')}</span>
+                <span>{t('monthlySummary.terminatedThisMonth')}</span>
               </div>
               <Badge variant="destructive">{summary.terminatedThisMonth}</Badge>
             </div>
@@ -139,7 +138,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-blue-500" />
-                <span>{t('monthlySummary.renewed', 'Renovados')}</span>
+                <span>{t('monthlySummary.renewedThisMonth')}</span>
               </div>
               <Badge variant="secondary">{summary.renewedThisMonth}</Badge>
             </div>
@@ -149,7 +148,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <Scale className="h-3.5 w-3.5 text-purple-500" />
-                <span>{t('monthlySummary.events', 'Eventos legislativos')}</span>
+                <span>{t('monthlySummary.legislativeEvents')}</span>
               </div>
               <Badge variant="secondary">{summary.eventsThisMonth}</Badge>
             </div>
@@ -161,7 +160,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   <Euro className="h-3.5 w-3.5 text-amber-500" />
-                  <span>{t('monthlySummary.pending', 'Pendente')}</span>
+                  <span>{t('monthlySummary.financialPending')}</span>
                 </div>
                 <span className="text-sm font-medium">
                   {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(summary.totalPendente)}
@@ -171,7 +170,7 @@ const MonthlySummaryWidget = forwardRef<HTMLDivElement, MonthlySummaryWidgetProp
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
-                    <span>{t('monthlySummary.overdue', 'Vencido')}</span>
+                    <span>{t('monthlySummary.financialOverdue')}</span>
                   </div>
                   <span className="text-sm font-medium text-red-500">
                     {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(summary.totalVencido)}
