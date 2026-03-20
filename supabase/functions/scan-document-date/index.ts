@@ -124,7 +124,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 256,
         system: SYSTEM_PROMPT,
         messages: [
