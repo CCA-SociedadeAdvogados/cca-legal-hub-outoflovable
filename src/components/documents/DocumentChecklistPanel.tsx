@@ -202,31 +202,18 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
         for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
         const base64 = btoa(binary);
 
-        const { data, error } = await supabase.functions.invoke('analyze-document', {
+        const { data: scanData, error: scanError } = await supabase.functions.invoke('scan-document-date', {
           body: {
-            type: 'analyze_general_document',
-            language: 'pt',
-            data: {
-              fileContent: base64,
-              fileName: selectedFile.name,
-              mimeType: selectedFile.type || 'application/pdf',
-            },
+            file_base64: base64,
+            file_name: selectedFile.name,
+            mime_type: selectedFile.type || 'application/pdf',
           },
         });
 
-        if (!error) {
-          // Extract date — Claude may return YYYY-MM-DD or DD/MM/YYYY
-          const raw: string | null | undefined = data?.data?.dados_extraidos?.data_documento;
-          let emissionDate: Date | null = null;
-          if (raw) {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-              emissionDate = new Date(raw + 'T12:00:00');
-            } else if (/^\d{2}[\/.-]\d{2}[\/.-]\d{4}$/.test(raw)) {
-              const parts = raw.split(/[\/.-]/);
-              emissionDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T12:00:00`);
-            }
-          }
-          if (emissionDate && !isNaN(emissionDate.getTime())) {
+        if (!scanError && scanData?.emission_date) {
+          // Parse ISO date returned by the function
+          const emissionDate = new Date(scanData.emission_date + 'T12:00:00');
+          if (!isNaN(emissionDate.getTime())) {
             emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
             setValidityDate(emissionDate.toISOString().split('T')[0]);
             toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
