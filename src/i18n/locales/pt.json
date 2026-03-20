@@ -1530,7 +1530,8 @@
     "selectDate": "Seleccionar data de validade",
     "aiSuggestedApplied": "Data sugerida pela IA aplicada",
     "aiSuggestError": "Erro ao obter sugestão de data",
-    "suggestDate": "Sugerir data (IA)"
+    "suggestDate": "Sugerir data (IA)",
+    "noClient": "Selecione um cliente para gerir a checklist de documentos."
   },
   "notifPrefs": {
     "title": "Preferências de Notificação",

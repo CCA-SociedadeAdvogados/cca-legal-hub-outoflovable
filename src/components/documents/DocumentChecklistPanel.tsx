@@ -5,6 +5,7 @@ import { pt } from 'date-fns/locale';
 
 import { useDocumentChecklist, ChecklistItemWithType } from '@/hooks/useDocumentChecklist';
 import { useUploadToSharePoint } from '@/hooks/useSharePoint';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -83,7 +84,7 @@ interface DocumentChecklistPanelProps {
 
 export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: DocumentChecklistPanelProps) {
   const { t } = useTranslation();
-  const { items, isLoading, upsertEntry, isTableAvailable } = useDocumentChecklist();
+  const { items, isLoading, upsertEntry, isTableAvailable, organizationId } = useDocumentChecklist();
   const uploadToSharePoint = useUploadToSharePoint(uploadOrgId);
   const [editItem, setEditItem] = useState<ChecklistItemWithType | null>(null);
   const [validityDate, setValidityDate] = useState('');
@@ -114,6 +115,24 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
         <CardContent>
           <p className="text-sm text-muted-foreground">
             {t('docChecklist.notAvailable', 'A checklist de documentos estará disponível em breve. A migração de base de dados está pendente.')}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!organizationId) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileCheck className="h-5 w-5" />
+            {t('docChecklist.title', 'Checklist de Documentos')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            {t('docChecklist.noClient', 'Selecione um cliente para gerir a checklist de documentos.')}
           </p>
         </CardContent>
       </Card>
@@ -169,10 +188,51 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
     handleCloseEdit();
   };
 
-  const handleSuggestDate = () => {
+  const handleSuggestDate = async () => {
     if (!editItem) return;
     setIsSuggestingDate(true);
     try {
+      const validityMonths = suggestValidityMonths(editItem.name);
+
+      if (selectedFile) {
+        // Convert file to base64 and ask Claude to extract the emission date
+        const arrayBuffer = await selectedFile.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuffer);
+        let binary = '';
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        const base64 = btoa(binary);
+
+        const { data, error } = await supabase.functions.invoke('analyze-document', {
+          body: {
+            type: 'analyze_general_document',
+            language: 'pt',
+            data: {
+              fileContent: base64,
+              fileName: selectedFile.name,
+              mimeType: selectedFile.type || 'application/pdf',
+            },
+          },
+        });
+
+        if (!error && data?.data?.dados_extraidos?.data_documento) {
+          // Emission date found — validity = emission date + document validity period
+          const emissionDate = new Date(data.data.dados_extraidos.data_documento);
+          if (!isNaN(emissionDate.getTime())) {
+            emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
+            setValidityDate(emissionDate.toISOString().split('T')[0]);
+            toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
+            return;
+          }
+        }
+      }
+
+      // Fallback: no file or AI couldn't extract date — use today as base
+      const suggested = new Date();
+      suggested.setMonth(suggested.getMonth() + validityMonths);
+      setValidityDate(suggested.toISOString().split('T')[0]);
+      toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
+    } catch {
+      // Non-fatal: fall back to today + validity period
       const validityMonths = suggestValidityMonths(editItem.name);
       const suggested = new Date();
       suggested.setMonth(suggested.getMonth() + validityMonths);
