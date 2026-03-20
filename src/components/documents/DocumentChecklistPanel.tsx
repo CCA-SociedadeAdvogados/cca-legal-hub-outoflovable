@@ -202,21 +202,17 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
         for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
         const base64 = btoa(binary);
 
-        const { data, error } = await supabase.functions.invoke('analyze-document', {
+        const { data: scanData, error: scanError } = await supabase.functions.invoke('scan-document-date', {
           body: {
-            type: 'analyze_general_document',
-            language: 'pt',
-            data: {
-              fileContent: base64,
-              fileName: selectedFile.name,
-              mimeType: selectedFile.type || 'application/pdf',
-            },
+            file_base64: base64,
+            file_name: selectedFile.name,
+            mime_type: selectedFile.type || 'application/pdf',
           },
         });
 
-        if (!error && data?.data?.dados_extraidos?.data_documento) {
-          // Emission date found — validity = emission date + document validity period
-          const emissionDate = new Date(data.data.dados_extraidos.data_documento);
+        if (!scanError && scanData?.emission_date) {
+          // Parse ISO date returned by the function
+          const emissionDate = new Date(scanData.emission_date + 'T12:00:00');
           if (!isNaN(emissionDate.getTime())) {
             emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
             setValidityDate(emissionDate.toISOString().split('T')[0]);
