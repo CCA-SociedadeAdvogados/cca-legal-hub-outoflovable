@@ -220,19 +220,87 @@
     "title": "Políticas",
     "subtitle": "Gestão de políticas internas da organização",
     "newPolicy": "Nova Política",
-    "noPolicies": "Nenhuma política encontrada"
+    "editPolicy": "Editar Política",
+    "noPolicies": "Nenhuma política encontrada",
+    "noPoliciesDescription": "Comece por criar a sua primeira política interna",
+    "createPolicy": "Criar Política",
+    "status": {
+      "draft": "Rascunho",
+      "inReview": "Em Revisão",
+      "approved": "Aprovada",
+      "archived": "Arquivada"
+    },
+    "policyContent": "Conteúdo da Política",
+    "policyContentPlaceholder": "Escreva o conteúdo da política...",
+    "attachDocument": "Anexar Documento",
+    "dragOrClick": "Arraste um ficheiro ou clique para selecionar",
+    "confirmDelete": "Tem a certeza que deseja eliminar esta política?",
+    "analyzeWithAI": "Analisar com IA",
+    "aiAnalysisInDevelopment": "Análise de IA em desenvolvimento",
+    "searchPlaceholder": "Pesquisar políticas...",
+    "allStatuses": "Todos os estados"
   },
   "templates": {
     "title": "Templates",
     "subtitle": "Modelos de documentos parametrizáveis",
     "newTemplate": "Novo Template",
-    "noTemplates": "Nenhum template encontrado"
+    "editTemplate": "Editar Template",
+    "noTemplates": "Nenhum template encontrado",
+    "noTemplatesDescription": "Comece por criar o seu primeiro template",
+    "createTemplate": "Criar Template",
+    "templateName": "Nome do Template",
+    "templateContent": "Conteúdo do Template",
+    "templateContentPlaceholder": "Escreva o conteúdo do template com placeholders...",
+    "availablePlaceholders": "Placeholders Disponíveis",
+    "placeholderHint": "Clique num placeholder para o inserir no conteúdo",
+    "confirmDelete": "Tem a certeza que deseja eliminar este template?",
+    "generateWithAI": "Gerar com IA",
+    "aiGenerationInDevelopment": "Geração de IA em desenvolvimento",
+    "searchPlaceholder": "Pesquisar templates...",
+    "allTypes": "Todos os tipos",
+    "types": {
+      "contract": "Contrato",
+      "amendment": "Adenda",
+      "policy": "Política",
+      "communication": "Comunicação",
+      "other": "Outro"
+    }
   },
   "documents": {
     "title": "Documentos",
-    "subtitle": "Gestão de documentos gerados",
-    "newDocument": "Novo Documento",
-    "noDocuments": "Nenhum documento encontrado"
+    "subtitle": "Gestão de documentos gerados e assinaturas",
+    "uploadDocument": "Carregar Documento",
+    "noDocuments": "Nenhum documento encontrado",
+    "noDocumentsDescription": "Comece por carregar o seu primeiro documento",
+    "dragOrClick": "Arraste ficheiros ou clique para selecionar",
+    "fileTypes": "PDF, Word, Excel (máx. 10MB)",
+    "selectFile": "Selecionar Ficheiro",
+    "upload": "Carregar",
+    "uploadInDevelopment": "Upload em desenvolvimento",
+    "confirmDelete": "Tem a certeza que deseja eliminar este documento?",
+    "createdOn": "Criado em",
+    "sendForSignature": "Enviar para Assinatura",
+    "signers": "Assinantes",
+    "signatureDeadline": "Prazo para Assinatura",
+    "days": "{{count}} dias",
+    "messageOptional": "Mensagem (opcional)",
+    "messagePlaceholder": "Adicione uma mensagem para os assinantes...",
+    "searchPlaceholder": "Pesquisar documentos...",
+    "signatureStatusLabel": "Estado de Assinatura",
+    "signatureStatus": {
+      "pending": "Pendente",
+      "sent": "Enviado",
+      "signed": "Assinado",
+      "refused": "Recusado",
+      "expired": "Expirado"
+    },
+    "types": {
+      "contract": "Contrato",
+      "amendment": "Adenda",
+      "policy": "Política",
+      "communication": "Comunicação",
+      "other": "Outro"
+    }
   },
   "digitalSignature": {
     "title": "Assinatura Digital",
@@ -571,92 +639,6 @@
     "generalDocTitle": "Carregar Documento",
     "generalDocDescription": "Carregue um documento para análise com IA"
   },
-  "policies": {
-    "title": "Políticas",
-    "subtitle": "Gestão de políticas internas da organização",
-    "newPolicy": "Nova Política",
-    "editPolicy": "Editar Política",
-    "noPolicies": "Nenhuma política encontrada",
-    "noPoliciesDescription": "Comece por criar a sua primeira política interna",
-    "createPolicy": "Criar Política",
-    "status": {
-      "draft": "Rascunho",
-      "inReview": "Em Revisão",
-      "approved": "Aprovada",
-      "archived": "Arquivada"
-    },
-    "policyContent": "Conteúdo da Política",
-    "policyContentPlaceholder": "Escreva o conteúdo da política...",
-    "attachDocument": "Anexar Documento",
-    "dragOrClick": "Arraste um ficheiro ou clique para selecionar",
-    "confirmDelete": "Tem a certeza que deseja eliminar esta política?",
-    "analyzeWithAI": "Analisar com IA",
-    "aiAnalysisInDevelopment": "Análise de IA em desenvolvimento",
-    "searchPlaceholder": "Pesquisar políticas...",
-    "allStatuses": "Todos os estados"
-  },
-  "templates": {
-    "title": "Templates",
-    "subtitle": "Modelos de documentos parametrizáveis",
-    "newTemplate": "Novo Template",
-    "editTemplate": "Editar Template",
-    "noTemplates": "Nenhum template encontrado",
-    "noTemplatesDescription": "Comece por criar o seu primeiro template",
-    "createTemplate": "Criar Template",
-    "templateName": "Nome do Template",
-    "templateContent": "Conteúdo do Template",
-    "templateContentPlaceholder": "Escreva o conteúdo do template com placeholders...",
-    "availablePlaceholders": "Placeholders Disponíveis",
-    "placeholderHint": "Clique num placeholder para o inserir no conteúdo",
-    "confirmDelete": "Tem a certeza que deseja eliminar este template?",
-    "generateWithAI": "Gerar com IA",
-    "aiGenerationInDevelopment": "Geração de IA em desenvolvimento",
-    "searchPlaceholder": "Pesquisar templates...",
-    "allTypes": "Todos os tipos",
-    "types": {
-      "contract": "Contrato",
-      "amendment": "Adenda",
-      "policy": "Política",
-      "communication": "Comunicação",
-      "other": "Outro"
-    }
-  },
-"documents": {
-    "title": "Documentos",
-    "subtitle": "Gestão de documentos gerados e assinaturas",
-    "uploadDocument": "Carregar Documento",
-    "noDocuments": "Nenhum documento encontrado",
-    "noDocumentsDescription": "Comece por carregar o seu primeiro documento",
-    "dragOrClick": "Arraste ficheiros ou clique para selecionar",
-    "fileTypes": "PDF, Word, Excel (máx. 10MB)",
-    "selectFile": "Selecionar Ficheiro",
-    "upload": "Carregar",
-    "uploadInDevelopment": "Upload em desenvolvimento",
-    "confirmDelete": "Tem a certeza que deseja eliminar este documento?",
-    "createdOn": "Criado em",
-    "sendForSignature": "Enviar para Assinatura",
-    "signers": "Assinantes",
-    "signatureDeadline": "Prazo para Assinatura",
-    "days": "{{count}} dias",
-    "messageOptional": "Mensagem (opcional)",
-    "messagePlaceholder": "Adicione uma mensagem para os assinantes...",
-    "searchPlaceholder": "Pesquisar documentos...",
-    "signatureStatusLabel": "Estado de Assinatura",
-    "signatureStatus": {
-      "pending": "Pendente",
-      "sent": "Enviado",
-      "signed": "Assinado",
-      "refused": "Recusado",
-      "expired": "Expirado"
-    },
-    "types": {
-      "contract": "Contrato",
-      "amendment": "Adenda",
-      "policy": "Política",
-      "communication": "Comunicação",
-      "other": "Outro"
-    }
-  },
   "home": {
     "title": "Início",
     "subtitle": "Bem-vindo à plataforma de gestão jurídica",
@@ -934,7 +916,7 @@
     "accountStatus": "Status da Conta",
     "regularized": "Regularizado",
     "attention": "Atenção",
-    "overdue": "Em Atraso",
+    "overdue": "Vencida",
     "totalInvoices": "Total Faturas",
     "totalInDefault": "Total em Incumprimento",
     "openAmount": "Em Aberto",
@@ -973,7 +955,7 @@
     "total": "Total",
     "newInvoiceDialog": "Nova Fatura",
     "newInvoiceDescription": "Criar uma nova fatura para esta organização",
-    "invoiceNumber": "Número da Fatura",
+    "invoiceNumber": "Nº Fatura",
     "periodStart": "Período Início",
     "periodEnd": "Período Fim",
     "currency": "Moeda",
@@ -1010,9 +992,7 @@
     "lastSync": "Último sync",
     "pendingInvoices": "Faturas pendentes",
     "pendingBalance": "Saldo pendente",
-    "overdue": "Vencida",
     "withinTerm": "Dentro do prazo",
-    "invoiceNumber": "Nº Fatura",
     "dueDate": "Data de Vencimento",
     "amount": "Valor",
     "invoiceStatus": "Estado",
@@ -1375,14 +1355,152 @@
   "faq": {
     "title": "Perguntas Frequentes",
     "disclaimer": "Esta informação é meramente orientativa e não substitui aconselhamento jurídico profissional.",
-    "defaultQuestions": {
-      "whatIsContract": "O que é um contrato?",
-      "whatIsContractAnswer": "Um contrato é um acordo juridicamente vinculativo entre duas ou mais partes que estabelece direitos e obrigações recíprocas.",
-      "howToRenew": "Como funciona a renovação?",
-      "howToRenewAnswer": "A renovação pode ser automática ou mediante acordo das partes, dependendo do que está estipulado no contrato. Verifique as cláusulas de renovação e os prazos de denúncia.",
-      "whatIfBreach": "O que acontece em caso de incumprimento?",
-      "whatIfBreachAnswer": "O incumprimento contratual pode resultar em indemnizações, rescisão do contrato ou outras consequências previstas nas cláusulas. Consulte o seu advogado para orientação específica."
-    }
+    "nda": [
+      {
+        "q": "O que acontece se a informação confidencial for divulgada?",
+        "a": "A parte que divulgar informação confidencial pode ser responsabilizada por danos. Verifique as cláusulas de indemnização e os limites de responsabilidade do contrato."
+      },
+      {
+        "q": "O NDA tem prazo de validade?",
+        "a": "Sim, verifique a data de termo. Muitos NDAs têm obrigações de confidencialidade que se estendem além do prazo do contrato."
+      },
+      {
+        "q": "Que informação é abrangida pelo NDA?",
+        "a": "Normalmente é definida na cláusula de 'Informação Confidencial'. Informe-se sobre possíveis exclusões (informação já pública, recebida de terceiros, etc.)."
+      }
+    ],
+    "prestacao_servicos": [
+      {
+        "q": "O que acontece se os SLAs não forem cumpridos?",
+        "a": "Verifique as cláusulas de penalização e os mecanismos de resolução previstos no contrato. Pode haver direito a créditos ou rescisão."
+      },
+      {
+        "q": "Como funciona a renovação deste contrato?",
+        "a": "Depende do tipo de renovação configurado. Se automática, renova-se salvo denúncia dentro do prazo de aviso prévio."
+      },
+      {
+        "q": "Posso subcontratar parte dos serviços?",
+        "a": "Verifique a cláusula de subcontratação do contrato. Alguns contratos proíbem expressamente esta possibilidade."
+      }
+    ],
+    "fornecimento": [
+      {
+        "q": "Quais as condições de entrega e aceitação?",
+        "a": "Verifique as cláusulas de entrega, prazos, locais e condições de aceitação ou rejeição das mercadorias."
+      },
+      {
+        "q": "Como são tratadas as não-conformidades?",
+        "a": "O contrato deve definir o processo de reclamação, prazos de garantia e responsabilidade por defeitos."
+      },
+      {
+        "q": "Quem suporta os custos de transporte?",
+        "a": "Verifique os Incoterms ou cláusulas de transporte para perceber quem assume os riscos e custos de expedição."
+      }
+    ],
+    "saas": [
+      {
+        "q": "Os meus dados estão protegidos?",
+        "a": "Verifique se existe DPA (Acordo de Processamento de Dados) anexo ao contrato e se estão definidas as categorias de dados tratados."
+      },
+      {
+        "q": "O que acontece se o fornecedor cessar actividade?",
+        "a": "Verifique as cláusulas de continuidade e portabilidade de dados. É recomendável ter um plano de saída."
+      },
+      {
+        "q": "Posso cancelar a qualquer momento?",
+        "a": "Depende do tipo de duração e renovação. Contratos de prazo determinado normalmente exigem cumprimento até ao final."
+      }
+    ],
+    "arrendamento": [
+      {
+        "q": "Qual o prazo de aviso para não renovar?",
+        "a": "Verifique o campo 'Aviso Prévio' nas datas do contrato. A legislação portuguesa define mínimos legais que podem prevalecer."
+      },
+      {
+        "q": "Quem é responsável pelas obras?",
+        "a": "Verifique as obrigações de cada parte no contrato. Normalmente, obras estruturais são do senhorio e não estruturais do arrendatário."
+      },
+      {
+        "q": "O senhorio pode entrar no imóvel?",
+        "a": "Sim, mas em condições específicas definidas no contrato e na lei. Normalmente exige aviso prévio e consentimento."
+      }
+    ],
+    "trabalho": [
+      {
+        "q": "Qual o período experimental?",
+        "a": "O período experimental varia conforme o tipo de contrato e funções. Consulte o contrato e a legislação laboral vigente."
+      },
+      {
+        "q": "Como funciona a denúncia do contrato?",
+        "a": "A denúncia segue regras específicas do Código do Trabalho, com prazos mínimos de aviso prévio conforme a antiguidade."
+      },
+      {
+        "q": "Quais os direitos a férias e subsídios?",
+        "a": "Verifique o contrato e o CCT aplicável. A lei garante mínimos (22 dias úteis de férias, subsídio de férias e de Natal)."
+      }
+    ],
+    "licenciamento": [
+      {
+        "q": "Posso sublicenciar a terceiros?",
+        "a": "Depende das condições da licença. Verifique se o contrato é exclusivo ou não e se a sublicença está permitida."
+      },
+      {
+        "q": "O que acontece quando a licença expira?",
+        "a": "Verifique as obrigações de cessação de uso, devolução de materiais e direitos de renovação."
+      },
+      {
+        "q": "A licença é territorial?",
+        "a": "Sim, geralmente. Verifique as restrições geográficas e de uso previstas no contrato."
+      }
+    ],
+    "parceria": [
+      {
+        "q": "Como são distribuídos os lucros e custos?",
+        "a": "Verifique as cláusulas de partilha de receitas e responsabilidade por custos. Devem ser explícitas e quantificadas."
+      },
+      {
+        "q": "Como se resolve um desentendimento entre parceiros?",
+        "a": "Verifique a cláusula de resolução de litígios (mediação, arbitragem ou tribunal). A mediação é preferível pela rapidez."
+      },
+      {
+        "q": "Posso sair da parceria antecipadamente?",
+        "a": "Verifique as cláusulas de saída, lock-in e consequências financeiras de uma saída antecipada."
+      }
+    ],
+    "consultoria": [
+      {
+        "q": "Os entregáveis estão bem definidos?",
+        "a": "Verifique se o contrato especifica claramente os entregáveis, critérios de aceitação e prazos."
+      },
+      {
+        "q": "Existe cláusula de não-concorrência?",
+        "a": "Alguns contratos proíbem o consultor de trabalhar para concorrentes durante e após o contrato. Verifique o âmbito e a duração."
+      },
+      {
+        "q": "Quem é dono da propriedade intelectual criada?",
+        "a": "Verifique a cláusula de PI. Por defeito pode pertencer ao consultor salvo acordo contratual em contrário."
+      }
+    ],
+    "outro": [
+      {
+        "q": "Como posso renovar este contrato?",
+        "a": "Verifique o tipo de renovação configurado no contrato. Se for renovação automática, o contrato renova-se automaticamente salvo denúncia dentro do prazo."
+      },
+      {
+        "q": "Onde encontro os documentos anexos?",
+        "a": "Os documentos estão disponíveis no separador 'Histórico' > 'Anexos' na página do contrato."
+      }
+    ],
+    "default": [
+      {
+        "q": "Como posso renovar este contrato?",
+        "a": "Verifique o tipo de renovação configurado no contrato. Se for renovação automática, o contrato renova-se automaticamente salvo denúncia dentro do prazo."
+      },
+      {
+        "q": "Onde encontro os documentos anexos?",
+        "a": "Os documentos estão disponíveis no separador 'Histórico' > 'Anexos' na página do contrato."
+      }
+    ]
   },
   "monthlySummary": {
     "title": "Resumo Mensal",
@@ -1409,7 +1527,10 @@
     "confirmDate": "Confirmo a validade deste documento",
     "confirmRequired": "Tem de confirmar a data de validade antes de guardar",
     "notAvailable": "Checklist de documentos não disponível. Contacte o administrador.",
-    "selectDate": "Seleccionar data de validade"
+    "selectDate": "Seleccionar data de validade",
+    "aiSuggestedApplied": "Data sugerida pela IA aplicada",
+    "aiSuggestError": "Erro ao obter sugestão de data",
+    "suggestDate": "Sugerir data (IA)"
   },
   "notifPrefs": {
     "title": "Preferências de Notificação",
