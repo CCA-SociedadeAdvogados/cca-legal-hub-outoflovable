@@ -272,8 +272,8 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* File upload zone */}
-            {uploadFolderPath && (
+            {/* File upload zone — always show when org is available */}
+            {uploadOrgId && (
               <div>
                 <Label className="mb-1 block">{t('docChecklist.uploadFile', 'Ficheiro')}</Label>
                 <input
