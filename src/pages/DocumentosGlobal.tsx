@@ -33,9 +33,9 @@ export default function DocumentosGlobal() {
           </p>
         </div>
 
-        {/* Document Checklist — passes upload folder so "Registar" can upload to SharePoint */}
+        {/* Document Checklist — folderPath always has a value (defaults to /Documentos) */}
         <DocumentChecklistPanel
-          uploadFolderPath={isReady ? folderPath : undefined}
+          uploadFolderPath={effectiveOrgId ? folderPath : undefined}
           uploadOrgId={effectiveOrgId ?? undefined}
         />
 
