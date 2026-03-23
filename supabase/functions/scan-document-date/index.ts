@@ -111,14 +111,14 @@ serve(async (req) => {
       requestHeaders["anthropic-beta"] = "pdfs-2024-09-25";
     }
 
-    console.log("[scan-document-date] calling Anthropic, model: claude-3-5-sonnet-20241022");
+    console.log("[scan-document-date] calling Anthropic, model: claude-sonnet-4-6");
     let response: Response;
     try {
       response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: requestHeaders,
         body: JSON.stringify({
-          model: "claude-3-5-sonnet-20241022",
+          model: "claude-sonnet-4-6",
           max_tokens: 256,
           system: SYSTEM_PROMPT,
           messages: [
