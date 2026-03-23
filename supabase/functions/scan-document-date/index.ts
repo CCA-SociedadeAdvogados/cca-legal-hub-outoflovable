@@ -1,16 +1,7 @@
-/**
- * scan-document-date
- *
- * Accepts a document (PDF or image) in base64 and returns the emission date
- * extracted by Claude Vision. Works for any language and any document type —
- * digital PDFs, scanned images, foreign documents, etc.
- *
- * Request body:
- *   { file_base64: string, file_name: string, mime_type: string }
- *
- * Response:
- *   { emission_date: "YYYY-MM-DD" | null, confidence: "high" | "low" | "none" }
- */
+// scan-document-date
+// Accepts a document (PDF or image) in base64, returns emission date via Claude Vision.
+// Body: { file_base64: string, file_name: string, mime_type: string }
+// Response: { emission_date: "YYYY-MM-DD" | null, confidence: "high" | "low" | "none" }
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
