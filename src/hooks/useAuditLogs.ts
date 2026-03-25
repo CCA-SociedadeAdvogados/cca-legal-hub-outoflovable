@@ -39,6 +39,7 @@ export function useAuditLogs(options: UseAuditLogsOptions = {}) {
       let query = supabase
         .from("audit_logs")
         .select("*")
+        .eq("organization_id", profile!.current_organization_id!)
         .order("created_at", { ascending: false })
         .limit(limit);
 
