@@ -10,10 +10,49 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
+      alert_rules: {
+        Row: {
+          created_at: string
+          custom_label: string | null
+          days_before: number
+          enabled: boolean
+          id: string
+          notify_email: boolean
+          notify_platform: boolean
+          organization_id: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_label?: string | null
+          days_before?: number
+          enabled?: boolean
+          id?: string
+          notify_email?: boolean
+          notify_platform?: boolean
+          organization_id: string
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_label?: string | null
+          days_before?: number
+          enabled?: boolean
+          id?: string
+          notify_email?: boolean
+          notify_platform?: boolean
+          organization_id?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       anexos_contrato: {
         Row: {
           contrato_id: string
@@ -128,15 +167,7 @@ export type Database = {
           user_email?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       auth_activity_logs: {
         Row: {
@@ -171,6 +202,24 @@ export type Database = {
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      cca_internal_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
         }
         Relationships: []
       }
@@ -217,15 +266,7 @@ export type Database = {
           titulo?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "cca_news_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       client_content_blocks: {
         Row: {
@@ -264,15 +305,7 @@ export type Database = {
           updated_at?: string | null
           updated_by_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "client_content_blocks_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       client_folders: {
         Row: {
@@ -342,13 +375,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "client_folders_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "client_folders_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
@@ -408,15 +434,7 @@ export type Database = {
           updated_at?: string | null
           updated_by_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "client_home_config_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       contract_ai_diffs: {
         Row: {
@@ -642,13 +660,6 @@ export type Database = {
             referencedRelation: "profiles_safe"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "contract_compliance_analyses_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
       contract_extractions: {
@@ -850,13 +861,6 @@ export type Database = {
             columns: ["contrato_id"]
             isOneToOne: true
             referencedRelation: "contratos_safe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contract_triage_analyses_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1290,13 +1294,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contratos_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "contratos_responsavel_interno_id_fkey"
             columns: ["responsavel_interno_id"]
             isOneToOne: false
@@ -1428,14 +1425,37 @@ export type Database = {
             referencedRelation: "profiles_safe"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "departments_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
+      }
+      document_checklist_types: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_required: boolean | null
+          name: string
+          name_en: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_required?: boolean | null
+          name: string
+          name_en?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_required?: boolean | null
+          name?: string
+          name_en?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
       }
       documentos_gerados: {
         Row: {
@@ -1519,13 +1539,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "documentos_gerados_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "documentos_gerados_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -1572,6 +1585,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      email_mfa_codes: {
+        Row: {
+          attempt_count: number
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          ip_address: unknown
+          purpose: string
+          used_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          purpose: string
+          used_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_count?: number
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          purpose?: string
+          used_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_mfa_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_mfa_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       eventos_ciclo_vida_contrato: {
         Row: {
@@ -1703,13 +1770,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "eventos_legislativos_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "eventos_legislativos_updated_by_id_fkey"
             columns: ["updated_by_id"]
             isOneToOne: false
@@ -1751,6 +1811,118 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      financeiro_nav_cache: {
+        Row: {
+          data_vencimento: string | null
+          id: string
+          jvris_id: string
+          raw_row: Json | null
+          synced_at: string | null
+          valor_pendente: number | null
+        }
+        Insert: {
+          data_vencimento?: string | null
+          id?: string
+          jvris_id: string
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor_pendente?: number | null
+        }
+        Update: {
+          data_vencimento?: string | null
+          id?: string
+          jvris_id?: string
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor_pendente?: number | null
+        }
+        Relationships: []
+      }
+      financeiro_nav_items: {
+        Row: {
+          data_vencimento: string | null
+          descricao: string | null
+          id: string
+          jvris_id: string
+          numero_documento: string | null
+          raw_row: Json | null
+          synced_at: string | null
+          valor: number | null
+        }
+        Insert: {
+          data_vencimento?: string | null
+          descricao?: string | null
+          id?: string
+          jvris_id: string
+          numero_documento?: string | null
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor?: number | null
+        }
+        Update: {
+          data_vencimento?: string | null
+          descricao?: string | null
+          id?: string
+          jvris_id?: string
+          numero_documento?: string | null
+          raw_row?: Json | null
+          synced_at?: string | null
+          valor?: number | null
+        }
+        Relationships: []
+      }
+      financial_clients: {
+        Row: {
+          client_code: string | null
+          client_name: string | null
+          created_at: string
+          id: string
+          jvris_id: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_code?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          jvris_id: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_code?: string | null
+          client_name?: string | null
+          created_at?: string
+          id?: string
+          jvris_id?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "financial_clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "financial_clients_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
       }
       folder_items: {
         Row: {
@@ -1887,13 +2059,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "impactos_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "impactos_resolvido_por_id_fkey"
             columns: ["resolvido_por_id"]
             isOneToOne: false
@@ -1920,6 +2085,7 @@ export type Database = {
           ip_address: string | null
           real_user_id: string
           reason: string
+          session_notes: string | null
           started_at: string
           status: string | null
           user_agent: string | null
@@ -1934,6 +2100,7 @@ export type Database = {
           ip_address?: string | null
           real_user_id: string
           reason: string
+          session_notes?: string | null
           started_at?: string
           status?: string | null
           user_agent?: string | null
@@ -1948,18 +2115,12 @@ export type Database = {
           ip_address?: string | null
           real_user_id?: string
           reason?: string
+          session_notes?: string | null
           started_at?: string
           status?: string | null
           user_agent?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "impersonation_sessions_impersonated_organization_id_fkey"
-            columns: ["impersonated_organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "impersonation_sessions_impersonated_user_id_fkey"
             columns: ["impersonated_user_id"]
@@ -1975,66 +2136,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      financeiro_nav_items: {
-        Row: {
-          data_vencimento: string | null
-          descricao: string | null
-          id: string
-          jvris_id: string
-          numero_documento: string | null
-          raw_row: Json | null
-          synced_at: string | null
-          valor: number | null
-        }
-        Insert: {
-          data_vencimento?: string | null
-          descricao?: string | null
-          id?: string
-          jvris_id: string
-          numero_documento?: string | null
-          raw_row?: Json | null
-          synced_at?: string | null
-          valor?: number | null
-        }
-        Update: {
-          data_vencimento?: string | null
-          descricao?: string | null
-          id?: string
-          jvris_id?: string
-          numero_documento?: string | null
-          raw_row?: Json | null
-          synced_at?: string | null
-          valor?: number | null
-        }
-        Relationships: []
-      }
-      financeiro_nav_cache: {
-        Row: {
-          data_vencimento: string | null
-          id: string
-          jvris_id: string
-          raw_row: Json | null
-          synced_at: string | null
-          valor_pendente: number | null
-        }
-        Insert: {
-          data_vencimento?: string | null
-          id?: string
-          jvris_id: string
-          raw_row?: Json | null
-          synced_at?: string | null
-          valor_pendente?: number | null
-        }
-        Update: {
-          data_vencimento?: string | null
-          id?: string
-          jvris_id?: string
-          raw_row?: Json | null
-          synced_at?: string | null
-          valor_pendente?: number | null
-        }
-        Relationships: []
       }
       invoices: {
         Row: {
@@ -2082,15 +2183,52 @@ export type Database = {
           url_ficheiro?: string | null
           valor?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          channel_email: boolean | null
+          channel_in_app: boolean | null
+          created_at: string | null
+          enable_cca_news: boolean | null
+          enable_contract_expiry: boolean | null
+          enable_document_checklist: boolean | null
+          enable_financial_due: boolean | null
+          enable_legislative_events: boolean | null
+          expiry_alert_days: number[] | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          channel_email?: boolean | null
+          channel_in_app?: boolean | null
+          created_at?: string | null
+          enable_cca_news?: boolean | null
+          enable_contract_expiry?: boolean | null
+          enable_document_checklist?: boolean | null
+          enable_financial_due?: boolean | null
+          enable_legislative_events?: boolean | null
+          expiry_alert_days?: number[] | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          channel_email?: boolean | null
+          channel_in_app?: boolean | null
+          created_at?: string | null
+          enable_cca_news?: boolean | null
+          enable_contract_expiry?: boolean | null
+          enable_document_checklist?: boolean | null
+          enable_financial_due?: boolean | null
+          enable_legislative_events?: boolean | null
+          expiry_alert_days?: number[] | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
@@ -2137,13 +2275,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notifications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "notifications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -2159,6 +2290,174 @@ export type Database = {
           },
         ]
       }
+      on_demand_requests: {
+        Row: {
+          contrato_id: string | null
+          created_at: string
+          descricao: string | null
+          estado: string
+          id: string
+          organization_id: string
+          prazo_resposta: string | null
+          prioridade: string
+          responsavel_id: string | null
+          resposta: string | null
+          solicitado_por_id: string | null
+          tipo_analise: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          contrato_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          estado?: string
+          id?: string
+          organization_id: string
+          prazo_resposta?: string | null
+          prioridade?: string
+          responsavel_id?: string | null
+          resposta?: string | null
+          solicitado_por_id?: string | null
+          tipo_analise?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          contrato_id?: string | null
+          created_at?: string
+          descricao?: string | null
+          estado?: string
+          id?: string
+          organization_id?: string
+          prazo_resposta?: string | null
+          prioridade?: string
+          responsavel_id?: string | null
+          resposta?: string | null
+          solicitado_por_id?: string | null
+          tipo_analise?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "on_demand_requests_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "on_demand_requests_contrato_id_fkey"
+            columns: ["contrato_id"]
+            isOneToOne: false
+            referencedRelation: "contratos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "on_demand_requests_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "on_demand_requests_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "on_demand_requests_solicitado_por_id_fkey"
+            columns: ["solicitado_por_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "on_demand_requests_solicitado_por_id_fkey"
+            columns: ["solicitado_por_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_document_checklist: {
+        Row: {
+          ai_suggested_date: string | null
+          checklist_type_id: string
+          confirmed_by_user: boolean | null
+          created_at: string | null
+          file_reference: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          status: string
+          updated_at: string | null
+          updated_by_id: string | null
+          validity_date: string | null
+        }
+        Insert: {
+          ai_suggested_date?: string | null
+          checklist_type_id: string
+          confirmed_by_user?: boolean | null
+          created_at?: string | null
+          file_reference?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          status?: string
+          updated_at?: string | null
+          updated_by_id?: string | null
+          validity_date?: string | null
+        }
+        Update: {
+          ai_suggested_date?: string | null
+          checklist_type_id?: string
+          confirmed_by_user?: boolean | null
+          created_at?: string | null
+          file_reference?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          status?: string
+          updated_at?: string | null
+          updated_by_id?: string | null
+          validity_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_document_checklist_checklist_type_id_fkey"
+            columns: ["checklist_type_id"]
+            isOneToOne: false
+            referencedRelation: "document_checklist_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_document_checklist_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_document_checklist_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "organization_document_checklist_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
       organization_members: {
         Row: {
           created_at: string
@@ -2166,6 +2465,7 @@ export type Database = {
           organization_id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
+          user_type: string
         }
         Insert: {
           created_at?: string
@@ -2173,6 +2473,7 @@ export type Database = {
           organization_id: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
+          user_type?: string
         }
         Update: {
           created_at?: string
@@ -2180,6 +2481,7 @@ export type Database = {
           organization_id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+          user_type?: string
         }
         Relationships: [
           {
@@ -2188,6 +2490,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
           },
         ]
       }
@@ -2254,6 +2570,20 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
         ]
       }
       organization_subscriptions: {
@@ -2296,6 +2626,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "organization_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "organization_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+          {
             foreignKeyName: "organization_subscriptions_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
@@ -2309,114 +2653,131 @@ export type Database = {
           client_code: string | null
           cost_center: string | null
           created_at: string
-          custom_branding: Json | null
           group: string | null
           id: string
           industry_sectors: string[] | null
-          is_active: boolean | null
+          is_active: boolean
           jvris_id: string | null
-          lawyer_name: string | null
-          lawyer_photo_url: string | null
+          legacy_org_id: number | null
           legalbi_url: string | null
-          logo_url: string | null
           name: string
-          prazo_pagamento_dias: number | null
-          primary_color: string | null
+          org_type: string
           responsible: string | null
           responsible_email: string | null
-          secondary_color: string | null
-          slug: string
-          tipo_cliente: string | null
           updated_at: string
         }
         Insert: {
           client_code?: string | null
           cost_center?: string | null
           created_at?: string
-          custom_branding?: Json | null
           group?: string | null
-          id?: string
+          id: string
           industry_sectors?: string[] | null
-          is_active?: boolean | null
+          is_active?: boolean
           jvris_id?: string | null
-          lawyer_name?: string | null
-          lawyer_photo_url?: string | null
+          legacy_org_id?: number | null
           legalbi_url?: string | null
-          logo_url?: string | null
           name: string
-          prazo_pagamento_dias?: number | null
-          primary_color?: string | null
+          org_type: string
           responsible?: string | null
           responsible_email?: string | null
-          secondary_color?: string | null
-          slug: string
-          tipo_cliente?: string | null
           updated_at?: string
         }
         Update: {
           client_code?: string | null
           cost_center?: string | null
           created_at?: string
-          custom_branding?: Json | null
           group?: string | null
           id?: string
           industry_sectors?: string[] | null
-          is_active?: boolean | null
+          is_active?: boolean
           jvris_id?: string | null
-          lawyer_name?: string | null
-          lawyer_photo_url?: string | null
+          legacy_org_id?: number | null
           legalbi_url?: string | null
-          logo_url?: string | null
           name?: string
-          prazo_pagamento_dias?: number | null
-          primary_color?: string | null
+          org_type?: string
           responsible?: string | null
           responsible_email?: string | null
-          secondary_color?: string | null
-          slug?: string
-          tipo_cliente?: string | null
           updated_at?: string
         }
         Relationships: []
       }
-      platform_users: {
+      "organizations sso": {
         Row: {
-          email: string
-          full_name: string | null
-          role: string | null
-          department: string | null
-          job_title: string | null
-          organization: string | null
-          auth_method: string | null
+          client_code: string | null
+          cost_center: string | null
+          group: string | null
           is_active: boolean | null
+          name: string | null
+          responsible: string | null
+          responsible_email: string | null
+        }
+        Insert: {
+          client_code?: string | null
+          cost_center?: string | null
+          group?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          responsible?: string | null
+          responsible_email?: string | null
+        }
+        Update: {
+          client_code?: string | null
+          cost_center?: string | null
+          group?: string | null
+          is_active?: boolean | null
+          name?: string | null
+          responsible?: string | null
+          responsible_email?: string | null
+        }
+        Relationships: []
+      }
+      organizations_legacy: {
+        Row: {
+          client_code: string
+          cost_center: string | null
           created_at: string
+          group: string | null
+          id: number
+          is_active: boolean
+          name: string
+          responsible: string | null
+          responsible_email: string | null
           updated_at: string
         }
         Insert: {
-          email: string
-          full_name?: string | null
-          role?: string | null
-          department?: string | null
-          job_title?: string | null
-          organization?: string | null
-          auth_method?: string | null
-          is_active?: boolean | null
+          client_code: string
+          cost_center?: string | null
           created_at?: string
+          group?: string | null
+          id: number
+          is_active?: boolean
+          name: string
+          responsible?: string | null
+          responsible_email?: string | null
           updated_at?: string
         }
         Update: {
-          email?: string
-          full_name?: string | null
-          role?: string | null
-          department?: string | null
-          job_title?: string | null
-          organization?: string | null
-          auth_method?: string | null
-          is_active?: boolean | null
+          client_code?: string
+          cost_center?: string | null
           created_at?: string
+          group?: string | null
+          id?: number
+          is_active?: boolean
+          name?: string
+          responsible?: string | null
+          responsible_email?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_responsible_email_fkey"
+            columns: ["responsible_email"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["email"]
+          },
+        ]
       }
       platform_admins: {
         Row: {
@@ -2439,6 +2800,48 @@ export type Database = {
           id?: string
           notes?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_users: {
+        Row: {
+          auth_method: string
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string | null
+          id: number
+          is_active: boolean
+          job_title: string | null
+          organization: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          auth_method?: string
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name?: string | null
+          id?: number
+          is_active?: boolean
+          job_title?: string | null
+          organization?: string
+          role?: string
+          updated_at?: string
+        }
+        Update: {
+          auth_method?: string
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string | null
+          id?: number
+          is_active?: boolean
+          job_title?: string | null
+          organization?: string
+          role?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2510,13 +2913,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "politicas_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "politicas_updated_by_id_fkey"
             columns: ["updated_by_id"]
             isOneToOne: false
@@ -2534,18 +2930,27 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
+          activated_at: string | null
           auth_method: string | null
           avatar_url: string | null
+          cargo: string | null
           created_at: string
           current_organization_id: string | null
           departamento: Database["public"]["Enums"]["departamento"] | null
           email: string | null
           id: string
+          invited_at: string | null
+          jvris_id: string | null
           last_login_at: string | null
           locked_until: string | null
           login_attempts: number | null
+          mfa_method: string | null
+          mfa_required: boolean
+          must_change_password: boolean
           nome_completo: string | null
           onboarding_completed: boolean | null
+          password_set_at: string | null
           sso_external_id: string | null
           sso_group: string | null
           sso_provider: string | null
@@ -2555,18 +2960,27 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          account_status?: string
+          activated_at?: string | null
           auth_method?: string | null
           avatar_url?: string | null
+          cargo?: string | null
           created_at?: string
           current_organization_id?: string | null
           departamento?: Database["public"]["Enums"]["departamento"] | null
           email?: string | null
           id: string
+          invited_at?: string | null
+          jvris_id?: string | null
           last_login_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
+          mfa_method?: string | null
+          mfa_required?: boolean
+          must_change_password?: boolean
           nome_completo?: string | null
           onboarding_completed?: boolean | null
+          password_set_at?: string | null
           sso_external_id?: string | null
           sso_group?: string | null
           sso_provider?: string | null
@@ -2576,18 +2990,27 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          account_status?: string
+          activated_at?: string | null
           auth_method?: string | null
           avatar_url?: string | null
+          cargo?: string | null
           created_at?: string
           current_organization_id?: string | null
           departamento?: Database["public"]["Enums"]["departamento"] | null
           email?: string | null
           id?: string
+          invited_at?: string | null
+          jvris_id?: string | null
           last_login_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
+          mfa_method?: string | null
+          mfa_required?: boolean
+          must_change_password?: boolean
           nome_completo?: string | null
           onboarding_completed?: boolean | null
+          password_set_at?: string | null
           sso_external_id?: string | null
           sso_group?: string | null
           sso_provider?: string | null
@@ -2603,6 +3026,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_current_organization_id_fkey"
+            columns: ["current_organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "profiles_current_organization_id_fkey"
+            columns: ["current_organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
           },
         ]
       }
@@ -2674,13 +3111,6 @@ export type Database = {
             referencedRelation: "eventos_legislativos"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "requisitos_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
       sharepoint_config: {
@@ -2735,15 +3165,7 @@ export type Database = {
           sync_interval_minutes?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "sharepoint_config_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sharepoint_documents: {
         Row: {
@@ -2817,13 +3239,6 @@ export type Database = {
             referencedRelation: "sharepoint_config"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sharepoint_documents_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
       sharepoint_sync_logs: {
@@ -2880,39 +3295,32 @@ export type Database = {
             referencedRelation: "sharepoint_config"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "sharepoint_sync_logs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
         ]
       }
       sso_admin_emails: {
         Row: {
-          id: string
-          email: string
-          role: "admin" | "editor"
-          notes: string | null
           added_by: string | null
           created_at: string
+          email: string
+          id: string
+          notes: string | null
+          role: string
         }
         Insert: {
-          id?: string
-          email: string
-          role?: "admin" | "editor"
-          notes?: string | null
           added_by?: string | null
           created_at?: string
+          email: string
+          id?: string
+          notes?: string | null
+          role?: string
         }
         Update: {
-          id?: string
-          email?: string
-          role?: "admin" | "editor"
-          notes?: string | null
           added_by?: string | null
           created_at?: string
+          email?: string
+          id?: string
+          notes?: string | null
+          role?: string
         }
         Relationships: []
       }
@@ -3041,13 +3449,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "templates_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "templates_updated_by_id_fkey"
             columns: ["updated_by_id"]
             isOneToOne: false
@@ -3153,13 +3554,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "user_departments_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "user_departments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -3168,6 +3562,95 @@ export type Database = {
           },
           {
             foreignKeyName: "user_departments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_invites: {
+        Row: {
+          created_at: string
+          created_by_id: string | null
+          email: string
+          expires_at: string
+          id: string
+          invite_token_hash: string
+          organization_id: string
+          status: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_id?: string | null
+          email: string
+          expires_at: string
+          id?: string
+          invite_token_hash: string
+          organization_id: string
+          status?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by_id?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          invite_token_hash?: string
+          organization_id?: string
+          status?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invites_created_by_id_fkey"
+            columns: ["created_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_invites_created_by_id_fkey"
+            columns: ["created_by_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "user_invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "user_invites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_invites_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_safe"
@@ -3190,6 +3673,72 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          auth_method: string | null
+          department: string | null
+          email: string | null
+          full_name: string | null
+          is_active: boolean | null
+          job_title: string | null
+          organization: string | null
+          role: string | null
+        }
+        Insert: {
+          auth_method?: string | null
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          is_active?: boolean | null
+          job_title?: string | null
+          organization?: string | null
+          role?: string | null
+        }
+        Update: {
+          auth_method?: string | null
+          department?: string | null
+          email?: string | null
+          full_name?: string | null
+          is_active?: boolean | null
+          job_title?: string | null
+          organization?: string | null
+          role?: string | null
+        }
+        Relationships: []
+      }
+      users_import: {
+        Row: {
+          autenticacao: string | null
+          departamentos: string | null
+          email: string | null
+          funcao: string | null
+          id: number
+          organizacao: string | null
+          perfil_legalhub: string | null
+          utilizador: string | null
+        }
+        Insert: {
+          autenticacao?: string | null
+          departamentos?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: number
+          organizacao?: string | null
+          perfil_legalhub?: string | null
+          utilizador?: string | null
+        }
+        Update: {
+          autenticacao?: string | null
+          departamentos?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: number
+          organizacao?: string | null
+          perfil_legalhub?: string | null
+          utilizador?: string | null
         }
         Relationships: []
       }
@@ -3561,13 +4110,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "contratos_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "contratos_responsavel_interno_id_fkey"
             columns: ["responsavel_interno_id"]
             isOneToOne: false
@@ -3677,6 +4219,171 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "profiles_current_organization_id_fkey"
+            columns: ["current_organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "profiles_current_organization_id_fkey"
+            columns: ["current_organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      vw_cca_client_catalog_overview: {
+        Row: {
+          can_open_in_platform: boolean | null
+          client_code: string | null
+          client_status: string | null
+          cost_center: string | null
+          distinct_users: number | null
+          group_code: string | null
+          has_financial_data: boolean | null
+          has_platform_tenant: boolean | null
+          legacy_client_name: string | null
+          legacy_is_active: boolean | null
+          organization_count: number | null
+          organization_id: string | null
+          organization_is_active: boolean | null
+          organization_name: string | null
+          primeira_data_vencimento: string | null
+          responsible: string | null
+          responsible_email: string | null
+          total_a_vencer: number | null
+          total_admins: number | null
+          total_documentos: number | null
+          total_editors: number | null
+          total_members: number | null
+          total_owners: number | null
+          total_pendente: number | null
+          total_vencido: number | null
+          total_viewers: number | null
+          ultima_data_vencimento: string | null
+          ultima_sincronizacao: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_responsible_email_fkey"
+            columns: ["responsible_email"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["email"]
+          },
+        ]
+      }
+      vw_cca_client_selector_tmp: {
+        Row: {
+          client_code: string | null
+          client_name: string | null
+          client_status: string | null
+          cost_center: string | null
+          group_code: string | null
+          organization_id: string | null
+          responsible: string | null
+          responsible_email: string | null
+          total_a_vencer: number | null
+          total_documentos: number | null
+          total_pendente: number | null
+          total_vencido: number | null
+          ultima_sincronizacao: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_responsible_email_fkey"
+            columns: ["responsible_email"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["email"]
+          },
+        ]
+      }
+      vw_client_finance_home: {
+        Row: {
+          client_code: string | null
+          cost_center: string | null
+          group_code: string | null
+          legacy_client_name: string | null
+          organization_id: string | null
+          organization_name: string | null
+          responsible: string | null
+          responsible_email: string | null
+          total_a_vencer: number | null
+          total_documentos: number | null
+          total_pendente: number | null
+          total_vencido: number | null
+          ultima_sincronizacao: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_responsible_email_fkey"
+            columns: ["responsible_email"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["email"]
+          },
+        ]
+      }
+      vw_client_finance_home_by_organization: {
+        Row: {
+          client_code: string | null
+          cost_center: string | null
+          group_code: string | null
+          legacy_client_name: string | null
+          organization_id: string | null
+          organization_name: string | null
+          responsible: string | null
+          responsible_email: string | null
+          total_a_vencer: number | null
+          total_documentos: number | null
+          total_pendente: number | null
+          total_vencido: number | null
+          ultima_sincronizacao: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_responsible_email_fkey"
+            columns: ["responsible_email"]
+            isOneToOne: false
+            referencedRelation: "platform_users"
+            referencedColumns: ["email"]
+          },
+        ]
+      }
+      vw_organization_members_financial_scope: {
+        Row: {
+          can_view_group_financials: boolean | null
+          email: string | null
+          organization_id: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
         ]
       }
     }
@@ -3694,20 +4401,20 @@ export type Database = {
       create_organization: {
         Args: { p_name: string; p_slug: string }
         Returns: {
+          client_code: string | null
+          cost_center: string | null
           created_at: string
-          custom_branding: Json | null
+          group: string | null
           id: string
           industry_sectors: string[] | null
-          lawyer_name: string | null
-          lawyer_photo_url: string | null
+          is_active: boolean
+          jvris_id: string | null
+          legacy_org_id: number | null
           legalbi_url: string | null
-          logo_url: string | null
           name: string
-          prazo_pagamento_dias: number | null
-          primary_color: string | null
-          secondary_color: string | null
-          slug: string
-          tipo_cliente: string | null
+          org_type: string
+          responsible: string | null
+          responsible_email: string | null
           updated_at: string
         }
         SetofOptions: {
@@ -3717,14 +4424,126 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      execute_data_retention: {
-        Args: never
+      expire_stale_impersonation_sessions: { Args: never; Returns: number }
+      fn_get_client_home_for_actor: {
+        Args: { p_user_id: string; p_viewing_organization_id: string }
         Returns: {
-          deleted_rows: number
-          table_name: string
+          client_code: string
+          cost_center: string
+          group_code: string
+          legacy_client_name: string
+          organization_id: string
+          organization_name: string
+          responsible: string
+          responsible_email: string
+          total_a_vencer: number
+          total_documentos: number
+          total_pendente: number
+          total_vencido: number
+          ultima_sincronizacao: string
         }[]
       }
-      expire_stale_impersonation_sessions: { Args: never; Returns: number }
+      fn_get_financial_items_for_actor: {
+        Args: { p_user_id: string; p_viewing_organization_id: string }
+        Returns: {
+          client_code: string
+          data_vencimento: string
+          descricao: string
+          estado: string
+          group_code: string
+          legacy_client_name: string
+          numero_documento: string
+          organization_id: string
+          organization_name: string
+          synced_at: string
+          valor: number
+        }[]
+      }
+      fn_get_financial_items_for_user: {
+        Args: { p_organization_id: string; p_user_id: string }
+        Returns: {
+          client_code: string
+          client_name: string
+          data_vencimento: string
+          descricao: string
+          group_code: string
+          numero_documento: string
+          responsible: string
+          responsible_email: string
+          situacao: string
+          synced_at: string
+          valor: number
+        }[]
+      }
+      fn_get_financial_summary_by_entity_for_actor: {
+        Args: { p_user_id: string; p_viewing_organization_id: string }
+        Returns: {
+          entity_client_code: string
+          entity_name: string
+          entity_organization_id: string
+          group_code: string
+          total_a_vencer: number
+          total_documentos: number
+          total_pendente: number
+          total_vencido: number
+          ultima_sincronizacao: string
+        }[]
+      }
+      fn_get_financial_summary_by_entity_for_user: {
+        Args: { p_organization_id: string; p_user_id: string }
+        Returns: {
+          client_code: string
+          client_name: string
+          group_code: string
+          primeiro_vencimento: string
+          total_a_vencer: number
+          total_documentos: number
+          total_pendente: number
+          total_vencido: number
+          ultimo_vencimento: string
+        }[]
+      }
+      fn_get_financial_summary_for_actor: {
+        Args: { p_user_id: string; p_viewing_organization_id: string }
+        Returns: {
+          client_code: string
+          group_code: string
+          legacy_client_name: string
+          organization_id: string
+          organization_name: string
+          total_a_vencer: number
+          total_documentos: number
+          total_pendente: number
+          total_vencido: number
+          ultima_sincronizacao: string
+        }[]
+      }
+      fn_get_financial_summary_for_user: {
+        Args: { p_organization_id: string; p_user_id: string }
+        Returns: {
+          primeiro_vencimento: string
+          total_a_vencer: number
+          total_documentos: number
+          total_entidades: number
+          total_pendente: number
+          total_vencido: number
+          ultima_sincronizacao: string
+          ultimo_vencimento: string
+        }[]
+      }
+      fn_is_cca_internal_authorized: {
+        Args: { p_user_id: string }
+        Returns: boolean
+      }
+      fn_provision_org_for_client_code: {
+        Args: { p_client_code: string }
+        Returns: string
+      }
+      fn_provision_orgs_for_client_codes: {
+        Args: { p_client_codes: string[] }
+        Returns: number
+      }
+      get_cca_org_id: { Args: never; Returns: string }
       get_legal_document: {
         Args: { p_id: string }
         Returns: {
@@ -3778,6 +4597,8 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
+      get_user_type: { Args: { _oid: string; _uid: string }; Returns: string }
+      is_cca_user: { Args: { _uid?: string }; Returns: boolean }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
       log_audit_event: {
         Args: {
@@ -3790,6 +4611,8 @@ export type Database = {
         }
         Returns: string
       }
+      my_department_in_org: { Args: { _oid: string }; Returns: string }
+      my_user_type_in_org: { Args: { _oid: string }; Returns: string }
       search_legal_documents: {
         Args: {
           p_limit?: number
