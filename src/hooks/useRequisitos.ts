@@ -32,6 +32,7 @@ export function useRequisitos() {
       const { data, error } = await supabase
         .from("requisitos")
         .select("*")
+        .eq("organization_id", profile!.current_organization_id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;

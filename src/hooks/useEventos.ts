@@ -41,7 +41,7 @@ export const useEventos = (contratoId?: string) => {
       if (error) throw error;
       return data;
     },
-    enabled: !!user,
+    enabled: !!user && !!contratoId,
   });
 
   const createEvento = useMutation({
