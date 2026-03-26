@@ -436,11 +436,13 @@ export function ContractsTable({
               className="pl-9"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              aria-label="Pesquisar contratos"
             />
             {search && (
               <button
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 onClick={() => setSearch('')}
+                aria-label="Limpar pesquisa"
               >
                 <X className="h-3.5 w-3.5" />
               </button>

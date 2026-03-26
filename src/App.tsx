@@ -83,7 +83,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Block access until department is set
-  return <DepartmentGate>{children}</DepartmentGate>;
+  return <ErrorBoundary><DepartmentGate>{children}</DepartmentGate></ErrorBoundary>;
 };
 
 const OnboardingRoute = () => {
@@ -184,7 +184,7 @@ const AppRoutes = () => {
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/organizacao" element={<ProtectedRoute><Organizacao /></ProtectedRoute>} />
       <Route path="/definicoes" element={<ProtectedRoute><Definicoes /></ProtectedRoute>} />
-      <Route path="/admin" element={<ProtectedRoute><PlatformAdminRoute><ErrorBoundary><PlatformAdmin /></ErrorBoundary></PlatformAdminRoute></ProtectedRoute>} />
+      <Route path="/admin" element={<ProtectedRoute><PlatformAdminRoute><PlatformAdmin /></PlatformAdminRoute></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
