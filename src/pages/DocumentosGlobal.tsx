@@ -19,12 +19,10 @@ export default function DocumentosGlobal() {
     (isCCAInternalAuthorized ? null : currentOrganization?.id) ||
     null;
 
-  // Org that owns the SharePoint config:
-  // - CCA users: always CCA's own org (the SharePoint is configured there)
-  // - External users: their own org
-  const configOrgId = isCCAInternalAuthorized
-    ? (currentOrganization?.id ?? null)
-    : effectiveOrgId;
+  // Org that owns the SharePoint config.
+  // provision-client-sharepoint creates sharepoint_config per client org (not on the CCA org),
+  // so always use effectiveOrgId to resolve the correct config regardless of who is viewing.
+  const configOrgId = effectiveOrgId;
 
   // folderPath derived from the viewed client's client_code (e.g. /C.4859)
   // configOrgId provides the SharePoint connection to use
