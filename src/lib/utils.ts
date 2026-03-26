@@ -17,3 +17,14 @@ export function generateSlug(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')     // Substitui caracteres especiais por hífen
     .replace(/^-+|-+$/g, '');        // Remove hífens do início e fim
 }
+
+/**
+ * Sanitiza o nome de um ficheiro para uso seguro em paths de storage.
+ * Remove acentos e substitui caracteres não alfanuméricos (excepto ponto, hífen, underscore) por underscore.
+ */
+export function safeFileName(name: string): string {
+  return name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9.\-_]/g, '_');
+}
