@@ -105,7 +105,7 @@ export function Header() {
         <div className="shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative shrink-0">
+              <Button variant="ghost" size="icon" className="relative shrink-0" aria-label={t('common.notifications')}>
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">

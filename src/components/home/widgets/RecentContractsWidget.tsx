@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,9 +45,13 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
     };
 
     // Sort by created_at and limit
-    const recentContracts = contratos
-      ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, limit);
+    const recentContracts = useMemo(
+      () => contratos
+        ?.slice()
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, limit),
+      [contratos, limit]
+    );
 
     if (isLoading) {
       return (

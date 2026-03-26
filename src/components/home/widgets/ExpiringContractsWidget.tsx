@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,14 +28,17 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
     futureDate.setDate(futureDate.getDate() + daysAhead);
 
     // Filter contracts expiring within the specified days
-    const expiringContracts = contratos
-      ?.filter((c) => {
-        if (!c.data_termo || c.estado_contrato !== 'activo') return false;
-        const expiryDate = new Date(c.data_termo);
-        return expiryDate >= today && expiryDate <= futureDate;
-      })
-      .sort((a, b) => new Date(a.data_termo!).getTime() - new Date(b.data_termo!).getTime())
-      .slice(0, 5);
+    const expiringContracts = useMemo(
+      () => contratos
+        ?.filter((c) => {
+          if (!c.data_termo || c.estado_contrato !== 'activo') return false;
+          const expiryDate = new Date(c.data_termo);
+          return expiryDate >= today && expiryDate <= futureDate;
+        })
+        .sort((a, b) => new Date(a.data_termo!).getTime() - new Date(b.data_termo!).getTime())
+        .slice(0, 5),
+      [contratos, today.toDateString(), daysAhead]
+    );
 
     if (isLoading) {
       return (
