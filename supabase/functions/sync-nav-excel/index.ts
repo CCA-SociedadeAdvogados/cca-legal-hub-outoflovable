@@ -614,6 +614,64 @@ serve(async (req) => {
       console.log(`Provisioned ${provisionedCount ?? 0} new organizations`);
     }
 
+    // ── Auto-provision SharePoint para orgs sem config ─────────────
+    // Para cada client_code do sync, verifica se a org correspondente
+    // já tem sharepoint_config. Se não tiver, chama provision-client-sharepoint
+    // para criar as pastas e registar a config. Idempotente e não-bloqueante.
+    // Limitado a 20 por sync para evitar timeouts.
+    let sharepointProvisioned = 0;
+    try {
+      const { data: syncedOrgs } = await supabaseAdmin
+        .from("organizations")
+        .select("id, name, client_code")
+        .in("client_code", syncedIds)
+        .eq("org_type", "client");
+
+      if (syncedOrgs && syncedOrgs.length > 0) {
+        const orgIds = syncedOrgs.map((o: { id: string }) => o.id);
+        const { data: existingConfigs } = await supabaseAdmin
+          .from("sharepoint_config")
+          .select("organization_id")
+          .in("organization_id", orgIds);
+
+        const configuredOrgIds = new Set(
+          (existingConfigs ?? []).map((c: { organization_id: string }) => c.organization_id)
+        );
+        const orgsToProvision = syncedOrgs
+          .filter((o: { id: string }) => !configuredOrgIds.has(o.id))
+          .slice(0, 20);
+
+        if (orgsToProvision.length > 0) {
+          console.log(`[sharepoint] Provisioning SharePoint for ${orgsToProvision.length} org(s)`);
+        }
+
+        for (const org of orgsToProvision) {
+          try {
+            const { error: spErr } = await supabaseAdmin.functions.invoke(
+              "provision-client-sharepoint",
+              {
+                body: {
+                  organization_id: org.id,
+                  client_code: org.client_code,
+                  client_name: org.name || org.client_code,
+                },
+              }
+            );
+            if (spErr) {
+              console.warn(`[sharepoint] Failed for ${org.client_code}:`, spErr.message);
+            } else {
+              sharepointProvisioned++;
+              console.log(`[sharepoint] Provisioned ${org.client_code}`);
+            }
+          } catch (spErr) {
+            console.warn(`[sharepoint] Exception for ${org.client_code}:`, spErr);
+          }
+        }
+      }
+    } catch (spBatchErr) {
+      console.warn("[sharepoint] Batch provisioning error:", spBatchErr);
+    }
+
     const totalItems = itemRecords.length;
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
@@ -652,6 +710,7 @@ serve(async (req) => {
         auto_linked: autoLinkedJvrisId,
         needs_jvris_config: !orgJvrisId && cacheRecords.length > 1,
         provisioned: provisionedCount ?? 0,
+        sharepoint_provisioned: sharepointProvisioned,
         names_updated: namesUpdated,
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
