@@ -18,7 +18,9 @@ import {
   FileText,
 } from 'lucide-react';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
+import { useSharePointConfig } from '@/hooks/useSharePoint';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
@@ -40,6 +42,7 @@ const statusIcons: Record<AccountStatus, ReactNode> = {
 export default function Financeiro() {
   const { t } = useTranslation();
   const { isCCAUser } = useLegalHubProfile();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
 
   const {
     organizationId,
@@ -55,6 +58,18 @@ export default function Financeiro() {
   } = useFinanceiro();
 
   const [activeTab, setActiveTab] = useState('financeiro');
+
+  // SharePoint: verificar se o cliente tem config própria.
+  // Se não tiver e for utilizador CCA, usa a config umbrella da CCA.
+  // Se for utilizador externo sem config, oculta a secção.
+  const { data: clientSharePointConfig } = useSharePointConfig(organizationId ?? undefined);
+  const clientSharePointProvisioned = !!clientSharePointConfig;
+  const sharepointConfigOrgId: string | null = (() => {
+    if (!organizationId) return null;
+    if (clientSharePointProvisioned) return organizationId;
+    if (isCCAInternalAuthorized) return currentOrganization?.id ?? null;
+    return null;
+  })();
 
   const { data: contratosCliente = [], isLoading: isLoadingContratos } = useQuery({
     queryKey: ['contratos-org-cliente', organizationId],
@@ -367,7 +382,9 @@ export default function Financeiro() {
         </CardContent>
       </Card>
 
-      <SharePointDocumentsBrowser overrideOrgId={organizationId ?? undefined} />
+      {sharepointConfigOrgId && (
+        <SharePointDocumentsBrowser overrideOrgId={sharepointConfigOrgId} />
+      )}
     </>
   );
 
