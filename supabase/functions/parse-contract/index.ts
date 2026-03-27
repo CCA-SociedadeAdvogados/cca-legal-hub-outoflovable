@@ -274,7 +274,7 @@ INSTRUÇÕES IMPORTANTES:
       : `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`;
 
     console.log(`[parse-contract] Calling Claude Haiku...`);
-    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 4096);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 8192);
 
     // ── 3. Parsear resposta JSON ───────────────────────────────────────────
     let parsedData;
