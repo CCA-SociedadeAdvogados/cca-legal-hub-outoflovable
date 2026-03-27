@@ -137,8 +137,6 @@ export default function Dashboard() {
         <div id="dashboard-content" className="space-y-4">
         {/* KPI Row */}
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        {/* KPI Row */}
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title={t('dashboard.totalContracts')}
             value={stats.totalContratos}
