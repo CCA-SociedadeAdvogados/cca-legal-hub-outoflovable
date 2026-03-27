@@ -61,52 +61,15 @@ export default function LegalBi() {
 
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            {legalbiUrl ? (
-              <>
-                <BarChart3 className="h-16 w-16 text-primary mb-6" />
-                <p className="text-lg font-medium mb-2">{t('legalbi.externalTitle', 'Aceder ao LegalBI')}</p>
-                <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-                  {t('legalbi.externalDesc', 'Aceda à plataforma de Business Intelligence jurídico para análise avançada da sua carteira.')}
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    size="lg"
-                    onClick={() => window.open('https://bi.cca.law/Identity/Account/Login', '_blank', 'noopener,noreferrer')}
-                    className="flex items-center gap-2"
-                  >
-                    <ExternalLink className="h-5 w-5" />
-                    {t('legalbi.loginButton', 'Entrar no LegalBI')}
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={() => window.open(legalbiUrl, '_blank', 'noopener,noreferrer')}
-                    className="flex items-center gap-2"
-                  >
-                    <ExternalLink className="h-5 w-5" />
-                    {t('legalbi.openExternal', 'Abrir LegalBI externo')}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                <BarChart3 className="h-16 w-16 text-muted-foreground/40 mb-6" />
-                <p className="text-lg font-medium mb-2 text-muted-foreground">
-                  {t('legalbi.noUrl', 'LegalBI não configurado')}
-                </p>
-                <p className="text-sm text-muted-foreground text-center max-w-md mb-6">
-                  {t('legalbi.noUrlDesc', 'O link de acesso ao LegalBI ainda não foi configurado para esta organização.')}
-                </p>
-                <Button
-                  size="lg"
-                  onClick={() => window.open('https://bi.cca.law/Identity/Account/Login', '_blank', 'noopener,noreferrer')}
-                  className="flex items-center gap-2"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                  {t('legalbi.loginButton', 'Entrar no LegalBI')}
-                </Button>
-              </>
-            )}
+            <BarChart3 className="h-16 w-16 text-primary mb-6" />
+            <Button
+              size="lg"
+              onClick={() => window.open('https://bi.cca.law/Identity/Account/Login', '_blank', 'noopener,noreferrer')}
+              className="flex items-center gap-2"
+            >
+              <ExternalLink className="h-5 w-5" />
+              {t('legalbi.loginButton', 'Entrar no LegalBI')}
+            </Button>
           </CardContent>
         </Card>
       </div>
