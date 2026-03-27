@@ -43,7 +43,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { TIPO_CONTRATO_LABELS } from '@/types/contracts';
+import { TIPO_CONTRATO_LABELS, ESTADO_CONTRATO_LABELS } from '@/types/contracts';
 import { cn } from '@/lib/utils';
 
 const chartTooltipStyle = {
@@ -61,6 +61,39 @@ const RENOVACAO_LABELS: Record<string, string> = {
   renovacao_automatica: 'Auto',
   renovacao_mediante_acordo: 'Acordo',
   sem_renovacao_automatica: 'Sem Renov.',
+};
+
+const ESTADO_ICON_BG: Record<string, string> = {
+  rascunho: 'bg-gray-100 dark:bg-gray-800',
+  em_revisao: 'bg-amber-100 dark:bg-amber-900/30',
+  em_aprovacao: 'bg-purple-100 dark:bg-purple-900/30',
+  enviado_para_assinatura: 'bg-blue-100 dark:bg-blue-900/30',
+  activo: 'bg-emerald-100 dark:bg-emerald-900/30',
+  expirado: 'bg-red-100 dark:bg-red-900/30',
+  denunciado: 'bg-red-100 dark:bg-red-900/30',
+  rescindido: 'bg-gray-100 dark:bg-gray-800',
+};
+
+const ESTADO_ICON_COLOR: Record<string, string> = {
+  rascunho: 'text-gray-500',
+  em_revisao: 'text-amber-600',
+  em_aprovacao: 'text-purple-600',
+  enviado_para_assinatura: 'text-blue-600',
+  activo: 'text-emerald-600',
+  expirado: 'text-red-500',
+  denunciado: 'text-red-700',
+  rescindido: 'text-gray-400',
+};
+
+const ESTADO_BADGE_CLASS: Record<string, string> = {
+  rascunho: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+  em_revisao: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  em_aprovacao: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  enviado_para_assinatura: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  activo: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  expirado: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
+  denunciado: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  rescindido: 'bg-gray-100 text-gray-500 dark:bg-gray-800',
 };
 
 interface TimelineEvent {
@@ -318,8 +351,11 @@ export default function Dashboard() {
           <div className="lg:col-span-2 space-y-6">
             {/* Recent Contracts */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg">{t('dashboard.recentContracts')}</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  {t('dashboard.recentContracts')}
+                </CardTitle>
                 <Button variant="ghost" size="sm" className="text-accent" asChild>
                   <Link to="/contratos">
                     {t('dashboard.viewAll')}
@@ -344,18 +380,28 @@ export default function Dashboard() {
                     <Link
                       key={contrato.id}
                       to={`/contratos/${contrato.id}`}
-                      className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
+                      className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/40 transition-colors group"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <FileCheck className="h-5 w-5 text-muted-foreground" />
+                      <div className={cn(
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
+                        ESTADO_ICON_BG[contrato.estado_contrato] || 'bg-muted'
+                      )}>
+                        <FileCheck className={cn('h-4 w-4', ESTADO_ICON_COLOR[contrato.estado_contrato] || 'text-muted-foreground')} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{contrato.titulo_contrato}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] || contrato.tipo_contrato} • {contrato.parte_b_nome_legal}
+                        <p className="font-medium text-sm truncate leading-snug">{contrato.titulo_contrato}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] || contrato.tipo_contrato}
+                          {contrato.parte_b_nome_legal && <> · {contrato.parte_b_nome_legal}</>}
                         </p>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium',
+                        ESTADO_BADGE_CLASS[contrato.estado_contrato] || 'bg-muted text-muted-foreground'
+                      )}>
+                        {ESTADO_CONTRATO_LABELS[contrato.estado_contrato as keyof typeof ESTADO_CONTRATO_LABELS] || contrato.estado_contrato}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
                     </Link>
                   ))
                 )}
@@ -425,8 +471,11 @@ export default function Dashboard() {
             {/* Recent Legislative Events */}
             {recentEventos.length > 0 && (
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-lg">{t('dashboard.recentEvents')}</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Scale className="h-4 w-4 text-primary" />
+                    {t('dashboard.recentEvents')}
+                  </CardTitle>
                   <Button variant="ghost" size="sm" className="text-accent" asChild>
                     <Link to="/eventos">
                       {t('dashboard.viewAll')}
@@ -474,31 +523,51 @@ export default function Dashboard() {
 
             {/* Quick Stats */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t('dashboard.byContractType')}</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <div className="h-1.5 w-4 rounded-full bg-primary" />
+                  {t('dashboard.byContractType')}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {Object.entries(stats.contratosPorTipo).length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
                     {t('dashboard.noData')}
                   </p>
-                ) : (
-                  Object.entries(stats.contratosPorTipo)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 5)
-                    .map(([tipo, count]) => (
-                      <div key={tipo} className="flex items-center justify-between">
+                ) : (() => {
+                  const sorted = Object.entries(stats.contratosPorTipo).sort(([,a], [,b]) => b - a).slice(0, 5);
+                  const maxCount = Math.max(...sorted.map(([, c]) => c), 1);
+                  return sorted.map(([tipo, count]) => (
+                    <div key={tipo} className="space-y-1">
+                      <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
                           {TIPO_CONTRATO_LABELS[tipo as keyof typeof TIPO_CONTRATO_LABELS] || tipo}
                         </span>
-                        <span className="font-medium">{count}</span>
+                        <span className="text-sm font-semibold tabular-nums">{count}</span>
                       </div>
-                    ))
-                )}
+                      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary/60 transition-all"
+                          style={{ width: `${(count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ));
+                })()}
               </CardContent>
             </Card>
 
           </div>
+        </div>
+
+        {/* Section separator */}
+        <div className="flex items-center gap-4">
+          <div className="h-px flex-1 bg-border" />
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <TrendingUp className="h-3.5 w-3.5" />
+            {t('dashboard.advancedAnalysis', 'Análise Avançada')}
+          </span>
+          <div className="h-px flex-1 bg-border" />
         </div>
 
         {/* ─── BI Tabs ───────────────────────────────────────────────────── */}
