@@ -1312,6 +1312,7 @@
     "expira": "Expires",
     "dias": "Days",
     "renovacao": "Renewal",
+    "loginButton": "Log in to LegalBI",
     "openExternal": "Open external LegalBI",
     "tabDocuments": "Documents",
     "docTotal": "Total Documents",
