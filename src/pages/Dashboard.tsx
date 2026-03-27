@@ -316,11 +316,51 @@ export default function Dashboard() {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column - 2/3 */}
           <div className="lg:col-span-2 space-y-6">
-            <ContractsExpiringList
-              contratos={contratosAExpirar}
-              title={t('dashboard.contractsExpiring')}
-              maxItems={5}
-            />
+            {/* Recent Contracts */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-lg">{t('dashboard.recentContracts')}</CardTitle>
+                <Button variant="ghost" size="sm" className="text-accent" asChild>
+                  <Link to="/contratos">
+                    {t('dashboard.viewAll')}
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {contratos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>{t('dashboard.noContracts')}</p>
+                    <Button variant="outline" className="mt-4" asChild>
+                      <Link to="/contratos/novo">
+                        <Plus className="mr-2 h-4 w-4" />
+                        {t('dashboard.createFirstContract')}
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  contratos.slice(0, 5).map((contrato) => (
+                    <Link
+                      key={contrato.id}
+                      to={`/contratos/${contrato.id}`}
+                      className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <FileCheck className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{contrato.titulo_contrato}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] || contrato.tipo_contrato} • {contrato.parte_b_nome_legal}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Link>
+                  ))
+                )}
+              </CardContent>
+            </Card>
 
             {/* Prazos e Datas Críticas */}
             {timelineEvents.length > 0 && (
@@ -423,51 +463,6 @@ export default function Dashboard() {
               </Card>
             )}
 
-            {/* Recent Contracts */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-lg">{t('dashboard.recentContracts')}</CardTitle>
-                <Button variant="ghost" size="sm" className="text-accent" asChild>
-                  <Link to="/contratos">
-                    {t('dashboard.viewAll')}
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {contratos.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>{t('dashboard.noContracts')}</p>
-                    <Button variant="outline" className="mt-4" asChild>
-                      <Link to="/contratos/novo">
-                        <Plus className="mr-2 h-4 w-4" />
-                        {t('dashboard.createFirstContract')}
-                      </Link>
-                    </Button>
-                  </div>
-                ) : (
-                  contratos.slice(0, 5).map((contrato) => (
-                    <Link
-                      key={contrato.id}
-                      to={`/contratos/${contrato.id}`}
-                      className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
-                    >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <FileCheck className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{contrato.titulo_contrato}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] || contrato.tipo_contrato} • {contrato.parte_b_nome_legal}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  ))
-                )}
-              </CardContent>
-            </Card>
           </div>
 
           {/* Right Column - 1/3 */}
@@ -503,88 +498,16 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Value summary */}
-            {stats.valorAnualRecorrente > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">{t('dashboard.financialSummary')}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('dashboard.totalEstimatedValue')}</p>
-                    <p className="text-2xl font-bold">{formatCurrency(stats.valorTotalContratos)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('dashboard.annualRecurringValue')}</p>
-                    <p className="text-2xl font-bold text-accent">{formatCurrency(stats.valorAnualRecorrente)}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        {/* ─── Evolução 12 meses + RGPD ──────────────────────────────────── */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">{t('legalbi.evolucao', 'Evolução (12 meses)')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[240px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={biData.portfolio.contratosPorMes}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                    <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                    <YAxis allowDecimals={false} />
-                    <RechartsTooltip contentStyle={chartTooltipStyle} />
-                    <Area type="monotone" dataKey="criados" name={t('legalbi.criados', 'Criados')} stroke="hsl(142, 71%, 45%)" fill="hsl(142, 71%, 45%)" fillOpacity={0.2} />
-                    <Area type="monotone" dataKey="expirados" name={t('legalbi.terminados', 'Terminados')} stroke="hsl(0, 84%, 60%)" fill="hsl(0, 84%, 60%)" fillOpacity={0.2} />
-                    <Legend formatter={(v) => <span className="text-xs">{v}</span>} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* RGPD Mini-cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 content-start">
-            <Card>
-              <CardContent className="pt-4 text-center">
-                <p className="text-2xl font-bold">{biData.portfolio.rgpdStats.comDadosPessoais}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('legalbi.comDadosPessoais', 'Com Dados Pessoais')}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 text-center">
-                <p className="text-2xl font-bold">{biData.portfolio.rgpdStats.comDPA}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('legalbi.comDPA', 'Com DPA')}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 text-center">
-                <p className="text-2xl font-bold">{biData.portfolio.rgpdStats.transferenciaInternacional}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('legalbi.transferInt', 'Transf. Internacional')}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 text-center">
-                <p className="text-2xl font-bold">{biData.portfolio.renovacaoStats.automatica}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('legalbi.renAutomat', 'Renovação Auto.')}</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4 text-center">
-                <p className="text-2xl font-bold">{biData.portfolio.duracaoStats.indeterminado}</p>
-                <p className="text-xs text-muted-foreground mt-1">{t('legalbi.prazoIndet', 'Prazo Indeterminado')}</p>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
         {/* ─── BI Tabs ───────────────────────────────────────────────────── */}
-        <Tabs defaultValue="compliance" className="w-full">
+        <Tabs defaultValue="portfolio" className="w-full">
           <TabsList className="w-full justify-start">
+            <TabsTrigger value="portfolio" className="flex items-center gap-1.5">
+              <TrendingUp className="h-4 w-4" />
+              {t('legalbi.tabPortfolio', 'Portfolio')}
+            </TabsTrigger>
             <TabsTrigger value="compliance" className="flex items-center gap-1.5">
               <Shield className="h-4 w-4" />
               {t('legalbi.tabCompliance', 'Compliance')}
@@ -604,6 +527,66 @@ export default function Dashboard() {
               </TabsTrigger>
             )}
           </TabsList>
+
+          {/* ── Portfolio Tab ── */}
+          <TabsContent value="portfolio" className="mt-6 space-y-6">
+            <div className="grid md:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{t('legalbi.evolucao', 'Evolução (12 meses)')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[240px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={biData.portfolio.contratosPorMes}>
+                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                        <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                        <YAxis allowDecimals={false} />
+                        <RechartsTooltip contentStyle={chartTooltipStyle} />
+                        <Area type="monotone" dataKey="criados" name={t('legalbi.criados', 'Criados')} stroke="hsl(142, 71%, 45%)" fill="hsl(142, 71%, 45%)" fillOpacity={0.2} />
+                        <Area type="monotone" dataKey="expirados" name={t('legalbi.terminados', 'Terminados')} stroke="hsl(0, 84%, 60%)" fill="hsl(0, 84%, 60%)" fillOpacity={0.2} />
+                        <Legend formatter={(v) => <span className="text-xs">{v}</span>} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* RGPD Mini-cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 content-start">
+                <Card>
+                  <CardContent className="pt-4 text-center">
+                    <p className="text-2xl font-bold">{biData.portfolio.rgpdStats.comDadosPessoais}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('legalbi.comDadosPessoais', 'Com Dados Pessoais')}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 text-center">
+                    <p className="text-2xl font-bold">{biData.portfolio.rgpdStats.comDPA}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('legalbi.comDPA', 'Com DPA')}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 text-center">
+                    <p className="text-2xl font-bold">{biData.portfolio.rgpdStats.transferenciaInternacional}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('legalbi.transferInt', 'Transf. Internacional')}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 text-center">
+                    <p className="text-2xl font-bold">{biData.portfolio.renovacaoStats.automatica}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('legalbi.renAutomat', 'Renovação Auto.')}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-4 text-center">
+                    <p className="text-2xl font-bold">{biData.portfolio.duracaoStats.indeterminado}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{t('legalbi.prazoIndet', 'Prazo Indeterminado')}</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
 
           {/* ── Compliance Tab ── */}
           <TabsContent value="compliance" className="mt-6 space-y-6">
