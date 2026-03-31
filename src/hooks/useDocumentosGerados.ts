@@ -44,9 +44,13 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
     queryKey: ["documentos-gerados", profile?.current_organization_id, options?.modulo],
     staleTime: 30 * 1000,
     queryFn: async () => {
+      const orgId = profile?.current_organization_id;
+      if (!orgId) return [];
+
       let query = supabase
         .from("documentos_gerados")
         .select("*")
+        .eq("organization_id", orgId)
         .order("created_at", { ascending: false });
 
       // Filter by module if specified
@@ -120,6 +124,7 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
         .from("documentos_gerados")
         .update(updateData)
         .eq("id", id)
+        .eq("organization_id", profile?.current_organization_id)
         .select()
         .single();
 
@@ -137,7 +142,7 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
 
   const deleteDocumento = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("documentos_gerados").delete().eq("id", id);
+      const { error } = await supabase.from("documentos_gerados").delete().eq("id", id).eq("organization_id", profile?.current_organization_id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -171,6 +176,7 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
           assinantes: assinantesFormatted,
         })
         .eq("id", id)
+        .eq("organization_id", profile?.current_organization_id)
         .select()
         .single();
 

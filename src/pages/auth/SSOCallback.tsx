@@ -40,7 +40,14 @@ export default function SSOCallback() {
         return;
       }
 
+      const storedState = sessionStorage.getItem("sso_state");
       sessionStorage.removeItem("sso_state");
+
+      if (!storedState || stateParam !== storedState) {
+        setError({ code: "state_mismatch", message: "Token CSRF inválido. Por favor, tente novamente." });
+        setState("error");
+        return;
+      }
 
       try {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
