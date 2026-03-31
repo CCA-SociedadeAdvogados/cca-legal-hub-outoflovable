@@ -347,7 +347,7 @@ export function usePlatformAdmin() {
         .from("profiles_safe")
         .select("id")
         .eq("email", email.trim())
-        .single();
+        .maybeSingle();
       
       if (profileError || !profile) {
         throw new Error("Utilizador não encontrado com este email");

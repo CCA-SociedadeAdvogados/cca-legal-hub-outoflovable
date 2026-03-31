@@ -182,9 +182,19 @@ export const useContratos = () => {
 
   const createContratosBulk = useMutation({
     mutationFn: async (contratos: ContratoInsert[]) => {
+      if (!user) throw new Error('Utilizador não autenticado');
+      if (!organizationId) throw new Error('Nenhuma organização selecionada');
+
+      const contratosWithMeta = contratos.map(c => ({
+        ...c,
+        created_by_id: user.id,
+        updated_by_id: user.id,
+        organization_id: organizationId,
+      }));
+
       const { data, error } = await supabase
         .from('contratos')
-        .insert(contratos)
+        .insert(contratosWithMeta)
         .select();
       
       if (error) throw error;
