@@ -1,8 +1,8 @@
 // ALL external libraries are imported dynamically to avoid crashing the edge
 // function during module initialisation on Supabase Edge Runtime / Deno v2.x.
 //
-// AI: Claude Haiku 4.5 (claude-haiku-4-5-20251001) via Anthropic Messages API
-// Context window: 200K tokens — sem truncagem forçada de documentos
+// AI: Claude Sonnet 4.6 (claude-sonnet-4-6) via Anthropic Messages API
+// Context window: 200K tokens — max output: 16K tokens
 
 const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
 function corsHeaders(req: Request): Record<string, string> {
@@ -18,7 +18,7 @@ function corsHeaders(req: Request): Record<string, string> {
   };
 }
 
-const CLAUDE_HAIKU = "claude-haiku-4-5-20251001";
+const CLAUDE_SONNET = "claude-sonnet-4-6";
 // 150K chars ≈ 37K tokens — seguro para Haiku 200K context.
 // Apenas como salvaguarda; a maioria dos contratos fica bem abaixo disto.
 const MAX_CHARS = 150000;
@@ -37,7 +37,7 @@ async function callClaude(
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      model: CLAUDE_HAIKU,
+      model: CLAUDE_SONNET,
       max_tokens: maxTokens,
       system,
       messages: [{ role: "user", content: user }],
@@ -192,7 +192,7 @@ O JSON deve ter esta estrutura exata:
 {
   "titulo_contrato": "string - título completo do contrato como aparece no documento",
   "tipo_contrato": "string - um de: nda, prestacao_servicos, fornecimento, saas, arrendamento, trabalho, licenciamento, parceria, consultoria, outro (escolha o mais adequado ao conteúdo)",
-  "objeto_resumido": "string - descrição detalhada do objeto do contrato, incluindo serviços/produtos específicos (máx 800 caracteres)",
+  "objeto_resumido": "string - descrição detalhada do objeto do contrato, incluindo serviços/produtos específicos (máx 500 caracteres)",
 
   "parte_a_nome_legal": "string - nome legal completo da PRIMEIRA OUTORGANTE/CONTRATANTE (inclui forma jurídica: Lda, SA, etc.)",
   "parte_a_nif": "string ou null - NIF/NIPC da primeira parte (9 dígitos em Portugal)",
@@ -274,7 +274,7 @@ INSTRUÇÕES IMPORTANTES:
       : `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`;
 
     console.log(`[parse-contract] Calling Claude Haiku...`);
-    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 8192);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 16384);
 
     // ── 3. Parsear resposta JSON ───────────────────────────────────────────
     let parsedData;
