@@ -6,7 +6,7 @@ import {
   VALID_STATE_TRANSITIONS,
   VALID_EVENTS_PER_STATE,
 } from '@/lib/contractStateMachine';
-import type { EstadoContrato, TipoEventoCicloVida } from '@/types/contracts';
+import type { EstadoContrato } from '@/types/contracts';
 
 describe('contractStateMachine', () => {
   describe('canTransitionTo', () => {

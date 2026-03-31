@@ -11,44 +11,46 @@ import { useOnboarding } from "@/hooks/useOnboarding";
 import { DepartmentGate } from "@/components/layout/DepartmentGate";
 import { translationService } from "@/lib/TranslationService";
 import { ClienteProvider } from "@/contexts/ClienteContext";
-import React from "react";
+import React, { Suspense } from "react";
 
 // Initialize translation service (migration, cleanup)
 translationService.initialize();
-import Dashboard from "./pages/Dashboard";
-import Eventos from "./pages/Eventos";
+
+// Critical path — imported eagerly (login, home, core contracts)
+import Login from "./pages/auth/Login";
+import SSOCallback from "./pages/auth/SSOCallback";
+import Home from "./pages/Home";
 import Contratos from "./pages/Contratos";
 import ContratoDetalhe from "./pages/ContratoDetalhe";
 import ContratoForm from "./pages/ContratoForm";
-import ContratosUploadMassa from "./pages/ContratosUploadMassa";
-import ContratosTriagem from "./pages/ContratosTriagem";
-import Impactos from "./pages/Impactos";
-import Perfil from "./pages/Perfil";
-import Organizacao from "./pages/Organizacao";
-import Definicoes from "./pages/Definicoes";
-import Politicas from "./pages/Politicas";
-import AssinaturaDigital from "./pages/AssinaturaDigital";
-import DocumentosGlobal from "./pages/DocumentosGlobal";
-// Utilizadores foi movido para a tab Users na página Admin
-import Normativos from "./pages/Normativos";
-import NormativoDetalhe from "./pages/NormativoDetalhe";
-import NovidadesCCA from "./pages/NovidadesCCA";
-import Financeiro from "./pages/Financeiro";
-import Notificacoes from "./pages/Notificacoes";
-import Login from "./pages/auth/Login";
-import SSOCallback from "./pages/auth/SSOCallback";
-import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
-import PlatformAdmin from "./pages/PlatformAdmin";
-import Home from "./pages/Home";
-import MeuDepartamento from "./pages/MeuDepartamento";
-import MinhaOrganizacao from "./pages/MinhaOrganizacao";
-import UtilizadoresOrg from "./pages/UtilizadoresOrg";
-import LegalBi from "./pages/LegalBi";
-import PrazosTimeline from "./pages/PrazosTimeline";
-import OrganizationsPage from "./pages/OrganizationsPage";
+import Onboarding from "./pages/Onboarding";
 import { PlatformAdminRoute } from "./components/layout/PlatformAdminRoute";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+
+// Lazy-loaded pages — code-split for smaller initial bundle
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Eventos = React.lazy(() => import("./pages/Eventos"));
+const ContratosUploadMassa = React.lazy(() => import("./pages/ContratosUploadMassa"));
+const ContratosTriagem = React.lazy(() => import("./pages/ContratosTriagem"));
+const Impactos = React.lazy(() => import("./pages/Impactos"));
+const Perfil = React.lazy(() => import("./pages/Perfil"));
+const Organizacao = React.lazy(() => import("./pages/Organizacao"));
+const Definicoes = React.lazy(() => import("./pages/Definicoes"));
+const Politicas = React.lazy(() => import("./pages/Politicas"));
+const AssinaturaDigital = React.lazy(() => import("./pages/AssinaturaDigital"));
+const DocumentosGlobal = React.lazy(() => import("./pages/DocumentosGlobal"));
+const Normativos = React.lazy(() => import("./pages/Normativos"));
+const NormativoDetalhe = React.lazy(() => import("./pages/NormativoDetalhe"));
+const NovidadesCCA = React.lazy(() => import("./pages/NovidadesCCA"));
+const Financeiro = React.lazy(() => import("./pages/Financeiro"));
+const Notificacoes = React.lazy(() => import("./pages/Notificacoes"));
+const PlatformAdmin = React.lazy(() => import("./pages/PlatformAdmin"));
+const MeuDepartamento = React.lazy(() => import("./pages/MeuDepartamento"));
+const MinhaOrganizacao = React.lazy(() => import("./pages/MinhaOrganizacao"));
+const UtilizadoresOrg = React.lazy(() => import("./pages/UtilizadoresOrg"));
+const LegalBi = React.lazy(() => import("./pages/LegalBi"));
+const OrganizationsPage = React.lazy(() => import("./pages/OrganizationsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,7 +123,14 @@ const AppRoutes = () => {
     );
   }
 
+  const lazyFallback = (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  );
+
   return (
+    <Suspense fallback={lazyFallback}>
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/auth/sso-callback" element={<SSOCallback />} />
@@ -187,6 +196,7 @@ const AppRoutes = () => {
       <Route path="/admin" element={<ProtectedRoute><PlatformAdminRoute><PlatformAdmin /></PlatformAdminRoute></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 };
 

@@ -115,7 +115,7 @@ function AuditLogDetail({ log }: { log: AuditLog }) {
 }
 
 export default function Auditoria() {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [tableFilter, setTableFilter] = useState<string>("all");
   const [actionFilter, setActionFilter] = useState<string>("all");

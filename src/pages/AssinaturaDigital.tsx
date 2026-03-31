@@ -35,7 +35,7 @@ const estadoAssinaturaIcons: Record<string, React.ReactNode> = {
 export default function Documentos() {
   const { t } = useTranslation();
   // Only show documents from ASSINATURA module (not accounting/archive documents)
-  const { documentos, isLoading, createDocumento, deleteDocumento, sendForSignature } = useDocumentosGerados({ modulo: 'ASSINATURA' });
+  const { documentos, isLoading, createDocumento: _createDocumento, deleteDocumento, sendForSignature } = useDocumentosGerados({ modulo: 'ASSINATURA' });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSignatureDialogOpen, setIsSignatureDialogOpen] = useState(false);
   const [selectedDocumento, setSelectedDocumento] = useState<DocumentoGerado | null>(null);
@@ -78,7 +78,7 @@ export default function Documentos() {
     return matchesSearch && matchesTipo && matchesEstado;
   });
 
-  const handleUpload = () => {
+  const _handleUpload = () => {
     toast.info(t('documents.uploadInDevelopment'));
     setIsDialogOpen(false);
   };
@@ -104,7 +104,7 @@ export default function Documentos() {
         prazo_dias: signatureData.prazo_dias,
       });
       setIsSignatureDialogOpen(false);
-    } catch (error) {
+    } catch (_error) {
       // Error handled in hook
     }
   };
@@ -170,7 +170,7 @@ export default function Documentos() {
             <div className="space-y-4">
               <DocumentUploadWithAI
                 context="documento"
-                onAnalysisComplete={(result, file) => {
+                onAnalysisComplete={(_result, _file) => {
                   toast.success(t('upload.analysisComplete'));
                   // Here you could create a document record with the analysis
                 }}

@@ -22,7 +22,7 @@ interface OrgSharePointConfigProps {
 }
 
 export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps) {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
   const { data: existingConfig, isLoading: isLoadingConfig } = useSharePointConfigByOrgId(organizationId);
   const saveConfig = useSaveSharePointConfigForOrg();
   const listDrives = useListSharePointDrives();
