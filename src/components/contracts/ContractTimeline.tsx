@@ -34,7 +34,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useEventos, type EventoCicloVida, type TipoEvento } from '@/hooks/useEventos';
+import { useEventos, type TipoEvento } from '@/hooks/useEventos';
 import { TIPO_EVENTO_CICLO_VIDA_LABELS } from '@/types/contracts';
 import { getValidEventsForState, getStateChangeForEvent } from '@/lib/contractStateMachine';
 import { useContratos } from '@/hooks/useContratos';

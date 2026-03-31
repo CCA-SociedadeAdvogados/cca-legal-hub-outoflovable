@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import type { CreateUserResponse } from '@/hooks/usePlatformAdmin';
@@ -181,7 +180,7 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
         try {
           const body = await (error as any).context?.json?.();
           if (body?.error) msg = body.error;
-        } catch {}
+        } catch { /* error context extraction is best-effort */ }
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);

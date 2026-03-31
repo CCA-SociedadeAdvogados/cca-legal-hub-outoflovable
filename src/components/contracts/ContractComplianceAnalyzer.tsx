@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Upload, 
@@ -15,12 +14,10 @@ import {
   AlertTriangle, 
   XCircle,
   ShieldCheck,
-  ShieldAlert,
   Sparkles,
   FileSearch,
   Scale,
-  ClipboardList,
-  Save
+  ClipboardList
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -110,7 +107,7 @@ export function ContractComplianceAnalyzer({
 }: ContractComplianceAnalyzerProps) {
   const { settings } = useOrganizationSettings();
   const { profile } = useProfile();
-  const { saveAnalysis, isSaving } = useContractComplianceAnalysis(contratoId);
+  const { saveAnalysis } = useContractComplianceAnalysis(contratoId);
   const [textContent, setTextContent] = useState(initialTextContent);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ComplianceResult | null>(null);

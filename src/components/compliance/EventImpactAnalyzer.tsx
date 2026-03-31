@@ -25,7 +25,7 @@ const riskLabels = {
   alto: "Alto",
 };
 
-export function EventImpactAnalyzer({ eventoId, eventoTitulo }: EventImpactAnalyzerProps) {
+export function EventImpactAnalyzer({ eventoId, eventoTitulo: _eventoTitulo }: EventImpactAnalyzerProps) {
   const { settings } = useOrganizationSettings();
   const { isLoading, analyzeEventImpact } = useComplianceAI(settings?.ai_model);
   const [analysis, setAnalysis] = useState<EventImpactAnalysis | null>(null);

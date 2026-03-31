@@ -8,7 +8,7 @@ const db = supabase as any;
  * Maps profiles.departamento enum values to human-readable department names.
  * These are the Portuguese labels used when auto-creating departments rows.
  */
-const DEPT_ENUM_TO_NAME: Record<string, string> = {
+const _DEPT_ENUM_TO_NAME: Record<string, string> = {
   juridico: 'Jurídico',
   comercial: 'Comercial',
   financeiro: 'Financeiro',

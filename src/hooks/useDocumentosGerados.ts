@@ -158,7 +158,7 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
     mutationFn: async ({
       id,
       assinantes,
-      prazo_dias,
+      prazo_dias: _prazo_dias,
     }: {
       id: string;
       assinantes: { nome: string; email: string }[];

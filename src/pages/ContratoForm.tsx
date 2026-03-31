@@ -31,7 +31,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { ArrowLeft, Save, Loader2, CalendarIcon, Upload, FileText, Sparkles, Paperclip, Tags } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, CalendarIcon, Upload, FileText, Paperclip, Tags } from 'lucide-react';
 import { ContractAttachments } from '@/components/contracts/ContractAttachments';
 import { ContractComplianceAnalyzer } from '@/components/contracts/ContractComplianceAnalyzer';
 import { ContractClassification } from '@/components/contracts/ContractClassification';
@@ -163,7 +163,7 @@ export default function ContratoForm() {
   
   const [activeTab, setActiveTab] = useState('identificacao');
   const [showUploadStep, setShowUploadStep] = useState(true);
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [_uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedContractText, setExtractedContractText] = useState<string>('');
   // triageResult removed — analysis done by external CCA agent
 
@@ -541,7 +541,7 @@ export default function ContratoForm() {
   }
 
   // Get risk badge color
-  const getRiskColor = (level: string) => {
+  const _getRiskColor = (level: string) => {
     switch (level?.toLowerCase()) {
       case 'crítico': return 'bg-red-600 text-white';
       case 'alto': return 'bg-orange-500 text-white';
