@@ -43,6 +43,12 @@ export default function DocumentosGlobal() {
   const dataOrgIdForFolder = clientIsProvisioned ? null : effectiveOrgId;
   const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(dataOrgIdForFolder, configOrgId);
 
+  // Only offer SharePoint upload when there's actually a config available:
+  // - provisioned client: their own config exists
+  // - CCA internal user: umbrella config may exist
+  // - external unprovisioned: no SharePoint → hide upload to avoid cryptic errors
+  const canUploadToSharePoint = clientIsProvisioned || isCCAInternalAuthorized;
+
   // Path used in browser and uploads:
   // - Provisioned → "/" (root of client's own SharePoint space)
   // - Unprovisioned → "/{client_code}" subfolder within CCA's drive
@@ -64,8 +70,8 @@ export default function DocumentosGlobal() {
 
         {/* Document Checklist — upload uses configOrgId (has SharePoint) + correct folder */}
         <DocumentChecklistPanel
-          uploadFolderPath={effectiveOrgId ? browsePath : undefined}
-          uploadOrgId={configOrgId ?? undefined}
+          uploadFolderPath={canUploadToSharePoint && effectiveOrgId ? browsePath : undefined}
+          uploadOrgId={canUploadToSharePoint ? configOrgId ?? undefined : undefined}
         />
 
         <div className="mt-6">
