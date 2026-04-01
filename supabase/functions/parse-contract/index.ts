@@ -319,10 +319,11 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     );
   }
 
-  // Disable worker in Deno edge function environment (no Web Workers available)
-  pdfjs.GlobalWorkerOptions.workerSrc = "";
+  // Point to the matching worker version on esm.sh (required by pdfjs-dist)
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs?external=canvas";
 
-  const pdf = await pdfjs.getDocument({ data: fileBytes, disableWorker: true }).promise;
+  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
   const pages: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
