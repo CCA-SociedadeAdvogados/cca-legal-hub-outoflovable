@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
@@ -5,13 +6,16 @@ import { DocumentChecklistPanel } from '@/components/documents/DocumentChecklist
 import { useEnsureClientFolder, useSharePointConfig } from '@/hooks/useSharePoint';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
+import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
 import { Loader2 } from 'lucide-react';
 
 export default function DocumentosGlobal() {
   const { t } = useTranslation();
 
-  const { viewingOrganizationId } = useCliente();
+  const { viewingOrganizationId, cliente } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  const { provision: provisionSharePoint } = useProvisionSharePoint();
+  const provisionAttempted = useRef<string | null>(null);
 
   // Org being viewed (client or own org for external users)
   const effectiveOrgId =
@@ -25,6 +29,23 @@ export default function DocumentosGlobal() {
     effectiveOrgId ?? undefined,
   );
   const clientIsProvisioned = !!clientConfig;
+
+  // Auto-provision SharePoint for unprovisioned orgs on first access
+  useEffect(() => {
+    if (isLoadingClientConfig) return;
+    if (clientIsProvisioned) return;
+    if (!effectiveOrgId) return;
+    if (provisionAttempted.current === effectiveOrgId) return;
+    if (provisionSharePoint.isPending) return;
+
+    const clientCode = cliente?.clientCode ?? currentOrganization?.client_code;
+    const clientName = cliente?.nome ?? currentOrganization?.name;
+    if (!clientCode || !clientName) return;
+
+    provisionAttempted.current = effectiveOrgId;
+    provisionSharePoint.mutate({ organizationId: effectiveOrgId, clientCode, clientName });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingClientConfig, clientIsProvisioned, effectiveOrgId, cliente, currentOrganization]);
 
   // Org that owns the SharePoint config to use:
   // - Provisioned client → use client's own org (has sharepoint_config with its root_folder_path)
