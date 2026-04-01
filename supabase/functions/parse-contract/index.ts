@@ -311,7 +311,7 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
 
   let pdfjs: any;
   try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@4.0.379/build/pdf.min.mjs?external=canvas");
+    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas");
   } catch (importErr: any) {
     console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
     throw new Error(
@@ -319,10 +319,10 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     );
   }
 
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://esm.sh/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs?external=canvas";
+  // Disable worker in Deno edge function environment (no Web Workers available)
+  pdfjs.GlobalWorkerOptions.workerSrc = "";
 
-  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
+  const pdf = await pdfjs.getDocument({ data: fileBytes, disableWorker: true }).promise;
   const pages: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
