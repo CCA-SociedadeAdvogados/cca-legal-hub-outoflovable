@@ -311,7 +311,7 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
 
   let pdfjs: any;
   try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas");
+    pdfjs = await import("https://esm.sh/pdfjs-dist@3.11.174/build/pdf.min.js");
   } catch (importErr: any) {
     console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
     throw new Error(
@@ -319,11 +319,7 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     );
   }
 
-  // Point to the matching worker version on esm.sh (required by pdfjs-dist)
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs?external=canvas";
-
-  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
+  const pdf = await pdfjs.getDocument({ data: fileBytes, disableWorker: true }).promise;
   const pages: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
