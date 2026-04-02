@@ -311,7 +311,7 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
 
   let pdfjs: any;
   try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@3.11.174/build/pdf.min.js");
+    pdfjs = await import("https://esm.sh/pdfjs-dist@3.11.174/build/pdf.min.js?external=canvas");
   } catch (importErr: any) {
     console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
     throw new Error(
