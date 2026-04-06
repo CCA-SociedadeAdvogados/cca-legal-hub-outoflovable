@@ -211,20 +211,24 @@ serve(async (req) => {
       // Não bloquear — pastas já criadas, apenas log
     }
 
-    // 5. Audit log
-    await supabase.from("audit_logs").insert({
-      action: "provision_client_sharepoint",
-      table_name: "organizations",
-      record_id: organization_id,
-      user_id: "00000000-0000-0000-0000-000000000000",
-      metadata: {
-        client_code,
-        client_name: safeName,
-        root_folder_path: rootFolderPath,
-        folders_created: ["Contratos", "Financeiro", "Correspondência", "LegalBI"],
-        legalbi_url: legalbiFolder.webUrl,
-      },
-    }).catch((e) => console.warn("[provision-sharepoint] Audit log failed:", e));
+    // 5. Audit log (non-blocking)
+    try {
+      await supabase.from("audit_logs").insert({
+        action: "provision_client_sharepoint",
+        table_name: "organizations",
+        record_id: organization_id,
+        user_id: "00000000-0000-0000-0000-000000000000",
+        metadata: {
+          client_code,
+          client_name: safeName,
+          root_folder_path: rootFolderPath,
+          folders_created: ["Contratos", "Financeiro", "Correspondência", "LegalBI"],
+          legalbi_url: legalbiFolder.webUrl,
+        },
+      });
+    } catch (e) {
+      console.warn("[provision-sharepoint] Audit log failed:", e);
+    }
 
     console.log(`[provision-sharepoint] Done for ${client_code}`);
 

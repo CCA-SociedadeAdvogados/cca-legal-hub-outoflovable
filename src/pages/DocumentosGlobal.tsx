@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
@@ -5,13 +6,16 @@ import { DocumentChecklistPanel } from '@/components/documents/DocumentChecklist
 import { useEnsureClientFolder, useSharePointConfig } from '@/hooks/useSharePoint';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
+import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
 import { Loader2 } from 'lucide-react';
 
 export default function DocumentosGlobal() {
   const { t } = useTranslation();
 
-  const { viewingOrganizationId } = useCliente();
+  const { viewingOrganizationId, cliente } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  const { provision: provisionSharePoint } = useProvisionSharePoint();
+  const provisionAttempted = useRef<string | null>(null);
 
   // Org being viewed (client or own org for external users)
   const effectiveOrgId =
@@ -25,6 +29,23 @@ export default function DocumentosGlobal() {
     effectiveOrgId ?? undefined,
   );
   const clientIsProvisioned = !!clientConfig;
+
+  // Auto-provision SharePoint for unprovisioned orgs on first access
+  useEffect(() => {
+    if (isLoadingClientConfig) return;
+    if (clientIsProvisioned) return;
+    if (!effectiveOrgId) return;
+    if (provisionAttempted.current === effectiveOrgId) return;
+    if (provisionSharePoint.isPending) return;
+
+    const clientCode = cliente?.clientCode ?? currentOrganization?.client_code;
+    const clientName = cliente?.nome ?? currentOrganization?.name;
+    if (!clientCode || !clientName) return;
+
+    provisionAttempted.current = effectiveOrgId;
+    provisionSharePoint.mutate({ organizationId: effectiveOrgId, clientCode, clientName });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingClientConfig, clientIsProvisioned, effectiveOrgId, cliente, currentOrganization]);
 
   // Org that owns the SharePoint config to use:
   // - Provisioned client → use client's own org (has sharepoint_config with its root_folder_path)
@@ -42,6 +63,12 @@ export default function DocumentosGlobal() {
   // For unprovisioned clients using CCA's umbrella config we need a /{client_code} subfolder.
   const dataOrgIdForFolder = clientIsProvisioned ? null : effectiveOrgId;
   const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(dataOrgIdForFolder, configOrgId);
+
+  // Only offer SharePoint upload when there's actually a config available:
+  // - provisioned client: their own config exists
+  // - CCA internal user: umbrella config may exist
+  // - external unprovisioned: no SharePoint → hide upload to avoid cryptic errors
+  const canUploadToSharePoint = clientIsProvisioned || isCCAInternalAuthorized;
 
   // Path used in browser and uploads:
   // - Provisioned → "/" (root of client's own SharePoint space)
@@ -64,8 +91,8 @@ export default function DocumentosGlobal() {
 
         {/* Document Checklist — upload uses configOrgId (has SharePoint) + correct folder */}
         <DocumentChecklistPanel
-          uploadFolderPath={effectiveOrgId ? browsePath : undefined}
-          uploadOrgId={configOrgId ?? undefined}
+          uploadFolderPath={canUploadToSharePoint && effectiveOrgId ? browsePath : undefined}
+          uploadOrgId={canUploadToSharePoint ? configOrgId ?? undefined : undefined}
         />
 
         <div className="mt-6">

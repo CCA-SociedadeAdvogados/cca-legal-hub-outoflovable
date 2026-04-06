@@ -369,7 +369,7 @@ Deno.serve(async (req) => {
 
     console.log(`[analyze-compliance] Processing ${request.type} with Claude Sonnet...`);
 
-    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userPrompt, 4096);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userPrompt, 8192);
 
     let parsedData;
     try {

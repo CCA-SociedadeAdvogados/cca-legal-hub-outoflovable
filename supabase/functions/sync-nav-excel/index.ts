@@ -90,6 +90,60 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
   return data.access_token;
 }
 
+// ── SharePoint folder helpers (usados no auto-provisioning) ─────
+
+async function ensureSharePointFolder(
+  accessToken: string,
+  driveId: string,
+  folderPath: string,
+): Promise<{ id: string; webUrl: string }> {
+  const encodedPath = encodeURIComponent(folderPath).replace(/%2F/g, "/");
+  const getRes = await fetch(
+    `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (getRes.ok) {
+    const item = await getRes.json();
+    return { id: item.id, webUrl: item.webUrl };
+  }
+  // Criar hierarquia de pastas
+  const parts = folderPath.replace(/^\//, "").split("/").filter(Boolean);
+  let currentId = "root";
+  let currentWebUrl = "";
+  for (const part of parts) {
+    const url = currentId === "root"
+      ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+      : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${currentId}/children`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: part, folder: {}, "@microsoft.graph.conflictBehavior": "rename" }),
+    });
+    if (!res.ok) throw new Error(`Erro a criar pasta "${part}": ${res.status}`);
+    const created = await res.json();
+    currentId = created.id;
+    currentWebUrl = created.webUrl;
+  }
+  return { id: currentId, webUrl: currentWebUrl };
+}
+
+async function createSharePointSubfolder(
+  accessToken: string,
+  driveId: string,
+  parentId: string,
+  name: string,
+): Promise<void> {
+  const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ name, folder: {}, "@microsoft.graph.conflictBehavior": "rename" }),
+  });
+  if (!res.ok && res.status !== 409) {
+    console.warn(`[sharepoint] Subfolder "${name}" create failed: ${res.status}`);
+  }
+}
+
 async function getDriveId(accessToken: string, siteId: string): Promise<string> {
   const response = await fetch(
     `https://graph.microsoft.com/v1.0/sites/${siteId}/drive`,
@@ -614,6 +668,80 @@ serve(async (req) => {
       console.log(`Provisioned ${provisionedCount ?? 0} new organizations`);
     }
 
+    // ── Auto-provision SharePoint para orgs sem config ─────────────
+    // Para cada client_code do sync, verifica se a org correspondente
+    // já tem sharepoint_config. Se não tiver, chama provision-client-sharepoint
+    // para criar as pastas e registar a config. Idempotente e não-bloqueante.
+    // Limitado a 20 por sync para evitar timeouts.
+    let sharepointProvisioned = 0;
+    try {
+      const { data: syncedOrgs } = await supabaseAdmin
+        .from("organizations")
+        .select("id, name, client_code")
+        .in("client_code", syncedIds)
+        .eq("org_type", "client");
+
+      if (syncedOrgs && syncedOrgs.length > 0) {
+        const orgIds = syncedOrgs.map((o: { id: string }) => o.id);
+        const { data: existingConfigs } = await supabaseAdmin
+          .from("sharepoint_config")
+          .select("organization_id")
+          .in("organization_id", orgIds);
+
+        const configuredOrgIds = new Set(
+          (existingConfigs ?? []).map((c: { organization_id: string }) => c.organization_id)
+        );
+        const orgsToProvision = syncedOrgs
+          .filter((o: { id: string }) => !configuredOrgIds.has(o.id))
+          .slice(0, 20);
+
+        if (orgsToProvision.length > 0) {
+          console.log(`[sharepoint] Provisioning SharePoint for ${orgsToProvision.length} org(s)`);
+        }
+
+        const targetDriveId = spConfig.drive_id || primaryDriveId;
+
+        for (const org of orgsToProvision) {
+          try {
+            const safeName = (org.name || org.client_code).replace(/[<>:"/\\|?*]/g, "_").trim();
+            const rootFolderName = `${org.client_code} - ${safeName}`;
+            const rootFolderPath = `Clientes/${rootFolderName}`;
+
+            const rootFolder = await ensureSharePointFolder(accessToken, targetDriveId, rootFolderPath);
+            await Promise.allSettled([
+              createSharePointSubfolder(accessToken, targetDriveId, rootFolder.id, "Contratos"),
+              createSharePointSubfolder(accessToken, targetDriveId, rootFolder.id, "Financeiro"),
+              createSharePointSubfolder(accessToken, targetDriveId, rootFolder.id, "Correspondência"),
+              createSharePointSubfolder(accessToken, targetDriveId, rootFolder.id, "LegalBI"),
+            ]);
+
+            const { error: configError } = await supabaseAdmin
+              .from("sharepoint_config")
+              .upsert({
+                organization_id: org.id,
+                site_id: spConfig.site_id,
+                drive_id: targetDriveId,
+                root_folder_path: `/${rootFolderPath}`,
+                sync_enabled: true,
+                sync_interval_minutes: 60,
+                updated_at: new Date().toISOString(),
+              }, { onConflict: "organization_id" });
+
+            if (configError) {
+              console.warn(`[sharepoint] Config save failed for ${org.client_code}:`, configError.message);
+            } else {
+              sharepointProvisioned++;
+              console.log(`[sharepoint] Provisioned ${org.client_code} → /${rootFolderPath}`);
+            }
+          } catch (orgErr) {
+            console.warn(`[sharepoint] Failed for ${org.client_code}:`, orgErr);
+          }
+        }
+      }
+    } catch (spBatchErr) {
+      console.warn("[sharepoint] Batch provisioning error:", spBatchErr);
+    }
+
     const totalItems = itemRecords.length;
     console.log(`Synced ${cacheRecords.length} clients, ${totalItems} invoice items from ${baseNavFile.name}`);
 
@@ -652,6 +780,7 @@ serve(async (req) => {
         auto_linked: autoLinkedJvrisId,
         needs_jvris_config: !orgJvrisId && cacheRecords.length > 1,
         provisioned: provisionedCount ?? 0,
+        sharepoint_provisioned: sharepointProvisioned,
         names_updated: namesUpdated,
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }

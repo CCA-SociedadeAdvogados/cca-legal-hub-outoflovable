@@ -34,7 +34,7 @@ export function LanguageSelector() {
     }, 300);
   }, [i18n]);
 
-  const currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
+  const _currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
 
   return (
     <DropdownMenu>

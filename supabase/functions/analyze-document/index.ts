@@ -146,7 +146,7 @@ serve(async (req) => {
     }
 
     const systemPrompt = getSystemPrompt(type, language);
-    let messages: any[] = [{ role: "system", content: systemPrompt }];
+    const messages: any[] = [{ role: "system", content: systemPrompt }];
     let textContent = data.textContent || "";
 
     // If file content is provided, handle based on type
