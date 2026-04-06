@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -12,11 +13,19 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { WidgetConfig } from '@/lib/defaultHomeLayout';
 import { ImageUploader } from '@/components/shared/ImageUploader';
 import { useUpdateOrganization } from '@/hooks/useUpdateOrganization';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useContentBlocks } from '@/hooks/useContentBlocks';
+import { supabase } from '@/integrations/supabase/client';
 
 interface WidgetConfigEditorProps {
   open: boolean;
@@ -38,25 +47,59 @@ export function WidgetConfigEditor({
 
   // Organization data
   const { organizations } = useOrganizations();
-  const organization = organizations?.find(org => org.id === organizationId);
-  
+  const organization = organizations?.find((org) => org.id === organizationId);
+
   // Update organization hook
-  const { 
-    updateLawyer, 
-    updateOrganization, 
-    uploadLawyerPhoto, 
-    uploadLogo,
-    isUpdatingLawyer,
-    isUpdatingOrganization 
-  } = useUpdateOrganization(organizationId);
+  const { updateLawyer, updateOrganization, uploadLogo, isUpdatingLawyer, isUpdatingOrganization } =
+    useUpdateOrganization(organizationId);
 
   // Content blocks for welcome message
   const { getBlock, upsertBlock, isUpserting } = useContentBlocks(organizationId || '');
   const welcomeBlock = getBlock('welcome_message');
 
+  // Fetch CCA internal lawyers for the lawyer selector
+  const { data: ccaLawyers } = useQuery({
+    queryKey: ['cca-lawyers-list'],
+    queryFn: async () => {
+      // Buscar a organização CCA (client_code = 'C.0000')
+      const { data: ccaOrg } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('client_code', 'C.0000')
+        .maybeSingle();
+
+      if (!ccaOrg) return [];
+
+      // Buscar membros da organização CCA
+      const { data: members } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', ccaOrg.id);
+
+      if (!members || members.length === 0) return [];
+
+      const userIds = members.map((m) => m.user_id);
+
+      type ProfileRow = {
+        id: string;
+        nome_completo: string | null;
+        email: string | null;
+        avatar_url: string | null;
+      };
+      const { data: profiles } = (await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('profiles_safe' as any)
+        .select('id, nome_completo, email, avatar_url')
+        .in('id', userIds)
+        .order('nome_completo')) as { data: ProfileRow[] | null };
+
+      return (profiles ?? []).filter((p) => p.nome_completo);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Local state for content editing
-  const [lawyerName, setLawyerName] = useState('');
-  const [lawyerPhotoUrl, setLawyerPhotoUrl] = useState('');
+  const [selectedLawyerId, setSelectedLawyerId] = useState<string>('');
   const [orgLogoUrl, setOrgLogoUrl] = useState('');
   const [welcomeTitle, setWelcomeTitle] = useState('');
   const [welcomeContent, setWelcomeContent] = useState('');
@@ -64,11 +107,24 @@ export function WidgetConfigEditor({
   // Sync organization data when it changes
   useEffect(() => {
     if (organization) {
-      setLawyerName(organization.lawyer_name || '');
-      setLawyerPhotoUrl(organization.lawyer_photo_url || '');
       setOrgLogoUrl(organization.logo_url || '');
     }
   }, [organization]);
+
+  // Sync lawyer_user_id from organization
+  useEffect(() => {
+    if (organizationId) {
+      supabase
+        .from('organizations')
+        .select('lawyer_user_id')
+        .eq('id', organizationId)
+        .maybeSingle()
+        .then(({ data }) => {
+          const lawyerUserId = (data as Record<string, unknown>)?.lawyer_user_id as string | null;
+          setSelectedLawyerId(lawyerUserId || '');
+        });
+    }
+  }, [organizationId]);
 
   // Sync welcome block data
   useEffect(() => {
@@ -91,8 +147,7 @@ export function WidgetConfigEditor({
 
   const handleSaveLawyer = () => {
     updateLawyer({
-      lawyerName: lawyerName || undefined,
-      lawyerPhotoUrl: lawyerPhotoUrl || undefined,
+      lawyerUserId: selectedLawyerId || null,
     });
   };
 
@@ -114,8 +169,6 @@ export function WidgetConfigEditor({
   const updateConfig = (key: string, value: unknown) => {
     setConfig({ ...config, [key]: value });
   };
-
-  const isContentWidget = ['LAWYER_CARD', 'ORGANIZATION_CARD', 'WELCOME_MESSAGE'].includes(widget.type);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,34 +194,32 @@ export function WidgetConfigEditor({
             <>
               <Separator />
               <div className="space-y-4">
-                <h4 className="font-medium text-sm text-muted-foreground">Dados do Advogado</h4>
-                
-                <ImageUploader
-                  currentImageUrl={lawyerPhotoUrl}
-                  onUpload={uploadLawyerPhoto}
-                  onUrlChange={setLawyerPhotoUrl}
-                  placeholder="Carregar Foto"
-                  shape="circle"
-                  size="lg"
-                />
+                <h4 className="font-medium text-sm text-muted-foreground">Advogado Responsável</h4>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lawyerName">Nome do Advogado</Label>
-                  <Input
-                    id="lawyerName"
-                    value={lawyerName}
-                    onChange={(e) => setLawyerName(e.target.value)}
-                    placeholder="Dr. Nome Completo"
-                  />
+                  <Label htmlFor="lawyerSelect">Selecionar Advogado</Label>
+                  <Select value={selectedLawyerId} onValueChange={setSelectedLawyerId}>
+                    <SelectTrigger id="lawyerSelect">
+                      <SelectValue placeholder="Selecionar advogado..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ccaLawyers?.map((lawyer) => (
+                        <SelectItem key={lawyer.id} value={lawyer.id}>
+                          {lawyer.nome_completo}
+                          {lawyer.email ? ` (${lawyer.email})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <Button 
-                  onClick={handleSaveLawyer} 
+                <Button
+                  onClick={handleSaveLawyer}
                   disabled={isUpdatingLawyer}
                   variant="secondary"
                   className="w-full"
                 >
-                  {isUpdatingLawyer ? 'A guardar...' : 'Guardar Dados do Advogado'}
+                  {isUpdatingLawyer ? 'A guardar...' : 'Guardar Advogado'}
                 </Button>
               </div>
             </>
@@ -180,7 +231,7 @@ export function WidgetConfigEditor({
               <Separator />
               <div className="space-y-4">
                 <h4 className="font-medium text-sm text-muted-foreground">Dados da Organização</h4>
-                
+
                 <ImageUploader
                   currentImageUrl={orgLogoUrl}
                   onUpload={uploadLogo}
@@ -190,8 +241,8 @@ export function WidgetConfigEditor({
                   size="lg"
                 />
 
-                <Button 
-                  onClick={handleSaveOrganization} 
+                <Button
+                  onClick={handleSaveOrganization}
                   disabled={isUpdatingOrganization}
                   variant="secondary"
                   className="w-full"
@@ -228,8 +279,10 @@ export function WidgetConfigEditor({
             <>
               <Separator />
               <div className="space-y-4">
-                <h4 className="font-medium text-sm text-muted-foreground">Mensagem de Boas-Vindas</h4>
-                
+                <h4 className="font-medium text-sm text-muted-foreground">
+                  Mensagem de Boas-Vindas
+                </h4>
+
                 <div className="space-y-2">
                   <Label htmlFor="welcomeTitle">Título da Mensagem</Label>
                   <Input
@@ -251,8 +304,8 @@ export function WidgetConfigEditor({
                   />
                 </div>
 
-                <Button 
-                  onClick={handleSaveWelcome} 
+                <Button
+                  onClick={handleSaveWelcome}
                   disabled={isUpserting}
                   variant="secondary"
                   className="w-full"
@@ -264,8 +317,8 @@ export function WidgetConfigEditor({
           )}
 
           {/* Type-specific display configs */}
-          {(widget.type === 'CCA_NEWS' || 
-            widget.type === 'RECENT_CONTRACTS' || 
+          {(widget.type === 'CCA_NEWS' ||
+            widget.type === 'RECENT_CONTRACTS' ||
             widget.type === 'RECENT_DOCUMENTS') && (
             <>
               <Separator />

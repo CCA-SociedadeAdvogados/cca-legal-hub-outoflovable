@@ -3,7 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface UpdateLawyerData {
+  lawyerUserId?: string | null;
+  /** @deprecated Usar lawyerUserId. Mantido para retrocompatibilidade. */
   lawyerName?: string;
+  /** @deprecated Usar lawyerUserId. Mantido para retrocompatibilidade. */
   lawyerPhotoUrl?: string;
 }
 
@@ -30,9 +33,9 @@ export function useUpdateOrganization(organizationId: string | null) {
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('org-assets')
-      .getPublicUrl(filePath);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('org-assets').getPublicUrl(filePath);
 
     return publicUrl;
   };
@@ -42,6 +45,8 @@ export function useUpdateOrganization(organizationId: string | null) {
       if (!organizationId) throw new Error('Organization ID is required');
 
       const updateData: Record<string, string | null> = {};
+
+      if (data.lawyerUserId !== undefined) updateData.lawyer_user_id = data.lawyerUserId;
       if (data.lawyerName !== undefined) updateData.lawyer_name = data.lawyerName;
       if (data.lawyerPhotoUrl !== undefined) updateData.lawyer_photo_url = data.lawyerPhotoUrl;
 
@@ -54,6 +59,7 @@ export function useUpdateOrganization(organizationId: string | null) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['lawyer-profile', organizationId] });
       toast.success('Dados do advogado atualizados');
     },
     onError: (error) => {
