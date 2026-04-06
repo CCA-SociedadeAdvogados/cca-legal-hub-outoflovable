@@ -20,7 +20,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { CheckCircle2, XCircle, AlertTriangle, FileCheck, Upload, CalendarClock, Loader2, Sparkles, FileText, AlertCircle } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  FileCheck,
+  Upload,
+  CalendarClock,
+  Loader2,
+  Sparkles,
+  FileText,
+  AlertCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 function statusIcon(status: string) {
@@ -38,19 +49,27 @@ function statusIcon(status: string) {
 
 function statusLabel(status: string, t: (k: string, f?: string) => string) {
   switch (status) {
-    case 'uploaded': return t('docChecklist.uploaded', 'Carregado');
-    case 'expired': return t('docChecklist.expired', 'Expirado');
-    case 'expiring_soon': return t('docChecklist.expiringSoon', 'Expira em breve');
-    default: return t('docChecklist.missing', 'Em falta');
+    case 'uploaded':
+      return t('docChecklist.uploaded', 'Carregado');
+    case 'expired':
+      return t('docChecklist.expired', 'Expirado');
+    case 'expiring_soon':
+      return t('docChecklist.expiringSoon', 'Expira em breve');
+    default:
+      return t('docChecklist.missing', 'Em falta');
   }
 }
 
 function statusBadgeVariant(status: string): 'active' | 'destructive' | 'default' | 'secondary' {
   switch (status) {
-    case 'uploaded': return 'active';
-    case 'expired': return 'destructive';
-    case 'expiring_soon': return 'default';
-    default: return 'secondary';
+    case 'uploaded':
+      return 'active';
+    case 'expired':
+      return 'destructive';
+    case 'expiring_soon':
+      return 'default';
+    default:
+      return 'secondary';
   }
 }
 
@@ -58,7 +77,7 @@ function statusBadgeVariant(status: string): 'active' | 'destructive' | 'default
 const VALIDITY_RULES: Record<string, number> = {
   'certidão permanente': 12,
   'certidao permanente': 12,
-  'rcbe': 12,
+  rcbe: 12,
   'registo central do beneficiário efetivo': 12,
   'documentos de identificação': 60,
   'documentos de identificacao': 60,
@@ -82,9 +101,13 @@ interface DocumentChecklistPanelProps {
   uploadOrgId?: string;
 }
 
-export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: DocumentChecklistPanelProps) {
+export function DocumentChecklistPanel({
+  uploadFolderPath,
+  uploadOrgId,
+}: DocumentChecklistPanelProps) {
   const { t } = useTranslation();
-  const { items, isLoading, upsertEntry, isTableAvailable, organizationId } = useDocumentChecklist();
+  const { items, isLoading, upsertEntry, isTableAvailable, organizationId } =
+    useDocumentChecklist();
   const uploadToSharePoint = useUploadToSharePoint(uploadOrgId);
   const [editItem, setEditItem] = useState<ChecklistItemWithType | null>(null);
   const [validityDate, setValidityDate] = useState('');
@@ -114,7 +137,10 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {t('docChecklist.notAvailable', 'A checklist de documentos estará disponível em breve. A migração de base de dados está pendente.')}
+            {t(
+              'docChecklist.notAvailable',
+              'A checklist de documentos estará disponível em breve. A migração de base de dados está pendente.',
+            )}
           </p>
         </CardContent>
       </Card>
@@ -132,14 +158,17 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {t('docChecklist.noClient', 'Selecione um cliente para gerir a checklist de documentos.')}
+            {t(
+              'docChecklist.noClient',
+              'Selecione um cliente para gerir a checklist de documentos.',
+            )}
           </p>
         </CardContent>
       </Card>
     );
   }
 
-  const uploaded = items.filter(i => i.entry?.status === 'uploaded').length;
+  const uploaded = items.filter((i) => i.entry?.status === 'uploaded').length;
   const total = items.length;
   const percentage = total > 0 ? Math.round((uploaded / total) * 100) : 0;
 
@@ -199,7 +228,10 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
         if (selectedFile.size > 5 * 1024 * 1024) {
           toast({
             title: t('docChecklist.fileTooLarge', 'Ficheiro demasiado grande para análise IA'),
-            description: t('docChecklist.fileTooLargeDesc', 'Limite 5 MB. A usar data de hoje como base.'),
+            description: t(
+              'docChecklist.fileTooLargeDesc',
+              'Limite 5 MB. A usar data de hoje como base.',
+            ),
           });
         } else {
           // Use FileReader — avoids btoa stack-overflow on large binary files
@@ -213,13 +245,16 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
             reader.readAsDataURL(selectedFile);
           });
 
-          const { data: scanData, error: scanError } = await supabase.functions.invoke('scan-document-date', {
-            body: {
-              file_base64: base64,
-              file_name: selectedFile.name,
-              mime_type: selectedFile.type || 'application/pdf',
+          const { data: scanData, error: scanError } = await supabase.functions.invoke(
+            'scan-document-date',
+            {
+              body: {
+                file_base64: base64,
+                file_name: selectedFile.name,
+                mime_type: selectedFile.type || 'application/pdf',
+              },
             },
-          });
+          );
 
           if (scanError) {
             console.error('[scan-document-date] invoke error:', scanError);
@@ -228,22 +263,37 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
               description: scanError.message ?? String(scanError),
               variant: 'destructive',
             });
+          } else if (scanData?.validity_date) {
+            // Edge function returned an explicit validity/expiry date from the document
+            const validityDateParsed = new Date(scanData.validity_date + 'T12:00:00');
+            if (!isNaN(validityDateParsed.getTime())) {
+              setValidityDate(validityDateParsed.toISOString().split('T')[0]);
+              toast({
+                title: t('docChecklist.aiSuggestedApplied', 'Data sugerida pela IA aplicada'),
+              });
+              return;
+            }
           } else if (scanData?.emission_date) {
+            // Edge function found emission date but no explicit validity — calculate from rules
             const emissionDate = new Date(scanData.emission_date + 'T12:00:00');
             if (!isNaN(emissionDate.getTime())) {
               emissionDate.setMonth(emissionDate.getMonth() + validityMonths);
               setValidityDate(emissionDate.toISOString().split('T')[0]);
-              toast({ title: t('docChecklist.aiSuggestedApplied', 'Data sugerida aplicada') });
+              toast({
+                title: t('docChecklist.aiSuggestedApplied', 'Data sugerida pela IA aplicada'),
+              });
               return;
             }
           } else {
-            // Function returned but no date found — show reason for debug
+            // Function returned but no date found — inform user, do NOT fall through to today-based fallback
             console.warn('[scan-document-date] response:', JSON.stringify(scanData));
             const reason = scanData?.reason ?? scanData?.confidence ?? 'unknown';
             toast({
               title: t('docChecklist.aiDateNotFound', 'Data não detectada no documento'),
               description: `reason: ${reason} — ${t('docChecklist.aiDateNotFoundDesc', 'Ajuste manualmente se necessário.')}`,
             });
+            setIsSuggestingDate(false);
+            return;
           }
         }
       }
@@ -290,7 +340,9 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold">{percentage}%</p>
-              <p className="text-xs text-muted-foreground">{uploaded}/{total} {t('docChecklist.complete', 'completos')}</p>
+              <p className="text-xs text-muted-foreground">
+                {uploaded}/{total} {t('docChecklist.complete', 'completos')}
+              </p>
             </div>
           </div>
           {/* Progress bar */}
@@ -298,7 +350,11 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                percentage === 100 ? 'bg-emerald-500' : percentage >= 50 ? 'bg-amber-500' : 'bg-red-500'
+                percentage === 100
+                  ? 'bg-emerald-500'
+                  : percentage >= 50
+                    ? 'bg-amber-500'
+                    : 'bg-red-500',
               )}
               style={{ width: `${percentage}%` }}
             />
@@ -323,11 +379,14 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                     </Badge>
                     {validDate && (
                       <span className="text-xs text-muted-foreground">
-                        {t('docChecklist.validUntil', 'Válido até')} {format(new Date(validDate), 'dd/MM/yyyy', { locale: pt })}
+                        {t('docChecklist.validUntil', 'Válido até')}{' '}
+                        {format(new Date(validDate), 'dd/MM/yyyy', { locale: pt })}
                       </span>
                     )}
                     {item.is_required && (
-                      <Badge variant="outline" className="text-xs">{t('docChecklist.required', 'Obrigatório')}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {t('docChecklist.required', 'Obrigatório')}
+                      </Badge>
                     )}
                     {item.entry?.confirmed_by_user && (
                       <CheckCircle2 className="h-3 w-3 text-emerald-500" />
@@ -344,8 +403,7 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                     <Upload className="h-4 w-4 mr-1" />
                     {status === 'missing'
                       ? t('docChecklist.upload', 'Registar')
-                      : t('docChecklist.update', 'Atualizar')
-                    }
+                      : t('docChecklist.update', 'Atualizar')}
                   </Button>
                 </div>
               </div>
@@ -360,7 +418,10 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
           <DialogHeader>
             <DialogTitle>{editItem?.name}</DialogTitle>
             <DialogDescription>
-              {t('docChecklist.editDescription', 'Carregue o ficheiro e confirme a data de validade do documento.')}
+              {t(
+                'docChecklist.editDescription',
+                'Carregue o ficheiro e confirme a data de validade do documento.',
+              )}
             </DialogDescription>
           </DialogHeader>
 
@@ -395,8 +456,11 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                       <Upload className="h-6 w-6 text-muted-foreground" />
                       <p className="text-sm text-muted-foreground">
                         {editItem?.entry?.file_reference
-                          ? t('docChecklist.replaceFile', 'Clique para substituir: {{name}}', { name: editItem.entry.file_reference })
-                          : t('docChecklist.selectFile', 'Clique para selecionar o ficheiro')}</p>
+                          ? t('docChecklist.replaceFile', 'Clique para substituir: {{name}}', {
+                              name: editItem.entry.file_reference,
+                            })
+                          : t('docChecklist.selectFile', 'Clique para selecionar o ficheiro')}
+                      </p>
                       {uploadFolderPath && (
                         <p className="text-xs text-muted-foreground/70">
                           SharePoint: <span className="font-mono">{uploadFolderPath}</span>
@@ -420,7 +484,9 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                 <div className="text-sm">
                   <p className="font-medium">{t('docChecklist.aiSuggestion', 'Sugestão IA')}</p>
                   <p className="text-muted-foreground">
-                    {format(new Date(editItem.entry.ai_suggested_date), 'dd/MM/yyyy', { locale: pt })}
+                    {format(new Date(editItem.entry.ai_suggested_date), 'dd/MM/yyyy', {
+                      locale: pt,
+                    })}
                   </p>
                 </div>
                 <Button
@@ -444,10 +510,11 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                   onClick={handleSuggestDate}
                   disabled={isSuggestingDate}
                 >
-                  {isSuggestingDate
-                    ? <Loader2 className="h-3 w-3 animate-spin" />
-                    : <Sparkles className="h-3 w-3" />
-                  }
+                  {isSuggestingDate ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3 w-3" />
+                  )}
                   {t('docChecklist.suggestDate', 'Sugerir data')}
                 </Button>
               </div>
@@ -485,14 +552,16 @@ export function DocumentChecklistPanel({ uploadFolderPath, uploadOrgId }: Docume
                 (!!selectedFile && selectedFile.size > 4 * 1024 * 1024)
               }
             >
-              {(upsertEntry.isPending || uploadToSharePoint.isPending) ? (
+              {upsertEntry.isPending || uploadToSharePoint.isPending ? (
                 <>
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                   {uploadToSharePoint.isPending
                     ? t('docChecklist.uploading', 'A carregar...')
                     : t('common.saving', 'A guardar...')}
                 </>
-              ) : t('common.save', 'Guardar')}
+              ) : (
+                t('common.save', 'Guardar')
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
