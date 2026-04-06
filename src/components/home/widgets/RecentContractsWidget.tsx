@@ -17,7 +17,7 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
   function RecentContractsWidget({ title, config }, ref) {
     const { t } = useTranslation();
     const { contratos, isLoading } = useContratos();
-    
+
     const limit = (config.limit as number) || 5;
     const showStatus = config.showStatus !== false;
 
@@ -46,11 +46,12 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
 
     // Sort by created_at and limit
     const recentContracts = useMemo(
-      () => contratos
-        ?.slice()
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, limit),
-      [contratos, limit]
+      () =>
+        (contratos ?? [])
+          .slice()
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, limit),
+      [contratos, limit],
     );
 
     if (isLoading) {
@@ -86,9 +87,7 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t('home.noContracts')}
-            </p>
+            <p className="text-sm text-muted-foreground">{t('home.noContracts')}</p>
             <Button variant="outline" size="sm" asChild className="mt-2">
               <Link to="/contratos/novo">{t('home.createContract')}</Link>
             </Button>
@@ -126,7 +125,10 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
                   </p>
                 </div>
                 {showStatus && (
-                  <Badge variant="secondary" className={statusColors[contract.estado_contrato] || ''}>
+                  <Badge
+                    variant="secondary"
+                    className={statusColors[contract.estado_contrato] || ''}
+                  >
                     {statusLabels[contract.estado_contrato] || contract.estado_contrato}
                   </Badge>
                 )}
@@ -136,7 +138,7 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 export default RecentContractsWidget;

@@ -21,9 +21,14 @@ export const useImpactos = () => {
   const { viewingOrganizationId } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   // For CCA internal users, require explicit client selection
-  const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
+  const organizationId =
+    viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
-  const { data: impactos, isLoading, error } = useQuery({
+  const {
+    data: impactos,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['impactos', organizationId],
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -31,11 +36,13 @@ export const useImpactos = () => {
 
       const { data, error } = await supabase
         .from('impactos')
-        .select(`
+        .select(
+          `
           *,
           eventos_legislativos(*),
           contratos(id, titulo_contrato, id_interno)
-        `)
+        `,
+        )
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
@@ -52,24 +59,30 @@ export const useImpactos = () => {
 
       const { data, error } = await supabase
         .from('impactos')
-        .insert([{
-          ...impacto,
-          created_by_id: user.id,
-          updated_by_id: user.id,
-          organization_id: organizationId,
-        }])
+        .insert([
+          {
+            ...impacto,
+            created_by_id: user.id,
+            updated_by_id: user.id,
+            organization_id: organizationId,
+          },
+        ])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['impactos'] });
+      queryClient.invalidateQueries({ queryKey: ['impactos', organizationId] });
       toast({ title: 'Impacto registado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao registar impacto', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao registar impacto',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -82,33 +95,37 @@ export const useImpactos = () => {
         updateData.data_resolucao = new Date().toISOString().split('T')[0];
         updateData.resolvido_por_id = user?.id;
       }
-      
+
       const { data, error } = await supabase
         .from('impactos')
         .update(updateData)
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['impactos'] });
+      queryClient.invalidateQueries({ queryKey: ['impactos', organizationId] });
       toast({ title: 'Impacto atualizado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar impacto', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao atualizar impacto',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
   const stats = {
     total: impactos?.length ?? 0,
-    alto: impactos?.filter(i => i.nivel_risco === 'alto').length ?? 0,
-    medio: impactos?.filter(i => i.nivel_risco === 'medio').length ?? 0,
-    baixo: impactos?.filter(i => i.nivel_risco === 'baixo').length ?? 0,
-    pendentes: impactos?.filter(i => i.estado === 'pendente_analise').length ?? 0,
-    emTratamento: impactos?.filter(i => i.estado === 'em_tratamento').length ?? 0,
+    alto: impactos?.filter((i) => i.nivel_risco === 'alto').length ?? 0,
+    medio: impactos?.filter((i) => i.nivel_risco === 'medio').length ?? 0,
+    baixo: impactos?.filter((i) => i.nivel_risco === 'baixo').length ?? 0,
+    pendentes: impactos?.filter((i) => i.estado === 'pendente_analise').length ?? 0,
+    emTratamento: impactos?.filter((i) => i.estado === 'em_tratamento').length ?? 0,
   };
 
   return {

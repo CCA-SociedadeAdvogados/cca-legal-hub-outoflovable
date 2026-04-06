@@ -19,7 +19,7 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
   function ExpiringContractsWidget({ title, config }, ref) {
     const { t, i18n } = useTranslation();
     const { contratos, isLoading } = useContratos();
-    
+
     const daysAhead = (config.daysAhead as number) || 30;
     const dateLocale = i18n.language === 'pt' ? pt : enUS;
 
@@ -29,15 +29,16 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
 
     // Filter contracts expiring within the specified days
     const expiringContracts = useMemo(
-      () => contratos
-        ?.filter((c) => {
-          if (!c.data_termo || c.estado_contrato !== 'activo') return false;
-          const expiryDate = new Date(c.data_termo);
-          return expiryDate >= today && expiryDate <= futureDate;
-        })
-        .sort((a, b) => new Date(a.data_termo!).getTime() - new Date(b.data_termo!).getTime())
-        .slice(0, 5),
-      [contratos, today.toDateString(), daysAhead]
+      () =>
+        (contratos ?? [])
+          .filter((c) => {
+            if (!c.data_termo || c.estado_contrato !== 'activo') return false;
+            const expiryDate = new Date(c.data_termo);
+            return expiryDate >= today && expiryDate <= futureDate;
+          })
+          .sort((a, b) => new Date(a.data_termo!).getTime() - new Date(b.data_termo!).getTime())
+          .slice(0, 5),
+      [contratos, today.toDateString(), daysAhead],
     );
 
     if (isLoading) {
@@ -113,11 +114,13 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
                   <div className="min-w-0 flex-1 mr-2">
                     <p className="text-sm font-medium truncate">{contract.titulo_contrato}</p>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(contract.data_termo!), "d 'de' MMMM", { locale: dateLocale })}
+                      {format(new Date(contract.data_termo!), "d 'de' MMMM", {
+                        locale: dateLocale,
+                      })}
                     </p>
                   </div>
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className={isUrgent ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}
                   >
                     {isUrgent && <AlertTriangle className="h-3 w-3 mr-1" />}
@@ -130,7 +133,7 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 export default ExpiringContractsWidget;

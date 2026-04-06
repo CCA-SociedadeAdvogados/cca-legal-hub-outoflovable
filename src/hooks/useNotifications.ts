@@ -1,10 +1,10 @@
-import { useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { useTranslation } from "react-i18next";
-import { TFunction } from "i18next";
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
+import { TFunction } from 'i18next';
 
 export interface Notification {
   id: string;
@@ -24,7 +24,7 @@ export interface Notification {
 // Helper function to translate notification based on metadata
 export function translateNotification(notification: Notification, t: TFunction): Notification {
   const metadata = notification.metadata as Record<string, unknown> | null;
-  
+
   // If has translation key in metadata, use it
   if (metadata?.title_key) {
     return {
@@ -32,7 +32,7 @@ export function translateNotification(notification: Notification, t: TFunction):
       title: t(metadata.title_key as string, metadata.title_params as Record<string, unknown>),
     };
   }
-  
+
   // Fallback for old news_published notifications without metadata
   if (notification.type === 'news_published') {
     return {
@@ -40,7 +40,7 @@ export function translateNotification(notification: Notification, t: TFunction):
       title: t('notifications.newsPublishedTitle', { newsTitle: notification.title }),
     };
   }
-  
+
   return notification;
 }
 
@@ -50,13 +50,14 @@ export function useNotifications() {
   const queryClient = useQueryClient();
 
   const { data: notifications = [], isLoading } = useQuery({
-    queryKey: ["notifications"],
+    queryKey: ['notifications', user?.id],
     staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("notifications")
-        .select("*")
-        .order("created_at", { ascending: false })
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user!.id)
+        .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
       return data as Notification[];
@@ -69,26 +70,26 @@ export function useNotifications() {
     if (!user) return;
 
     const channel = supabase
-      .channel("notifications-realtime")
+      .channel('notifications-realtime')
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           const newNotification = payload.new as Notification;
-          
+
           // Show toast for new notification
           toast(newNotification.title, {
             description: newNotification.message,
           });
-          
+
           // Invalidate query to refresh list
-          queryClient.invalidateQueries({ queryKey: ["notifications"] });
-        }
+          queryClient.invalidateQueries({ queryKey: ['notifications', user.id] });
+        },
       )
       .subscribe();
 
@@ -100,39 +101,38 @@ export function useNotifications() {
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("notifications")
+        .from('notifications')
         .update({ read: true, read_at: new Date().toISOString() })
-        .eq("id", id);
+        .eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
     },
   });
 
   const markAllAsRead = useMutation({
     mutationFn: async () => {
+      if (!user) throw new Error('Utilizador não autenticado');
       const { error } = await supabase
-        .from("notifications")
+        .from('notifications')
         .update({ read: true, read_at: new Date().toISOString() })
-        .eq("read", false);
+        .eq('user_id', user.id)
+        .eq('read', false);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
     },
   });
 
   const deleteNotification = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("notifications")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from('notifications').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ['notifications', user?.id] });
     },
   });
 

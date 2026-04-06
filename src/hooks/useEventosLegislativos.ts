@@ -16,9 +16,14 @@ export const useEventosLegislativos = () => {
   const { viewingOrganizationId } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   // For CCA internal users, require explicit client selection
-  const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
+  const organizationId =
+    viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
-  const { data: eventos, isLoading, error } = useQuery({
+  const {
+    data: eventos,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['eventos_legislativos', organizationId],
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -43,20 +48,22 @@ export const useEventosLegislativos = () => {
 
       const { data, error } = await supabase
         .from('eventos_legislativos')
-        .insert([{ 
-          ...evento, 
-          created_by_id: user.id, 
-          updated_by_id: user.id,
-          organization_id: organizationId,
-        }])
+        .insert([
+          {
+            ...evento,
+            created_by_id: user.id,
+            updated_by_id: user.id,
+            organization_id: organizationId,
+          },
+        ])
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
+      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
       toast({ title: 'Evento criado com sucesso' });
     },
     onError: (error: Error) => {
@@ -72,34 +79,39 @@ export const useEventosLegislativos = () => {
         .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
+      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
       toast({ title: 'Evento atualizado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar evento', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao atualizar evento',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
   const deleteEvento = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('eventos_legislativos')
-        .delete()
-        .eq('id', id);
-      
+      const { error } = await supabase.from('eventos_legislativos').delete().eq('id', id);
+
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos'] });
+      queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
       toast({ title: 'Evento eliminado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao eliminar evento', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao eliminar evento',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 

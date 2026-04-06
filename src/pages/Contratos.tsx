@@ -2,7 +2,16 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { Plus, Download, Sparkles, Table as TableIcon, Upload, Archive, ArchiveRestore, Cloud } from 'lucide-react';
+import {
+  Plus,
+  Download,
+  Sparkles,
+  Table as TableIcon,
+  Upload,
+  Archive,
+  ArchiveRestore,
+  Cloud,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useContratos } from '@/hooks/useContratos';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -14,7 +23,13 @@ import { GenerateContractDialog } from '@/components/contracts/GenerateContractD
 import { MultiContractAnalysis } from '@/components/contracts/MultiContractAnalysis';
 import { exportContratosToCSV } from '@/lib/exportUtils';
 import { toast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
 
@@ -33,7 +48,8 @@ export default function Contratos() {
   const [activeTab, setActiveTab] = useState<'contratos' | 'ia' | 'arquivo'>('contratos');
   const [showArchived, setShowArchived] = useState(false);
   const { contratos, isLoading, archiveContrato, restoreContrato, deleteContrato } = useContratos();
-  const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } = useOrganizations();
+  const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } =
+    useOrganizations();
   const { cliente } = useCliente();
 
   const effectiveOrgId = isCCAInternalAuthorized
@@ -42,7 +58,7 @@ export default function Contratos() {
 
   const filteredContracts = useMemo(() => {
     if (!contratos) return [];
-    
+
     return contratos.filter((contract) => {
       if (showArchived) {
         if (!contract.arquivado) return false;
@@ -53,9 +69,9 @@ export default function Contratos() {
       if (filters.searchQuery) {
         const query = filters.searchQuery.toLowerCase();
         const matchesSearch =
-          contract.titulo_contrato.toLowerCase().includes(query) ||
-          contract.id_interno.toLowerCase().includes(query) ||
-          contract.parte_b_nome_legal.toLowerCase().includes(query) ||
+          contract.titulo_contrato?.toLowerCase().includes(query) ||
+          contract.id_interno?.toLowerCase().includes(query) ||
+          contract.parte_b_nome_legal?.toLowerCase().includes(query) ||
           contract.objeto_resumido?.toLowerCase().includes(query);
         if (!matchesSearch) return false;
       }
@@ -64,11 +80,17 @@ export default function Contratos() {
         return false;
       }
 
-      if (filters.estadoContrato !== 'todos' && contract.estado_contrato !== filters.estadoContrato) {
+      if (
+        filters.estadoContrato !== 'todos' &&
+        contract.estado_contrato !== filters.estadoContrato
+      ) {
         return false;
       }
 
-      if (filters.departamento !== 'todos' && contract.departamento_responsavel !== filters.departamento) {
+      if (
+        filters.departamento !== 'todos' &&
+        contract.departamento_responsavel !== filters.departamento
+      ) {
         return false;
       }
 
@@ -84,7 +106,7 @@ export default function Contratos() {
   }, [filters, contratos, showArchived]);
 
   const archivedCount = useMemo(() => {
-    return contratos?.filter(c => c.arquivado).length || 0;
+    return contratos?.filter((c) => c.arquivado).length || 0;
   }, [contratos]);
 
   const handleArchive = (id: string) => {
@@ -135,7 +157,9 @@ export default function Contratos() {
                     return;
                   }
                   exportContratosToCSV(filteredContracts);
-                  toast({ title: `${filteredContracts.length} ${t('nav.contracts').toLowerCase()}` });
+                  toast({
+                    title: `${filteredContracts.length} ${t('nav.contracts').toLowerCase()}`,
+                  });
                 }}
                 disabled={isLoading}
               >
@@ -158,7 +182,10 @@ export default function Contratos() {
           )}
         </div>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'contratos' | 'ia' | 'arquivo')}>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as 'contratos' | 'ia' | 'arquivo')}
+        >
           <TabsList>
             <TabsTrigger value="contratos" className="gap-2">
               <TableIcon className="h-4 w-4" />
@@ -174,11 +201,11 @@ export default function Contratos() {
             </TabsTrigger>
           </TabsList>
 
-        <TabsContent value="contratos" className="space-y-4">
+          <TabsContent value="contratos" className="space-y-4">
             {/* Archived Toggle */}
             <div className="flex items-center gap-2">
               <Button
-                variant={showArchived ? "default" : "outline"}
+                variant={showArchived ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setShowArchived(!showArchived)}
                 className="gap-2"
