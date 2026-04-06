@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useCCALawyers } from '@/hooks/useCCALawyers';
 import type { Database } from '@/integrations/supabase/types';
 import type { CreateUserResponse } from '@/hooks/usePlatformAdmin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -143,38 +143,8 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
   const [credentials, setCredentials] = useState<CreateUserResponse | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Buscar advogados CCA (membros da organização CCA) para o selector
-  const { data: ccaLawyers } = useQuery({
-    queryKey: ['cca-lawyers-list'],
-    queryFn: async () => {
-      const { data: ccaOrg } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('client_code', 'C.0000')
-        .maybeSingle();
-
-      if (!ccaOrg) return [];
-
-      const { data: members } = await supabase
-        .from('organization_members')
-        .select('user_id')
-        .eq('organization_id', ccaOrg.id);
-
-      if (!members || members.length === 0) return [];
-
-      const userIds = members.map((m) => m.user_id);
-      type ProfileRow = { id: string; nome_completo: string | null; email: string | null };
-      const { data: profiles } = (await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('profiles_safe' as any)
-        .select('id, nome_completo, email')
-        .in('id', userIds)
-        .order('nome_completo')) as { data: ProfileRow[] | null };
-
-      return (profiles ?? []).filter((p) => p.nome_completo);
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // Advogados CCA disponíveis (apenas SSO reais, sem contas de serviço)
+  const { data: ccaLawyers } = useCCALawyers();
 
   const filteredOrgs = organizations.filter((o) => {
     const q = orgSearch.toLowerCase();

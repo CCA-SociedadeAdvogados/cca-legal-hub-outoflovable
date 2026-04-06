@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +24,7 @@ import { ImageUploader } from '@/components/shared/ImageUploader';
 import { useUpdateOrganization } from '@/hooks/useUpdateOrganization';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useContentBlocks } from '@/hooks/useContentBlocks';
+import { useCCALawyers } from '@/hooks/useCCALawyers';
 import { supabase } from '@/integrations/supabase/client';
 
 interface WidgetConfigEditorProps {
@@ -57,46 +57,8 @@ export function WidgetConfigEditor({
   const { getBlock, upsertBlock, isUpserting } = useContentBlocks(organizationId || '');
   const welcomeBlock = getBlock('welcome_message');
 
-  // Fetch CCA internal lawyers for the lawyer selector
-  const { data: ccaLawyers } = useQuery({
-    queryKey: ['cca-lawyers-list'],
-    queryFn: async () => {
-      // Buscar a organização CCA (client_code = 'C.0000')
-      const { data: ccaOrg } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('client_code', 'C.0000')
-        .maybeSingle();
-
-      if (!ccaOrg) return [];
-
-      // Buscar membros da organização CCA
-      const { data: members } = await supabase
-        .from('organization_members')
-        .select('user_id')
-        .eq('organization_id', ccaOrg.id);
-
-      if (!members || members.length === 0) return [];
-
-      const userIds = members.map((m) => m.user_id);
-
-      type ProfileRow = {
-        id: string;
-        nome_completo: string | null;
-        email: string | null;
-        avatar_url: string | null;
-      };
-      const { data: profiles } = (await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('profiles_safe' as any)
-        .select('id, nome_completo, email, avatar_url')
-        .in('id', userIds)
-        .order('nome_completo')) as { data: ProfileRow[] | null };
-
-      return (profiles ?? []).filter((p) => p.nome_completo);
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // Advogados CCA disponíveis (apenas SSO reais, sem contas de serviço)
+  const { data: ccaLawyers } = useCCALawyers();
 
   // Local state for content editing
   const [selectedLawyerId, setSelectedLawyerId] = useState<string>('');
