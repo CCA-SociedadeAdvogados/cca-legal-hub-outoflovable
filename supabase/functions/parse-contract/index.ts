@@ -26,7 +26,7 @@ const MAX_CHARS = 150000;
 async function callClaude(
   apiKey: string,
   system: string,
-  user: string,
+  userContent: string | unknown[],
   maxTokens = 4096,
 ): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -40,7 +40,7 @@ async function callClaude(
       model: CLAUDE_SONNET,
       max_tokens: maxTokens,
       system,
-      messages: [{ role: "user", content: user }],
+      messages: [{ role: "user", content: userContent }],
     }),
   });
 
@@ -53,6 +53,14 @@ async function callClaude(
   const text = data.content?.[0]?.text;
   if (!text) throw new Error("Claude retornou resposta vazia");
   return text;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 function parseJSONResponse(content: string): unknown {
@@ -146,7 +154,7 @@ Deno.serve(async (req) => {
     }
 
     let contractText = textContent as string | undefined;
-    let isScannedPDF = false;
+    let pdfBase64: string | null = null;
 
     // ── 1. Obter conteúdo do ficheiro ──────────────────────────────────────
     if (!contractText) {
@@ -193,9 +201,10 @@ Deno.serve(async (req) => {
 
       if (fileBytes) {
         if (resolvedMime === "application/pdf" || resolvedName?.endsWith(".pdf")) {
-          const extracted = await extractTextFromPDF(fileBytes);
-          contractText = extracted.text;
-          isScannedPDF = extracted.isScanned;
+          // Send PDF directly to Claude — no local text extraction needed.
+          // Claude's API supports native PDF document input (vision + text).
+          pdfBase64 = bytesToBase64(fileBytes);
+          console.log(`[parse-contract] PDF detected, size: ${fileBytes.length} bytes, sending to Claude as document`);
         } else if (
           resolvedMime?.includes("word") ||
           resolvedName?.endsWith(".docx") ||
@@ -213,22 +222,20 @@ Deno.serve(async (req) => {
       }
     }
 
-    if (!contractText) {
+    if (!contractText && !pdfBase64) {
       return new Response(
         JSON.stringify({ error: "Conteúdo do contrato é obrigatório" }),
         { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
-    // ── 2. Analisar contrato com Claude Haiku 4.5 ─────────────────────────
-    console.log(`[parse-contract] Text length: ${contractText.length} chars, scanned: ${isScannedPDF}`);
-
-    const truncatedText = contractText.length > MAX_CHARS
-      ? contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado após 150 000 caracteres]"
-      : contractText;
-
-    if (contractText.length > MAX_CHARS) {
-      console.warn(`[parse-contract] Text truncated from ${contractText.length} to ${MAX_CHARS} chars`);
+    // ── 2. Analisar contrato com Claude Sonnet ────────────────────────────
+    if (contractText) {
+      console.log(`[parse-contract] Text length: ${contractText.length} chars`);
+      if (contractText.length > MAX_CHARS) {
+        console.warn(`[parse-contract] Text truncated from ${contractText.length} to ${MAX_CHARS} chars`);
+        contractText = contractText.substring(0, MAX_CHARS) + "\n\n[Nota: documento truncado após 150 000 caracteres]";
+      }
     }
 
     const systemPrompt = `Você é um assistente jurídico sénior especializado em análise detalhada de contratos portugueses e europeus.
@@ -318,12 +325,30 @@ INSTRUÇÕES IMPORTANTES:
 7. Nos riscos, foque em lacunas legais, cláusulas desequilibradas ou ambiguidades
 8. O sumario_executivo deve ser em português simples, percetível por um não-advogado`;
 
-    const userMessage = isScannedPDF
-      ? `ATENÇÃO: Este PDF contém pouco texto extraível — pode ser um documento digitalizado. Analise o texto disponível com o máximo detalhe possível.\n\nContrato:\n\n${truncatedText}`
-      : `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`;
+    // Build user content: either a PDF document block or plain text
+    let userContent: string | unknown[];
+    if (pdfBase64) {
+      // Send PDF natively — Claude reads the document directly (text + scanned/image PDFs)
+      userContent = [
+        {
+          type: "document",
+          source: {
+            type: "base64",
+            media_type: "application/pdf",
+            data: pdfBase64,
+          },
+        },
+        {
+          type: "text",
+          text: "Analise detalhadamente este contrato PDF e extraia TODAS as informações disponíveis.",
+        },
+      ];
+    } else {
+      userContent = `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${contractText}`;
+    }
 
-    console.log(`[parse-contract] Calling Claude Sonnet...`);
-    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 16384);
+    console.log(`[parse-contract] Calling Claude Sonnet (${pdfBase64 ? "PDF document" : "text"})...`);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userContent, 16384);
 
     // ── 3. Parsear resposta JSON ───────────────────────────────────────────
     let parsedData;
@@ -344,8 +369,8 @@ INSTRUÇÕES IMPORTANTES:
       JSON.stringify({
         success: true,
         data: parsedData,
-        extractedText: contractText,
-        isScannedPDF,
+        extractedText: contractText || "[PDF processado nativamente pelo Claude]",
+        isScannedPDF: false,
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
@@ -357,53 +382,6 @@ INSTRUÇÕES IMPORTANTES:
     );
   }
 });
-
-// ── Extracção de texto de PDF via pdfjs-dist ──────────────────────────────
-async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string; isScanned: boolean }> {
-  console.log("[parse-contract] Extracting text from PDF, size:", fileBytes.length);
-
-  let pdfjs: any;
-  try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas");
-  } catch (importErr: any) {
-    console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
-    throw new Error(
-      "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt.",
-    );
-  }
-
-  // Deno Edge Runtime does not support Web Workers.
-  // Set workerSrc to satisfy the validation check, but use disableWorker
-  // so pdfjs-dist never actually loads the worker file.
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs?external=canvas";
-
-  const pdf = await pdfjs.getDocument({ data: fileBytes, disableWorker: true }).promise;
-  const pages: string[] = [];
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item: any) => item.str)
-      .join(" ");
-    pages.push(pageText);
-  }
-
-  const fullText = pages.join("\n\n");
-
-  // PDF digitalizado: texto extraído vazio ou muito curto
-  const isScanned = !fullText || fullText.trim().length < 100;
-
-  if (isScanned) {
-    console.warn("[parse-contract] PDF parece ser digitalizado (texto < 100 chars). A tentar análise com o texto disponível.");
-    // Não lançar erro — deixar Claude tentar com o texto disponível (pode ter algum OCR embutido)
-    return { text: fullText || "[PDF digitalizado — texto não extraível]", isScanned: true };
-  }
-
-  console.log("[parse-contract] PDF text extracted, length:", fullText.length);
-  return { text: fullText, isScanned: false };
-}
 
 // ── Extracção de texto de Word (.docx) via zip.js ─────────────────────────
 async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Promise<string> {
