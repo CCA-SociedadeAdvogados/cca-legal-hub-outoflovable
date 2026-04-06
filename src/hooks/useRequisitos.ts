@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
-import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { toast } from 'sonner';
 
 export interface Requisito {
   id: string;
@@ -26,19 +26,19 @@ export function useRequisitos() {
   const queryClient = useQueryClient();
 
   const { data: requisitos = [], isLoading } = useQuery({
-    queryKey: ["requisitos", profile?.current_organization_id],
+    queryKey: ['requisitos', profile?.current_organization_id],
     staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("requisitos")
-        .select("*")
-        .eq("organization_id", profile!.current_organization_id)
-        .order("created_at", { ascending: false });
+        .from('requisitos')
+        .select('*')
+        .eq('organization_id', profile!.current_organization_id!)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as Requisito[];
     },
-    enabled: !!profile?.current_organization_id,
+    enabled: !!user && !!profile?.current_organization_id,
   });
 
   const createRequisito = useMutation({
@@ -53,7 +53,7 @@ export function useRequisitos() {
       evento_legislativo_id?: string;
     }) => {
       const { data: result, error } = await supabase
-        .from("requisitos")
+        .from('requisitos')
         .insert({
           ...data,
           organization_id: profile?.current_organization_id,
@@ -66,11 +66,11 @@ export function useRequisitos() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requisitos"] });
-      toast.success("Requisito criado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['requisitos', profile?.current_organization_id] });
+      toast.success('Requisito criado com sucesso!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao criar requisito");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao criar requisito');
     },
   });
 
@@ -89,9 +89,9 @@ export function useRequisitos() {
       nivel_criticidade?: string;
     }) => {
       const { data: result, error } = await supabase
-        .from("requisitos")
+        .from('requisitos')
         .update(data)
-        .eq("id", id)
+        .eq('id', id)
         .select()
         .single();
 
@@ -99,25 +99,25 @@ export function useRequisitos() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requisitos"] });
-      toast.success("Requisito atualizado!");
+      queryClient.invalidateQueries({ queryKey: ['requisitos', profile?.current_organization_id] });
+      toast.success('Requisito atualizado!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao atualizar requisito");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao atualizar requisito');
     },
   });
 
   const deleteRequisito = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("requisitos").delete().eq("id", id);
+      const { error } = await supabase.from('requisitos').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["requisitos"] });
-      toast.success("Requisito eliminado!");
+      queryClient.invalidateQueries({ queryKey: ['requisitos', profile?.current_organization_id] });
+      toast.success('Requisito eliminado!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao eliminar requisito");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao eliminar requisito');
     },
   });
 
