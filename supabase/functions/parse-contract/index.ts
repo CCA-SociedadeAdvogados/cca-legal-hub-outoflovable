@@ -372,9 +372,11 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     );
   }
 
-  // Disable worker — Deno Edge Runtime does not support Web Workers.
-  // This avoids the "Setting up fake worker failed: Module not found" error.
-  pdfjs.GlobalWorkerOptions.workerSrc = "";
+  // Deno Edge Runtime does not support Web Workers.
+  // Set workerSrc to satisfy the validation check, but use disableWorker
+  // so pdfjs-dist never actually loads the worker file.
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs?external=canvas";
 
   const pdf = await pdfjs.getDocument({ data: fileBytes, disableWorker: true }).promise;
   const pages: string[] = [];
