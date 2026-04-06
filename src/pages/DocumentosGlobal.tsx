@@ -94,6 +94,11 @@ export default function DocumentosGlobal() {
         <DocumentChecklistPanel
           uploadFolderPath={canUploadToSharePoint && effectiveOrgId ? browsePath : undefined}
           uploadOrgId={canUploadToSharePoint ? (configOrgId ?? undefined) : undefined}
+          sharePointDisplayPath={
+            clientConfig?.root_folder_path && clientConfig.root_folder_path !== '/'
+              ? clientConfig.root_folder_path
+              : undefined
+          }
         />
 
         <div className="mt-6">

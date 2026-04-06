@@ -99,11 +99,14 @@ function suggestValidityMonths(docName: string): number {
 interface DocumentChecklistPanelProps {
   uploadFolderPath?: string;
   uploadOrgId?: string;
+  /** Human-readable SharePoint path to display (e.g. root_folder_path from config) */
+  sharePointDisplayPath?: string;
 }
 
 export function DocumentChecklistPanel({
   uploadFolderPath,
   uploadOrgId,
+  sharePointDisplayPath,
 }: DocumentChecklistPanelProps) {
   const { t } = useTranslation();
   const { items, isLoading, upsertEntry, isTableAvailable, organizationId } =
@@ -461,9 +464,12 @@ export function DocumentChecklistPanel({
                             })
                           : t('docChecklist.selectFile', 'Clique para selecionar o ficheiro')}
                       </p>
-                      {uploadFolderPath && (
+                      {(sharePointDisplayPath || uploadFolderPath) && (
                         <p className="text-xs text-muted-foreground/70">
-                          SharePoint: <span className="font-mono">{uploadFolderPath}</span>
+                          SharePoint:{' '}
+                          <span className="font-mono">
+                            {sharePointDisplayPath || uploadFolderPath}
+                          </span>
                         </p>
                       )}
                     </div>
