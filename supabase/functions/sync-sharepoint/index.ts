@@ -225,6 +225,77 @@ async function resolveFolderPathToId(
   return { id: currentId, name: currentName };
 }
 
+// Ensure a folder path exists, creating segments as needed. Returns the leaf folder ID.
+async function ensureFolderPath(
+  accessToken: string,
+  driveId: string,
+  folderPath: string,
+): Promise<string> {
+  const segments = folderPath.split("/").filter(Boolean);
+  if (segments.length === 0) return "root";
+
+  let parentId = "root";
+  for (const segment of segments) {
+    const childrenUrl = parentId === "root"
+      ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+      : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
+
+    // Try to create the folder (fastest path)
+    const createResp = await fetch(childrenUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: segment,
+        folder: {},
+        "@microsoft.graph.conflictBehavior": "fail",
+      }),
+    });
+
+    if (createResp.ok) {
+      const created: GraphDriveItem = await createResp.json();
+      parentId = created.id;
+    } else if (createResp.status === 409) {
+      // Already exists — resolve its ID
+      await createResp.text(); // consume body
+      const listResp = await fetch(
+        childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (listResp.ok) {
+        const listData = await listResp.json();
+        const found = (listData.value || []).find(
+          (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined,
+        );
+        if (found) {
+          parentId = found.id;
+          continue;
+        }
+      }
+      // Fallback: get by path
+      const encodedPath = segments.slice(0, segments.indexOf(segment) + 1).map(s => encodeURIComponent(s)).join("/");
+      const getResp = await fetch(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (getResp.ok) {
+        const item = await getResp.json();
+        parentId = item.id;
+      } else {
+        const errText = await getResp.text();
+        throw new Error(`Failed to resolve existing folder "${segment}": ${getResp.status} - ${errText}`);
+      }
+    } else {
+      const errText = await createResp.text();
+      throw new Error(`Failed to ensure folder "${segment}": ${createResp.status} - ${errText}`);
+    }
+  }
+
+  return parentId;
+}
+
 // Fetch children of a folder by ID with pagination
 async function fetchFolderChildrenById(
   accessToken: string,
@@ -887,15 +958,25 @@ serve(async (req) => {
         await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
       }
 
-      // Build full path
+      // Build full folder path
       const rootPath = spCfg.root_folder_path || "/";
       const currentFolder = uploadLargeFolderPath || "/";
-      let fullPath: string;
+      let folderFullPath: string;
       if (rootPath === "/") {
-        fullPath = currentFolder === "/" ? `/${file_name}` : `${currentFolder}/${file_name}`;
+        folderFullPath = currentFolder === "/" ? "/" : currentFolder;
       } else {
-        fullPath = currentFolder === "/" ? `${rootPath}/${file_name}` : `${rootPath}${currentFolder}/${file_name}`;
+        folderFullPath = currentFolder === "/" ? rootPath : `${rootPath}${currentFolder}`;
       }
+
+      // Ensure parent folder exists before uploading
+      if (folderFullPath !== "/") {
+        console.log(`Ensuring folder exists: ${folderFullPath}`);
+        await ensureFolderPath(accessToken, driveId, folderFullPath);
+      }
+
+      const fullPath = folderFullPath === "/"
+        ? `/${file_name}`
+        : `${folderFullPath}/${file_name}`;
 
       // Decode base64 to binary
       const binaryString = atob(file_base64);
@@ -1029,15 +1110,25 @@ serve(async (req) => {
         await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
       }
 
-      // Build the full path: root_folder_path + current folder + filename
+      // Build the full folder path: root_folder_path + current folder
       const rootPath = spCfg.root_folder_path || "/";
       const currentFolder = uploadFolderPath || "/";
-      let fullPath: string;
+      let folderFullPath: string;
       if (rootPath === "/") {
-        fullPath = currentFolder === "/" ? `/${file_name}` : `${currentFolder}/${file_name}`;
+        folderFullPath = currentFolder === "/" ? "/" : currentFolder;
       } else {
-        fullPath = currentFolder === "/" ? `${rootPath}/${file_name}` : `${rootPath}${currentFolder}/${file_name}`;
+        folderFullPath = currentFolder === "/" ? rootPath : `${rootPath}${currentFolder}`;
       }
+
+      // Ensure parent folder exists before uploading
+      if (folderFullPath !== "/") {
+        console.log(`Ensuring folder exists: ${folderFullPath}`);
+        await ensureFolderPath(accessToken, driveId, folderFullPath);
+      }
+
+      const fullPath = folderFullPath === "/"
+        ? `/${file_name}`
+        : `${folderFullPath}/${file_name}`;
 
       // Decode base64 to binary
       const binaryString = atob(file_base64);
