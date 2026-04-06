@@ -2,8 +2,7 @@ import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useOrganizations } from '@/hooks/useOrganizations';
-import { useAzureProfile } from '@/hooks/useAzureProfile';
+import { useLawyerProfile } from '@/hooks/useLawyerProfile';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Scale, Mail } from 'lucide-react';
 
@@ -18,10 +17,7 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
   ref,
 ) {
   const { t } = useTranslation();
-  const { organizations, isLoading } = useOrganizations();
-  const { nomeCompleto, email, photoUrl, iniciais, isSSO, isLoadingPhoto } = useAzureProfile();
-
-  const organization = organizations?.find((org) => org.id === organizationId);
+  const { data: lawyer, isLoading } = useLawyerProfile(organizationId);
 
   if (isLoading) {
     return (
@@ -42,15 +38,7 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
     );
   }
 
-  // Para a org CCA (C.0001) nunca mostrar advogado — é a própria firma
-  const isCCAClientOrg = organization?.client_code === 'C.0001';
-
-  // Para CCA SSO users a ver clientes externos, mostrar dados do utilizador autenticado
-  const lawyerName = isCCAClientOrg ? null : isSSO ? nomeCompleto : organization?.lawyer_name;
-  const lawyerPhoto = isCCAClientOrg ? null : isSSO ? photoUrl : organization?.lawyer_photo_url;
-  const lawyerEmail = isCCAClientOrg ? null : isSSO ? email : null;
-
-  if (!lawyerName) {
+  if (!lawyer?.nome_completo) {
     return (
       <Card ref={ref}>
         <CardHeader>
@@ -68,14 +56,12 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
     );
   }
 
-  const displayInitials = isSSO
-    ? iniciais
-    : lawyerName
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .slice(0, 2)
-        .toUpperCase();
+  const displayInitials = lawyer.nome_completo
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <Card ref={ref}>
@@ -85,26 +71,18 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
       <CardContent>
         <div className="flex items-center gap-4">
           <Avatar className="h-16 w-16">
-            {isLoadingPhoto ? (
-              <AvatarFallback className="text-lg bg-primary/10 text-primary animate-pulse">
-                {displayInitials}
-              </AvatarFallback>
-            ) : (
-              <>
-                <AvatarImage src={lawyerPhoto || undefined} alt={lawyerName} />
-                <AvatarFallback className="text-lg bg-primary/10 text-primary">
-                  {displayInitials}
-                </AvatarFallback>
-              </>
-            )}
+            <AvatarImage src={lawyer.avatar_url || undefined} alt={lawyer.nome_completo} />
+            <AvatarFallback className="text-lg bg-primary/10 text-primary">
+              {displayInitials}
+            </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium text-foreground">{lawyerName}</p>
+            <p className="font-medium text-foreground">{lawyer.nome_completo}</p>
             <p className="text-sm text-muted-foreground">{t('home.responsibleLawyer')}</p>
-            {lawyerEmail && (
+            {lawyer.email && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Mail className="h-3 w-3" />
-                {lawyerEmail}
+                {lawyer.email}
               </p>
             )}
           </div>
