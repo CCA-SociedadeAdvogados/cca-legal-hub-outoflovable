@@ -385,7 +385,34 @@ Deno.serve(async (req) => {
       if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
         jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
       }
-      parsedData = JSON.parse(jsonStr);
+
+      try {
+        parsedData = JSON.parse(jsonStr);
+      } catch (_) {
+        let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
+        try {
+          parsedData = JSON.parse(repaired);
+        } catch (_) {
+          let openBraces = 0, openBrackets = 0, inStr = false, esc = false;
+          for (const ch of repaired) {
+            if (esc) { esc = false; continue; }
+            if (ch === "\\") { esc = true; continue; }
+            if (ch === '"') { inStr = !inStr; continue; }
+            if (inStr) continue;
+            if (ch === "{") openBraces++;
+            else if (ch === "}") openBraces--;
+            else if (ch === "[") openBrackets++;
+            else if (ch === "]") openBrackets--;
+          }
+          if (openBraces > 0 || openBrackets > 0) {
+            repaired = repaired.replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "");
+            for (let i = 0; i < openBrackets; i++) repaired += "]";
+            for (let i = 0; i < openBraces; i++) repaired += "}";
+            repaired = repaired.replace(/,\s*([\]}])/g, "$1");
+          }
+          parsedData = JSON.parse(repaired);
+        }
+      }
     } catch {
       console.error("[analyze-compliance] Failed to parse AI response as JSON:", content.substring(0, 500));
       throw new Error("Não foi possível processar a resposta da IA");

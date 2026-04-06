@@ -60,7 +60,30 @@ function parseJSONResponse(content: string): unknown {
   const fb = jsonStr.indexOf("{");
   const lb = jsonStr.lastIndexOf("}");
   if (fb !== -1 && lb > fb) jsonStr = jsonStr.slice(fb, lb + 1);
-  return JSON.parse(jsonStr);
+
+  try { return JSON.parse(jsonStr); } catch (_) { /* try repairs */ }
+
+  let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
+  try { return JSON.parse(repaired); } catch (_) { /* noop */ }
+
+  let openBraces = 0, openBrackets = 0, inString = false, escape = false;
+  for (const ch of repaired) {
+    if (escape) { escape = false; continue; }
+    if (ch === "\\") { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") openBraces++;
+    else if (ch === "}") openBraces--;
+    else if (ch === "[") openBrackets++;
+    else if (ch === "]") openBrackets--;
+  }
+  if (openBraces > 0 || openBrackets > 0) {
+    repaired = repaired.replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "");
+    for (let i = 0; i < openBrackets; i++) repaired += "]";
+    for (let i = 0; i < openBraces; i++) repaired += "}";
+    repaired = repaired.replace(/,\s*([\]}])/g, "$1");
+  }
+  return JSON.parse(repaired);
 }
 
 serve(async (req) => {

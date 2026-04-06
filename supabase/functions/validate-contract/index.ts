@@ -52,18 +52,52 @@ async function callClaude(
 
 function parseJSONResponse(content: string): unknown {
   let jsonStr = content.trim();
+
   const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   if (codeBlockMatch) {
     jsonStr = codeBlockMatch[1].trim();
   } else {
     jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   }
+
   const firstBrace = jsonStr.indexOf("{");
   const lastBrace = jsonStr.lastIndexOf("}");
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
   }
-  return JSON.parse(jsonStr);
+
+  try {
+    return JSON.parse(jsonStr);
+  } catch (_) {
+    // noop — try repairs
+  }
+
+  let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
+  try {
+    return JSON.parse(repaired);
+  } catch (_) {
+    // noop
+  }
+
+  // Try closing truncated JSON
+  let openBraces = 0, openBrackets = 0, inString = false, escape = false;
+  for (const ch of repaired) {
+    if (escape) { escape = false; continue; }
+    if (ch === "\\") { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") openBraces++;
+    else if (ch === "}") openBraces--;
+    else if (ch === "[") openBrackets++;
+    else if (ch === "]") openBrackets--;
+  }
+  if (openBraces > 0 || openBrackets > 0) {
+    repaired = repaired.replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "");
+    for (let i = 0; i < openBrackets; i++) repaired += "]";
+    for (let i = 0; i < openBraces; i++) repaired += "}";
+    repaired = repaired.replace(/,\s*([\]}])/g, "$1");
+  }
+  return JSON.parse(repaired);
 }
 
 // Campos críticos para cálculo de diff e validação

@@ -231,10 +231,42 @@ serve(async (req) => {
 
     let parsedData;
     try {
-      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      parsedData = JSON.parse(jsonStr);
+      let jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const fb = jsonStr.indexOf("{");
+      const lb = jsonStr.lastIndexOf("}");
+      if (fb !== -1 && lb > fb) jsonStr = jsonStr.slice(fb, lb + 1);
+
+      try {
+        parsedData = JSON.parse(jsonStr);
+      } catch (_) {
+        // Repair trailing commas
+        let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
+        try {
+          parsedData = JSON.parse(repaired);
+        } catch (_) {
+          // Try closing truncated JSON
+          let openBraces = 0, openBrackets = 0, inStr = false, esc = false;
+          for (const ch of repaired) {
+            if (esc) { esc = false; continue; }
+            if (ch === "\\") { esc = true; continue; }
+            if (ch === '"') { inStr = !inStr; continue; }
+            if (inStr) continue;
+            if (ch === "{") openBraces++;
+            else if (ch === "}") openBraces--;
+            else if (ch === "[") openBrackets++;
+            else if (ch === "]") openBrackets--;
+          }
+          if (openBraces > 0 || openBrackets > 0) {
+            repaired = repaired.replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "");
+            for (let i = 0; i < openBrackets; i++) repaired += "]";
+            for (let i = 0; i < openBraces; i++) repaired += "}";
+            repaired = repaired.replace(/,\s*([\]}])/g, "$1");
+          }
+          parsedData = JSON.parse(repaired);
+        }
+      }
     } catch {
-      console.error("Failed to parse AI response:", content);
+      console.error("Failed to parse AI response:", content.substring(0, 500));
       const errorMsg = language === 'en'
         ? "Could not process AI response"
         : "Não foi possível processar a resposta da IA";
