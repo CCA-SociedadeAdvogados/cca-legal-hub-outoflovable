@@ -18,7 +18,7 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
     const { organizations } = useOrganizations();
     const { nomeCompleto, photoUrl, iniciais, isSSO } = useAzureProfile();
 
-    const organization = organizations?.find(org => org.id === organizationId);
+    const organization = organizations?.find((org) => org.id === organizationId);
 
     if (!organization) {
       return (
@@ -30,9 +30,7 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t('home.organizationNotFound')}
-            </p>
+            <p className="text-sm text-muted-foreground">{t('home.organizationNotFound')}</p>
           </CardContent>
         </Card>
       );
@@ -41,13 +39,20 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
     const showLogo = config.showLogo !== false;
     const showLawyer = config.showLawyer !== false;
 
-    // Para CCA SSO users, mostrar dados do utilizador autenticado como advogado
-    const lawyerName = isSSO
-      ? nomeCompleto
-      : (organization as unknown as { lawyer_name?: string }).lawyer_name;
-    const lawyerPhoto = isSSO
-      ? photoUrl
-      : (organization as unknown as { lawyer_photo_url?: string }).lawyer_photo_url;
+    // Para a org CCA (C.0001) nunca mostrar advogado — é a própria firma
+    const isCCAClientOrg = organization?.client_code === 'C.0001';
+
+    // Para CCA SSO users a ver clientes externos, mostrar dados do utilizador autenticado como advogado
+    const lawyerName = isCCAClientOrg
+      ? null
+      : isSSO
+        ? nomeCompleto
+        : (organization as unknown as { lawyer_name?: string }).lawyer_name;
+    const lawyerPhoto = isCCAClientOrg
+      ? null
+      : isSSO
+        ? photoUrl
+        : (organization as unknown as { lawyer_photo_url?: string }).lawyer_photo_url;
 
     return (
       <Card ref={ref}>
@@ -69,19 +74,14 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
             )}
             <div>
               <h3 className="font-semibold text-lg">{organization.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('home.organization')}
-              </p>
+              <p className="text-sm text-muted-foreground">{t('home.organization')}</p>
             </div>
           </div>
 
           {showLawyer && lawyerName && (
             <div className="flex items-center gap-3 pt-2 border-t">
               <Avatar className="h-10 w-10">
-                <AvatarImage
-                  src={lawyerPhoto || undefined}
-                  alt={lawyerName}
-                />
+                <AvatarImage src={lawyerPhoto || undefined} alt={lawyerName} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs">
                   {isSSO ? iniciais : <User className="h-5 w-5" />}
                 </AvatarFallback>
@@ -95,7 +95,7 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
         </CardContent>
       </Card>
     );
-  }
+  },
 );
 
 export default OrganizationCard;
