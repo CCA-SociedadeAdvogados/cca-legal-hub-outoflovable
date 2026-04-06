@@ -16,15 +16,20 @@
 -- ============================================================
 
 -- ── 1. Inserir no catálogo legacy ────────────────────────────────
-INSERT INTO public.organizations_legacy (client_code, name, "group", is_active)
-VALUES ('C.0001', 'CCA - Sociedade de Advogados', NULL, true)
-ON CONFLICT (client_code) DO NOTHING;
+-- organizations_legacy.id é integer sem default — calcular o próximo
+INSERT INTO public.organizations_legacy (id, client_code, name, is_active)
+SELECT COALESCE(MAX(id), 0) + 1, 'C.0001', 'CCA - Sociedade de Advogados', true
+FROM public.organizations_legacy
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.organizations_legacy WHERE client_code = 'C.0001'
+);
 
 -- ── 2. Criar a organização-cliente ───────────────────────────────
-INSERT INTO public.organizations (name, slug, client_code, org_type, is_active)
+-- A tabela organizations não tem coluna slug — apenas name, client_code, org_type
+INSERT INTO public.organizations (id, name, client_code, org_type, is_active)
 SELECT
+  gen_random_uuid(),
   'CCA - Sociedade de Advogados',
-  'cca-sociedade-advogados',
   'C.0001',
   'client',
   true
@@ -32,24 +37,6 @@ WHERE NOT EXISTS (
   SELECT 1 FROM public.organizations
   WHERE client_code = 'C.0001' AND org_type = 'client'
 );
-
--- Garantir slug único (caso já exista slug 'cca-sociedade-advogados' por outro motivo)
-DO $$
-DECLARE
-  v_count int;
-BEGIN
-  SELECT count(*) INTO v_count
-  FROM public.organizations
-  WHERE slug = 'cca-sociedade-advogados'
-    AND client_code <> 'C.0001';
-
-  IF v_count > 0 THEN
-    UPDATE public.organizations
-    SET slug = 'cca-sociedade-advogados-c0001'
-    WHERE client_code = 'C.0001' AND org_type = 'client';
-  END IF;
-END;
-$$;
 
 -- ── 3. Copiar membros da org CCA (C.0000) para C.0001 ───────────
 -- Todos os utilizadores internos CCA ficam automaticamente com acesso
