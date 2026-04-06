@@ -57,18 +57,67 @@ async function callClaude(
 
 function parseJSONResponse(content: string): unknown {
   let jsonStr = content.trim();
+
+  // Strip code-block wrappers
   const codeBlockMatch = jsonStr.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   if (codeBlockMatch) {
     jsonStr = codeBlockMatch[1].trim();
   } else {
     jsonStr = jsonStr.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "").trim();
   }
+
+  // Extract outermost braces
   const firstBrace = jsonStr.indexOf("{");
   const lastBrace = jsonStr.lastIndexOf("}");
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
     jsonStr = jsonStr.slice(firstBrace, lastBrace + 1);
   }
-  return JSON.parse(jsonStr);
+
+  // First attempt: direct parse
+  try {
+    return JSON.parse(jsonStr);
+  } catch (_firstErr) {
+    // noop — try repairs below
+  }
+
+  // Repair: remove trailing commas before } or ]
+  let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
+
+  try {
+    return JSON.parse(repaired);
+  } catch (_secondErr) {
+    // noop
+  }
+
+  // Repair: if JSON was truncated (no closing }), try to close it
+  // Count unmatched braces/brackets and close them
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+  let escape = false;
+  for (const ch of repaired) {
+    if (escape) { escape = false; continue; }
+    if (ch === "\\") { escape = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+    if (ch === "{") openBraces++;
+    else if (ch === "}") openBraces--;
+    else if (ch === "[") openBrackets++;
+    else if (ch === "]") openBrackets--;
+  }
+
+  // Remove any trailing incomplete key-value (after last comma)
+  if (openBraces > 0 || openBrackets > 0) {
+    // Strip incomplete trailing value after last comma
+    repaired = repaired.replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "");
+    // Close open brackets/braces
+    for (let i = 0; i < openBrackets; i++) repaired += "]";
+    for (let i = 0; i < openBraces; i++) repaired += "}";
+    // Remove trailing commas again
+    repaired = repaired.replace(/,\s*([\]}])/g, "$1");
+  }
+
+  return JSON.parse(repaired);
 }
 
 Deno.serve(async (req) => {
@@ -274,14 +323,18 @@ INSTRUÇÕES IMPORTANTES:
       : `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`;
 
     console.log(`[parse-contract] Calling Claude Haiku...`);
-    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 4096);
+    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 8192);
 
     // ── 3. Parsear resposta JSON ───────────────────────────────────────────
     let parsedData;
     try {
       parsedData = parseJSONResponse(content);
-    } catch {
-      console.error("[parse-contract] Failed to parse AI response as JSON:", content.substring(0, 500));
+    } catch (parseErr: any) {
+      console.error("[parse-contract] Failed to parse AI response as JSON.");
+      console.error("[parse-contract] Parse error:", parseErr.message);
+      console.error("[parse-contract] Response length:", content.length, "chars");
+      console.error("[parse-contract] Response start:", content.substring(0, 300));
+      console.error("[parse-contract] Response end:", content.substring(content.length - 300));
       throw new Error("Não foi possível processar a resposta da IA");
     }
 
