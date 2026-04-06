@@ -20,20 +20,24 @@ function corsHeaders(req: Request): Record<string, string> {
   };
 }
 
-const SYSTEM_PROMPT = `You are a document date extractor. Your ONLY task is to find the emission/issue date of the document provided.
+const SYSTEM_PROMPT = `You are a document date extractor. Your task is to find the emission/issue date AND the validity/expiry date of the document provided.
 
 Rules:
-- Look for labels such as: "Data:", "Emitido em:", "Date:", "Issued:", "Fecha:", "Datum:", "Date d'émission:", "Data di emissione:", etc.
-- For Portuguese government certificates, the emission date is usually near the top of the document.
-- Return the date in ISO format YYYY-MM-DD regardless of the original format.
-- If you find multiple dates, return the emission/issue date (not an expiry/validity date).
+- Look for emission labels: "Data:", "Emitido em:", "Date:", "Issued:", "Data de emissão:", etc.
+- Look for validity/expiry labels: "Válido até:", "Válida até:", "Data de validade:", "Expiry:", "Valid until:", "Válido por:", etc.
+- For Portuguese government certificates (Certidão Permanente, RCBE, etc.), the emission date is usually near the top. The validity date may appear explicitly or be stated as a period (e.g. "válida por 12 meses").
+- If a validity period is stated (e.g. "válida por 12 meses" or "valid for 1 year"), calculate the absolute validity date from the emission date.
+- Return all dates in ISO format YYYY-MM-DD regardless of the original format.
+- If you find multiple dates, distinguish emission from validity carefully.
 - Confidence "high" = date label is explicit. "low" = inferred from context. "none" = no date found.
 - Respond ONLY with valid JSON. No explanation, no markdown.
 
-JSON format:
-{"emission_date": "YYYY-MM-DD", "confidence": "high"}
-or
-{"emission_date": null, "confidence": "none"}`;
+JSON format (include validity_date when found):
+{"emission_date": "YYYY-MM-DD", "validity_date": "YYYY-MM-DD", "confidence": "high"}
+or if only emission date found:
+{"emission_date": "YYYY-MM-DD", "validity_date": null, "confidence": "high"}
+or if nothing found:
+{"emission_date": null, "validity_date": null, "confidence": "none"}`;
 
 serve(async (req) => {
   console.log("[scan-document-date] handler invoked, method:", req.method);
@@ -117,7 +121,7 @@ serve(async (req) => {
               role: "user",
               content: [
                 contentBlock,
-                { type: "text", text: "Extract the emission/issue date from this document." },
+                { type: "text", text: "Extract the emission/issue date and validity/expiry date from this document. If the document states a validity period (e.g. 'válida por 12 meses'), calculate the absolute expiry date from the emission date." },
               ],
             },
           ],
