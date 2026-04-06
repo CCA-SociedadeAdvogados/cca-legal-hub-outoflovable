@@ -372,11 +372,11 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     );
   }
 
-  // Point to the matching worker version on esm.sh (required by pdfjs-dist)
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs?external=canvas";
+  // Disable worker — Deno Edge Runtime does not support Web Workers.
+  // This avoids the "Setting up fake worker failed: Module not found" error.
+  pdfjs.GlobalWorkerOptions.workerSrc = "";
 
-  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
+  const pdf = await pdfjs.getDocument({ data: fileBytes, disableWorker: true }).promise;
   const pages: string[] = [];
 
   for (let i = 1; i <= pdf.numPages; i++) {
