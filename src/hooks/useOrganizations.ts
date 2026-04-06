@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 // ─── helpers de mapeamento (module-level, reutilizados) ──────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCCARow(row: any): CCAClientOption {
   return {
     organization_id: row.organization_id ?? null,
@@ -50,7 +51,10 @@ const CCA_SELECT_FIELDS = `
  * @param platformOnly se true (default), mostra apenas clientes activados na plataforma.
  *                     Usar false para mostrar todos os clientes do catálogo legacy.
  */
-export async function searchCCAClients(term: string, platformOnly = true): Promise<CCAClientOption[]> {
+export async function searchCCAClients(
+  term: string,
+  platformOnly = true,
+): Promise<CCAClientOption[]> {
   const clean = term.trim();
   if (!clean || clean.length < 2) return [];
 
@@ -59,9 +63,9 @@ export async function searchCCAClients(term: string, platformOnly = true): Promi
     .select(CCA_SELECT_FIELDS)
     .or(
       `legacy_client_name.ilike.%${clean}%,` +
-      `client_code.ilike.%${clean}%,` +
-      `responsible.ilike.%${clean}%,` +
-      `group_code.ilike.%${clean}%`,
+        `client_code.ilike.%${clean}%,` +
+        `responsible.ilike.%${clean}%,` +
+        `group_code.ilike.%${clean}%`,
     )
     .order('legacy_client_name', { ascending: true })
     .limit(50);
@@ -151,10 +155,7 @@ export function useOrganizations() {
     queryFn: async () => {
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('name');
+      const { data, error } = await supabase.from('organizations').select('*').order('name');
 
       if (error) throw error;
       return data as Organization[];
@@ -207,6 +208,50 @@ export function useOrganizations() {
     staleTime: 5 * 60 * 1000, // autorização CCA raramente muda
   });
 
+  // Org-cliente CCA por defeito (C.0001) — usada para pré-seleccionar
+  // o cliente em visualização quando o utilizador CCA não tem nenhum guardado.
+  // Tenta RPC primeiro; se não existir, consulta a tabela directamente.
+  // Fallback final: a org identitária (C.0000) para que nunca fique sem org.
+  const { data: ccaDefaultClientOrg } = useQuery({
+    queryKey: ['cca-default-client-org'],
+    queryFn: async () => {
+      // 1. Tentar via RPC (existe após migration 20260406000001)
+      const { data: orgId, error: rpcError } = await supabase.rpc(
+        'fn_get_cca_default_client_org_id',
+      );
+
+      if (!rpcError && orgId) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('id, name, client_code')
+          .eq('id', orgId)
+          .maybeSingle();
+        if (org) return org;
+      }
+
+      // 2. Fallback: consultar directamente por C.0001
+      const { data: directOrg } = await supabase
+        .from('organizations')
+        .select('id, name, client_code')
+        .eq('client_code', 'C.0001')
+        .eq('org_type', 'client')
+        .maybeSingle();
+      if (directOrg) return directOrg;
+
+      // 3. Fallback final: usar a org identitária (C.0000 / currentOrganization)
+      if (currentOrganization) {
+        return {
+          id: currentOrganization.id,
+          name: currentOrganization.name,
+          client_code: currentOrganization.client_code,
+        };
+      }
+
+      return null;
+    },
+    enabled: !!user && isCCAInternalAuthorized && !ccaAuthLoading,
+    staleTime: 10 * 60 * 1000,
+  });
 
   const { data: userMemberships, isLoading: membershipsLoading } = useQuery({
     queryKey: ['user-memberships', user?.id],
@@ -228,13 +273,11 @@ export function useOrganizations() {
           .maybeSingle();
 
         if (profile?.current_organization_id) {
-          await supabase
-            .from('organization_members')
-            .insert({
-              organization_id: profile.current_organization_id,
-              user_id: user.id,
-              role: 'editor',
-            });
+          await supabase.from('organization_members').insert({
+            organization_id: profile.current_organization_id,
+            user_id: user.id,
+            role: 'editor',
+          });
 
           const { data: newData } = await supabase
             .from('organization_members')
@@ -286,14 +329,23 @@ export function useOrganizations() {
   useEffect(() => {
     if (!user) return;
 
-    // Utilizadores CCA gerem a sua selecção através do selector de pesquisa.
-    // O cliente escolhido é persistido em localStorage e restaurado no mount.
-    if (isCCAInternalAuthorized) return;
-
     // Aguardar que a verificação CCA termine antes de qualquer reset.
     // Sem isto, o clearCliente() seria chamado durante o loading inicial,
     // destruindo o cliente restaurado do localStorage para utilizadores CCA.
     if (ccaAuthLoading) return;
+
+    // Utilizadores CCA: se não têm nenhum cliente guardado em localStorage,
+    // pré-seleccionar o cliente CCA por defeito (C.0001).
+    if (isCCAInternalAuthorized) {
+      if (!cliente && ccaDefaultClientOrg) {
+        setCliente({
+          organizationId: ccaDefaultClientOrg.id,
+          nome: ccaDefaultClientOrg.name,
+          clientCode: ccaDefaultClientOrg.client_code || 'C.0001',
+        });
+      }
+      return;
+    }
 
     // Utilizadores cliente: sincronizar com a organização actual do perfil.
     if (currentOrganization) {
@@ -307,7 +359,16 @@ export function useOrganizations() {
     } else {
       clearCliente();
     }
-  }, [user, isCCAInternalAuthorized, ccaAuthLoading, cliente, currentOrganization, setCliente, clearCliente]);
+  }, [
+    user,
+    isCCAInternalAuthorized,
+    ccaAuthLoading,
+    cliente,
+    ccaDefaultClientOrg,
+    currentOrganization,
+    setCliente,
+    clearCliente,
+  ]);
 
   const createOrganization = useMutation({
     mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
@@ -329,7 +390,7 @@ export function useOrganizations() {
       queryClient.invalidateQueries({ queryKey: ['cca-clients'] });
       toast.success('Organização criada com sucesso!');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Error creating organization:', error);
       toast.error(error.message || 'Erro ao criar organização');
     },
@@ -410,7 +471,7 @@ export function useOrganizations() {
 
       toast.success('Organização alterada');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Erro ao mudar organização');
     },
   });
@@ -488,6 +549,7 @@ export function useOrganizationMembers(organizationId: string | undefined) {
       };
 
       const { data: profilesData } = (await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from('profiles_safe' as any)
         .select(
           'id, nome_completo, email, avatar_url, departamento, auth_method, sso_provider, login_attempts, locked_until, last_login_at, two_factor_enabled',
@@ -514,16 +576,16 @@ export function useOrganizationMembers(organizationId: string | undefined) {
 
       if (profileError) throw profileError;
       if (!profile) {
-        throw new Error('Este utilizador não pertence à sua organização ou não tem conta registada.');
+        throw new Error(
+          'Este utilizador não pertence à sua organização ou não tem conta registada.',
+        );
       }
 
-      const { error } = await supabase
-        .from('organization_members')
-        .insert({
-          organization_id: organizationId,
-          user_id: profile.id,
-          role,
-        });
+      const { error } = await supabase.from('organization_members').insert({
+        organization_id: organizationId,
+        user_id: profile.id,
+        role,
+      });
 
       if (error) throw error;
 
@@ -538,13 +600,19 @@ export function useOrganizationMembers(organizationId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['organization-members', organizationId] });
       toast.success('Membro adicionado com sucesso!');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Erro ao adicionar membro');
     },
   });
 
   const updateMemberRole = useMutation({
-    mutationFn: async ({ memberId, role }: { memberId: string; role: 'admin' | 'editor' | 'viewer' }) => {
+    mutationFn: async ({
+      memberId,
+      role,
+    }: {
+      memberId: string;
+      role: 'admin' | 'editor' | 'viewer';
+    }) => {
       const { error } = await supabase
         .from('organization_members')
         .update({ role })
@@ -556,17 +624,14 @@ export function useOrganizationMembers(organizationId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['organization-members', organizationId] });
       toast.success('Permissão actualizada');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Erro ao actualizar permissão');
     },
   });
 
   const removeMember = useMutation({
     mutationFn: async (memberId: string) => {
-      const { error } = await supabase
-        .from('organization_members')
-        .delete()
-        .eq('id', memberId);
+      const { error } = await supabase.from('organization_members').delete().eq('id', memberId);
 
       if (error) throw error;
     },
@@ -574,7 +639,7 @@ export function useOrganizationMembers(organizationId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: ['organization-members', organizationId] });
       toast.success('Membro removido');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Erro ao remover membro');
     },
   });

@@ -1126,6 +1126,48 @@ Deno.serve(async (req) => {
         console.log(`[SSO-CCA] Successfully assigned user to CCA_Teste with role: ${assignedRole}`);
       }
 
+      // ── Step 4b: Assign user to CCA default client org (C.0001) ────────
+      // C.0001 is the CCA client org — all CCA SSO users get access so they
+      // land on the CCA client view by default after login.
+      const { data: ccaClientOrgRow } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("client_code", "C.0001")
+        .eq("org_type", "client")
+        .maybeSingle();
+
+      if (ccaClientOrgRow?.id) {
+        const ccaClientOrgId = ccaClientOrgRow.id;
+        console.log(`[SSO-CCA] Assigning user to CCA client org C.0001 (${ccaClientOrgId}) with role: ${assignedRole}`);
+
+        const { error: clientAssignError } = await supabase
+          .rpc("assign_sso_user_to_organization", {
+            p_user_id: userId,
+            p_organization_id: ccaClientOrgId,
+            p_role: assignedRole,
+          });
+
+        if (clientAssignError) {
+          console.error(`[SSO-CCA] RPC assign to C.0001 failed:`, clientAssignError.message);
+          // Fallback: direct upsert
+          const { error: directErr } = await supabase
+            .from("organization_members")
+            .upsert(
+              { organization_id: ccaClientOrgId, user_id: userId, role: assignedRole },
+              { onConflict: "organization_id,user_id" }
+            );
+          if (directErr) {
+            console.error(`[SSO-CCA] Direct INSERT fallback for C.0001 also failed:`, directErr.message);
+          } else {
+            console.log(`[SSO-CCA] Direct INSERT fallback for C.0001 succeeded`);
+          }
+        } else {
+          console.log(`[SSO-CCA] Successfully assigned user to CCA client org C.0001`);
+        }
+      } else {
+        console.warn(`[SSO-CCA] CCA client org C.0001 not found — skipping default client assignment`);
+      }
+
       // ── Step 5: Update profile with org assignment ─────────────────────
       // Only set current_organization_id when NULL (first SSO login).
       // Per CLAUDE.md rule #13: NEVER overwrite current_organization_id for
