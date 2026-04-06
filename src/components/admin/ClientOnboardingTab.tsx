@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import type { CreateUserResponse } from '@/hooks/usePlatformAdmin';
@@ -23,12 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
 import {
   UserPlus,
@@ -96,27 +92,33 @@ function parseCSV(raw: string): BulkRow[] {
   const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
   const idx = (col: string) => header.indexOf(col);
 
-  return lines.slice(1).map((line, i) => {
-    // Handle quoted fields with commas inside
-    const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g)?.map((c) => c.replace(/^"|"$/g, '').trim()) ?? line.split(',').map((c) => c.trim());
-    const get = (col: string) => cols[idx(col)] ?? '';
+  return lines
+    .slice(1)
+    .map((line, i) => {
+      // Handle quoted fields with commas inside
+      const cols =
+        line.match(/(".*?"|[^,]+)(?=,|$)/g)?.map((c) => c.replace(/^"|"$/g, '').trim()) ??
+        line.split(',').map((c) => c.trim());
+      const get = (col: string) => cols[idx(col)] ?? '';
 
-    return {
-      linha: i + 2,
-      email: get('email').toLowerCase(),
-      nome_completo: get('nome_completo') || get('nome') || get('name'),
-      role: (['owner', 'admin', 'editor', 'viewer'].includes(get('role'))
-        ? get('role')
-        : 'viewer') as AppRole,
-      departamento: get('departamento') as Departamento | undefined,
-      org_ref: get('jvris_id') || get('org_ref') || get('organizacao') || get('organization'),
-    };
-  }).filter((r) => r.email && r.nome_completo);
+      return {
+        linha: i + 2,
+        email: get('email').toLowerCase(),
+        nome_completo: get('nome_completo') || get('nome') || get('name'),
+        role: (['owner', 'admin', 'editor', 'viewer'].includes(get('role'))
+          ? get('role')
+          : 'viewer') as AppRole,
+        departamento: get('departamento') as Departamento | undefined,
+        org_ref: get('jvris_id') || get('org_ref') || get('organizacao') || get('organization'),
+      };
+    })
+    .filter((r) => r.email && r.nome_completo);
 }
 
 function downloadCSV(filename: string, rows: string[][]): void {
   const bom = '\uFEFF';
-  const content = bom + rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
+  const content =
+    bom + rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -135,10 +137,44 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
   const [departamento, setDepartamento] = useState<Departamento | ''>('');
   const [orgSearch, setOrgSearch] = useState('');
   const [selectedOrg, setSelectedOrg] = useState<OrgOption | null>(null);
+  const [selectedLawyerId, setSelectedLawyerId] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState<CreateUserResponse | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Buscar advogados CCA (membros da organização CCA) para o selector
+  const { data: ccaLawyers } = useQuery({
+    queryKey: ['cca-lawyers-list'],
+    queryFn: async () => {
+      const { data: ccaOrg } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('client_code', 'C.0000')
+        .maybeSingle();
+
+      if (!ccaOrg) return [];
+
+      const { data: members } = await supabase
+        .from('organization_members')
+        .select('user_id')
+        .eq('organization_id', ccaOrg.id);
+
+      if (!members || members.length === 0) return [];
+
+      const userIds = members.map((m) => m.user_id);
+      type ProfileRow = { id: string; nome_completo: string | null; email: string | null };
+      const { data: profiles } = (await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('profiles_safe' as any)
+        .select('id, nome_completo, email')
+        .in('id', userIds)
+        .order('nome_completo')) as { data: ProfileRow[] | null };
+
+      return (profiles ?? []).filter((p) => p.nome_completo);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const filteredOrgs = organizations.filter((o) => {
     const q = orgSearch.toLowerCase();
@@ -158,7 +194,11 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
 
   const handleSubmit = async () => {
     if (!email.trim() || !nome.trim() || !selectedOrg) {
-      toast({ title: 'Campos obrigatórios', description: 'Email, nome e organização são obrigatórios.', variant: 'destructive' });
+      toast({
+        title: 'Campos obrigatórios',
+        description: 'Email, nome e organização são obrigatórios.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -178,22 +218,40 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
       if (error) {
         let msg = error.message;
         try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const body = await (error as any).context?.json?.();
           if (body?.error) msg = body.error;
-        } catch { /* error context extraction is best-effort */ }
+        } catch {
+          /* error context extraction is best-effort */
+        }
         throw new Error(msg);
       }
       if (data?.error) throw new Error(data.error);
 
+      // Associar advogado responsável à organização se seleccionado
+      if (selectedLawyerId && selectedOrg) {
+        await supabase
+          .from('organizations')
+          .update({ lawyer_user_id: selectedLawyerId } as Record<string, string>)
+          .eq('id', selectedOrg.id);
+      }
+
       if (data.existingUser) {
-        toast({ title: 'Utilizador adicionado', description: 'O utilizador já existia e foi adicionado à organização.' });
+        toast({
+          title: 'Utilizador adicionado',
+          description: 'O utilizador já existia e foi adicionado à organização.',
+        });
         resetForm();
       } else {
         setCredentials(data as CreateUserResponse);
         resetForm();
       }
     } catch (err) {
-      toast({ title: 'Erro ao criar utilizador', description: err instanceof Error ? err.message : 'Erro desconhecido', variant: 'destructive' });
+      toast({
+        title: 'Erro ao criar utilizador',
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -206,6 +264,7 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
     setDepartamento('');
     setOrgSearch('');
     setSelectedOrg(null);
+    setSelectedLawyerId('');
     setPassword('');
   };
 
@@ -225,7 +284,14 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
                   </Badge>
                 )}
               </div>
-              <Button variant="ghost" size="icon" onClick={() => { setSelectedOrg(null); setOrgSearch(''); }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setSelectedOrg(null);
+                  setOrgSearch('');
+                }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -243,18 +309,31 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
               {orgSearch && (
                 <div className="border rounded-md max-h-48 overflow-y-auto divide-y">
                   {filteredOrgs.length === 0 ? (
-                    <p className="p-3 text-sm text-muted-foreground text-center">Nenhuma organização encontrada</p>
+                    <p className="p-3 text-sm text-muted-foreground text-center">
+                      Nenhuma organização encontrada
+                    </p>
                   ) : (
                     filteredOrgs.slice(0, 8).map((o) => (
                       <button
                         key={o.id}
                         className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex items-center justify-between"
-                        onClick={() => { setSelectedOrg(o); setOrgSearch(''); }}
+                        onClick={() => {
+                          setSelectedOrg(o);
+                          setOrgSearch('');
+                        }}
                       >
                         <span className="font-medium text-sm">{o.name}</span>
                         <div className="flex gap-1">
-                          {o.jvris_id && <Badge variant="secondary" className="text-xs">JVRIS: {o.jvris_id}</Badge>}
-                          {o.client_code && <Badge variant="outline" className="text-xs">{o.client_code}</Badge>}
+                          {o.jvris_id && (
+                            <Badge variant="secondary" className="text-xs">
+                              JVRIS: {o.jvris_id}
+                            </Badge>
+                          )}
+                          {o.client_code && (
+                            <Badge variant="outline" className="text-xs">
+                              {o.client_code}
+                            </Badge>
+                          )}
                         </div>
                       </button>
                     ))
@@ -297,7 +376,9 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
             </SelectTrigger>
             <SelectContent>
               {(Object.entries(ROLE_LABELS) as [AppRole, string][]).map(([v, l]) => (
-                <SelectItem key={v} value={v}>{l}</SelectItem>
+                <SelectItem key={v} value={v}>
+                  {l}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -312,10 +393,34 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
             </SelectTrigger>
             <SelectContent>
               {(Object.entries(DEPARTAMENTO_LABELS) as [Departamento, string][]).map(([v, l]) => (
-                <SelectItem key={v} value={v}>{l}</SelectItem>
+                <SelectItem key={v} value={v}>
+                  {l}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Advogado Responsável */}
+        <div className="md:col-span-2 grid gap-2">
+          <Label>Advogado Responsável</Label>
+          <Select value={selectedLawyerId} onValueChange={setSelectedLawyerId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar advogado (opcional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {ccaLawyers?.map((lawyer) => (
+                <SelectItem key={lawyer.id} value={lawyer.id}>
+                  {lawyer.nome_completo}
+                  {lawyer.email ? ` (${lawyer.email})` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Advogado CCA responsável por este cliente. Será apresentado na área de início do
+            cliente.
+          </p>
         </div>
 
         {/* Palavra-passe opcional */}
@@ -337,9 +442,14 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
       <div className="flex justify-end pt-2">
         <Button onClick={handleSubmit} disabled={loading} className="min-w-[160px]">
           {loading ? (
-            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />A criar...</>
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />A criar...
+            </>
           ) : (
-            <><UserPlus className="mr-2 h-4 w-4" />Criar Utilizador</>
+            <>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Criar Utilizador
+            </>
           )}
         </Button>
       </div>
@@ -356,12 +466,26 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
           {credentials && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Copie as credenciais e envie ao cliente. A palavra-passe não voltará a ser apresentada.
+                Copie as credenciais e envie ao cliente. A palavra-passe não voltará a ser
+                apresentada.
               </p>
               <div className="space-y-3 p-4 bg-muted/40 rounded-lg">
-                <CredentialRow label="Email" value={credentials.credentials?.email ?? credentials.user.email} field="email" copiedField={copiedField} onCopy={handleCopy} />
+                <CredentialRow
+                  label="Email"
+                  value={credentials.credentials?.email ?? credentials.user.email}
+                  field="email"
+                  copiedField={copiedField}
+                  onCopy={handleCopy}
+                />
                 {credentials.credentials?.password && (
-                  <CredentialRow label="Palavra-passe" value={credentials.credentials.password} field="password" copiedField={copiedField} onCopy={handleCopy} mono />
+                  <CredentialRow
+                    label="Palavra-passe"
+                    value={credentials.credentials.password}
+                    field="password"
+                    copiedField={copiedField}
+                    onCopy={handleCopy}
+                    mono
+                  />
                 )}
               </div>
               <Button
@@ -379,7 +503,9 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
                 <Download className="mr-2 h-4 w-4" />
                 Descarregar credenciais (.csv)
               </Button>
-              <Button className="w-full" onClick={() => setCredentials(null)}>Fechar</Button>
+              <Button className="w-full" onClick={() => setCredentials(null)}>
+                Fechar
+              </Button>
             </div>
           )}
         </DialogContent>
@@ -403,13 +529,17 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
       (o) =>
         o.jvris_id?.toLowerCase() === ref.toLowerCase() ||
         o.client_code?.toLowerCase() === ref.toLowerCase() ||
-        (o.name ?? '').toLowerCase().includes(ref.toLowerCase())
+        (o.name ?? '').toLowerCase().includes(ref.toLowerCase()),
     );
 
   const handleParse = () => {
     const parsed = parseCSV(csvText);
     if (parsed.length === 0) {
-      toast({ title: 'CSV inválido', description: 'Nenhuma linha válida encontrada. Verifique o formato.', variant: 'destructive' });
+      toast({
+        title: 'CSV inválido',
+        description: 'Nenhuma linha válida encontrada. Verifique o formato.',
+        variant: 'destructive',
+      });
       return;
     }
     setRows(
@@ -417,7 +547,7 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
         ...r,
         status: 'pending',
         org_name: orgByJvris(r.org_ref)?.name,
-      }))
+      })),
     );
     setParsed(true);
     setDone(false);
@@ -449,9 +579,12 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
         if (error) {
           let msg = error.message;
           try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const body = await (error as any).context?.json?.();
             if (body?.error) msg = body.error;
-          } catch {}
+          } catch {
+            /* best-effort */
+          }
           throw new Error(msg);
         }
         if (data?.error) throw new Error(data.error);
@@ -463,7 +596,11 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
           credentials: data.credentials,
         };
       } catch (err) {
-        updated[i] = { ...row, status: 'error', erro: err instanceof Error ? err.message : 'Erro desconhecido' };
+        updated[i] = {
+          ...row,
+          status: 'error',
+          erro: err instanceof Error ? err.message : 'Erro desconhecido',
+        };
       }
 
       setRows([...updated]);
@@ -471,11 +608,25 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
 
     setRunning(false);
     setDone(true);
-    toast({ title: 'Processamento concluído', description: `${updated.filter((r) => r.status === 'ok').length} criados, ${updated.filter((r) => r.status === 'error').length} erros.` });
+    toast({
+      title: 'Processamento concluído',
+      description: `${updated.filter((r) => r.status === 'ok').length} criados, ${updated.filter((r) => r.status === 'error').length} erros.`,
+    });
   };
 
   const handleDownloadResults = () => {
-    const header = ['linha', 'email', 'nome_completo', 'role', 'departamento', 'org_ref', 'org_name', 'estado', 'password_gerada', 'erro'];
+    const header = [
+      'linha',
+      'email',
+      'nome_completo',
+      'role',
+      'departamento',
+      'org_ref',
+      'org_name',
+      'estado',
+      'password_gerada',
+      'erro',
+    ];
     const dataRows = rows.map((r) => [
       String(r.linha),
       r.email,
@@ -488,7 +639,10 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
       r.credentials?.password ?? '',
       r.erro ?? '',
     ]);
-    downloadCSV(`onboarding_resultados_${new Date().toISOString().slice(0, 10)}.csv`, [header, ...dataRows]);
+    downloadCSV(`onboarding_resultados_${new Date().toISOString().slice(0, 10)}.csv`, [
+      header,
+      ...dataRows,
+    ]);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -529,20 +683,29 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
         <div className="flex-1">
           <p className="text-sm font-medium">Formato do CSV</p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Colunas obrigatórias: <code className="bg-muted px-1 rounded">email</code>, <code className="bg-muted px-1 rounded">nome_completo</code>, <code className="bg-muted px-1 rounded">role</code>, <code className="bg-muted px-1 rounded">jvris_id</code>. Opcional: <code className="bg-muted px-1 rounded">departamento</code>.
+            Colunas obrigatórias: <code className="bg-muted px-1 rounded">email</code>,{' '}
+            <code className="bg-muted px-1 rounded">nome_completo</code>,{' '}
+            <code className="bg-muted px-1 rounded">role</code>,{' '}
+            <code className="bg-muted px-1 rounded">jvris_id</code>. Opcional:{' '}
+            <code className="bg-muted px-1 rounded">departamento</code>.
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Roles válidos: <code className="bg-muted px-1 rounded">owner</code> · <code className="bg-muted px-1 rounded">admin</code> · <code className="bg-muted px-1 rounded">editor</code> · <code className="bg-muted px-1 rounded">viewer</code>
+            Roles válidos: <code className="bg-muted px-1 rounded">owner</code> ·{' '}
+            <code className="bg-muted px-1 rounded">admin</code> ·{' '}
+            <code className="bg-muted px-1 rounded">editor</code> ·{' '}
+            <code className="bg-muted px-1 rounded">viewer</code>
           </p>
         </div>
         <Button
           size="sm"
           variant="outline"
-          onClick={() => downloadCSV('template_onboarding.csv', [
-            ['email', 'nome_completo', 'role', 'departamento', 'jvris_id'],
-            ['joao.silva@empresa.pt', 'João Silva', 'editor', 'juridico', 'CL0042'],
-            ['maria.santos@empresa.pt', 'Maria Santos', 'viewer', 'financeiro', 'CL0042'],
-          ])}
+          onClick={() =>
+            downloadCSV('template_onboarding.csv', [
+              ['email', 'nome_completo', 'role', 'departamento', 'jvris_id'],
+              ['joao.silva@empresa.pt', 'João Silva', 'editor', 'juridico', 'CL0042'],
+              ['maria.santos@empresa.pt', 'Maria Santos', 'viewer', 'financeiro', 'CL0042'],
+            ])
+          }
         >
           <Download className="mr-2 h-3.5 w-3.5" />
           Template
@@ -558,13 +721,22 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
               Carregar ficheiro .csv
             </Button>
             <span className="text-sm text-muted-foreground">ou cole o conteúdo abaixo</span>
-            <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleFileUpload} />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
           </div>
           <textarea
             className="w-full min-h-[160px] rounded-md border bg-background px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring"
             placeholder={CSV_TEMPLATE}
             value={csvText}
-            onChange={(e) => { setCsvText(e.target.value); setRows([]); }}
+            onChange={(e) => {
+              setCsvText(e.target.value);
+              setRows([]);
+            }}
           />
           <div className="flex justify-end">
             <Button onClick={handleParse} disabled={!csvText.trim()}>
@@ -583,7 +755,9 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
               {done && (
                 <>
                   <Badge className="bg-green-100 text-green-700">{okCount} criados</Badge>
-                  {errCount > 0 && <Badge className="bg-red-100 text-red-700">{errCount} erros</Badge>}
+                  {errCount > 0 && (
+                    <Badge className="bg-red-100 text-red-700">{errCount} erros</Badge>
+                  )}
                 </>
               )}
             </div>
@@ -624,7 +798,9 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
                       <TableCell className="text-sm">{r.email}</TableCell>
                       <TableCell className="text-sm">{r.nome_completo}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="text-xs">{ROLE_LABELS[r.role]}</Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {ROLE_LABELS[r.role]}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
                         {orgFound ? (
@@ -638,7 +814,9 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
                       </TableCell>
                       <TableCell>
                         <Badge className={cn('text-xs', si.className)}>
-                          {r.status === 'running' && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+                          {r.status === 'running' && (
+                            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                          )}
                           {r.status === 'ok' && <CheckCircle2 className="mr-1 h-3 w-3" />}
                           {r.status === 'error' && <AlertCircle className="mr-1 h-3 w-3" />}
                           {si.label}
@@ -646,7 +824,8 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
                         {r.erro && <p className="text-xs text-destructive mt-1">{r.erro}</p>}
                       </TableCell>
                       <TableCell className="font-mono text-xs">
-                        {r.credentials?.password ?? (r.status === 'existing' ? '— já existia —' : '—')}
+                        {r.credentials?.password ??
+                          (r.status === 'existing' ? '— já existia —' : '—')}
                       </TableCell>
                     </TableRow>
                   );
@@ -659,9 +838,14 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
             <div className="flex justify-end">
               <Button onClick={handleRun} disabled={running} className="min-w-[180px]">
                 {running ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />A processar...</>
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />A processar...
+                  </>
                 ) : (
-                  <><UserPlus className="mr-2 h-4 w-4" />Criar {rows.length} utilizadores</>
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Criar {rows.length} utilizadores
+                  </>
                 )}
               </Button>
             </div>
@@ -695,8 +879,17 @@ function CredentialRow({
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className={cn('text-sm', mono && 'font-mono')}>{value}</p>
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => onCopy(value, field)}>
-        {copiedField === field ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        onClick={() => onCopy(value, field)}
+      >
+        {copiedField === field ? (
+          <Check className="h-3.5 w-3.5 text-green-500" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
       </Button>
     </div>
   );
@@ -713,7 +906,8 @@ export function ClientOnboardingTab({ organizations }: { organizations: OrgOptio
           Onboarding de Clientes
         </CardTitle>
         <CardDescription>
-          Crie utilizadores externos na plataforma. Os super admins CCA têm sempre visibilidade total sobre todos os dados.
+          Crie utilizadores externos na plataforma. Os super admins CCA têm sempre visibilidade
+          total sobre todos os dados.
         </CardDescription>
       </CardHeader>
       <CardContent>
