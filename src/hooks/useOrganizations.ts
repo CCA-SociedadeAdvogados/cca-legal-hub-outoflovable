@@ -210,22 +210,46 @@ export function useOrganizations() {
 
   // Org-cliente CCA por defeito (C.0001) — usada para pré-seleccionar
   // o cliente em visualização quando o utilizador CCA não tem nenhum guardado.
+  // Tenta RPC primeiro; se não existir, consulta a tabela directamente.
+  // Fallback final: a org identitária (C.0000) para que nunca fique sem org.
   const { data: ccaDefaultClientOrg } = useQuery({
     queryKey: ['cca-default-client-org'],
     queryFn: async () => {
-      const { data: orgId, error } = await supabase.rpc('fn_get_cca_default_client_org_id');
-      if (error || !orgId) return null;
+      // 1. Tentar via RPC (existe após migration 20260406000001)
+      const { data: orgId, error: rpcError } = await supabase.rpc(
+        'fn_get_cca_default_client_org_id',
+      );
 
-      const { data: org, error: orgError } = await supabase
+      if (!rpcError && orgId) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('id, name, client_code')
+          .eq('id', orgId)
+          .maybeSingle();
+        if (org) return org;
+      }
+
+      // 2. Fallback: consultar directamente por C.0001
+      const { data: directOrg } = await supabase
         .from('organizations')
         .select('id, name, client_code')
-        .eq('id', orgId)
+        .eq('client_code', 'C.0001')
+        .eq('org_type', 'client')
         .maybeSingle();
+      if (directOrg) return directOrg;
 
-      if (orgError || !org) return null;
-      return org;
+      // 3. Fallback final: usar a org identitária (C.0000 / currentOrganization)
+      if (currentOrganization) {
+        return {
+          id: currentOrganization.id,
+          name: currentOrganization.name,
+          client_code: currentOrganization.client_code,
+        };
+      }
+
+      return null;
     },
-    enabled: !!user && isCCAInternalAuthorized,
+    enabled: !!user && isCCAInternalAuthorized && !ccaAuthLoading,
     staleTime: 10 * 60 * 1000,
   });
 
