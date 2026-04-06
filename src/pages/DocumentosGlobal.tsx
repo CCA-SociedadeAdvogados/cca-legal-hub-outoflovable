@@ -19,21 +19,23 @@ export default function DocumentosGlobal() {
 
   // Org being viewed (client or own org for external users)
   const effectiveOrgId =
-    viewingOrganizationId ||
-    (isCCAInternalAuthorized ? null : currentOrganization?.id) ||
-    null;
+    viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
-  // Check if the viewed client org has been provisioned (has its own sharepoint_config).
-  // provision-client-sharepoint creates a per-client config with root_folder_path = /Clientes/{code} - {name}
+  // Check if the viewed client org has a sharepoint_config record.
   const { data: clientConfig, isLoading: isLoadingClientConfig } = useSharePointConfig(
     effectiveOrgId ?? undefined,
   );
-  const clientIsProvisioned = !!clientConfig;
+  // Config record exists in DB (may have been saved by admin without provisioning folders)
+  const hasSharePointConfig = !!clientConfig;
+  // Fully provisioned: provision-client-sharepoint sets root_folder_path to /Clientes/{code} - {name}.
+  // A root_folder_path of "/" means admin saved config but folders were never created.
+  const isFullyProvisioned = hasSharePointConfig && clientConfig.root_folder_path !== '/';
 
-  // Auto-provision SharePoint for unprovisioned orgs on first access
+  // Auto-provision SharePoint for orgs that lack folder structure on first access.
+  // Triggers both when no config exists AND when config exists with root_folder_path="/".
   useEffect(() => {
     if (isLoadingClientConfig) return;
-    if (clientIsProvisioned) return;
+    if (isFullyProvisioned) return;
     if (!effectiveOrgId) return;
     if (provisionAttempted.current === effectiveOrgId) return;
     if (provisionSharePoint.isPending) return;
@@ -44,55 +46,54 @@ export default function DocumentosGlobal() {
 
     provisionAttempted.current = effectiveOrgId;
     provisionSharePoint.mutate({ organizationId: effectiveOrgId, clientCode, clientName });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingClientConfig, clientIsProvisioned, effectiveOrgId, cliente, currentOrganization]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingClientConfig, isFullyProvisioned, effectiveOrgId, cliente, currentOrganization]);
 
   // Org that owns the SharePoint config to use:
-  // - Provisioned client → use client's own org (has sharepoint_config with its root_folder_path)
-  // - Unprovisioned client viewed by CCA user → fall back to CCA's umbrella config
+  // - Has own config → use client's own org
+  // - No config, CCA user → fall back to CCA's umbrella config
   // - External user → always their own org
   const configOrgId: string | null = (() => {
     if (!effectiveOrgId) return null;
-    if (clientIsProvisioned) return effectiveOrgId;
+    if (hasSharePointConfig) return effectiveOrgId;
     if (isCCAInternalAuthorized) return currentOrganization?.id ?? null;
     return effectiveOrgId;
   })();
 
-  // For provisioned clients the root_folder_path already scopes to the client's folder tree,
+  // For clients with their own config the root_folder_path already scopes to the client's folder tree,
   // so we start the browser at "/" and don't need a subfolder.
-  // For unprovisioned clients using CCA's umbrella config we need a /{client_code} subfolder.
-  const dataOrgIdForFolder = clientIsProvisioned ? null : effectiveOrgId;
-  const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(dataOrgIdForFolder, configOrgId);
+  // For clients without config using CCA's umbrella config we need a /{client_code} subfolder.
+  const dataOrgIdForFolder = hasSharePointConfig ? null : effectiveOrgId;
+  const { folderPath, isReady, isEnsuring } = useEnsureClientFolder(
+    dataOrgIdForFolder,
+    configOrgId,
+  );
 
   // Only offer SharePoint upload when there's actually a config available:
-  // - provisioned client: their own config exists
+  // - client has own config (even if not fully provisioned yet — provision is in flight)
   // - CCA internal user: umbrella config may exist
-  // - external unprovisioned: no SharePoint → hide upload to avoid cryptic errors
-  const canUploadToSharePoint = clientIsProvisioned || isCCAInternalAuthorized;
+  // - external without config: no SharePoint → hide upload to avoid cryptic errors
+  const canUploadToSharePoint = hasSharePointConfig || isCCAInternalAuthorized;
 
   // Path used in browser and uploads:
-  // - Provisioned → "/" (root of client's own SharePoint space)
-  // - Unprovisioned → "/{client_code}" subfolder within CCA's drive
-  const browsePath = clientIsProvisioned ? '/' : folderPath;
-  const browseReady = clientIsProvisioned ? !isLoadingClientConfig : isReady;
-  const browseEnsuring = clientIsProvisioned ? isLoadingClientConfig : isEnsuring;
+  // - Has own config → "/" (root relative to root_folder_path in config)
+  // - No config → "/{client_code}" subfolder within CCA's drive
+  const browsePath = hasSharePointConfig ? '/' : folderPath;
+  const browseReady = hasSharePointConfig ? !isLoadingClientConfig : isReady;
+  const browseEnsuring = hasSharePointConfig ? isLoadingClientConfig : isEnsuring;
 
   return (
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            {t('documentsGlobal.title')}
-          </h1>
-          <p className="text-muted-foreground">
-            {t('documentsGlobal.subtitle')}
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{t('documentsGlobal.title')}</h1>
+          <p className="text-muted-foreground">{t('documentsGlobal.subtitle')}</p>
         </div>
 
         {/* Document Checklist — upload uses configOrgId (has SharePoint) + correct folder */}
         <DocumentChecklistPanel
           uploadFolderPath={canUploadToSharePoint && effectiveOrgId ? browsePath : undefined}
-          uploadOrgId={canUploadToSharePoint ? configOrgId ?? undefined : undefined}
+          uploadOrgId={canUploadToSharePoint ? (configOrgId ?? undefined) : undefined}
         />
 
         <div className="mt-6">
