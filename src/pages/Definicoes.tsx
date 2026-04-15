@@ -1,20 +1,26 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { PrivacySettings } from "@/components/settings/PrivacySettings";
-import { SecuritySettings } from "@/components/settings/SecuritySettings";
-import { NotificationPreferencesPanel } from "@/components/settings/NotificationPreferencesPanel";
-import { usePlatformAdmin } from "@/hooks/usePlatformAdmin";
+import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
+import { PrivacySettings } from '@/components/settings/PrivacySettings';
+import { SecuritySettings } from '@/components/settings/SecuritySettings';
+import { NotificationPreferencesPanel } from '@/components/settings/NotificationPreferencesPanel';
+import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 import {
   Settings,
   Pen,
@@ -26,13 +32,13 @@ import {
   CheckCircle,
   Loader2,
   Lock,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface SignatureProvider {
   id: string;
   name: string;
   descriptionKey: string;
-  status: "configured" | "not_configured" | "coming_soon";
+  status: 'configured' | 'not_configured' | 'coming_soon';
 }
 
 interface AIModel {
@@ -43,23 +49,33 @@ interface AIModel {
 }
 
 const AI_MODELS: AIModel[] = [
-  { id: "gpt-5-2025-08-07", name: "GPT-5", description: "Modelo mais potente da OpenAI", recommended: true },
-  { id: "gpt-5-mini-2025-08-07", name: "GPT-5 Mini", description: "Rápido e económico" },
-  { id: "gpt-4.1-2025-04-14", name: "GPT-4.1", description: "Modelo estável e fiável" },
-  { id: "o3-2025-04-16", name: "O3", description: "Raciocínio avançado" },
-  { id: "o4-mini-2025-04-16", name: "O4 Mini", description: "Raciocínio rápido" },
+  {
+    id: 'gpt-5-2025-08-07',
+    name: 'GPT-5',
+    description: 'Modelo mais potente da OpenAI',
+    recommended: true,
+  },
+  { id: 'gpt-5-mini-2025-08-07', name: 'GPT-5 Mini', description: 'Rápido e económico' },
+  { id: 'gpt-4.1-2025-04-14', name: 'GPT-4.1', description: 'Modelo estável e fiável' },
+  { id: 'o3-2025-04-16', name: 'O3', description: 'Raciocínio avançado' },
+  { id: 'o4-mini-2025-04-16', name: 'O4 Mini', description: 'Raciocínio rápido' },
 ];
 
 export default function Definicoes() {
   const { t } = useTranslation();
-  const { settings, isLoading: isLoadingSettings, updateSettings, isUpdating } = useOrganizationSettings();
+  const {
+    settings,
+    isLoading: _isLoadingSettings,
+    updateSettings,
+    isUpdating: _isUpdating,
+  } = useOrganizationSettings();
   const { isPlatformAdmin } = usePlatformAdmin();
   const [isLoading, setIsLoading] = useState(false);
   const [aiSettings, setAiSettings] = useState({
     autoAnalyze: true,
     notifyImpacts: true,
     confidenceThreshold: 70,
-    model: "gpt-5-2025-08-07",
+    model: 'gpt-5-2025-08-07',
   });
   const [notificationSettings, setNotificationSettings] = useState({
     emailAlerts: true,
@@ -68,7 +84,7 @@ export default function Definicoes() {
     daysBeforeExpiry: 30,
   });
   const [signatureSettings, setSignatureSettings] = useState({
-    provider: "manual",
+    provider: 'manual',
     autoSendForSignature: false,
     reminderDays: 7,
   });
@@ -98,28 +114,28 @@ export default function Definicoes() {
 
   const signatureProviders: SignatureProvider[] = [
     {
-      id: "docusign",
-      name: "DocuSign",
-      descriptionKey: "settings.signatures.docusignDesc",
-      status: "coming_soon",
+      id: 'docusign',
+      name: 'DocuSign',
+      descriptionKey: 'settings.signatures.docusignDesc',
+      status: 'coming_soon',
     },
     {
-      id: "autenticacao_gov",
-      name: "Autenticação.Gov",
-      descriptionKey: "settings.signatures.govDesc",
-      status: "coming_soon",
+      id: 'autenticacao_gov',
+      name: 'Autenticação.Gov',
+      descriptionKey: 'settings.signatures.govDesc',
+      status: 'coming_soon',
     },
     {
-      id: "adobe_sign",
-      name: "Adobe Sign",
-      descriptionKey: "settings.signatures.adobeDesc",
-      status: "coming_soon",
+      id: 'adobe_sign',
+      name: 'Adobe Sign',
+      descriptionKey: 'settings.signatures.adobeDesc',
+      status: 'coming_soon',
     },
     {
-      id: "manual",
+      id: 'manual',
       name: t('settings.signatures.manual'),
-      descriptionKey: "settings.signatures.manualDesc",
-      status: "configured",
+      descriptionKey: 'settings.signatures.manualDesc',
+      status: 'configured',
     },
   ];
 
@@ -133,7 +149,7 @@ export default function Definicoes() {
         ai_confidence_threshold: aiSettings.confidenceThreshold,
       });
       toast.success(t('settings.ai.saveSuccess'));
-    } catch (error) {
+    } catch {
       toast.error(t('settings.saveError'));
     } finally {
       setIsLoading(false);
@@ -150,7 +166,7 @@ export default function Definicoes() {
         notification_days_before_expiry: notificationSettings.daysBeforeExpiry,
       });
       toast.success(t('settings.notifications.saveSuccess'));
-    } catch (error) {
+    } catch {
       toast.error(t('settings.saveError'));
     } finally {
       setIsLoading(false);
@@ -166,7 +182,7 @@ export default function Definicoes() {
         signature_reminder_days: signatureSettings.reminderDays,
       });
       toast.success(t('settings.signatures.saveSuccess'));
-    } catch (error) {
+    } catch {
       toast.error(t('settings.saveError'));
     } finally {
       setIsLoading(false);
@@ -179,9 +195,7 @@ export default function Definicoes() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-serif font-bold text-foreground">{t('settings.title')}</h1>
-          <p className="text-muted-foreground mt-1">
-            {t('settings.subtitle')}
-          </p>
+          <p className="text-muted-foreground mt-1">{t('settings.subtitle')}</p>
         </div>
 
         {/* Tabs */}
@@ -223,9 +237,7 @@ export default function Definicoes() {
                   <Settings className="h-5 w-5" />
                   {t('settings.general.title')}
                 </CardTitle>
-                <CardDescription>
-                  {t('settings.general.description')}
-                </CardDescription>
+                <CardDescription>{t('settings.general.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -268,7 +280,6 @@ export default function Definicoes() {
                     </SelectContent>
                   </Select>
                 </div>
-
               </CardContent>
             </Card>
 
@@ -278,9 +289,7 @@ export default function Definicoes() {
                   <Upload className="h-5 w-5" />
                   {t('settings.upload.title')}
                 </CardTitle>
-                <CardDescription>
-                  {t('settings.upload.description')}
-                </CardDescription>
+                <CardDescription>{t('settings.upload.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -340,9 +349,7 @@ export default function Definicoes() {
                   <FileSignature className="h-5 w-5" />
                   {t('settings.signatures.title')}
                 </CardTitle>
-                <CardDescription>
-                  {t('settings.signatures.description')}
-                </CardDescription>
+                <CardDescription>{t('settings.signatures.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-4">
@@ -351,10 +358,10 @@ export default function Definicoes() {
                       key={provider.id}
                       className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
                         signatureSettings.provider === provider.id
-                          ? "border-primary bg-primary/5"
-                          : provider.status === "coming_soon"
-                          ? "opacity-60"
-                          : ""
+                          ? 'border-primary bg-primary/5'
+                          : provider.status === 'coming_soon'
+                            ? 'opacity-60'
+                            : ''
                       }`}
                     >
                       <div className="flex items-center gap-4">
@@ -364,14 +371,16 @@ export default function Definicoes() {
                         <div>
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium">{provider.name}</h4>
-                            {provider.status === "configured" && (
+                            {provider.status === 'configured' && (
                               <Badge variant="default" className="bg-green-600">
                                 <CheckCircle className="mr-1 h-3 w-3" />
                                 {t('settings.signatures.active')}
                               </Badge>
                             )}
-                            {provider.status === "coming_soon" && (
-                              <Badge variant="secondary">{t('settings.signatures.comingSoon')}</Badge>
+                            {provider.status === 'coming_soon' && (
+                              <Badge variant="secondary">
+                                {t('settings.signatures.comingSoon')}
+                              </Badge>
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
@@ -379,12 +388,10 @@ export default function Definicoes() {
                           </p>
                         </div>
                       </div>
-                      {provider.status !== "coming_soon" && (
+                      {provider.status !== 'coming_soon' && (
                         <Button
                           variant={
-                            signatureSettings.provider === provider.id
-                              ? "default"
-                              : "outline"
+                            signatureSettings.provider === provider.id ? 'default' : 'outline'
                           }
                           size="sm"
                           onClick={() =>
@@ -399,7 +406,7 @@ export default function Definicoes() {
                             : t('settings.signatures.select')}
                         </Button>
                       )}
-                      {provider.status === "coming_soon" && (
+                      {provider.status === 'coming_soon' && (
                         <Button variant="outline" size="sm" disabled>
                           {t('settings.signatures.comingSoon')}
                         </Button>
@@ -410,7 +417,7 @@ export default function Definicoes() {
 
                 <div className="border-t pt-6 space-y-4">
                   <h4 className="font-medium">{t('settings.signatures.settingsTitle')}</h4>
-                  
+
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <Label>{t('settings.signatures.autoSend')}</Label>
@@ -444,7 +451,9 @@ export default function Definicoes() {
                         }
                         className="w-24"
                       />
-                      <span className="text-sm text-muted-foreground">{t('settings.signatures.daysAfterSend')}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {t('settings.signatures.daysAfterSend')}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -462,9 +471,7 @@ export default function Definicoes() {
                   <Shield className="h-5 w-5" />
                   {t('settings.certificates.title')}
                 </CardTitle>
-                <CardDescription>
-                  {t('settings.certificates.description')}
-                </CardDescription>
+                <CardDescription>{t('settings.certificates.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="rounded-lg border border-dashed p-8 text-center">
@@ -491,18 +498,14 @@ export default function Definicoes() {
                     <Brain className="h-5 w-5" />
                     {t('settings.ai.title')}
                   </CardTitle>
-                  <CardDescription>
-                    {t('settings.ai.description')}
-                  </CardDescription>
+                  <CardDescription>{t('settings.ai.description')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="aiModel">{t('settings.ai.model')}</Label>
                     <Select
                       value={aiSettings.model}
-                      onValueChange={(value) =>
-                        setAiSettings({ ...aiSettings, model: value })
-                      }
+                      onValueChange={(value) => setAiSettings({ ...aiSettings, model: value })}
                     >
                       <SelectTrigger id="aiModel">
                         <SelectValue />
@@ -604,9 +607,7 @@ export default function Definicoes() {
                   <Bell className="h-5 w-5" />
                   {t('settings.notifications.title')}
                 </CardTitle>
-                <CardDescription>
-                  {t('settings.notifications.description')}
-                </CardDescription>
+                <CardDescription>{t('settings.notifications.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between rounded-lg border p-4">
@@ -664,7 +665,9 @@ export default function Definicoes() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="daysBeforeExpiry">{t('settings.notifications.daysBeforeExpiry')}</Label>
+                  <Label htmlFor="daysBeforeExpiry">
+                    {t('settings.notifications.daysBeforeExpiry')}
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="daysBeforeExpiry"
@@ -678,7 +681,9 @@ export default function Definicoes() {
                       }
                       className="w-24"
                     />
-                    <span className="text-sm text-muted-foreground">{t('settings.notifications.days')}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t('settings.notifications.days')}
+                    </span>
                   </div>
                 </div>
 
@@ -689,7 +694,6 @@ export default function Definicoes() {
               </CardContent>
             </Card>
           </TabsContent>
-
         </Tabs>
       </div>
     </AppLayout>

@@ -3,20 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Scale, 
-  Sparkles, 
-  ExternalLink, 
-  FileText, 
-  Download, 
+import {
+  Scale,
+  Sparkles,
+  ExternalLink,
+  FileText,
+  Download,
   Trash2,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
-import { 
-  useContratoNormativos, 
-  useMatchLegislation, 
+import {
+  useContratoNormativos,
+  useMatchLegislation,
   useRemoveContratoNormativo,
-  getStorageUrl 
+  getStorageUrl,
 } from '@/hooks/useContratoNormativos';
 import {
   AlertDialog,
@@ -38,7 +38,7 @@ const sourceLabels: Record<string, string> = {
   dre: 'Diário da República',
   bdp: 'Banco de Portugal',
   asf: 'ASF',
-  cmvm: 'CMVM'
+  cmvm: 'CMVM',
 };
 
 export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
@@ -53,9 +53,12 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
 
   const handleRemove = (id: string) => {
     setRemovingId(id);
-    removeMutation.mutate({ id, contratoId }, {
-      onSettled: () => setRemovingId(null)
-    });
+    removeMutation.mutate(
+      { id, contratoId },
+      {
+        onSettled: () => setRemovingId(null),
+      },
+    );
   };
 
   if (isLoading) {
@@ -103,8 +106,8 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
           <Scale className="h-5 w-5" />
           Legislação Aplicável
         </CardTitle>
-        <Button 
-          onClick={handleMatch} 
+        <Button
+          onClick={handleMatch}
           disabled={matchMutation.isPending}
           size="sm"
           variant="outline"
@@ -114,19 +117,20 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
         </Button>
       </CardHeader>
       <CardContent>
-        {(!normativos || normativos.length === 0) ? (
+        {!normativos || normativos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Scale className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p>Nenhuma legislação associada a este contrato.</p>
             <p className="text-sm mt-1">
-              Clique em "Encontrar Legislação" para identificar automaticamente os normativos relevantes.
+              Clique em &quot;Encontrar Legislação&quot; para identificar automaticamente os
+              normativos relevantes.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {normativos.map((item) => (
-              <div 
-                key={item.id} 
+              <div
+                key={item.id}
                 className="border rounded-lg p-4 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
@@ -137,14 +141,14 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
                         {item.documento?.title || 'Documento sem título'}
                       </h4>
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-2 mb-2">
                       {item.documento?.source_key && (
                         <Badge variant="secondary" className="text-xs">
                           {sourceLabels[item.documento.source_key] || item.documento.source_key}
                         </Badge>
                       )}
-                      <Badge 
+                      <Badge
                         variant={item.tipo_associacao === 'automatico' ? 'outline' : 'default'}
                         className="text-xs"
                       >
@@ -156,25 +160,20 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
                         </Badge>
                       )}
                     </div>
-                    
+
                     {item.motivo_associacao && (
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {item.motivo_associacao}
                       </p>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center gap-1 flex-shrink-0">
                     {item.documento?.storage_path && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                      >
-                        <a 
-                          href={getStorageUrl(item.documento.storage_path) || '#'} 
-                          target="_blank" 
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <a
+                          href={getStorageUrl(item.documento.storage_path) || '#'}
+                          target="_blank"
                           rel="noopener noreferrer"
                           title="Download cópia"
                         >
@@ -182,17 +181,12 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
                         </a>
                       </Button>
                     )}
-                    
+
                     {item.documento?.canonical_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        asChild
-                      >
-                        <a 
-                          href={item.documento.canonical_url} 
-                          target="_blank" 
+                      <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                        <a
+                          href={item.documento.canonical_url}
+                          target="_blank"
                           rel="noopener noreferrer"
                           title="Ver fonte oficial"
                         >
@@ -200,7 +194,7 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
                         </a>
                       </Button>
                     )}
-                    
+
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button
@@ -216,7 +210,8 @@ export function ContratoLegislacao({ contratoId }: ContratoLegislacaoProps) {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Remover associação?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta ação irá remover a associação entre este contrato e o documento legal.
+                            Esta ação irá remover a associação entre este contrato e o documento
+                            legal.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

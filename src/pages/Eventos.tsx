@@ -6,10 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useEventosLegislativos, EventoLegislativo } from '@/hooks/useEventosLegislativos';
-import { 
-  Scale, 
-  Plus, 
-  Search, 
+import {
+  Scale,
+  Plus,
+  Search,
   Calendar,
   ExternalLink,
   Loader2,
@@ -46,13 +46,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { EventImpactAnalyzer } from '@/components/compliance/EventImpactAnalyzer';
-import { DocumentUploadWithAI, DocumentAnalysisResult } from '@/components/shared/DocumentUploadWithAI';
+import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Eventos() {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'pt' ? pt : enGB;
-  
+
   const AREA_DIREITO_LABELS: Record<string, string> = {
     laboral: t('areaOfLaw.labor'),
     fiscal: t('areaOfLaw.tax'),
@@ -82,9 +82,19 @@ export default function Eventos() {
   const [editingEvento, setEditingEvento] = useState<EventoLegislativo | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [impactDialogOpen, setImpactDialogOpen] = useState(false);
-  const [selectedEventoForImpact, setSelectedEventoForImpact] = useState<EventoLegislativo | null>(null);
+  const [selectedEventoForImpact, setSelectedEventoForImpact] = useState<EventoLegislativo | null>(
+    null,
+  );
 
-  type AreaDireito = 'laboral' | 'fiscal' | 'comercial' | 'protecao_dados' | 'ambiente' | 'seguranca_trabalho' | 'societario' | 'outro';
+  type AreaDireito =
+    | 'laboral'
+    | 'fiscal'
+    | 'comercial'
+    | 'protecao_dados'
+    | 'ambiente'
+    | 'seguranca_trabalho'
+    | 'societario'
+    | 'outro';
   type Jurisdicao = 'nacional' | 'europeia' | 'internacional';
   type EstadoEvento = 'rascunho' | 'activo' | 'arquivado';
 
@@ -148,7 +158,7 @@ export default function Eventos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const payload = {
       ...formData,
       data_publicacao: formData.data_publicacao || null,
@@ -160,7 +170,7 @@ export default function Eventos() {
     } else {
       await createEvento.mutateAsync(payload);
     }
-    
+
     setDialogOpen(false);
     resetForm();
   };
@@ -172,11 +182,13 @@ export default function Eventos() {
     }
   };
 
-  const filteredEventos = eventos?.filter(evento =>
-    evento.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    evento.referencia_legal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    evento.descricao_resumo?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) ?? [];
+  const filteredEventos =
+    eventos?.filter(
+      (evento) =>
+        evento.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        evento.referencia_legal?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        evento.descricao_resumo?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) ?? [];
 
   if (isLoading) {
     return (
@@ -220,7 +232,7 @@ export default function Eventos() {
                     compact
                     onAnalysisComplete={(result) => {
                       const dados = result.dados_extraidos || {};
-                      setFormData(prev => ({
+                      setFormData((prev) => ({
                         ...prev,
                         titulo: dados.titulo_lei || prev.titulo,
                         referencia_legal: dados.referencia_legal || prev.referencia_legal,
@@ -244,17 +256,19 @@ export default function Eventos() {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="referencia_legal">{t('events.legalReference')}</Label>
                       <Input
                         id="referencia_legal"
                         value={formData.referencia_legal}
-                        onChange={(e) => setFormData({ ...formData, referencia_legal: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, referencia_legal: e.target.value })
+                        }
                         placeholder="Ex: Lei n.º 83/2021"
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="link_oficial">{t('events.officialLink')}</Label>
                       <Input
@@ -265,12 +279,12 @@ export default function Eventos() {
                         placeholder="https://..."
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="area_direito">{t('events.areaOfLaw')}</Label>
                       <Select
                         value={formData.area_direito}
-                        onValueChange={(value: AreaDireito) => 
+                        onValueChange={(value: AreaDireito) =>
                           setFormData({ ...formData, area_direito: value })
                         }
                       >
@@ -279,17 +293,19 @@ export default function Eventos() {
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(AREA_DIREITO_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="jurisdicao">{t('events.jurisdiction')}</Label>
                       <Select
                         value={formData.jurisdicao}
-                        onValueChange={(value: Jurisdicao) => 
+                        onValueChange={(value: Jurisdicao) =>
                           setFormData({ ...formData, jurisdicao: value })
                         }
                       >
@@ -298,17 +314,19 @@ export default function Eventos() {
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(JURISDICAO_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="estado">{t('events.status')}</Label>
                       <Select
                         value={formData.estado}
-                        onValueChange={(value: EstadoEvento) => 
+                        onValueChange={(value: EstadoEvento) =>
                           setFormData({ ...formData, estado: value })
                         }
                       >
@@ -317,38 +335,46 @@ export default function Eventos() {
                         </SelectTrigger>
                         <SelectContent>
                           {Object.entries(ESTADO_LABELS).map(([value, label]) => (
-                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="data_publicacao">{t('events.publicationDate')}</Label>
                       <Input
                         id="data_publicacao"
                         type="date"
                         value={formData.data_publicacao}
-                        onChange={(e) => setFormData({ ...formData, data_publicacao: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, data_publicacao: e.target.value })
+                        }
                       />
                     </div>
-                    
+
                     <div>
                       <Label htmlFor="data_entrada_vigor">{t('events.effectiveDate')}</Label>
                       <Input
                         id="data_entrada_vigor"
                         type="date"
                         value={formData.data_entrada_vigor}
-                        onChange={(e) => setFormData({ ...formData, data_entrada_vigor: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, data_entrada_vigor: e.target.value })
+                        }
                       />
                     </div>
-                    
+
                     <div className="md:col-span-2">
                       <Label htmlFor="descricao_resumo">{t('events.description')}</Label>
                       <Textarea
                         id="descricao_resumo"
                         value={formData.descricao_resumo}
-                        onChange={(e) => setFormData({ ...formData, descricao_resumo: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, descricao_resumo: e.target.value })
+                        }
                         rows={3}
                       />
                     </div>
@@ -404,10 +430,13 @@ export default function Eventos() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge 
+                          <Badge
                             variant={
-                              evento.estado === 'activo' ? 'active' : 
-                              evento.estado === 'rascunho' ? 'subtle' : 'secondary'
+                              evento.estado === 'activo'
+                                ? 'active'
+                                : evento.estado === 'rascunho'
+                                  ? 'subtle'
+                                  : 'secondary'
                             }
                           >
                             {ESTADO_LABELS[evento.estado]}
@@ -415,9 +444,7 @@ export default function Eventos() {
                           <Badge variant="outline">
                             {AREA_DIREITO_LABELS[evento.area_direito]}
                           </Badge>
-                          <Badge variant="outline">
-                            {JURISDICAO_LABELS[evento.jurisdicao]}
-                          </Badge>
+                          <Badge variant="outline">{JURISDICAO_LABELS[evento.jurisdicao]}</Badge>
                         </div>
                         <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
                           {evento.titulo}
@@ -436,19 +463,25 @@ export default function Eventos() {
                           {evento.data_publicacao && (
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {t('common.publication')}: {format(new Date(evento.data_publicacao), "d MMM yyyy", { locale: dateLocale })}
+                              {t('common.publication')}:{' '}
+                              {format(new Date(evento.data_publicacao), 'd MMM yyyy', {
+                                locale: dateLocale,
+                              })}
                             </div>
                           )}
                           {evento.data_entrada_vigor && (
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
-                              {t('common.effectiveDate')}: {format(new Date(evento.data_entrada_vigor), "d MMM yyyy", { locale: dateLocale })}
+                              {t('common.effectiveDate')}:{' '}
+                              {format(new Date(evento.data_entrada_vigor), 'd MMM yyyy', {
+                                locale: dateLocale,
+                              })}
                             </div>
                           )}
                           {evento.link_oficial && (
-                            <a 
-                              href={evento.link_oficial} 
-                              target="_blank" 
+                            <a
+                              href={evento.link_oficial}
+                              target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1 text-accent hover:underline"
                               onClick={(e) => e.stopPropagation()}
@@ -461,8 +494,8 @@ export default function Eventos() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         title={t('events.analyzeImpact')}
                         onClick={() => {
@@ -472,18 +505,10 @@ export default function Eventos() {
                       >
                         <Sparkles className="h-4 w-4 text-primary" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => handleOpenEdit(evento)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(evento)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={() => setDeleteId(evento.id)}
-                      >
+                      <Button variant="ghost" size="icon" onClick={() => setDeleteId(evento.id)}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -500,14 +525,17 @@ export default function Eventos() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('common.confirm')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {i18n.language === 'pt' 
+              {i18n.language === 'pt'
                 ? 'Tem a certeza que pretende eliminar este evento legislativo? Esta ação não pode ser revertida.'
                 : 'Are you sure you want to delete this legislative event? This action cannot be undone.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>

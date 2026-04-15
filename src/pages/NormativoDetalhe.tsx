@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  ArrowLeft, 
-  ExternalLink, 
-  Download, 
-  Calendar, 
+import {
+  ArrowLeft,
+  ExternalLink,
+  Download,
+  Calendar,
   Clock,
   FileText,
-  Link as LinkIcon
+  Link as LinkIcon,
 } from 'lucide-react';
 import { useLegalDocument, getStorageUrl } from '@/hooks/useLegalMirror';
 import { format } from 'date-fns';
@@ -23,7 +23,7 @@ const sourceColors: Record<string, string> = {
   'eur-lex': 'bg-indigo-500/10 text-indigo-700 border-indigo-200',
   bdp: 'bg-green-500/10 text-green-700 border-green-200',
   asf: 'bg-purple-500/10 text-purple-700 border-purple-200',
-  cmvm: 'bg-orange-500/10 text-orange-700 border-orange-200'
+  cmvm: 'bg-orange-500/10 text-orange-700 border-orange-200',
 };
 
 const sourceNames: Record<string, string> = {
@@ -31,12 +31,12 @@ const sourceNames: Record<string, string> = {
   'eur-lex': 'EUR-Lex (União Europeia)',
   bdp: 'Banco de Portugal',
   asf: 'ASF',
-  cmvm: 'CMVM'
+  cmvm: 'CMVM',
 };
 
 export default function NormativoDetalhe() {
   const { id } = useParams<{ id: string }>();
-  const { t } = useTranslation();
+  const _t = useTranslation().t;
   const { data: doc, isLoading, error } = useLegalDocument(id);
 
   const storageUrl = doc ? getStorageUrl(doc.storage_path) : null;
@@ -93,20 +93,16 @@ export default function NormativoDetalhe() {
                   <Badge variant="outline" className={sourceColors[doc.source_key] || ''}>
                     {doc.source_key.toUpperCase()}
                   </Badge>
-                  <Badge variant="secondary">
-                    {doc.doc_type.toUpperCase()}
-                  </Badge>
+                  <Badge variant="secondary">{doc.doc_type.toUpperCase()}</Badge>
                 </div>
-                
-                <CardTitle className="text-2xl">
-                  {doc.title || 'Documento sem título'}
-                </CardTitle>
-                
+
+                <CardTitle className="text-2xl">{doc.title || 'Documento sem título'}</CardTitle>
+
                 <p className="text-sm text-muted-foreground">
                   Fonte: {sourceNames[doc.source_key] || doc.source_key}
                 </p>
               </div>
-              
+
               <div className="flex gap-2 flex-shrink-0">
                 <Button variant="outline" asChild>
                   <a href={doc.canonical_url} target="_blank" rel="noopener noreferrer">
@@ -114,7 +110,7 @@ export default function NormativoDetalhe() {
                     Ver Original
                   </a>
                 </Button>
-                
+
                 {storageUrl && (
                   <Button asChild>
                     <a href={storageUrl} target="_blank" rel="noopener noreferrer" download>
@@ -126,7 +122,7 @@ export default function NormativoDetalhe() {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {doc.published_at && (
@@ -140,7 +136,7 @@ export default function NormativoDetalhe() {
                   </div>
                 </div>
               )}
-              
+
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -150,7 +146,7 @@ export default function NormativoDetalhe() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -158,7 +154,7 @@ export default function NormativoDetalhe() {
                   <p className="font-medium">{doc.mime_type || doc.doc_type}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <div>
@@ -181,9 +177,9 @@ export default function NormativoDetalhe() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <a 
-              href={doc.canonical_url} 
-              target="_blank" 
+            <a
+              href={doc.canonical_url}
+              target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline break-all"
             >
@@ -199,7 +195,7 @@ export default function NormativoDetalhe() {
               <CardTitle className="text-lg">Pré-visualização</CardTitle>
             </CardHeader>
             <CardContent>
-              <iframe 
+              <iframe
                 src={storageUrl}
                 className="w-full h-[800px] rounded-lg border"
                 title={doc.title || 'PDF Preview'}

@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, FileCheck, AlertCircle, Calendar } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { pt } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import type { Contrato } from '@/hooks/useContratos';
 import { TIPO_CONTRATO_LABELS } from '@/types/contracts';
@@ -15,10 +14,10 @@ interface ContractsExpiringListProps {
   title?: string;
 }
 
-export function ContractsExpiringList({ 
-  contratos, 
-  maxItems = 5, 
-  title = "Contratos a Expirar" 
+export function ContractsExpiringList({
+  contratos,
+  maxItems = 5,
+  title = 'Contratos a Expirar',
 }: ContractsExpiringListProps) {
   const now = new Date();
   const displayedContracts = contratos.slice(0, maxItems);
@@ -67,21 +66,23 @@ export function ContractsExpiringList({
       </CardHeader>
       <CardContent className="space-y-3">
         {displayedContracts.map((contrato) => {
-          const daysUntilExpiry = contrato.data_termo 
+          const daysUntilExpiry = contrato.data_termo
             ? differenceInDays(new Date(contrato.data_termo), now)
             : null;
           const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 60;
-          
+
           return (
             <Link
               key={contrato.id}
               to={`/contratos/${contrato.id}`}
               className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors group"
             >
-              <div className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                isExpiringSoon ? "bg-risk-medium/10" : "bg-muted"
-              )}>
+              <div
+                className={cn(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                  isExpiringSoon ? 'bg-risk-medium/10' : 'bg-muted',
+                )}
+              >
                 {isExpiringSoon ? (
                   <AlertCircle className="h-5 w-5 text-risk-medium" />
                 ) : (
@@ -112,7 +113,7 @@ export function ContractsExpiringList({
                 </p>
                 {contrato.data_termo && (
                   <p className="text-xs text-muted-foreground">
-                    até {format(new Date(contrato.data_termo), "dd/MM/yyyy")}
+                    até {format(new Date(contrato.data_termo), 'dd/MM/yyyy')}
                   </p>
                 )}
               </div>

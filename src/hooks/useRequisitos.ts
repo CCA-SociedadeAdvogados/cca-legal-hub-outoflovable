@@ -90,7 +90,7 @@ export function useRequisitos() {
     }) => {
       const { data: result, error } = await supabase
         .from('requisitos')
-        .update(data)
+        .update({ ...data, updated_by_id: user?.id })
         .eq('id', id)
         .select()
         .single();

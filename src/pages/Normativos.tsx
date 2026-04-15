@@ -6,23 +6,29 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Search, 
-  RefreshCw, 
-  FileText, 
-  ExternalLink, 
-  Download, 
+import {
+  Search,
+  RefreshCw,
+  FileText,
+  ExternalLink,
+  Download,
   Calendar,
   Database,
-  Filter
+  Filter,
 } from 'lucide-react';
-import { 
-  useLegalSearch, 
-  useLegalSources, 
+import {
+  useLegalSearch,
+  useLegalSources,
   useTriggerMirror,
-  getStorageUrl 
+  getStorageUrl,
 } from '@/hooks/useLegalMirror';
 import { useContentTranslation } from '@/hooks/useContentTranslation';
 import { useFeatureFlag } from '@/hooks/useFeatureFlags';
@@ -34,14 +40,14 @@ const sourceColors: Record<string, string> = {
   'eur-lex': 'bg-primary/10 text-primary border-primary/20',
   bdp: 'bg-risk-low/10 text-risk-low border-risk-low/20',
   asf: 'bg-primary/10 text-primary border-primary/20',
-  cmvm: 'bg-risk-medium/10 text-risk-medium border-risk-medium/20'
+  cmvm: 'bg-risk-medium/10 text-risk-medium border-risk-medium/20',
 };
 
 const docTypeLabels: Record<string, string> = {
   pdf: 'PDF',
   html: 'HTML',
   xml: 'XML',
-  doc: 'DOC'
+  doc: 'DOC',
 };
 
 export default function Normativos() {
@@ -50,13 +56,17 @@ export default function Normativos() {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [translatedTitles, setTranslatedTitles] = useState<Record<string, string>>({});
-  
+
   const dateLocale = i18n.language === 'pt' ? pt : enUS;
   const { translate, needsTranslation } = useContentTranslation();
   const { enabled: disableDocTranslation } = useFeatureFlag('DISABLE_AI_TRANSLATION_FOR_DOCUMENTS');
-  
+
   const { data: sources, isLoading: sourcesLoading } = useLegalSources();
-  const { data: documents, isLoading: docsLoading, refetch } = useLegalSearch(debouncedQuery, selectedSource);
+  const {
+    data: documents,
+    isLoading: docsLoading,
+    refetch: _refetch,
+  } = useLegalSearch(debouncedQuery, selectedSource);
   const { mutate: triggerMirror, isPending: isMirroring } = useTriggerMirror();
 
   const handleSearch = () => {
@@ -95,11 +105,11 @@ export default function Normativos() {
 
     const translateTitles = async () => {
       try {
-        const titles = documents.map(d => d.title || '');
+        const titles = documents.map((d) => d.title || '');
         const translated = await translateRef.current(titles, 'legal document titles');
-        
+
         if (cancelled) return;
-        
+
         const newTranslated: Record<string, string> = {};
         documents.forEach((d, i) => {
           if (translated[i]) {
@@ -113,8 +123,10 @@ export default function Normativos() {
     };
 
     translateTitles();
-    
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+    };
   }, [disableDocTranslation, needsTranslation, documents]);
 
   const getTitle = (doc: { id: string; title: string | null; canonical_url: string }) => {
@@ -135,16 +147,10 @@ export default function Normativos() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{t('legislation.title')}</h1>
-            <p className="text-muted-foreground">
-              {t('legislation.subtitle')}
-            </p>
+            <p className="text-muted-foreground">{t('legislation.subtitle')}</p>
           </div>
-          
-          <Button 
-            onClick={() => triggerMirror()} 
-            disabled={isMirroring}
-            className="gap-2"
-          >
+
+          <Button onClick={() => triggerMirror()} disabled={isMirroring} className="gap-2">
             <RefreshCw className={`h-4 w-4 ${isMirroring ? 'animate-spin' : ''}`} />
             {isMirroring ? t('legislation.updating') : t('legislation.updateNow')}
           </Button>
@@ -161,7 +167,7 @@ export default function Normativos() {
               <p className="text-2xl font-bold">{totalDocs.toLocaleString()}</p>
             </CardContent>
           </Card>
-          
+
           {sourcesLoading ? (
             <>
               <Skeleton className="h-20" />
@@ -170,17 +176,21 @@ export default function Normativos() {
               <Skeleton className="h-20" />
             </>
           ) : (
-            sources?.map(source => (
-              <Card key={source.source_key} className="cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => setSelectedSource(
-                  selectedSource === source.source_key ? null : source.source_key
-                )}
+            sources?.map((source) => (
+              <Card
+                key={source.source_key}
+                className="cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() =>
+                  setSelectedSource(selectedSource === source.source_key ? null : source.source_key)
+                }
               >
                 <CardContent className="pt-4">
                   <Badge variant="outline" className={sourceColors[source.source_key] || ''}>
                     {source.source_key.toUpperCase()}
                   </Badge>
-                  <p className="text-2xl font-bold mt-1">{source.document_count.toLocaleString()}</p>
+                  <p className="text-2xl font-bold mt-1">
+                    {source.document_count.toLocaleString()}
+                  </p>
                   <p className="text-xs text-muted-foreground truncate">{source.name}</p>
                 </CardContent>
               </Card>
@@ -202,9 +212,9 @@ export default function Normativos() {
                   className="pl-10"
                 />
               </div>
-              
-              <Select 
-                value={selectedSource || 'all'} 
+
+              <Select
+                value={selectedSource || 'all'}
                 onValueChange={(v) => setSelectedSource(v === 'all' ? null : v)}
               >
                 <SelectTrigger className="w-full md:w-48">
@@ -213,14 +223,14 @@ export default function Normativos() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t('legislation.allSources')}</SelectItem>
-                  {sources?.map(s => (
+                  {sources?.map((s) => (
                     <SelectItem key={s.source_key} value={s.source_key}>
                       {s.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              
+
               <Button onClick={handleSearch}>
                 <Search className="h-4 w-4 mr-2" />
                 {t('legislation.search')}
@@ -236,7 +246,9 @@ export default function Normativos() {
               <FileText className="h-5 w-5" />
               {t('legislation.documents')}
               {documents && (
-                <Badge variant="secondary">{t('legislation.results', { count: documents.length })}</Badge>
+                <Badge variant="secondary">
+                  {t('legislation.results', { count: documents.length })}
+                </Badge>
               )}
             </CardTitle>
           </CardHeader>
@@ -255,12 +267,12 @@ export default function Normativos() {
               </div>
             ) : (
               <div className="space-y-3">
-                {documents?.map(doc => {
+                {documents?.map((doc) => {
                   const storageUrl = getStorageUrl(doc.storage_path);
-                  
+
                   return (
-                    <div 
-                      key={doc.id} 
+                    <div
+                      key={doc.id}
                       className="border rounded-lg p-4 hover:bg-accent/30 transition-colors"
                     >
                       <div className="flex flex-col md:flex-row md:items-start gap-3">
@@ -273,31 +285,38 @@ export default function Normativos() {
                               {docTypeLabels[doc.doc_type] || doc.doc_type.toUpperCase()}
                             </Badge>
                           </div>
-                          
-                          <Link 
+
+                          <Link
                             to={`/normativos/${doc.id}`}
                             className="text-lg font-medium hover:text-primary hover:underline line-clamp-2"
                           >
                             {getTitle(doc)}
                           </Link>
-                          
+
                           <p className="text-sm text-muted-foreground truncate mt-1">
                             {doc.canonical_url}
                           </p>
-                          
+
                           <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                             {doc.published_at && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />
-                                {format(new Date(doc.published_at), 'dd MMM yyyy', { locale: dateLocale })}
+                                {format(new Date(doc.published_at), 'dd MMM yyyy', {
+                                  locale: dateLocale,
+                                })}
                               </span>
                             )}
                             <span>
-                              {t('legislation.indexed')}: {format(new Date(doc.fetched_at), i18n.language === 'pt' ? 'dd/MM/yyyy HH:mm' : 'MM/dd/yyyy HH:mm', { locale: dateLocale })}
+                              {t('legislation.indexed')}:{' '}
+                              {format(
+                                new Date(doc.fetched_at),
+                                i18n.language === 'pt' ? 'dd/MM/yyyy HH:mm' : 'MM/dd/yyyy HH:mm',
+                                { locale: dateLocale },
+                              )}
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="flex gap-2 flex-shrink-0">
                           <Button variant="outline" size="sm" asChild>
                             <a href={doc.canonical_url} target="_blank" rel="noopener noreferrer">
@@ -305,10 +324,15 @@ export default function Normativos() {
                               {t('legislation.original')}
                             </a>
                           </Button>
-                          
+
                           {storageUrl && (
                             <Button variant="outline" size="sm" asChild>
-                              <a href={storageUrl} target="_blank" rel="noopener noreferrer" download>
+                              <a
+                                href={storageUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                              >
                                 <Download className="h-4 w-4 mr-1" />
                                 {t('legislation.copy')}
                               </a>

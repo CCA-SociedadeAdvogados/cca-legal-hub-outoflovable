@@ -1,12 +1,18 @@
-import { useState, useEffect, useCallback } from "react";
-import { useTranslation } from "react-i18next";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   useSharePointConfigByOrgId,
   useSaveSharePointConfigForOrg,
@@ -14,8 +20,8 @@ import {
   useBrowseSharePointFolders,
   type SharePointDrive,
   type SharePointFolder,
-} from "@/hooks/useSharePoint";
-import { Cloud, Loader2, FolderOpen, RefreshCw, CheckCircle, Check, Library } from "lucide-react";
+} from '@/hooks/useSharePoint';
+import { Cloud, Loader2, FolderOpen, RefreshCw, CheckCircle, Check, Library } from 'lucide-react';
 
 interface OrgSharePointConfigProps {
   organizationId: string | null;
@@ -23,14 +29,15 @@ interface OrgSharePointConfigProps {
 
 export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps) {
   const { t: _t } = useTranslation();
-  const { data: existingConfig, isLoading: isLoadingConfig } = useSharePointConfigByOrgId(organizationId);
+  const { data: existingConfig, isLoading: isLoadingConfig } =
+    useSharePointConfigByOrgId(organizationId);
   const saveConfig = useSaveSharePointConfigForOrg();
   const listDrives = useListSharePointDrives();
   const browseFolders = useBrowseSharePointFolders();
 
-  const [siteId, setSiteId] = useState("");
-  const [driveId, setDriveId] = useState("");
-  const [rootFolderPath, setRootFolderPath] = useState("/");
+  const [siteId, setSiteId] = useState('');
+  const [driveId, setDriveId] = useState('');
+  const [rootFolderPath, setRootFolderPath] = useState('/');
   const [syncEnabled, setSyncEnabled] = useState(true);
   const [syncInterval, setSyncInterval] = useState(5);
   const [drives, setDrives] = useState<SharePointDrive[]>([]);
@@ -39,15 +46,15 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
   // Load existing config
   useEffect(() => {
     if (existingConfig) {
-      setSiteId(existingConfig.site_id || "");
-      setDriveId(existingConfig.drive_id || "");
-      setRootFolderPath(existingConfig.root_folder_path || "/");
+      setSiteId(existingConfig.site_id || '');
+      setDriveId(existingConfig.drive_id || '');
+      setRootFolderPath(existingConfig.root_folder_path || '/');
       setSyncEnabled(existingConfig.sync_enabled);
       setSyncInterval(existingConfig.sync_interval_minutes);
     } else {
-      setSiteId("");
-      setDriveId("");
-      setRootFolderPath("/");
+      setSiteId('');
+      setDriveId('');
+      setRootFolderPath('/');
       setSyncEnabled(true);
       setSyncInterval(5);
       setDrives([]);
@@ -55,18 +62,21 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
     }
   }, [existingConfig]);
 
-  const loadFolders = useCallback(async (orgId: string, targetDriveId: string) => {
-    try {
-      const result = await browseFolders.mutateAsync({
-        organization_id: orgId,
-        drive_id: targetDriveId,
-        folder_path: "/",
-      });
-      setFolders(result);
-    } catch (error) {
-      console.error("Error browsing folders:", error);
-    }
-  }, [browseFolders]);
+  const loadFolders = useCallback(
+    async (orgId: string, targetDriveId: string) => {
+      try {
+        const result = await browseFolders.mutateAsync({
+          organization_id: orgId,
+          drive_id: targetDriveId,
+          folder_path: '/',
+        });
+        setFolders(result);
+      } catch (error) {
+        console.error('Error browsing folders:', error);
+      }
+    },
+    [browseFolders],
+  );
 
   // Auto-load folders when driveId changes and drives are loaded
   useEffect(() => {
@@ -97,7 +107,7 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
         loadFolders(organizationId, driveId || result.current_drive_id);
       }
     } catch (error) {
-      console.error("Error listing drives:", error);
+      console.error('Error listing drives:', error);
     }
   };
 
@@ -106,11 +116,14 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
     setFolders([]);
     // Auto-browse folders for selected drive
     if (organizationId) {
-      browseFolders.mutateAsync({
-        organization_id: organizationId,
-        drive_id: val,
-        folder_path: "/",
-      }).then(setFolders).catch(console.error);
+      browseFolders
+        .mutateAsync({
+          organization_id: organizationId,
+          drive_id: val,
+          folder_path: '/',
+        })
+        .then(setFolders)
+        .catch(console.error);
     }
   };
 
@@ -127,7 +140,7 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
     });
   };
 
-  const selectedDrive = drives.find(d => d.id === driveId);
+  const selectedDrive = drives.find((d) => d.id === driveId);
 
   if (isLoadingConfig) {
     return (
@@ -176,7 +189,7 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
             onClick={handleListDrives}
             disabled={!siteId.trim() || listDrives.isPending || saveConfig.isPending}
           >
-            {(listDrives.isPending || saveConfig.isPending) ? (
+            {listDrives.isPending || saveConfig.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <RefreshCw className="h-4 w-4" />
@@ -222,7 +235,9 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
               <Library className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Drive configurada:</span>
               <code className="text-xs font-mono">...{existingConfig?.drive_id?.slice(-12)}</code>
-              <span className="text-xs text-muted-foreground ml-auto">(clique em "Listar Bibliotecas" para alterar)</span>
+              <span className="text-xs text-muted-foreground ml-auto">
+                (clique em &quot;Listar Bibliotecas&quot; para alterar)
+              </span>
             </div>
           )}
         </div>
@@ -237,11 +252,11 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
             <button
               type="button"
               className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center gap-2 ${
-                rootFolderPath === "/" ? "bg-accent/60 font-medium" : ""
+                rootFolderPath === '/' ? 'bg-accent/60 font-medium' : ''
               }`}
-              onClick={() => setRootFolderPath("/")}
+              onClick={() => setRootFolderPath('/')}
             >
-              {rootFolderPath === "/" ? (
+              {rootFolderPath === '/' ? (
                 <Check className="h-3 w-3 text-primary" />
               ) : (
                 <FolderOpen className="h-3 w-3 text-muted-foreground" />
@@ -253,7 +268,7 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
                 key={folder.path}
                 type="button"
                 className={`w-full text-left px-3 py-2 text-sm hover:bg-accent transition-colors flex items-center gap-2 ${
-                  rootFolderPath === folder.path ? "bg-accent/60 font-medium" : ""
+                  rootFolderPath === folder.path ? 'bg-accent/60 font-medium' : ''
                 }`}
                 onClick={() => setRootFolderPath(folder.path)}
               >
@@ -320,11 +335,10 @@ export function OrgSharePointConfig({ organizationId }: OrgSharePointConfigProps
       >
         {saveConfig.isPending ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            A guardar...
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />A guardar...
           </>
         ) : (
-          "Guardar Configuração SharePoint"
+          'Guardar Configuração SharePoint'
         )}
       </Button>
     </div>

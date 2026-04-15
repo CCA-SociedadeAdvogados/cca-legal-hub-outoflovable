@@ -4,16 +4,16 @@ import { useOrganizations } from './useOrganizations';
 import { useAuth } from '@/contexts/AuthContext';
 
 export type LegalHubProfile =
-  | 'app_admin'    // SSO + platform_admin
-  | 'cca_manager'  // SSO + role=admin (LegalHub_Manager)
-  | 'cca_user'     // SSO + qualquer outro role
-  | 'org_user'     // local + role=viewer
+  | 'app_admin' // SSO + platform_admin
+  | 'cca_manager' // SSO + role=admin (LegalHub_Manager)
+  | 'cca_user' // SSO + qualquer outro role
+  | 'org_user' // local + role=viewer
   | 'org_manager'; // local + role=owner/admin/editor
 
 function deriveLegalHubProfile(
   authMethod: string | null | undefined,
   isPlatformAdmin: boolean,
-  role: string | null | undefined
+  role: string | null | undefined,
 ): LegalHubProfile {
   if (isPlatformAdmin) return 'app_admin';
   if (authMethod === 'sso_cca') {
@@ -26,15 +26,16 @@ function deriveLegalHubProfile(
 }
 
 export function useLegalHubProfile() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const { isPlatformAdmin, isCheckingAdmin } = usePlatformAdmin();
   const { userMemberships, currentOrganization, membershipsLoading } = useOrganizations();
 
   const currentMembership = userMemberships?.find(
-    (m) => m.organization_id === currentOrganization?.id
+    (m) => m.organization_id === currentOrganization?.id,
   );
   const role = currentMembership?.role ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const authMethod = (profile as any)?.auth_method ?? null;
 
   const isLoading = profileLoading || isCheckingAdmin || membershipsLoading;

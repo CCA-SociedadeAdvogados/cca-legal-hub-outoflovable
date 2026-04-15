@@ -23,22 +23,25 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
     const daysAhead = (config.daysAhead as number) || 30;
     const dateLocale = i18n.language === 'pt' ? pt : enUS;
 
-    const today = new Date();
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + daysAhead);
+    const todayStr = new Date().toDateString();
 
     // Filter contracts expiring within the specified days
     const expiringContracts = useMemo(
-      () =>
-        (contratos ?? [])
+      () => {
+        const now = new Date();
+        const future = new Date();
+        future.setDate(future.getDate() + daysAhead);
+        return (contratos ?? [])
           .filter((c) => {
             if (!c.data_termo || c.estado_contrato !== 'activo') return false;
             const expiryDate = new Date(c.data_termo);
-            return expiryDate >= today && expiryDate <= futureDate;
+            return expiryDate >= now && expiryDate <= future;
           })
           .sort((a, b) => new Date(a.data_termo!).getTime() - new Date(b.data_termo!).getTime())
-          .slice(0, 5),
-      [contratos, today.toDateString(), daysAhead],
+          .slice(0, 5);
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [contratos, todayStr, daysAhead],
     );
 
     if (isLoading) {

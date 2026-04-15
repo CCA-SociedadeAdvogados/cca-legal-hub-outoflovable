@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router-dom";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -15,8 +15,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,36 +36,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { usePlatformAdmin, OrganizationMember, CreateUserPayload, CreateUserResponse } from "@/hooks/usePlatformAdmin";
-import { useAllUsersMetrics, AllMembersEntry } from "@/hooks/useAllUsersMetrics";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { generateSlug } from "@/lib/utils";
-import { IndustrySectorSelect } from "@/components/organizations/IndustrySectorSelect";
-import { AdminUsersTab } from "@/components/admin/AdminUsersTab";
-import { ClientOnboardingTab } from "@/components/admin/ClientOnboardingTab";
-import { DepartmentsConfig } from "@/components/admin/DepartmentsConfig";
-import { OrgSharePointConfig } from "@/components/admin/OrgSharePointConfig";
-import { OrgLegalBiConfig } from "@/components/admin/OrgLegalBiConfig";
-import { OrgJvrisIdConfig } from "@/components/admin/OrgJvrisIdConfig";
-import { useProvisionSharePoint } from "@/hooks/useProvisionSharePoint";
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { usePlatformAdmin, OrganizationMember, CreateUserResponse } from '@/hooks/usePlatformAdmin';
+import { useAllUsersMetrics, AllMembersEntry } from '@/hooks/useAllUsersMetrics';
+import { useImpersonation } from '@/contexts/ImpersonationContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { generateSlug } from '@/lib/utils';
+import { IndustrySectorSelect } from '@/components/organizations/IndustrySectorSelect';
+import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
+import { ClientOnboardingTab } from '@/components/admin/ClientOnboardingTab';
+import { OrgSharePointConfig } from '@/components/admin/OrgSharePointConfig';
+import { OrgLegalBiConfig } from '@/components/admin/OrgLegalBiConfig';
+import { OrgJvrisIdConfig } from '@/components/admin/OrgJvrisIdConfig';
+import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
 import {
   Building2,
   FileCheck,
@@ -90,32 +89,31 @@ import {
   Copy,
   Check,
   Briefcase,
-  Folders,
   Wand2,
-} from "lucide-react";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
-import type { Database } from "@/integrations/supabase/types";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import type { Database } from '@/integrations/supabase/types';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
-type AppRole = Database["public"]["Enums"]["app_role"];
+type AppRole = Database['public']['Enums']['app_role'];
 
 const statusColors: Record<string, string> = {
-  rascunho: "bg-muted text-muted-foreground",
-  ativo: "bg-risk-low/10 text-risk-low",
-  expirado: "bg-destructive/10 text-destructive",
-  pendente_assinatura: "bg-risk-medium/10 text-risk-medium",
-  em_revisao: "bg-primary/10 text-primary",
-  cancelado: "bg-destructive/10 text-destructive",
-  arquivado: "bg-muted text-muted-foreground",
+  rascunho: 'bg-muted text-muted-foreground',
+  ativo: 'bg-risk-low/10 text-risk-low',
+  expirado: 'bg-destructive/10 text-destructive',
+  pendente_assinatura: 'bg-risk-medium/10 text-risk-medium',
+  em_revisao: 'bg-primary/10 text-primary',
+  cancelado: 'bg-destructive/10 text-destructive',
+  arquivado: 'bg-muted text-muted-foreground',
 };
 
 const roleColors: Record<AppRole, string> = {
-  owner: "bg-risk-medium/20 text-risk-medium",
-  admin: "bg-primary/20 text-primary",
-  editor: "bg-primary/15 text-primary",
-  viewer: "bg-muted text-muted-foreground",
+  owner: 'bg-risk-medium/20 text-risk-medium',
+  admin: 'bg-primary/20 text-primary',
+  editor: 'bg-primary/15 text-primary',
+  viewer: 'bg-muted text-muted-foreground',
 };
 
 const roleIcons: Record<AppRole, React.ReactNode> = {
@@ -128,31 +126,40 @@ const roleIcons: Record<AppRole, React.ReactNode> = {
 export default function PlatformAdmin() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { startImpersonation, startUserImpersonation, isImpersonating } = useImpersonation();
+  const {
+    startImpersonation,
+    startUserImpersonation: _startUserImpersonation,
+    isImpersonating,
+  } = useImpersonation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") || "impersonation";
+  const initialTab = searchParams.get('tab') || 'impersonation';
   const [selectedUsersOrgId, setSelectedUsersOrgId] = useState<string | null>(null);
-  const [selectedDeptOrgId, setSelectedDeptOrgId] = useState<string | null>(null);
-  const [searchEmail, setSearchEmail] = useState("");
-  const [contractSearch, setContractSearch] = useState("");
-  const [orgSearch, setOrgSearch] = useState("");
-  const [newOrgName, setNewOrgName] = useState("");
-  const [newOrgSlug, setNewOrgSlug] = useState("");
+  const [_selectedDeptOrgId, _setSelectedDeptOrgId] = useState<string | null>(null);
+  const [searchEmail, setSearchEmail] = useState('');
+  const [contractSearch, setContractSearch] = useState('');
+  const [orgSearch, setOrgSearch] = useState('');
+  const [newOrgName, setNewOrgName] = useState('');
+  const [newOrgSlug, setNewOrgSlug] = useState('');
   const [newOrgSectors, setNewOrgSectors] = useState<string[]>([]);
-  const [newOrgLegalBiUrl, setNewOrgLegalBiUrl] = useState("");
+  const [newOrgLegalBiUrl, setNewOrgLegalBiUrl] = useState('');
   const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
-  const [editingOrg, setEditingOrg] = useState<{ id: string; name: string; slug: string; industry_sectors?: string[] | null } | null>(null);
-  const [editOrgName, setEditOrgName] = useState("");
-  const [editOrgSlug, setEditOrgSlug] = useState("");
+  const [editingOrg, setEditingOrg] = useState<{
+    id: string;
+    name: string;
+    slug: string;
+    industry_sectors?: string[] | null;
+  } | null>(null);
+  const [editOrgName, setEditOrgName] = useState('');
+  const [editOrgSlug, setEditOrgSlug] = useState('');
   const [editOrgSectors, setEditOrgSectors] = useState<string[]>([]);
   const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
-  
+
   const [selectedOrg, setSelectedOrg] = useState<{ id: string; name: string } | null>(null);
   const [isMembersSheetOpen, setIsMembersSheetOpen] = useState(false);
-  const [newMemberEmail, setNewMemberEmail] = useState("");
-  const [newMemberRole, setNewMemberRole] = useState<AppRole>("viewer");
+  const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState<AppRole>('viewer');
   const [editingMember, setEditingMember] = useState<OrganizationMember | null>(null);
-  
+
   const [pendingMemberAdd, setPendingMemberAdd] = useState<{
     email: string;
     role: AppRole;
@@ -160,29 +167,35 @@ export default function PlatformAdmin() {
   } | null>(null);
   const [isConfirmMoveOpen, setIsConfirmMoveOpen] = useState(false);
   const [isEditMemberOpen, setIsEditMemberOpen] = useState(false);
-  
+
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState("");
-  const [newUserName, setNewUserName] = useState("");
-  const [newUserRole, setNewUserRole] = useState<AppRole>("viewer");
-  const [newUserPassword, setNewUserPassword] = useState("");
-  const [createdUserCredentials, setCreatedUserCredentials] = useState<CreateUserResponse | null>(null);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserRole, setNewUserRole] = useState<AppRole>('viewer');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [createdUserCredentials, setCreatedUserCredentials] = useState<CreateUserResponse | null>(
+    null,
+  );
   const [isCredentialsDialogOpen, setIsCredentialsDialogOpen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  
+
   // Estado para impersonation de org
-  const [impersonationReason, setImpersonationReason] = useState("");
+  const [impersonationReason, setImpersonationReason] = useState('');
   const [isImpersonationDialogOpen, setIsImpersonationDialogOpen] = useState(false);
-  const [selectedOrgForImpersonation, setSelectedOrgForImpersonation] = useState<{ id: string; name: string } | null>(null);
-  
+  const [selectedOrgForImpersonation, setSelectedOrgForImpersonation] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
   // Estado para impersonation de utilizador individual
-  const [isUserImpersonationDialogOpen, setIsUserImpersonationDialogOpen] = useState(false);
-  const [selectedUserForImpersonation, setSelectedUserForImpersonation] = useState<AllMembersEntry | null>(null);
-  const [userImpersonationReason, setUserImpersonationReason] = useState("");
-  
+  const [_isUserImpersonationDialogOpen, _setIsUserImpersonationDialogOpen] = useState(false);
+  const [_selectedUserForImpersonation, _setSelectedUserForImpersonation] =
+    useState<AllMembersEntry | null>(null);
+  const [_userImpersonationReason, _setUserImpersonationReason] = useState('');
+
   const [userToDelete, setUserToDelete] = useState<AllMembersEntry | null>(null);
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
-  
+
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -211,10 +224,17 @@ export default function PlatformAdmin() {
   const { provision: provisionSharePoint } = useProvisionSharePoint();
 
   // Query para métricas globais de utilizadores
-  const { allMembers, isLoadingMembers: isLoadingAllMembers, userMetrics, isLoadingMetrics } = useAllUsersMetrics(isPlatformAdmin);
+  const {
+    allMembers,
+    isLoadingMembers: isLoadingAllMembers,
+    userMetrics,
+    isLoadingMetrics,
+  } = useAllUsersMetrics(isPlatformAdmin);
 
   // Query para obter membros da organização selecionada (para sheet de gestão)
-  const { data: orgMembers, isLoading: isLoadingOrgMembers } = useOrganizationMembers(selectedOrg?.id || null);
+  const { data: orgMembers, isLoading: isLoadingOrgMembers } = useOrganizationMembers(
+    selectedOrg?.id || null,
+  );
 
   // Query para histórico de impersonation
   const { data: impersonationHistory, isLoading: isLoadingHistory } = useQuery({
@@ -223,16 +243,18 @@ export default function PlatformAdmin() {
     queryFn: async () => {
       // Expire stale sessions before fetching history
       await supabase.rpc('expire_stale_impersonation_sessions');
-      
+
       const { data, error } = await supabase
         .from('impersonation_sessions')
-        .select(`
+        .select(
+          `
           *,
           organizations:impersonated_organization_id (name)
-        `)
+        `,
+        )
         .order('started_at', { ascending: false })
         .limit(50);
-      
+
       if (error) throw error;
       return data;
     },
@@ -242,29 +264,29 @@ export default function PlatformAdmin() {
   const deleteUser = useMutation({
     mutationFn: async (userId: string) => {
       const { data, error } = await supabase.functions.invoke('admin-delete-user', {
-        body: { userId }
+        body: { userId },
       });
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["allMembersWithProfiles"] });
-      queryClient.invalidateQueries({ queryKey: ["organization-members"] });
-      queryClient.invalidateQueries({ queryKey: ["global-stats"] });
+      queryClient.invalidateQueries({ queryKey: ['allMembersWithProfiles'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-members'] });
+      queryClient.invalidateQueries({ queryKey: ['global-stats'] });
       toast({
-        title: t("common.success"),
-        description: t("admin.userDeletedSuccess", "Utilizador eliminado com sucesso"),
+        title: t('common.success'),
+        description: t('admin.userDeletedSuccess', 'Utilizador eliminado com sucesso'),
       });
       setIsDeleteUserDialogOpen(false);
       setUserToDelete(null);
     },
     onError: (error: Error) => {
       toast({
-        title: t("common.error"),
-        description: error.message || t("admin.userDeleteError", "Erro ao eliminar utilizador"),
-        variant: "destructive",
+        title: t('common.error'),
+        description: error.message || t('admin.userDeleteError', 'Erro ao eliminar utilizador'),
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   // Handler para abrir diálogo de eliminar utilizador
@@ -283,7 +305,7 @@ export default function PlatformAdmin() {
     ?.filter(
       (org) =>
         (org.name ?? '').toLowerCase().includes(orgSearch.toLowerCase()) ||
-        (org.slug ?? '').toLowerCase().includes(orgSearch.toLowerCase())
+        (org.slug ?? '').toLowerCase().includes(orgSearch.toLowerCase()),
     )
     .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt'));
 
@@ -302,13 +324,13 @@ export default function PlatformAdmin() {
     if (!lockedUntil) return false;
     return new Date(lockedUntil) > new Date();
   };
-  
+
   const handleStartImpersonation = async () => {
     if (!selectedOrgForImpersonation || impersonationReason.trim().length < 5) {
       toast({
-        title: t("common.error"),
-        description: "Motivo deve ter pelo menos 5 caracteres",
-        variant: "destructive",
+        title: t('common.error'),
+        description: 'Motivo deve ter pelo menos 5 caracteres',
+        variant: 'destructive',
       });
       return;
     }
@@ -317,27 +339,27 @@ export default function PlatformAdmin() {
       await startImpersonation(
         selectedOrgForImpersonation.id,
         selectedOrgForImpersonation.name,
-        impersonationReason.trim()
+        impersonationReason.trim(),
       );
       toast({
-        title: t("common.success"),
+        title: t('common.success'),
         description: `A atuar no contexto de ${selectedOrgForImpersonation.name}`,
       });
       setIsImpersonationDialogOpen(false);
-      setImpersonationReason("");
+      setImpersonationReason('');
       setSelectedOrgForImpersonation(null);
     } catch (error) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao iniciar impersonation",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao iniciar impersonation',
+        variant: 'destructive',
       });
     }
   };
-  
+
   const openImpersonationDialog = (org: { id: string; name: string }) => {
     setSelectedOrgForImpersonation(org);
-    setImpersonationReason("");
+    setImpersonationReason('');
     setIsImpersonationDialogOpen(true);
   };
 
@@ -347,16 +369,16 @@ export default function PlatformAdmin() {
     try {
       // Find user by email (use profiles_safe — direct profiles table access is restricted by RLS)
       const { data: profile, error } = await supabase
-        .from("profiles_safe")
-        .select("id, email")
-        .eq("email", searchEmail.trim())
+        .from('profiles_safe')
+        .select('id, email')
+        .eq('email', searchEmail.trim())
         .maybeSingle();
 
       if (error || !profile) {
         toast({
-          title: t("common.error"),
-          description: "Utilizador não encontrado",
-          variant: "destructive",
+          title: t('common.error'),
+          description: 'Utilizador não encontrado',
+          variant: 'destructive',
         });
         return;
       }
@@ -367,15 +389,15 @@ export default function PlatformAdmin() {
       });
 
       toast({
-        title: t("common.success"),
-        description: "Platform admin adicionado com sucesso",
+        title: t('common.success'),
+        description: 'Platform admin adicionado com sucesso',
       });
-      setSearchEmail("");
+      setSearchEmail('');
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao adicionar admin",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao adicionar admin',
+        variant: 'destructive',
       });
     }
   };
@@ -384,14 +406,14 @@ export default function PlatformAdmin() {
     try {
       await removePlatformAdmin.mutateAsync(adminId);
       toast({
-        title: t("common.success"),
-        description: "Platform admin removido",
+        title: t('common.success'),
+        description: 'Platform admin removido',
       });
     } catch {
       toast({
-        title: t("common.error"),
-        description: "Erro ao remover admin",
-        variant: "destructive",
+        title: t('common.error'),
+        description: 'Erro ao remover admin',
+        variant: 'destructive',
       });
     }
   };
@@ -399,9 +421,9 @@ export default function PlatformAdmin() {
   const handleCreateOrganization = async () => {
     if (!newOrgName.trim() || !newOrgSlug.trim()) {
       toast({
-        title: t("common.error"),
-        description: "Nome e slug são obrigatórios",
-        variant: "destructive",
+        title: t('common.error'),
+        description: 'Nome e slug são obrigatórios',
+        variant: 'destructive',
       });
       return;
     }
@@ -409,24 +431,24 @@ export default function PlatformAdmin() {
     try {
       await createOrganization.mutateAsync({
         name: newOrgName.trim(),
-        slug: newOrgSlug.trim().toLowerCase().replace(/\s+/g, "-"),
+        slug: newOrgSlug.trim().toLowerCase().replace(/\s+/g, '-'),
         industrySectors: newOrgSectors,
         legalbiUrl: newOrgLegalBiUrl.trim() || undefined,
       });
       toast({
-        title: t("common.success"),
-        description: "Organização criada com sucesso",
+        title: t('common.success'),
+        description: 'Organização criada com sucesso',
       });
-      setNewOrgName("");
-      setNewOrgSlug("");
+      setNewOrgName('');
+      setNewOrgSlug('');
       setNewOrgSectors([]);
-      setNewOrgLegalBiUrl("");
+      setNewOrgLegalBiUrl('');
       setIsCreateOrgOpen(false);
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao criar organização",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao criar organização',
+        variant: 'destructive',
       });
     }
   };
@@ -435,19 +457,24 @@ export default function PlatformAdmin() {
     try {
       await deleteOrganization.mutateAsync(orgId);
       toast({
-        title: t("common.success"),
+        title: t('common.success'),
         description: `Organização "${orgName}" eliminada`,
       });
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao eliminar organização",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao eliminar organização',
+        variant: 'destructive',
       });
     }
   };
 
-  const handleEditOrganization = (org: { id: string; name: string; slug: string; industry_sectors?: string[] | null }) => {
+  const handleEditOrganization = (org: {
+    id: string;
+    name: string;
+    slug: string;
+    industry_sectors?: string[] | null;
+  }) => {
     setEditingOrg(org);
     setEditOrgName(org.name);
     setEditOrgSlug(org.slug);
@@ -458,9 +485,9 @@ export default function PlatformAdmin() {
   const handleUpdateOrganization = async () => {
     if (!editingOrg || !editOrgName.trim() || !editOrgSlug.trim()) {
       toast({
-        title: t("common.error"),
-        description: "Nome e slug são obrigatórios",
-        variant: "destructive",
+        title: t('common.error'),
+        description: 'Nome e slug são obrigatórios',
+        variant: 'destructive',
       });
       return;
     }
@@ -469,23 +496,23 @@ export default function PlatformAdmin() {
       await updateOrganization.mutateAsync({
         id: editingOrg.id,
         name: editOrgName.trim(),
-        slug: editOrgSlug.trim().toLowerCase().replace(/\s+/g, "-"),
+        slug: editOrgSlug.trim().toLowerCase().replace(/\s+/g, '-'),
         industrySectors: editOrgSectors,
       });
       toast({
-        title: t("common.success"),
-        description: "Organização atualizada com sucesso",
+        title: t('common.success'),
+        description: 'Organização atualizada com sucesso',
       });
       setEditingOrg(null);
-      setEditOrgName("");
-      setEditOrgSlug("");
+      setEditOrgName('');
+      setEditOrgSlug('');
       setEditOrgSectors([]);
       setIsEditOrgOpen(false);
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao atualizar organização",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao atualizar organização',
+        variant: 'destructive',
       });
     }
   };
@@ -499,9 +526,9 @@ export default function PlatformAdmin() {
   const handleAddMemberToOrg = async () => {
     if (!selectedOrg || !newMemberEmail.trim()) {
       toast({
-        title: t("common.error"),
-        description: "Email é obrigatório",
-        variant: "destructive",
+        title: t('common.error'),
+        description: 'Email é obrigatório',
+        variant: 'destructive',
       });
       return;
     }
@@ -513,11 +540,11 @@ export default function PlatformAdmin() {
         role: newMemberRole,
       });
       toast({
-        title: t("common.success"),
-        description: "Utilizador adicionado à organização",
+        title: t('common.success'),
+        description: 'Utilizador adicionado à organização',
       });
-      setNewMemberEmail("");
-      setNewMemberRole("viewer");
+      setNewMemberEmail('');
+      setNewMemberRole('viewer');
     } catch (error: unknown) {
       if (error instanceof Error && error.message.startsWith('USER_IN_OTHER_ORG:')) {
         const currentOrgName = error.message.split(':')[1];
@@ -529,9 +556,9 @@ export default function PlatformAdmin() {
         setIsConfirmMoveOpen(true);
       } else {
         toast({
-          title: t("common.error"),
-          description: error instanceof Error ? error.message : "Erro ao adicionar utilizador",
-          variant: "destructive",
+          title: t('common.error'),
+          description: error instanceof Error ? error.message : 'Erro ao adicionar utilizador',
+          variant: 'destructive',
         });
       }
     }
@@ -539,7 +566,7 @@ export default function PlatformAdmin() {
 
   const handleConfirmMoveUser = async () => {
     if (!pendingMemberAdd || !selectedOrg) return;
-    
+
     try {
       await addMemberToOrg.mutateAsync({
         orgId: selectedOrg.id,
@@ -548,16 +575,16 @@ export default function PlatformAdmin() {
         forceMove: true,
       });
       toast({
-        title: t("common.success"),
-        description: "Utilizador movido para esta organização",
+        title: t('common.success'),
+        description: 'Utilizador movido para esta organização',
       });
-      setNewMemberEmail("");
-      setNewMemberRole("viewer");
+      setNewMemberEmail('');
+      setNewMemberRole('viewer');
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao mover utilizador",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao mover utilizador',
+        variant: 'destructive',
       });
     }
     setIsConfirmMoveOpen(false);
@@ -568,9 +595,9 @@ export default function PlatformAdmin() {
   const handleCreateUser = async () => {
     if (!selectedOrg || !newUserEmail.trim() || !newUserName.trim()) {
       toast({
-        title: t("common.error"),
-        description: "Email e nome são obrigatórios",
-        variant: "destructive",
+        title: t('common.error'),
+        description: 'Email e nome são obrigatórios',
+        variant: 'destructive',
       });
       return;
     }
@@ -587,32 +614,33 @@ export default function PlatformAdmin() {
       // Check if it's an existing user (no credentials returned)
       if (result.existingUser) {
         toast({
-          title: t("common.success"),
-          description: "Utilizador existente adicionado à organização. Pode usar as credenciais existentes.",
+          title: t('common.success'),
+          description:
+            'Utilizador existente adicionado à organização. Pode usar as credenciais existentes.',
         });
       } else {
         // Store credentials to show in dialog for new users
         setCreatedUserCredentials(result);
         setIsCredentialsDialogOpen(true);
-        
+
         toast({
-          title: t("common.success"),
-          description: "Utilizador criado com sucesso!",
+          title: t('common.success'),
+          description: 'Utilizador criado com sucesso!',
         });
       }
-      
+
       setIsCreateUserOpen(false);
-      
+
       // Reset form
-      setNewUserEmail("");
-      setNewUserName("");
-      setNewUserRole("viewer");
-      setNewUserPassword("");
+      setNewUserEmail('');
+      setNewUserName('');
+      setNewUserRole('viewer');
+      setNewUserPassword('');
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao criar utilizador",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao criar utilizador',
+        variant: 'destructive',
       });
     }
   };
@@ -636,16 +664,16 @@ export default function PlatformAdmin() {
         role: newRole,
       });
       toast({
-        title: t("common.success"),
-        description: "Papel do utilizador atualizado",
+        title: t('common.success'),
+        description: 'Papel do utilizador atualizado',
       });
       setIsEditMemberOpen(false);
       setEditingMember(null);
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao atualizar papel",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao atualizar papel',
+        variant: 'destructive',
       });
     }
   };
@@ -654,14 +682,14 @@ export default function PlatformAdmin() {
     try {
       await removeMember.mutateAsync(memberId);
       toast({
-        title: t("common.success"),
-        description: "Utilizador removido da organização",
+        title: t('common.success'),
+        description: 'Utilizador removido da organização',
       });
     } catch (error: unknown) {
       toast({
-        title: t("common.error"),
-        description: error instanceof Error ? error.message : "Erro ao remover utilizador",
-        variant: "destructive",
+        title: t('common.error'),
+        description: error instanceof Error ? error.message : 'Erro ao remover utilizador',
+        variant: 'destructive',
       });
     }
   };
@@ -669,7 +697,7 @@ export default function PlatformAdmin() {
   const filteredContracts = allContracts?.filter(
     (c) =>
       (c.titulo_contrato ?? '').toLowerCase().includes(contractSearch.toLowerCase()) ||
-      (c.id_interno ?? '').toLowerCase().includes(contractSearch.toLowerCase())
+      (c.id_interno ?? '').toLowerCase().includes(contractSearch.toLowerCase()),
   );
 
   return (
@@ -678,10 +706,10 @@ export default function PlatformAdmin() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold font-serif">
-            {t("admin.title", "Administração da Plataforma")}
+            {t('admin.title', 'Administração da Plataforma')}
           </h1>
           <p className="text-muted-foreground">
-            {t("admin.subtitle", "Gestão global de organizações e contratos")}
+            {t('admin.subtitle', 'Gestão global de organizações e contratos')}
           </p>
         </div>
 
@@ -690,59 +718,64 @@ export default function PlatformAdmin() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t("admin.organizations", "Organizações")}
+                {t('admin.organizations', 'Organizações')}
               </CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoadingStats ? "..." : globalStats?.totalOrganizations}
+                {isLoadingStats ? '...' : globalStats?.totalOrganizations}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t("admin.contracts", "Contratos")}
+                {t('admin.contracts', 'Contratos')}
               </CardTitle>
               <FileCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoadingStats ? "..." : globalStats?.totalContracts}
+                {isLoadingStats ? '...' : globalStats?.totalContracts}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t("admin.users", "Utilizadores")}
+                {t('admin.users', 'Utilizadores')}
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoadingStats ? "..." : globalStats?.totalUsers}
+                {isLoadingStats ? '...' : globalStats?.totalUsers}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t("admin.platformAdmins", "Platform Admins")}
+                {t('admin.platformAdmins', 'Platform Admins')}
               </CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {isLoadingAdmins ? "..." : platformAdmins?.length}
+                {isLoadingAdmins ? '...' : platformAdmins?.length}
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue={initialTab} value={searchParams.get("tab") || "impersonation"} onValueChange={handleTabChange} className="space-y-4">
+        <Tabs
+          defaultValue={initialTab}
+          value={searchParams.get('tab') || 'impersonation'}
+          onValueChange={handleTabChange}
+          className="space-y-4"
+        >
           <TabsList className="flex-wrap">
             <TabsTrigger value="impersonation">
               <UserCheck className="h-4 w-4 mr-2" />
@@ -750,19 +783,19 @@ export default function PlatformAdmin() {
             </TabsTrigger>
             <TabsTrigger value="organizations">
               <Building2 className="h-4 w-4 mr-2" />
-              {t("admin.organizations", "Organizações")}
+              {t('admin.organizations', 'Organizações')}
             </TabsTrigger>
             <TabsTrigger value="users">
               <Users className="h-4 w-4 mr-2" />
-              {t("nav.users", "Utilizadores")}
+              {t('nav.users', 'Utilizadores')}
             </TabsTrigger>
             <TabsTrigger value="contracts">
               <FileCheck className="h-4 w-4 mr-2" />
-              {t("admin.allContracts", "Todos os Contratos")}
+              {t('admin.allContracts', 'Todos os Contratos')}
             </TabsTrigger>
             <TabsTrigger value="admins">
               <Shield className="h-4 w-4 mr-2" />
-              {t("admin.platformAdmins", "Platform Admins")}
+              {t('admin.platformAdmins', 'Platform Admins')}
             </TabsTrigger>
             <TabsTrigger value="onboarding">
               <UserPlus className="h-4 w-4 mr-2" />
@@ -781,7 +814,8 @@ export default function PlatformAdmin() {
                     Entrar no Contexto
                   </CardTitle>
                   <CardDescription>
-                    Selecione uma organização para visualizar e configurar como se fosse um utilizador dela.
+                    Selecione uma organização para visualizar e configurar como se fosse um
+                    utilizador dela.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -789,11 +823,12 @@ export default function PlatformAdmin() {
                     <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                       <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4" />
-                        Já está em modo impersonation. Saia primeiro para selecionar outra organização.
+                        Já está em modo impersonation. Saia primeiro para selecionar outra
+                        organização.
                       </p>
                     </div>
                   )}
-                  
+
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -804,7 +839,7 @@ export default function PlatformAdmin() {
                       disabled={isImpersonating}
                     />
                   </div>
-                  
+
                   <div className="max-h-[400px] overflow-y-auto space-y-2">
                     {isLoadingOrgs ? (
                       <div className="flex justify-center py-8">
@@ -851,9 +886,7 @@ export default function PlatformAdmin() {
                     <History className="h-5 w-5" />
                     Histórico de Sessões
                   </CardTitle>
-                  <CardDescription>
-                    Últimas sessões de impersonation realizadas.
-                  </CardDescription>
+                  <CardDescription>Últimas sessões de impersonation realizadas.</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {isLoadingHistory ? (
@@ -872,20 +905,29 @@ export default function PlatformAdmin() {
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium">
-                                {(session.organizations as { name: string } | null)?.name || 'Organização removida'}
+                                {(session.organizations as { name: string } | null)?.name ||
+                                  'Organização removida'}
                               </span>
                             </div>
-                            <Badge 
+                            <Badge
                               variant={
-                                session.status === 'active' ? 'default' : 
-                                session.status === 'expired' ? 'outline' : 
-                                'secondary'
+                                session.status === 'active'
+                                  ? 'default'
+                                  : session.status === 'expired'
+                                    ? 'outline'
+                                    : 'secondary'
                               }
-                              className={session.status === 'expired' ? 'border-yellow-500 text-yellow-600' : ''}
+                              className={
+                                session.status === 'expired'
+                                  ? 'border-yellow-500 text-yellow-600'
+                                  : ''
+                              }
                             >
-                              {session.status === 'active' ? t('platformAdmin.impersonation.statusActive', 'Ativa') : 
-                               session.status === 'expired' ? t('platformAdmin.impersonation.statusExpired', 'Expirada') : 
-                               t('platformAdmin.impersonation.statusEnded', 'Terminada')}
+                              {session.status === 'active'
+                                ? t('platformAdmin.impersonation.statusActive', 'Ativa')
+                                : session.status === 'expired'
+                                  ? t('platformAdmin.impersonation.statusExpired', 'Expirada')
+                                  : t('platformAdmin.impersonation.statusEnded', 'Terminada')}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2">
@@ -894,11 +936,13 @@ export default function PlatformAdmin() {
                           <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {format(new Date(session.started_at), "dd/MM/yyyy HH:mm", { locale: pt })}
+                              {format(new Date(session.started_at), 'dd/MM/yyyy HH:mm', {
+                                locale: pt,
+                              })}
                             </span>
                             {session.ended_at && (
                               <span>
-                                → {format(new Date(session.ended_at), "HH:mm", { locale: pt })}
+                                → {format(new Date(session.ended_at), 'HH:mm', { locale: pt })}
                               </span>
                             )}
                           </div>
@@ -916,7 +960,7 @@ export default function PlatformAdmin() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{t("admin.organizations", "Organizações")}</CardTitle>
+                  <CardTitle>{t('admin.organizations', 'Organizações')}</CardTitle>
                   <Dialog open={isCreateOrgOpen} onOpenChange={setIsCreateOrgOpen}>
                     <DialogTrigger asChild>
                       <Button>
@@ -933,7 +977,7 @@ export default function PlatformAdmin() {
                       </DialogHeader>
                       <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
                         <div className="grid gap-2">
-                          <Label htmlFor="org-name">{t("common.name", "Nome")}</Label>
+                          <Label htmlFor="org-name">{t('common.name', 'Nome')}</Label>
                           <Input
                             id="org-name"
                             value={newOrgName}
@@ -969,20 +1013,25 @@ export default function PlatformAdmin() {
                             placeholder="https://bi.cca.law/..."
                           />
                           <p className="text-xs text-muted-foreground">
-                            Opcional. Pode ser configurado/alterado posteriormente através da edição.
+                            Opcional. Pode ser configurado/alterado posteriormente através da
+                            edição.
                           </p>
                         </div>
                         {/* SharePoint will be configured after org creation via Edit */}
                         <p className="text-xs text-muted-foreground italic">
-                          A configuração SharePoint pode ser adicionada após criar a organização, através da edição.
+                          A configuração SharePoint pode ser adicionada após criar a organização,
+                          através da edição.
                         </p>
                       </div>
                       <DialogFooter>
                         <Button variant="outline" onClick={() => setIsCreateOrgOpen(false)}>
-                          {t("common.cancel", "Cancelar")}
+                          {t('common.cancel', 'Cancelar')}
                         </Button>
-                        <Button onClick={handleCreateOrganization} disabled={createOrganization.isPending}>
-                          {createOrganization.isPending ? "A criar..." : "Criar Organização"}
+                        <Button
+                          onClick={handleCreateOrganization}
+                          disabled={createOrganization.isPending}
+                        >
+                          {createOrganization.isPending ? 'A criar...' : 'Criar Organização'}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -998,16 +1047,17 @@ export default function PlatformAdmin() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("common.name", "Nome")}</TableHead>
+                        <TableHead>{t('common.name', 'Nome')}</TableHead>
                         <TableHead>Identificador único</TableHead>
                         <TableHead>Áreas de Atuação</TableHead>
-                        <TableHead>{t("common.createdAt", "Criado em")}</TableHead>
-                        <TableHead className="w-[100px]">{t("common.actions", "Ações")}</TableHead>
+                        <TableHead>{t('common.createdAt', 'Criado em')}</TableHead>
+                        <TableHead className="w-[100px]">{t('common.actions', 'Ações')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {allOrganizations?.map((org) => {
-                        const sectors = (org as { industry_sectors?: string[] | null }).industry_sectors || [];
+                        const sectors =
+                          (org as { industry_sectors?: string[] | null }).industry_sectors || [];
                         return (
                           <TableRow key={org.id}>
                             <TableCell className="font-medium">{org.name}</TableCell>
@@ -1027,7 +1077,7 @@ export default function PlatformAdmin() {
                               )}
                             </TableCell>
                             <TableCell>
-                              {format(new Date(org.created_at), "dd MMM yyyy", {
+                              {format(new Date(org.created_at), 'dd MMM yyyy', {
                                 locale: pt,
                               })}
                             </TableCell>
@@ -1044,12 +1094,16 @@ export default function PlatformAdmin() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  onClick={() => handleEditOrganization({
-                                    id: org.id,
-                                    name: org.name,
-                                    slug: org.slug,
-                                    industry_sectors: (org as { industry_sectors?: string[] | null }).industry_sectors,
-                                  })}
+                                  onClick={() =>
+                                    handleEditOrganization({
+                                      id: org.id,
+                                      name: org.name,
+                                      slug: org.slug,
+                                      industry_sectors: (
+                                        org as { industry_sectors?: string[] | null }
+                                      ).industry_sectors,
+                                    })
+                                  }
                                   title="Editar organização"
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -1069,12 +1123,15 @@ export default function PlatformAdmin() {
                                     <AlertDialogHeader>
                                       <AlertDialogTitle>Eliminar Organização</AlertDialogTitle>
                                       <AlertDialogDescription>
-                                        Tem a certeza que deseja eliminar a organização "{org.name}"? 
-                                        Esta ação não pode ser revertida e todos os dados associados serão perdidos.
+                                        Tem a certeza que deseja eliminar a organização &quot;
+                                        {org.name}&quot;? Esta ação não pode ser revertida e todos
+                                        os dados associados serão perdidos.
                                       </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                      <AlertDialogCancel>{t("common.cancel", "Cancelar")}</AlertDialogCancel>
+                                      <AlertDialogCancel>
+                                        {t('common.cancel', 'Cancelar')}
+                                      </AlertDialogCancel>
                                       <AlertDialogAction
                                         onClick={() => handleDeleteOrganization(org.id, org.name)}
                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -1107,13 +1164,11 @@ export default function PlatformAdmin() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Editar Organização</DialogTitle>
-                  <DialogDescription>
-                    Altere os dados da organização.
-                  </DialogDescription>
+                  <DialogDescription>Altere os dados da organização.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
                   <div className="grid gap-2">
-                    <Label htmlFor="edit-org-name">{t("common.name", "Nome")}</Label>
+                    <Label htmlFor="edit-org-name">{t('common.name', 'Nome')}</Label>
                     <Input
                       id="edit-org-name"
                       value={editOrgName}
@@ -1142,15 +1197,19 @@ export default function PlatformAdmin() {
                     <div className="rounded-lg border border-dashed p-4 space-y-2">
                       <p className="text-sm font-medium">Provisionamento Automático</p>
                       <p className="text-xs text-muted-foreground">
-                        Cria automaticamente a estrutura de pastas SharePoint para este cliente e configura o link LegalBI.
+                        Cria automaticamente a estrutura de pastas SharePoint para este cliente e
+                        configura o link LegalBI.
                       </p>
                       <Button
                         variant="outline"
                         size="sm"
                         disabled={provisionSharePoint.isPending}
                         onClick={() => {
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           const org = allOrganizations?.find((o: any) => o.id === editingOrg.id);
-                          const clientCode = (org as any)?.client_code ?? editingOrg.id.slice(0, 8).toUpperCase();
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const clientCode =
+                            (org as any)?.client_code ?? editingOrg.id.slice(0, 8).toUpperCase();
                           provisionSharePoint.mutate({
                             organizationId: editingOrg.id,
                             clientCode,
@@ -1158,8 +1217,12 @@ export default function PlatformAdmin() {
                           });
                         }}
                       >
-                        <Wand2 className={`mr-2 h-4 w-4 ${provisionSharePoint.isPending ? "animate-spin" : ""}`} />
-                        {provisionSharePoint.isPending ? "A provisionar..." : "Provisionar SharePoint + LegalBI"}
+                        <Wand2
+                          className={`mr-2 h-4 w-4 ${provisionSharePoint.isPending ? 'animate-spin' : ''}`}
+                        />
+                        {provisionSharePoint.isPending
+                          ? 'A provisionar...'
+                          : 'Provisionar SharePoint + LegalBI'}
                       </Button>
                     </div>
                   )}
@@ -1169,10 +1232,13 @@ export default function PlatformAdmin() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsEditOrgOpen(false)}>
-                    {t("common.cancel", "Cancelar")}
+                    {t('common.cancel', 'Cancelar')}
                   </Button>
-                  <Button onClick={handleUpdateOrganization} disabled={updateOrganization.isPending}>
-                    {updateOrganization.isPending ? "A guardar..." : "Guardar Alterações"}
+                  <Button
+                    onClick={handleUpdateOrganization}
+                    disabled={updateOrganization.isPending}
+                  >
+                    {updateOrganization.isPending ? 'A guardar...' : 'Guardar Alterações'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1202,11 +1268,11 @@ export default function PlatformAdmin() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{t("admin.allContracts", "Todos os Contratos")}</CardTitle>
+                  <CardTitle>{t('admin.allContracts', 'Todos os Contratos')}</CardTitle>
                   <div className="relative w-64">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
-                      placeholder={t("common.search", "Pesquisar...")}
+                      placeholder={t('common.search', 'Pesquisar...')}
                       value={contractSearch}
                       onChange={(e) => setContractSearch(e.target.value)}
                       className="pl-10"
@@ -1224,10 +1290,10 @@ export default function PlatformAdmin() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>ID</TableHead>
-                        <TableHead>{t("contracts.title", "Título")}</TableHead>
-                        <TableHead>{t("admin.organization", "Organização")}</TableHead>
-                        <TableHead>{t("contracts.status", "Estado")}</TableHead>
-                        <TableHead>{t("common.createdAt", "Criado em")}</TableHead>
+                        <TableHead>{t('contracts.title', 'Título')}</TableHead>
+                        <TableHead>{t('admin.organization', 'Organização')}</TableHead>
+                        <TableHead>{t('contracts.status', 'Estado')}</TableHead>
+                        <TableHead>{t('common.createdAt', 'Criado em')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1236,19 +1302,17 @@ export default function PlatformAdmin() {
                           <TableCell>
                             <Badge variant="outline">{contract.id_interno}</Badge>
                           </TableCell>
-                          <TableCell className="font-medium">
-                            {contract.titulo_contrato}
+                          <TableCell className="font-medium">{contract.titulo_contrato}</TableCell>
+                          <TableCell>
+                            {(contract.organization as { name: string } | null)?.name || '-'}
                           </TableCell>
                           <TableCell>
-                            {(contract.organization as { name: string } | null)?.name || "-"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={statusColors[contract.estado_contrato] || ""}>
+                            <Badge className={statusColors[contract.estado_contrato] || ''}>
                               {t(`status.${contract.estado_contrato}`, contract.estado_contrato)}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            {format(new Date(contract.created_at), "dd MMM yyyy", {
+                            {format(new Date(contract.created_at), 'dd MMM yyyy', {
                               locale: pt,
                             })}
                           </TableCell>
@@ -1273,7 +1337,7 @@ export default function PlatformAdmin() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{t("admin.platformAdmins", "Platform Admins")}</CardTitle>
+                  <CardTitle>{t('admin.platformAdmins', 'Platform Admins')}</CardTitle>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Email do utilizador..."
@@ -1283,7 +1347,7 @@ export default function PlatformAdmin() {
                     />
                     <Button onClick={handleAddAdmin} disabled={addPlatformAdmin.isPending}>
                       <Plus className="h-4 w-4 mr-2" />
-                      {t("admin.addAdmin", "Adicionar")}
+                      {t('admin.addAdmin', 'Adicionar')}
                     </Button>
                   </div>
                 </div>
@@ -1297,11 +1361,11 @@ export default function PlatformAdmin() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{t("common.email", "Email")}</TableHead>
-                        <TableHead>{t("common.name", "Nome")}</TableHead>
-                        <TableHead>{t("common.notes", "Notas")}</TableHead>
-                        <TableHead>{t("common.createdAt", "Adicionado em")}</TableHead>
-                        <TableHead className="w-[100px]">{t("common.actions", "Ações")}</TableHead>
+                        <TableHead>{t('common.email', 'Email')}</TableHead>
+                        <TableHead>{t('common.name', 'Nome')}</TableHead>
+                        <TableHead>{t('common.notes', 'Notas')}</TableHead>
+                        <TableHead>{t('common.createdAt', 'Adicionado em')}</TableHead>
+                        <TableHead className="w-[100px]">{t('common.actions', 'Ações')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1310,14 +1374,12 @@ export default function PlatformAdmin() {
                           <TableCell className="font-medium">
                             {admin.profile?.email || admin.user_id}
                           </TableCell>
-                          <TableCell>
-                            {admin.profile?.nome_completo || "-"}
-                          </TableCell>
+                          <TableCell>{admin.profile?.nome_completo || '-'}</TableCell>
                           <TableCell className="text-muted-foreground">
-                            {admin.notes || "-"}
+                            {admin.notes || '-'}
                           </TableCell>
                           <TableCell>
-                            {format(new Date(admin.created_at), "dd MMM yyyy", {
+                            {format(new Date(admin.created_at), 'dd MMM yyyy', {
                               locale: pt,
                             })}
                           </TableCell>
@@ -1361,9 +1423,7 @@ export default function PlatformAdmin() {
                 <Users className="h-5 w-5" />
                 Utilizadores - {selectedOrg?.name}
               </SheetTitle>
-              <SheetDescription>
-                Gerir utilizadores desta organização
-              </SheetDescription>
+              <SheetDescription>Gerir utilizadores desta organização</SheetDescription>
             </SheetHeader>
 
             <div className="mt-6 space-y-6">
@@ -1375,7 +1435,9 @@ export default function PlatformAdmin() {
                       <UserPlus className="h-4 w-4 text-primary" />
                       Criar Novo Utilizador
                     </h4>
-                    <p className="text-sm text-muted-foreground">Criar um novo utilizador nesta organização</p>
+                    <p className="text-sm text-muted-foreground">
+                      Criar um novo utilizador nesta organização
+                    </p>
                   </div>
                   <Button onClick={() => setIsCreateUserOpen(true)}>
                     <UserPlus className="h-4 w-4 mr-2" />
@@ -1387,7 +1449,9 @@ export default function PlatformAdmin() {
               {/* Adicionar utilizador existente */}
               <div className="p-4 border rounded-lg space-y-4 bg-muted/30">
                 <h4 className="font-medium">Adicionar Utilizador Existente</h4>
-                <p className="text-sm text-muted-foreground">Adicionar um utilizador que já existe na plataforma</p>
+                <p className="text-sm text-muted-foreground">
+                  Adicionar um utilizador que já existe na plataforma
+                </p>
                 <div className="flex gap-2">
                   <Input
                     placeholder="Email do utilizador existente..."
@@ -1395,7 +1459,10 @@ export default function PlatformAdmin() {
                     onChange={(e) => setNewMemberEmail(e.target.value)}
                     className="flex-1"
                   />
-                  <Select value={newMemberRole} onValueChange={(v) => setNewMemberRole(v as AppRole)}>
+                  <Select
+                    value={newMemberRole}
+                    onValueChange={(v) => setNewMemberRole(v as AppRole)}
+                  >
                     <SelectTrigger className="w-36">
                       <SelectValue />
                     </SelectTrigger>
@@ -1405,7 +1472,11 @@ export default function PlatformAdmin() {
                       <SelectItem value="viewer">Visualizador</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button variant="outline" onClick={handleAddMemberToOrg} disabled={addMemberToOrg.isPending}>
+                  <Button
+                    variant="outline"
+                    onClick={handleAddMemberToOrg}
+                    disabled={addMemberToOrg.isPending}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Adicionar
                   </Button>
@@ -1415,7 +1486,7 @@ export default function PlatformAdmin() {
               {/* Lista de membros */}
               <div className="space-y-3">
                 <h4 className="font-medium">Membros ({orgMembers?.length || 0})</h4>
-                
+
                 {isLoadingOrgMembers ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -1430,22 +1501,22 @@ export default function PlatformAdmin() {
                     {orgMembers?.map((member) => {
                       const isLocked = isUserLocked(member);
                       const authMethod = member.profiles?.auth_method || 'local';
-                      
+
                       return (
-                        <Card key={member.id} className={isLocked ? "border-destructive/50" : ""}>
+                        <Card key={member.id} className={isLocked ? 'border-destructive/50' : ''}>
                           <CardContent className="py-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <Avatar>
                                   <AvatarImage src={member.profiles?.avatar_url || undefined} />
                                   <AvatarFallback>
-                                    {member.profiles?.nome_completo?.[0] || "?"}
+                                    {member.profiles?.nome_completo?.[0] || '?'}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <p className="font-medium text-sm">
-                                      {member.profiles?.nome_completo || "Sem nome"}
+                                      {member.profiles?.nome_completo || 'Sem nome'}
                                     </p>
                                     {isLocked && (
                                       <Badge variant="destructive" className="text-xs">
@@ -1460,12 +1531,18 @@ export default function PlatformAdmin() {
                                   </div>
                                   <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                                     {authMethod === 'sso_cca' ? (
-                                      <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-700">
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs bg-green-500/20 text-green-700"
+                                      >
                                         <KeyRound className="h-3 w-3 mr-1" />
                                         SSO
                                       </Badge>
                                     ) : (
-                                      <Badge variant="secondary" className="text-xs bg-blue-500/20 text-blue-700">
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs bg-blue-500/20 text-blue-700"
+                                      >
                                         <Lock className="h-3 w-3 mr-1" />
                                         Email
                                       </Badge>
@@ -1473,7 +1550,11 @@ export default function PlatformAdmin() {
                                     {member.profiles?.last_login_at && (
                                       <span className="flex items-center gap-1">
                                         <Clock className="h-3 w-3" />
-                                        {format(new Date(member.profiles.last_login_at), "dd/MM/yyyy HH:mm", { locale: pt })}
+                                        {format(
+                                          new Date(member.profiles.last_login_at),
+                                          'dd/MM/yyyy HH:mm',
+                                          { locale: pt },
+                                        )}
                                       </span>
                                     )}
                                   </div>
@@ -1484,10 +1565,10 @@ export default function PlatformAdmin() {
                                   {roleIcons[member.role]}
                                   <span className="ml-1">{getRoleLabel(member.role)}</span>
                                 </Badge>
-                                {member.role !== "owner" && (
+                                {member.role !== 'owner' && (
                                   <div className="flex gap-1">
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       size="icon"
                                       onClick={() => handleEditMember(member)}
                                     >
@@ -1495,8 +1576,8 @@ export default function PlatformAdmin() {
                                     </Button>
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
-                                        <Button 
-                                          variant="ghost" 
+                                        <Button
+                                          variant="ghost"
                                           size="icon"
                                           disabled={removeMember.isPending}
                                         >
@@ -1507,7 +1588,10 @@ export default function PlatformAdmin() {
                                         <AlertDialogHeader>
                                           <AlertDialogTitle>Remover Utilizador</AlertDialogTitle>
                                           <AlertDialogDescription>
-                                            Tem a certeza que deseja remover "{member.profiles?.nome_completo || member.profiles?.email}" desta organização?
+                                            Tem a certeza que deseja remover &quot;
+                                            {member.profiles?.nome_completo ||
+                                              member.profiles?.email}
+                                            &quot; desta organização?
                                           </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
@@ -1548,21 +1632,23 @@ export default function PlatformAdmin() {
                   <Avatar>
                     <AvatarImage src={editingMember.profiles?.avatar_url || undefined} />
                     <AvatarFallback>
-                      {editingMember.profiles?.nome_completo?.[0] || "?"}
+                      {editingMember.profiles?.nome_completo?.[0] || '?'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{editingMember.profiles?.nome_completo || "Sem nome"}</p>
+                    <p className="font-medium">
+                      {editingMember.profiles?.nome_completo || 'Sem nome'}
+                    </p>
                     <p className="text-sm text-muted-foreground">{editingMember.profiles?.email}</p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Novo Papel</Label>
                   <div className="grid gap-2">
-                    {(["admin", "editor", "viewer"] as AppRole[]).map((role) => (
+                    {(['admin', 'editor', 'viewer'] as AppRole[]).map((role) => (
                       <Button
                         key={role}
-                        variant={editingMember.role === role ? "default" : "outline"}
+                        variant={editingMember.role === role ? 'default' : 'outline'}
                         className="justify-start"
                         onClick={() => handleUpdateMemberRole(role)}
                         disabled={updateMemberRole.isPending}
@@ -1570,7 +1656,9 @@ export default function PlatformAdmin() {
                         {roleIcons[role]}
                         <span className="ml-2">{getRoleLabel(role)}</span>
                         {editingMember.role === role && (
-                          <Badge variant="secondary" className="ml-auto">Atual</Badge>
+                          <Badge variant="secondary" className="ml-auto">
+                            Atual
+                          </Badge>
                         )}
                       </Button>
                     ))}
@@ -1592,9 +1680,12 @@ export default function PlatformAdmin() {
             <AlertDialogHeader>
               <AlertDialogTitle>Mover Utilizador</AlertDialogTitle>
               <AlertDialogDescription>
-                O utilizador <strong>{pendingMemberAdd?.email}</strong> já pertence à organização <strong>"{pendingMemberAdd?.currentOrgName}"</strong>.
-                <br /><br />
-                Deseja movê-lo para <strong>"{selectedOrg?.name}"</strong>? Ele será removido da organização atual.
+                O utilizador <strong>{pendingMemberAdd?.email}</strong> já pertence à organização{' '}
+                <strong>&quot;{pendingMemberAdd?.currentOrgName}&quot;</strong>.
+                <br />
+                <br />
+                Deseja movê-lo para <strong>&quot;{selectedOrg?.name}&quot;</strong>? Ele será
+                removido da organização atual.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -1617,14 +1708,15 @@ export default function PlatformAdmin() {
                 Entrar no Contexto
               </DialogTitle>
               <DialogDescription>
-                Vai atuar no contexto de <strong>{selectedOrgForImpersonation?.name}</strong>. 
-                Por favor, indique o motivo desta ação.
+                Vai atuar no contexto de <strong>{selectedOrgForImpersonation?.name}</strong>. Por
+                favor, indique o motivo desta ação.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                 <p className="text-sm text-amber-700 dark:text-amber-400">
-                  ⚠️ Esta ação será registada para auditoria. Verá a plataforma exatamente como um utilizador desta organização.
+                  ⚠️ Esta ação será registada para auditoria. Verá a plataforma exatamente como um
+                  utilizador desta organização.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1636,16 +1728,14 @@ export default function PlatformAdmin() {
                   onChange={(e) => setImpersonationReason(e.target.value)}
                   rows={3}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Mínimo 5 caracteres
-                </p>
+                <p className="text-xs text-muted-foreground">Mínimo 5 caracteres</p>
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsImpersonationDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button 
+              <Button
                 onClick={handleStartImpersonation}
                 disabled={impersonationReason.trim().length < 5}
               >
@@ -1665,7 +1755,7 @@ export default function PlatformAdmin() {
                 Criar Novo Utilizador
               </DialogTitle>
               <DialogDescription>
-                Criar um novo utilizador para a organização "{selectedOrg?.name}"
+                Criar um novo utilizador para a organização &quot;{selectedOrg?.name}&quot;
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -1724,7 +1814,11 @@ export default function PlatformAdmin() {
                   placeholder="Deixe vazio para gerar automaticamente"
                   value={newUserPassword}
                   onChange={(e) => setNewUserPassword(e.target.value)}
-                  className={newUserPassword.length > 0 && newUserPassword.length < 8 ? "border-destructive" : ""}
+                  className={
+                    newUserPassword.length > 0 && newUserPassword.length < 8
+                      ? 'border-destructive'
+                      : ''
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   Se deixar vazio, será gerada uma palavra-passe segura automaticamente
@@ -1740,9 +1834,14 @@ export default function PlatformAdmin() {
               <Button variant="outline" onClick={() => setIsCreateUserOpen(false)}>
                 Cancelar
               </Button>
-              <Button 
-                onClick={handleCreateUser} 
-                disabled={createUser.isPending || !newUserEmail.trim() || !newUserName.trim() || (newUserPassword.length > 0 && newUserPassword.length < 8)}
+              <Button
+                onClick={handleCreateUser}
+                disabled={
+                  createUser.isPending ||
+                  !newUserEmail.trim() ||
+                  !newUserName.trim() ||
+                  (newUserPassword.length > 0 && newUserPassword.length < 8)
+                }
               >
                 {createUser.isPending ? (
                   <>
@@ -1769,7 +1868,8 @@ export default function PlatformAdmin() {
                 Utilizador Criado com Sucesso!
               </DialogTitle>
               <DialogDescription>
-                Partilhe as credenciais abaixo com o utilizador. Esta é a única vez que a palavra-passe será exibida.
+                Partilhe as credenciais abaixo com o utilizador. Esta é a única vez que a
+                palavra-passe será exibida.
               </DialogDescription>
             </DialogHeader>
             {createdUserCredentials && createdUserCredentials.credentials && (
@@ -1778,12 +1878,16 @@ export default function PlatformAdmin() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-mono font-medium">{createdUserCredentials.credentials.email}</p>
+                      <p className="font-mono font-medium">
+                        {createdUserCredentials.credentials.email}
+                      </p>
                     </div>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
-                      onClick={() => handleCopyToClipboard(createdUserCredentials.credentials!.email, 'email')}
+                      onClick={() =>
+                        handleCopyToClipboard(createdUserCredentials.credentials!.email, 'email')
+                      }
                     >
                       {copiedField === 'email' ? (
                         <Check className="h-4 w-4 text-green-600" />
@@ -1795,12 +1899,19 @@ export default function PlatformAdmin() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Palavra-passe</p>
-                      <p className="font-mono font-medium">{createdUserCredentials.credentials.password}</p>
+                      <p className="font-mono font-medium">
+                        {createdUserCredentials.credentials.password}
+                      </p>
                     </div>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
-                      onClick={() => handleCopyToClipboard(createdUserCredentials.credentials!.password, 'password')}
+                      onClick={() =>
+                        handleCopyToClipboard(
+                          createdUserCredentials.credentials!.password,
+                          'password',
+                        )
+                      }
                     >
                       {copiedField === 'password' ? (
                         <Check className="h-4 w-4 text-green-600" />
@@ -1815,7 +1926,7 @@ export default function PlatformAdmin() {
                     ⚠️ Guarde estas credenciais agora. A palavra-passe não será mostrada novamente.
                   </p>
                 </div>
-                <Button 
+                <Button
                   className="w-full"
                   onClick={() => {
                     const text = `Email: ${createdUserCredentials.credentials!.email}\nPalavra-passe: ${createdUserCredentials.credentials!.password}`;
@@ -1837,7 +1948,7 @@ export default function PlatformAdmin() {
               </div>
             )}
             <DialogFooter>
-              <Button 
+              <Button
                 onClick={() => {
                   setIsCredentialsDialogOpen(false);
                   setCreatedUserCredentials(null);
@@ -1855,26 +1966,45 @@ export default function PlatformAdmin() {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
-                {t("admin.deleteUserTitle", "Eliminar Utilizador")}
+                {t('admin.deleteUserTitle', 'Eliminar Utilizador')}
               </AlertDialogTitle>
               <AlertDialogDescription asChild>
                 <div className="space-y-4">
                   <p>
-                    {t("admin.deleteUserConfirm", "Tem a certeza que pretende eliminar permanentemente o utilizador")}{" "}
-                    <strong>{userToDelete?.profiles?.nome_completo || userToDelete?.profiles?.email}</strong>?
+                    {t(
+                      'admin.deleteUserConfirm',
+                      'Tem a certeza que pretende eliminar permanentemente o utilizador',
+                    )}{' '}
+                    <strong>
+                      {userToDelete?.profiles?.nome_completo || userToDelete?.profiles?.email}
+                    </strong>
+                    ?
                   </p>
-                  
+
                   <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg space-y-2">
                     <p className="font-medium text-destructive flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4" />
-                      {t("admin.deleteUserWarning", "ATENÇÃO: Esta ação é irreversível!")}
+                      {t('admin.deleteUserWarning', 'ATENÇÃO: Esta ação é irreversível!')}
                     </p>
                     <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
-                      <li>{t("admin.deleteUserWarning1", "O utilizador será removido de todas as organizações")}</li>
-                      <li>{t("admin.deleteUserWarning2", "Todos os dados associados serão eliminados")}</li>
+                      <li>
+                        {t(
+                          'admin.deleteUserWarning1',
+                          'O utilizador será removido de todas as organizações',
+                        )}
+                      </li>
+                      <li>
+                        {t(
+                          'admin.deleteUserWarning2',
+                          'Todos os dados associados serão eliminados',
+                        )}
+                      </li>
                       {userToDelete?.profiles?.auth_method === 'sso_cca' && (
                         <li className="text-amber-600 dark:text-amber-400">
-                          {t("admin.deleteUserSsoWarning", "Utilizadores SSO podem criar nova conta através do SSO CCA")}
+                          {t(
+                            'admin.deleteUserSsoWarning',
+                            'Utilizadores SSO podem criar nova conta através do SSO CCA',
+                          )}
                         </li>
                       )}
                     </ul>
@@ -1884,16 +2014,16 @@ export default function PlatformAdmin() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setUserToDelete(null)}>
-                {t("common.cancel", "Cancelar")}
+                {t('common.cancel', 'Cancelar')}
               </AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 onClick={() => userToDelete && deleteUser.mutate(userToDelete.user_id)}
                 disabled={deleteUser.isPending}
               >
-                {deleteUser.isPending 
-                  ? t("admin.deletingUser", "A eliminar...") 
-                  : t("admin.confirmDeleteUser", "Eliminar Utilizador")}
+                {deleteUser.isPending
+                  ? t('admin.deletingUser', 'A eliminar...')
+                  : t('admin.confirmDeleteUser', 'Eliminar Utilizador')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

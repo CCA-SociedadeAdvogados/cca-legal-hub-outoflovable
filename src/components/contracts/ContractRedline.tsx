@@ -1,34 +1,56 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useRedlineContract, ClauseClassification } from "@/hooks/useRedlineContract";
-import { Gavel, Loader2, RefreshCw, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle2, ThumbsUp, ThumbsDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useRedlineContract, ClauseClassification } from '@/hooks/useRedlineContract';
+import {
+  Gavel,
+  Loader2,
+  RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  CheckCircle2,
+  ThumbsUp,
+  ThumbsDown,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ContractRedlineProps {
   contractId: string;
 }
 
-const CLASSIFICATION_CONFIG: Record<ClauseClassification, {
-  label: string;
-  color: string;
-  icon: React.ElementType;
-}> = {
-  favoravel: { label: "Favorável", color: "text-green-600 bg-green-50 border-green-200", icon: TrendingUp },
-  standard: { label: "Standard", color: "text-blue-600 bg-blue-50 border-blue-200", icon: Minus },
-  atencao: { label: "Atenção", color: "text-amber-600 bg-amber-50 border-amber-200", icon: AlertTriangle },
-  risco: { label: "Risco", color: "text-red-600 bg-red-50 border-red-200", icon: TrendingDown },
+const CLASSIFICATION_CONFIG: Record<
+  ClauseClassification,
+  {
+    label: string;
+    color: string;
+    icon: React.ElementType;
+  }
+> = {
+  favoravel: {
+    label: 'Favorável',
+    color: 'text-green-600 bg-green-50 border-green-200',
+    icon: TrendingUp,
+  },
+  standard: { label: 'Standard', color: 'text-blue-600 bg-blue-50 border-blue-200', icon: Minus },
+  atencao: {
+    label: 'Atenção',
+    color: 'text-amber-600 bg-amber-50 border-amber-200',
+    icon: AlertTriangle,
+  },
+  risco: { label: 'Risco', color: 'text-red-600 bg-red-50 border-red-200', icon: TrendingDown },
 };
 
 function ScoreRing({ score }: { score: number }) {
-  const color = score >= 75 ? "text-green-600" : score >= 50 ? "text-amber-600" : "text-red-600";
+  const color = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-600';
   return (
     <div className="flex items-center gap-3">
-      <div className={cn("text-3xl font-bold", color)}>{score}</div>
+      <div className={cn('text-3xl font-bold', color)}>{score}</div>
       <div>
         <p className="text-xs text-muted-foreground">Score</p>
         <p className="text-xs font-medium">
-          {score >= 75 ? "Bom" : score >= 50 ? "Razoável" : "Fraco"}
+          {score >= 75 ? 'Bom' : score >= 50 ? 'Razoável' : 'Fraco'}
         </p>
       </div>
     </div>
@@ -59,17 +81,20 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Analise cada cláusula do contrato quanto ao risco e equilíbrio. Identifica cláusulas desequilibradas e sugere alternativas.
+            Analise cada cláusula do contrato quanto ao risco e equilíbrio. Identifica cláusulas
+            desequilibradas e sugere alternativas.
           </p>
-          <Button
-            size="sm"
-            onClick={() => analyze.mutate(false)}
-            disabled={analyze.isPending}
-          >
-            {analyze.isPending
-              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />A analisar...</>
-              : <><Gavel className="mr-2 h-4 w-4" />Analisar Cláusulas</>
-            }
+          <Button size="sm" onClick={() => analyze.mutate(false)} disabled={analyze.isPending}>
+            {analyze.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />A analisar...
+              </>
+            ) : (
+              <>
+                <Gavel className="mr-2 h-4 w-4" />
+                Analisar Cláusulas
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -77,10 +102,10 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
   }
 
   const stats = {
-    favoravel: redline.clausulas.filter((c) => c.classificacao === "favoravel").length,
-    standard: redline.clausulas.filter((c) => c.classificacao === "standard").length,
-    atencao: redline.clausulas.filter((c) => c.classificacao === "atencao").length,
-    risco: redline.clausulas.filter((c) => c.classificacao === "risco").length,
+    favoravel: redline.clausulas.filter((c) => c.classificacao === 'favoravel').length,
+    standard: redline.clausulas.filter((c) => c.classificacao === 'standard').length,
+    atencao: redline.clausulas.filter((c) => c.classificacao === 'atencao').length,
+    risco: redline.clausulas.filter((c) => c.classificacao === 'risco').length,
   };
 
   return (
@@ -99,7 +124,7 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
               onClick={() => analyze.mutate(true)}
               disabled={analyze.isPending}
             >
-              <RefreshCw className={`h-4 w-4 ${analyze.isPending ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 ${analyze.isPending ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </CardHeader>
@@ -107,17 +132,29 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
           <div className="flex items-start gap-6 mb-4">
             <ScoreRing score={redline.score_geral} />
             <div className="flex gap-3">
-              {(["favoravel", "standard", "atencao", "risco"] as ClauseClassification[]).map((c) => (
-                <div key={c} className="text-center">
-                  <div className={cn(
-                    "text-lg font-bold",
-                    c === "favoravel" ? "text-green-600" :
-                    c === "standard" ? "text-blue-600" :
-                    c === "atencao" ? "text-amber-600" : "text-red-600",
-                  )}>{stats[c]}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{CLASSIFICATION_CONFIG[c].label}</div>
-                </div>
-              ))}
+              {(['favoravel', 'standard', 'atencao', 'risco'] as ClauseClassification[]).map(
+                (c) => (
+                  <div key={c} className="text-center">
+                    <div
+                      className={cn(
+                        'text-lg font-bold',
+                        c === 'favoravel'
+                          ? 'text-green-600'
+                          : c === 'standard'
+                            ? 'text-blue-600'
+                            : c === 'atencao'
+                              ? 'text-amber-600'
+                              : 'text-red-600',
+                      )}
+                    >
+                      {stats[c]}
+                    </div>
+                    <div className="text-xs text-muted-foreground capitalize">
+                      {CLASSIFICATION_CONFIG[c].label}
+                    </div>
+                  </div>
+                ),
+              )}
             </div>
           </div>
           <p className="text-sm text-muted-foreground">{redline.sumario}</p>
@@ -130,21 +167,20 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
           const config = CLASSIFICATION_CONFIG[clause.classificacao];
           const Icon = config.icon;
           return (
-            <div key={i} className={cn("rounded-lg border p-4", config.color)}>
+            <div key={i} className={cn('rounded-lg border p-4', config.color)}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="font-medium text-sm">{clause.titulo}</span>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={cn("text-xs shrink-0", config.color)}
-                >
+                <Badge variant="outline" className={cn('text-xs shrink-0', config.color)}>
                   {config.label}
                 </Badge>
               </div>
               {clause.texto_original && (
-                <p className="text-xs italic mb-2 opacity-75">"{clause.texto_original}"</p>
+                <p className="text-xs italic mb-2 opacity-75">
+                  &quot;{clause.texto_original}&quot;
+                </p>
               )}
               <p className="text-xs">{clause.justificacao}</p>
               {clause.sugestao && (

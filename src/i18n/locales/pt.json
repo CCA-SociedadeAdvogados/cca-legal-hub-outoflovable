@@ -54,7 +54,14 @@
     "darkMode": "Modo Escuro",
     "optional": "opcional",
     "saving": "A guardar...",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "add": "Adicionar",
+    "createdAt": "Criado em",
+    "downloadComplete": "Download concluído",
+    "error": "Erro",
+    "notes": "Notas",
+    "success": "Sucesso",
+    "user": "Utilizador"
   },
   "department": {
     "label": "Departamento",
@@ -112,8 +119,7 @@
     "admin": "Administração",
     "ccaNews": "Novidades CCA",
     "financial": "Minha Conta Corrente CCA",
-    "legalbi": "LegalBI",
-    "documents": "Documentos"
+    "legalbi": "LegalBI"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -143,7 +149,10 @@
     "noData": "Sem dados",
     "financialSummary": "Resumo Financeiro",
     "totalEstimatedValue": "Valor Total Estimado",
-    "annualRecurringValue": "Valor Anual Recorrente"
+    "annualRecurringValue": "Valor Anual Recorrente",
+    "docCompliance": "Compliance Documental",
+    "docsIssue": "em falta ou expirados",
+    "noExpiringContracts": "Sem expirações nos próximos 90 dias"
   },
   "contractsOld": {},
   "events": {
@@ -214,7 +223,11 @@
       "high": "Alta",
       "medium": "Média",
       "low": "Baixa"
-    }
+    },
+    "confirmDelete": "Tem a certeza que deseja eliminar este requisito?",
+    "deadlineLabel": "Prazo",
+    "editRequirement": "Editar Requisito",
+    "legalSourcePlaceholder": "Ex: Lei n.º XX/2025, Artigo Y.º"
   },
   "policies": {
     "title": "Políticas",
@@ -376,7 +389,9 @@
     "status": {
       "active": "Ativo",
       "locked": "Bloqueado"
-    }
+    },
+    "cannotDeleteSelf": "Não pode eliminar a sua própria conta",
+    "deleteUser": "Eliminar utilizador"
   },
   "auth": {
     "login": "Entrar",
@@ -448,7 +463,12 @@
       "admin": "Administrador",
       "editor": "Editor",
       "viewer": "Visualizador"
-    }
+    },
+    "contactAdmin": "Por favor contacte o administrador para ser adicionado a uma organização.",
+    "noOrganization": "Sem Organização",
+    "noOrganizationDescription": "Ainda não pertence a nenhuma organização.",
+    "selectOrganization": "Selecione a sua Organização",
+    "selectOrganizationDescription": "Pertence às seguintes organizações. Selecione uma para continuar."
   },
   "settings": {
     "title": "Definições",
@@ -586,7 +606,9 @@
     "environment": "Ambiente",
     "workSafety": "Segurança no Trabalho",
     "corporate": "Societário",
-    "other": "Outro"
+    "other": "Outro",
+    "fiscal": "Fiscal",
+    "workplaceSafety": "Segurança no Trabalho"
   },
   "jurisdiction": {
     "national": "Nacional",
@@ -907,6 +929,30 @@
       "archive": "Arquivar",
       "selectedContracts": "contrato(s) selecionado(s)",
       "clearSelection": "Limpar seleção"
+    },
+    "archiveTab": "Arquivo",
+    "openEnded": "Prazo indeterminado",
+    "risk": "Risco",
+    "triage": {
+      "analyze": "Analisar Contrato",
+      "analyzing": "A analisar contrato...",
+      "clauseAnalysis": "Análise por Cláusula",
+      "collapseAll": "Colapsar Todas",
+      "contractName": "Nome do Contrato (opcional)",
+      "contractNamePlaceholder": "Ex: Contrato SaaS com Fornecedor X",
+      "contractText": "Texto do Contrato",
+      "contractTextPlaceholder": "Cole aqui o texto completo do contrato para análise...",
+      "description": "Análise automática de contratos baseada no Playbook Contratual BAE",
+      "errorEmptyText": "Por favor, insira o texto do contrato.",
+      "executiveSummary": "Resumo Executivo",
+      "expandAll": "Expandir Todas",
+      "exportReport": "Exportar Relatório (JSON)",
+      "inputTab": "Inserir Contrato",
+      "nextSteps": "Próximos Passos",
+      "priorityRedFlags": "Red Flags Prioritários",
+      "recommendations": "Recomendações",
+      "resultsTab": "Resultados",
+      "title": "Contract Triage Agent"
     }
   },
   "financial": {
@@ -1118,7 +1164,8 @@
       "siteId": "Site ID",
       "siteIdHelp": "Obtenha o Site ID através do Microsoft Graph Explorer. Formato: hostname,site-guid,web-guid",
       "connected": "Ligado a:",
-      "save": "Guardar Configuração"
+      "save": "Guardar Configuração",
+      "rootFolderPath": "Pasta Raiz"
     },
     "sync": {
       "title": "Sincronização",
@@ -1159,14 +1206,29 @@
       "root": "Raiz",
       "back": "Voltar",
       "empty": "Nenhum documento nesta pasta",
-      "archiveHint": "Guarde aqui os documentos ativos para manter tudo organizado e acessível."
+      "archiveHint": "Guarde aqui os documentos ativos para manter tudo organizado e acessível.",
+      "fullSync": "Sincronização completa",
+      "upload": "Carregar"
     },
     "configSaved": "Configuração SharePoint guardada",
     "configError": "Erro ao guardar configuração",
     "configDeleted": "Configuração SharePoint removida",
     "deleteError": "Erro ao remover configuração",
     "syncSuccess": "Sincronização concluída: {{added}} novos, {{updated}} atualizados, {{deleted}} removidos",
-    "syncError": "Erro na sincronização: {{message}}"
+    "syncError": "Erro na sincronização: {{message}}",
+    "createFolder": {
+      "error": "Erro ao criar pasta: {{message}}"
+    },
+    "upload": {
+      "description": "O ficheiro será carregado para a pasta: {{path}}",
+      "dropzone": "Clique para selecionar um ficheiro",
+      "error": "Erro ao carregar ficheiro: {{message}}",
+      "sizeLimit": "Limite: 4MB",
+      "submit": "Carregar",
+      "success": "Ficheiro carregado com sucesso",
+      "title": "Carregar ficheiro para SharePoint",
+      "tooLarge": "Ficheiro demasiado grande. Limite: 4MB"
+    }
   },
   "organizations": {
     "title": "Organizações",
@@ -1331,7 +1393,11 @@
     "hasDPA": "DPA/RGPD verificado",
     "hasSignature": "Método de assinatura definido",
     "hasDepartment": "Departamento responsável definido",
-    "hasObject": "Objecto resumido preenchido"
+    "hasObject": "Objecto resumido preenchido",
+    "attention": "Atenção",
+    "good": "Bom",
+    "hasSigned": "Assinatura registada",
+    "incomplete": "Incompleto"
   },
   "prazos": {
     "title": "Prazos e Datas Críticas",
@@ -1351,7 +1417,23 @@
     "daysRemaining": "{{count}}d restantes",
     "viewContract": "Ver contrato",
     "criticalLabel": "Crítico",
-    "warningLabel": "Atenção"
+    "warningLabel": "Atenção",
+    "all": "Todos",
+    "expiration": "Expiração",
+    "expirations": "Expirações",
+    "exportICS": "Exportar .ics",
+    "financial": "Financeiro",
+    "financialTab": "Financeiro",
+    "guarantee": "Garantia",
+    "guarantees": "Garantias",
+    "invoiceDue": "Fatura",
+    "next30": "Próximos 30 dias",
+    "noDates": "Sem datas pendentes",
+    "noEventsDesc": "Não existem prazos relevantes no período",
+    "overdue": "Vencido",
+    "renewal": "Renovação",
+    "renewalDeadline": "Limite decisão renovação",
+    "renewals": "Renovações"
   },
   "faq": {
     "title": "Perguntas Frequentes",
@@ -1532,7 +1614,22 @@
     "aiSuggestedApplied": "Data sugerida pela IA aplicada",
     "aiSuggestError": "Erro ao obter sugestão de data",
     "suggestDate": "Sugerir data (IA)",
-    "noClient": "Selecione um cliente para gerir a checklist de documentos."
+    "noClient": "Selecione um cliente para gerir a checklist de documentos.",
+    "aiDateError": "IA não conseguiu ler a data",
+    "aiDateNotFound": "Data não detectada no documento",
+    "aiDateNotFoundDesc": "Ajuste manualmente se necessário.",
+    "aiSuggestion": "Sugestão IA",
+    "complete": "completos",
+    "fileTooLarge": "Ficheiro demasiado grande para análise IA",
+    "replaceFile": "Clique para substituir: {{name}}",
+    "required": "Obrigatório",
+    "selectFile": "Clique para selecionar o ficheiro",
+    "update": "Atualizar",
+    "upload": "Registar",
+    "uploadFile": "Ficheiro",
+    "uploading": "A carregar...",
+    "useSuggestion": "Usar",
+    "validityDate": "Data de Validade"
   },
   "notifPrefs": {
     "title": "Preferências de Notificação",
@@ -1567,5 +1664,60 @@
   },
   "export": {
     "pdf": "Exportar PDF"
+  },
+  "admin": {
+    "addAdmin": "Adicionar",
+    "allContracts": "Todos os Contratos",
+    "confirmDeleteUser": "Eliminar Utilizador",
+    "contracts": "Contratos",
+    "deleteUserConfirm": "Tem a certeza que pretende eliminar permanentemente o utilizador",
+    "deleteUserSsoWarning": "Utilizadores SSO podem criar nova conta através do SSO CCA",
+    "deleteUserTitle": "Eliminar Utilizador",
+    "deleteUserWarning": "ATENÇÃO: Esta ação é irreversível!",
+    "deletingUser": "A eliminar...",
+    "organization": "Organização",
+    "organizations": "Organizações",
+    "platformAdmins": "Platform Admins",
+    "subtitle": "Gestão global de organizações e contratos",
+    "title": "Administração da Plataforma",
+    "userDeleteError": "Erro ao eliminar utilizador",
+    "userDeletedSuccess": "Utilizador eliminado com sucesso",
+    "users": "Utilizadores",
+    "usersTab": {
+      "allOrganizations": "Todas as Organizações",
+      "authMethod": "Autenticação",
+      "lastLogin": "Último Login",
+      "noUsers": "Nenhum utilizador encontrado.",
+      "scope": "Âmbito",
+      "scopeDescription": "Selecione uma organização para ver os seus utilizadores ou veja todos.",
+      "selectOrg": "Selecionar organização...",
+      "usersList": "Lista de Utilizadores"
+    }
+  },
+  "security": {
+    "recommendations": {
+      "checkSessions": "Verifique regularmente as sessões ativas",
+      "strongPassword": "Use uma palavra-passe forte e única",
+      "title": "Recomendações de Segurança"
+    },
+    "sessions": {
+      "active": "Ativa",
+      "browser": "Navegador",
+      "currentSession": "Sessão Atual",
+      "description": "Ver e gerir as suas sessões ativas.",
+      "title": "Gestão de Sessões"
+    },
+    "twoFactor": {
+      "active": "Ativo",
+      "authenticatorApp": "Aplicação Autenticadora",
+      "authenticatorDesc": "Use uma aplicação como Google Authenticator ou Authy.",
+      "description": "Adicione uma camada extra de segurança à sua conta.",
+      "disable": "Desativar",
+      "enable": "Ativar",
+      "manualKey": "Chave manual:",
+      "setupTitle": "Configurar Autenticação de Dois Fatores",
+      "title": "Autenticação de Dois Fatores (2FA)",
+      "verify": "Verificar e Ativar"
+    }
   }
 }

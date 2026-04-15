@@ -12,7 +12,11 @@ export const useAnexos = (contratoId: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: anexos, isLoading, error } = useQuery({
+  const {
+    data: anexos,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['anexos', contratoId],
     staleTime: 30 * 1000,
     queryFn: async () => {
@@ -21,7 +25,7 @@ export const useAnexos = (contratoId: string) => {
         .select('*')
         .eq('contrato_id', contratoId)
         .order('uploaded_at', { ascending: false });
-      
+
       if (error) throw error;
       return data;
     },
@@ -29,20 +33,20 @@ export const useAnexos = (contratoId: string) => {
   });
 
   const uploadAnexo = useMutation({
-    mutationFn: async ({ 
-      file, 
-      tipoAnexo, 
-      descricao 
-    }: { 
-      file: File; 
+    mutationFn: async ({
+      file,
+      tipoAnexo,
+      descricao,
+    }: {
+      file: File;
       tipoAnexo: 'pdf_principal' | 'anexo' | 'adenda' | 'outro';
       descricao?: string;
     }) => {
       // Generate unique file path
       const fileName = `${contratoId}/${Date.now()}_${safeFileName(file.name)}`;
-      
+
       // Upload to storage
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { data: _uploadData, error: uploadError } = await supabase.storage
         .from('contratos')
         .upload(fileName, file);
 
@@ -54,16 +58,18 @@ export const useAnexos = (contratoId: string) => {
       // Insert record in anexos_contrato with storage path
       const { data, error } = await supabase
         .from('anexos_contrato')
-        .insert([{
-          contrato_id: contratoId,
-          nome_ficheiro: file.name,
-          url_ficheiro: storagePath, // Store path, not public URL
-          tipo_anexo: tipoAnexo,
-          descricao,
-          tamanho_bytes: file.size,
-          mime_type: file.type,
-          uploaded_by_id: user?.id,
-        }])
+        .insert([
+          {
+            contrato_id: contratoId,
+            nome_ficheiro: file.name,
+            url_ficheiro: storagePath, // Store path, not public URL
+            tipo_anexo: tipoAnexo,
+            descricao,
+            tamanho_bytes: file.size,
+            mime_type: file.type,
+            uploaded_by_id: user?.id,
+          },
+        ])
         .select()
         .single();
 
@@ -75,10 +81,10 @@ export const useAnexos = (contratoId: string) => {
       toast({ title: 'Ficheiro carregado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ 
-        title: 'Erro ao carregar ficheiro', 
-        description: error.message, 
-        variant: 'destructive' 
+      toast({
+        title: 'Erro ao carregar ficheiro',
+        description: error.message,
+        variant: 'destructive',
       });
     },
   });
@@ -93,19 +99,14 @@ export const useAnexos = (contratoId: string) => {
       }
 
       if (filePath) {
-        const { error: storageError } = await supabase.storage
-          .from('contratos')
-          .remove([filePath]);
+        const { error: storageError } = await supabase.storage.from('contratos').remove([filePath]);
         if (storageError) {
           console.error('Storage delete error:', storageError);
         }
       }
 
       // Delete record
-      const { error } = await supabase
-        .from('anexos_contrato')
-        .delete()
-        .eq('id', anexo.id);
+      const { error } = await supabase.from('anexos_contrato').delete().eq('id', anexo.id);
 
       if (error) throw error;
     },
@@ -114,10 +115,10 @@ export const useAnexos = (contratoId: string) => {
       toast({ title: 'Ficheiro eliminado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ 
-        title: 'Erro ao eliminar ficheiro', 
-        description: error.message, 
-        variant: 'destructive' 
+      toast({
+        title: 'Erro ao eliminar ficheiro',
+        description: error.message,
+        variant: 'destructive',
       });
     },
   });
@@ -126,7 +127,7 @@ export const useAnexos = (contratoId: string) => {
     try {
       // Get the file path - handle both old (full URL) and new (path only) formats
       let filePath = anexo.url_ficheiro;
-      
+
       // If it's a full URL (legacy), extract the path
       if (filePath.includes('/contratos/')) {
         const urlParts = filePath.split('/contratos/');
@@ -134,14 +135,12 @@ export const useAnexos = (contratoId: string) => {
           filePath = urlParts[1];
         }
       }
-      
+
       // Download the file using signed URL
-      const { data, error } = await supabase.storage
-        .from('contratos')
-        .download(filePath);
-      
+      const { data, error } = await supabase.storage.from('contratos').download(filePath);
+
       if (error) throw error;
-      
+
       // Create download link
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
@@ -151,11 +150,11 @@ export const useAnexos = (contratoId: string) => {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (error: any) {
-      toast({ 
-        title: 'Erro ao descarregar ficheiro', 
-        description: error.message, 
-        variant: 'destructive' 
+    } catch (error: unknown) {
+      toast({
+        title: 'Erro ao descarregar ficheiro',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive',
       });
     }
   };
@@ -164,7 +163,7 @@ export const useAnexos = (contratoId: string) => {
   const getSignedUrl = async (anexo: Anexo): Promise<string | null> => {
     try {
       let filePath = anexo.url_ficheiro;
-      
+
       // If it's a full URL (legacy), extract the path
       if (filePath.includes('/contratos/')) {
         const urlParts = filePath.split('/contratos/');
@@ -172,11 +171,11 @@ export const useAnexos = (contratoId: string) => {
           filePath = urlParts[1];
         }
       }
-      
+
       const { data, error } = await supabase.storage
         .from('contratos')
         .createSignedUrl(filePath, 3600); // 1 hour expiry
-      
+
       if (error) throw error;
       return data.signedUrl;
     } catch (error) {

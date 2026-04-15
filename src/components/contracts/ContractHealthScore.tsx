@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, XCircle, AlertTriangle, Heart } from 'lucide-react';
+import { CheckCircle2, XCircle, Heart } from 'lucide-react';
 import type { Contrato } from '@/hooks/useContratos';
 
 interface HealthCheck {
@@ -13,7 +12,10 @@ interface HealthCheck {
   weight: number;
 }
 
-function computeHealthChecks(contrato: Contrato, t: (key: string, fallback?: string) => string): HealthCheck[] {
+function computeHealthChecks(
+  contrato: Contrato,
+  t: (key: string, fallback?: string) => string,
+): HealthCheck[] {
   return [
     {
       key: 'titulo',
@@ -84,19 +86,30 @@ export function ContractHealthScore({ contrato }: { contrato: Contrato }) {
   const { checks, score, maxScore, percentage } = useMemo(() => {
     const checks = computeHealthChecks(contrato, t);
     const maxScore = checks.reduce((s, c) => s + c.weight, 0);
-    const score = checks.filter(c => c.passed).reduce((s, c) => s + c.weight, 0);
+    const score = checks.filter((c) => c.passed).reduce((s, c) => s + c.weight, 0);
     const percentage = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
     return { checks, score, maxScore, percentage };
   }, [contrato, t]);
 
   const variant = percentage >= 80 ? 'success' : percentage >= 50 ? 'warning' : 'danger';
-  const colorClass = variant === 'success' ? 'text-emerald-600' : variant === 'warning' ? 'text-amber-500' : 'text-red-500';
-  const progressColor = variant === 'success' ? 'bg-emerald-500' : variant === 'warning' ? 'bg-amber-500' : 'bg-red-500';
-  const label = variant === 'success'
-    ? t('healthScore.good', 'Bom')
-    : variant === 'warning'
-      ? t('healthScore.attention', 'Atenção')
-      : t('healthScore.incomplete', 'Incompleto');
+  const colorClass =
+    variant === 'success'
+      ? 'text-emerald-600'
+      : variant === 'warning'
+        ? 'text-amber-500'
+        : 'text-red-500';
+  const progressColor =
+    variant === 'success'
+      ? 'bg-emerald-500'
+      : variant === 'warning'
+        ? 'bg-amber-500'
+        : 'bg-red-500';
+  const label =
+    variant === 'success'
+      ? t('healthScore.good', 'Bom')
+      : variant === 'warning'
+        ? t('healthScore.attention', 'Atenção')
+        : t('healthScore.incomplete', 'Incompleto');
 
   return (
     <Card>
@@ -111,13 +124,27 @@ export function ContractHealthScore({ contrato }: { contrato: Contrato }) {
           <div className={`text-3xl font-bold ${colorClass}`}>{percentage}%</div>
           <div className="flex-1">
             <div className="h-2.5 rounded-full bg-muted overflow-hidden">
-              <div className={`h-full rounded-full transition-all ${progressColor}`} style={{ width: `${percentage}%` }} />
+              <div
+                className={`h-full rounded-full transition-all ${progressColor}`}
+                style={{ width: `${percentage}%` }}
+              />
             </div>
             <div className="flex items-center justify-between mt-1">
-              <Badge variant={variant === 'success' ? 'active' : variant === 'warning' ? 'default' : 'destructive'} className="text-xs">
+              <Badge
+                variant={
+                  variant === 'success'
+                    ? 'active'
+                    : variant === 'warning'
+                      ? 'default'
+                      : 'destructive'
+                }
+                className="text-xs"
+              >
                 {label}
               </Badge>
-              <span className="text-xs text-muted-foreground">{score}/{maxScore}</span>
+              <span className="text-xs text-muted-foreground">
+                {score}/{maxScore}
+              </span>
             </div>
           </div>
         </div>

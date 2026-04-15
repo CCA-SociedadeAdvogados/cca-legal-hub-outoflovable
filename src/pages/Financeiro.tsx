@@ -5,18 +5,16 @@ import { useFinanceiro, type AccountStatus } from '@/hooks/useFinanceiro';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Receipt,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Building2,
-  User,
-  Calendar,
-  FileText,
-} from 'lucide-react';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Receipt, AlertTriangle, CheckCircle, Clock, Building2, FileText } from 'lucide-react';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
 import { useSharePointConfig } from '@/hooks/useSharePoint';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
@@ -171,7 +169,9 @@ export default function Financeiro() {
               <CardDescription className="mt-1 flex min-w-0 items-center gap-2">
                 <Building2 className="h-4 w-4 shrink-0" />
                 <span className="truncate">
-                  {organizationInfo?.legacy_client_name || organizationInfo?.organization_name || 'Cliente'}
+                  {organizationInfo?.legacy_client_name ||
+                    organizationInfo?.organization_name ||
+                    'Cliente'}
                 </span>
               </CardDescription>
             </div>
@@ -191,9 +191,7 @@ export default function Financeiro() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t('financial.totalInDefault')}</p>
-                <p className="text-lg font-semibold">
-                  {financialSummary?.total_documentos ?? 0}
-                </p>
+                <p className="text-lg font-semibold">{financialSummary?.total_documentos ?? 0}</p>
               </div>
             </div>
 
@@ -203,7 +201,9 @@ export default function Financeiro() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t('financial.openAmount')}</p>
-                <p className="text-lg font-semibold">{financialItems.filter((i) => i.estado === 'a_vencer').length}</p>
+                <p className="text-lg font-semibold">
+                  {financialItems.filter((i) => i.estado === 'a_vencer').length}
+                </p>
               </div>
             </div>
 
@@ -213,7 +213,9 @@ export default function Financeiro() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm text-muted-foreground">{t('financial.overdueCount')}</p>
-                <p className="text-lg font-semibold">{financialItems.filter((i) => i.estado === 'vencido').length}</p>
+                <p className="text-lg font-semibold">
+                  {financialItems.filter((i) => i.estado === 'vencido').length}
+                </p>
               </div>
             </div>
           </div>
@@ -228,7 +230,9 @@ export default function Financeiro() {
               <p className="mt-1 font-medium">{organizationInfo?.group_code || 'NAO'}</p>
             </div>
             <div className="rounded-lg border p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Centro de custo</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Centro de custo
+              </p>
               <p className="mt-1 font-medium">{organizationInfo?.cost_center || '—'}</p>
             </div>
             <div className="rounded-lg border p-3">
@@ -236,8 +240,12 @@ export default function Financeiro() {
               <p className="mt-1 font-medium">{organizationInfo?.responsible || '—'}</p>
             </div>
             <div className="rounded-lg border p-3">
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Última sincronização</p>
-              <p className="mt-1 font-medium">{formatDateTime(organizationInfo?.ultima_sincronizacao)}</p>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                Última sincronização
+              </p>
+              <p className="mt-1 font-medium">
+                {formatDateTime(organizationInfo?.ultima_sincronizacao)}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -289,9 +297,15 @@ export default function Financeiro() {
                         <TableCell>{row.entity_client_code}</TableCell>
                         <TableCell>{row.group_code || 'NAO'}</TableCell>
                         <TableCell>{row.total_documentos}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(row.total_pendente)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(row.total_vencido)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(row.total_a_vencer)}</TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.total_pendente)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.total_vencido)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(row.total_a_vencer)}
+                        </TableCell>
                         <TableCell>{formatDateTime(row.ultima_sincronizacao)}</TableCell>
                       </TableRow>
                     ))
@@ -509,7 +523,9 @@ export default function Financeiro() {
 
               <div className="min-w-0">
                 <h3 className="truncate text-xl font-semibold">{orgCliente.name}</h3>
-                <p className="truncate font-mono text-sm text-muted-foreground">{orgCliente.slug}</p>
+                <p className="truncate font-mono text-sm text-muted-foreground">
+                  {orgCliente.slug}
+                </p>
               </div>
             </div>
 
@@ -532,16 +548,12 @@ export default function Financeiro() {
               </div>
 
               <div className="space-y-1 rounded-lg border p-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Grupo
-                </p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Grupo</p>
                 <p className="font-medium">{organizationInfo?.group_code || 'NAO'}</p>
               </div>
 
               <div className="space-y-1 rounded-lg border p-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Responsável
-                </p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Responsável</p>
                 <p className="font-medium">{organizationInfo?.responsible || '—'}</p>
               </div>
 
@@ -556,7 +568,9 @@ export default function Financeiro() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Última sincronização
                 </p>
-                <p className="font-medium">{formatDateTime(organizationInfo?.ultima_sincronizacao)}</p>
+                <p className="font-medium">
+                  {formatDateTime(organizationInfo?.ultima_sincronizacao)}
+                </p>
               </div>
             </div>
           </div>

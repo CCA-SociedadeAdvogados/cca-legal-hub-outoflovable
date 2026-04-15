@@ -3,7 +3,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import ContractTriageAgent from '@/components/contracts/ContractTriageAgent';
 
 export default function ContratosTriagem() {
-  const { t } = useTranslation();
+  const { t: _t } = useTranslation();
 
   return (
     <AppLayout>

@@ -6,18 +6,18 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Upload, 
-  FileText, 
-  Loader2, 
-  CheckCircle2, 
-  AlertTriangle, 
+import {
+  Upload,
+  FileText,
+  Loader2,
+  CheckCircle2,
+  AlertTriangle,
   XCircle,
   ShieldCheck,
   Sparkles,
   FileSearch,
   Scale,
-  ClipboardList
+  ClipboardList,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -30,7 +30,7 @@ interface ContractComplianceAnalyzerProps {
   tipoContrato?: string;
   areasDireitoAplicaveis?: string[];
   initialTextContent?: string;
-  onAnalysisComplete?: (data: any) => void;
+  onAnalysisComplete?: (data: ComplianceResult) => void;
 }
 
 interface ComplianceResult {
@@ -57,34 +57,43 @@ interface ComplianceResult {
   confianca: number;
 }
 
-const statusConfig: Record<string, { icon: any; color: string; bg: string; label: string; badge: string }> = {
-  conforme: { 
-    icon: CheckCircle2, 
-    color: 'text-green-500', 
-    bg: 'bg-green-500/10', 
+const statusConfig: Record<
+  string,
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    color: string;
+    bg: string;
+    label: string;
+    badge: string;
+  }
+> = {
+  conforme: {
+    icon: CheckCircle2,
+    color: 'text-green-500',
+    bg: 'bg-green-500/10',
     label: 'Conforme',
-    badge: 'bg-green-100 text-green-800'
+    badge: 'bg-green-100 text-green-800',
   },
-  parcialmente_conforme: { 
-    icon: AlertTriangle, 
-    color: 'text-yellow-500', 
-    bg: 'bg-yellow-500/10', 
+  parcialmente_conforme: {
+    icon: AlertTriangle,
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-500/10',
     label: 'Parcialmente Conforme',
-    badge: 'bg-yellow-100 text-yellow-800'
+    badge: 'bg-yellow-100 text-yellow-800',
   },
-  nao_conforme: { 
-    icon: XCircle, 
-    color: 'text-red-500', 
-    bg: 'bg-red-500/10', 
+  nao_conforme: {
+    icon: XCircle,
+    color: 'text-red-500',
+    bg: 'bg-red-500/10',
     label: 'Não Conforme',
-    badge: 'bg-red-100 text-red-800'
+    badge: 'bg-red-100 text-red-800',
   },
-  nao_aplicavel: { 
-    icon: FileText, 
-    color: 'text-muted-foreground', 
-    bg: 'bg-muted', 
+  nao_aplicavel: {
+    icon: FileText,
+    color: 'text-muted-foreground',
+    bg: 'bg-muted',
     label: 'Não Aplicável',
-    badge: 'bg-gray-100 text-gray-800'
+    badge: 'bg-gray-100 text-gray-800',
   },
 };
 
@@ -98,12 +107,12 @@ const prioridadeConfig: Record<string, { color: string; bg: string }> = {
 
 const defaultPrioridade = prioridadeConfig.media;
 
-export function ContractComplianceAnalyzer({ 
-  contratoId, 
+export function ContractComplianceAnalyzer({
+  contratoId,
   tipoContrato,
   areasDireitoAplicaveis,
   initialTextContent = '',
-  onAnalysisComplete 
+  onAnalysisComplete,
 }: ContractComplianceAnalyzerProps) {
   const { settings } = useOrganizationSettings();
   const { profile } = useProfile();
@@ -119,12 +128,13 @@ export function ContractComplianceAnalyzer({
     if (initialTextContent && !textContent) {
       setTextContent(initialTextContent);
     }
-  }, [initialTextContent]);
+  }, [initialTextContent, textContent]);
 
   const isValidFile = (file: File) => {
     const isPdf = file.type === 'application/pdf' || file.name.endsWith('.pdf');
     const isTxt = file.type === 'text/plain' || file.name.endsWith('.txt');
-    const isWord = file.type?.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    const isWord =
+      file.type?.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
     return isPdf || isTxt || isWord;
   };
 
@@ -169,8 +179,8 @@ export function ContractComplianceAnalyzer({
         body: {
           fileContent: base64Content,
           fileName: file.name,
-          mimeType: file.type
-        }
+          mimeType: file.type,
+        },
       });
 
       if (error) {
@@ -181,7 +191,9 @@ export function ContractComplianceAnalyzer({
             const body = await error.context.json();
             if (body?.error) errorMessage = body.error;
           }
-        } catch { /* use original message */ }
+        } catch {
+          /* use original message */
+        }
         throw new Error(errorMessage);
       }
       if (data?.error) throw new Error(data.error);
@@ -192,9 +204,9 @@ export function ContractComplianceAnalyzer({
       } else {
         toast.error('Não foi possível extrair texto do documento');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error extracting text:', err);
-      toast.error(err.message || 'Erro ao extrair texto do documento');
+      toast.error(err instanceof Error ? err.message : 'Erro ao extrair texto do documento');
     } finally {
       setIsAnalyzing(false);
       setAnalysisStep('');
@@ -238,7 +250,9 @@ export function ContractComplianceAnalyzer({
             const body = await error.context.json();
             if (body?.error) errorMessage = body.error;
           }
-        } catch { /* use original message */ }
+        } catch {
+          /* use original message */
+        }
         throw new Error(errorMessage);
       }
       if (data.error) throw new Error(data.error);
@@ -262,9 +276,9 @@ export function ContractComplianceAnalyzer({
       }
 
       toast.success('Análise de conformidade concluída e guardada');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error analyzing compliance:', error);
-      toast.error(error.message || 'Erro ao analisar conformidade');
+      toast.error(error instanceof Error ? error.message : 'Erro ao analisar conformidade');
     } finally {
       setIsAnalyzing(false);
       setAnalysisStep('');
@@ -274,7 +288,7 @@ export function ContractComplianceAnalyzer({
   const getOverallStatus = () => {
     if (!analysisResult) return null;
     const { sumario_geral } = analysisResult;
-    
+
     if (sumario_geral.nao_conformes > 0) return 'nao_conforme';
     if (sumario_geral.parcialmente_conformes > 0) return 'parcialmente_conforme';
     return 'conforme';
@@ -334,13 +348,8 @@ export function ContractComplianceAnalyzer({
             </div>
           )}
 
-
-
-
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">
-              {textContent.length} caracteres
-            </p>
+            <p className="text-xs text-muted-foreground">{textContent.length} caracteres</p>
             <Button
               type="button"
               onClick={analyzeCompliance}
@@ -390,19 +399,27 @@ export function ContractComplianceAnalyzer({
                   <p className="text-sm text-muted-foreground">Total Verificados</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-green-500/10">
-                  <p className="text-2xl font-bold text-green-600">{analysisResult.sumario_geral.conformes}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {analysisResult.sumario_geral.conformes}
+                  </p>
                   <p className="text-sm text-muted-foreground">Conformes</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-yellow-500/10">
-                  <p className="text-2xl font-bold text-yellow-600">{analysisResult.sumario_geral.parcialmente_conformes}</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {analysisResult.sumario_geral.parcialmente_conformes}
+                  </p>
                   <p className="text-sm text-muted-foreground">Parcialmente</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-red-500/10">
-                  <p className="text-2xl font-bold text-red-600">{analysisResult.sumario_geral.nao_conformes}</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {analysisResult.sumario_geral.nao_conformes}
+                  </p>
                   <p className="text-sm text-muted-foreground">Não Conformes</p>
                 </div>
                 <div className="text-center p-4 rounded-lg bg-muted">
-                  <p className="text-2xl font-bold text-muted-foreground">{analysisResult.sumario_geral.nao_aplicaveis}</p>
+                  <p className="text-2xl font-bold text-muted-foreground">
+                    {analysisResult.sumario_geral.nao_aplicaveis}
+                  </p>
                   <p className="text-sm text-muted-foreground">N/A</p>
                 </div>
               </div>
@@ -450,30 +467,42 @@ export function ContractComplianceAnalyzer({
                     const prioridade = prioridadeConfig[evento.prioridade] || defaultPrioridade;
 
                     return (
-                      <Card key={index} className={`${config.bg} border-l-4`} style={{ borderLeftColor: config.color.replace('text-', '') }}>
+                      <Card
+                        key={index}
+                        className={`${config.bg} border-l-4`}
+                        style={{ borderLeftColor: config.color.replace('text-', '') }}
+                      >
                         <CardContent className="pt-4">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <StatusIcon className={`h-5 w-5 ${config.color}`} />
                               <div>
                                 <h4 className="font-semibold">{evento.evento_titulo}</h4>
-                                <p className="text-sm text-muted-foreground">{evento.area_direito}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {evento.area_direito}
+                                </p>
                               </div>
                             </div>
                             <div className="flex gap-2">
                               <Badge className={config.badge}>{config.label}</Badge>
                               {evento.status_conformidade !== 'nao_aplicavel' && (
-                                <Badge className={prioridade.bg}>Prioridade {evento.prioridade}</Badge>
+                                <Badge className={prioridade.bg}>
+                                  Prioridade {evento.prioridade}
+                                </Badge>
                               )}
                             </div>
                           </div>
 
                           {evento.gaps_identificados.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-sm font-medium text-red-600 mb-1">Gaps Identificados:</p>
+                              <p className="text-sm font-medium text-red-600 mb-1">
+                                Gaps Identificados:
+                              </p>
                               <ul className="list-disc list-inside text-sm space-y-1">
                                 {evento.gaps_identificados.map((gap, i) => (
-                                  <li key={i} className="text-muted-foreground">{gap}</li>
+                                  <li key={i} className="text-muted-foreground">
+                                    {gap}
+                                  </li>
                                 ))}
                               </ul>
                             </div>
@@ -481,10 +510,14 @@ export function ContractComplianceAnalyzer({
 
                           {evento.recomendacoes.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-sm font-medium text-blue-600 mb-1">Recomendações:</p>
+                              <p className="text-sm font-medium text-blue-600 mb-1">
+                                Recomendações:
+                              </p>
                               <ul className="list-disc list-inside text-sm space-y-1">
                                 {evento.recomendacoes.map((rec, i) => (
-                                  <li key={i} className="text-muted-foreground">{rec}</li>
+                                  <li key={i} className="text-muted-foreground">
+                                    {rec}
+                                  </li>
                                 ))}
                               </ul>
                             </div>
@@ -495,7 +528,9 @@ export function ContractComplianceAnalyzer({
                               <p className="text-sm font-medium mb-1">Cláusulas Relevantes:</p>
                               <div className="flex flex-wrap gap-1">
                                 {evento.clausulas_relevantes.map((clausula, i) => (
-                                  <Badge key={i} variant="outline" className="text-xs">{clausula}</Badge>
+                                  <Badge key={i} variant="outline" className="text-xs">
+                                    {clausula}
+                                  </Badge>
                                 ))}
                               </div>
                             </div>
@@ -510,7 +545,8 @@ export function ContractComplianceAnalyzer({
           </Card>
 
           {/* General Recommendations */}
-          {(analysisResult.recomendacoes_gerais.length > 0 || analysisResult.proximos_passos.length > 0) && (
+          {(analysisResult.recomendacoes_gerais.length > 0 ||
+            analysisResult.proximos_passos.length > 0) && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -524,7 +560,9 @@ export function ContractComplianceAnalyzer({
                     <h4 className="font-medium mb-2">Recomendações Gerais:</h4>
                     <ul className="list-disc list-inside space-y-1">
                       {analysisResult.recomendacoes_gerais.map((rec, i) => (
-                        <li key={i} className="text-sm text-muted-foreground">{rec}</li>
+                        <li key={i} className="text-sm text-muted-foreground">
+                          {rec}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -535,7 +573,9 @@ export function ContractComplianceAnalyzer({
                     <h4 className="font-medium mb-2">Próximos Passos:</h4>
                     <ol className="list-decimal list-inside space-y-1">
                       {analysisResult.proximos_passos.map((passo, i) => (
-                        <li key={i} className="text-sm text-muted-foreground">{passo}</li>
+                        <li key={i} className="text-sm text-muted-foreground">
+                          {passo}
+                        </li>
                       ))}
                     </ol>
                   </div>

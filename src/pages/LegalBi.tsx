@@ -10,12 +10,13 @@ import { BarChart3, ExternalLink, Loader2 } from 'lucide-react';
 
 export default function LegalBi() {
   const { t } = useTranslation();
-  const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } = useOrganizations();
+  const { currentOrganization, isCCAInternalAuthorized, viewingOrganizationId } =
+    useOrganizations();
   const { cliente } = useCliente();
 
   const effectiveOrgId = isCCAInternalAuthorized
     ? (viewingOrganizationId ?? cliente?.organizationId ?? null)
-    : currentOrganization?.id ?? null;
+    : (currentOrganization?.id ?? null);
 
   const { data: viewingOrg, isLoading } = useQuery({
     queryKey: ['legalbi-org-url', effectiveOrgId],
@@ -32,7 +33,7 @@ export default function LegalBi() {
     staleTime: 2 * 60 * 1000,
   });
 
-  const legalbiUrl = isCCAInternalAuthorized
+  const _legalbiUrl = isCCAInternalAuthorized
     ? (viewingOrg?.legalbi_url ?? null)
     : ((currentOrganization as Record<string, unknown>)?.legalbi_url as string | null | undefined);
 
@@ -64,7 +65,13 @@ export default function LegalBi() {
             <BarChart3 className="h-16 w-16 text-primary mb-6" />
             <Button
               size="lg"
-              onClick={() => window.open('https://bi.cca.law/Identity/Account/Login', '_blank', 'noopener,noreferrer')}
+              onClick={() =>
+                window.open(
+                  'https://bi.cca.law/Identity/Account/Login',
+                  '_blank',
+                  'noopener,noreferrer',
+                )
+              }
               className="flex items-center gap-2"
             >
               <ExternalLink className="h-5 w-5" />

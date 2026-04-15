@@ -36,7 +36,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEventos, type TipoEvento } from '@/hooks/useEventos';
 import { TIPO_EVENTO_CICLO_VIDA_LABELS } from '@/types/contracts';
-import { getValidEventsForState, getStateChangeForEvent } from '@/lib/contractStateMachine';
+import {
+  canTransitionTo,
+  getValidEventsForState,
+  getStateChangeForEvent,
+} from '@/lib/contractStateMachine';
+import type { EstadoContrato } from '@/types/contracts';
 import { useContratos } from '@/hooks/useContratos';
 
 interface ContractTimelineProps {
@@ -112,7 +117,11 @@ const TIPO_EVENTO_OPTIONS: { value: TipoEvento; label: string }[] = [
   { value: 'alteracao', label: 'Alteração' },
 ];
 
-export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }: ContractTimelineProps) {
+export function ContractTimeline({
+  contratoId,
+  canEdit = false,
+  estadoContrato,
+}: ContractTimelineProps) {
   const { eventos, isLoading, createEvento } = useEventos(contratoId);
   const { updateContrato } = useContratos();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -120,12 +129,12 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
   const [descricao, setDescricao] = useState('');
   const [dataEvento, setDataEvento] = useState(new Date().toISOString().split('T')[0]);
 
-  const availableEventTypes = estadoContrato 
-    ? getValidEventsForState(estadoContrato as any)
+  const availableEventTypes = estadoContrato
+    ? getValidEventsForState(estadoContrato as EstadoContrato)
     : ['nota_interna', 'alteracao'];
-  
-  const filteredEventOptions = TIPO_EVENTO_OPTIONS.filter(
-    option => availableEventTypes.includes(option.value)
+
+  const filteredEventOptions = TIPO_EVENTO_OPTIONS.filter((option) =>
+    availableEventTypes.includes(option.value),
   );
 
   const handleSubmit = async () => {
@@ -135,16 +144,21 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
       descricao: descricao || undefined,
       data_evento: dataEvento,
     });
-    
-    // Auto-update contract state based on event
+
+    // Auto-update contract state based on event (validate transition first)
     const newState = getStateChangeForEvent(tipoEvento);
-    if (newState && contratoId) {
-      await updateContrato.mutateAsync({ 
-        id: contratoId, 
-        estado_contrato: newState as any 
+    if (
+      newState &&
+      contratoId &&
+      estadoContrato &&
+      canTransitionTo(estadoContrato as EstadoContrato, newState)
+    ) {
+      await updateContrato.mutateAsync({
+        id: contratoId,
+        estado_contrato: newState as EstadoContrato,
       });
     }
-    
+
     setIsDialogOpen(false);
     setTipoEvento('nota_interna');
     setDescricao('');
@@ -160,18 +174,14 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
   }
 
   const sortedEventos = [...(eventos || [])].sort(
-    (a, b) => new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime()
+    (a, b) => new Date(b.data_evento).getTime() - new Date(a.data_evento).getTime(),
   );
 
   return (
     <div className="space-y-4">
       {canEdit && (
         <div className="flex justify-end">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setIsDialogOpen(true)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Adicionar Evento
           </Button>
@@ -202,17 +212,17 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h4 className="font-medium">
-                      {TIPO_EVENTO_CICLO_VIDA_LABELS[evento.tipo_evento as keyof typeof TIPO_EVENTO_CICLO_VIDA_LABELS] || evento.tipo_evento}
+                      {TIPO_EVENTO_CICLO_VIDA_LABELS[
+                        evento.tipo_evento as keyof typeof TIPO_EVENTO_CICLO_VIDA_LABELS
+                      ] || evento.tipo_evento}
                     </h4>
                     {evento.descricao && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {evento.descricao}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">{evento.descricao}</p>
                     )}
                   </div>
                   <div className="text-right text-sm text-muted-foreground shrink-0">
                     <div>
-                      {format(new Date(evento.data_evento), "d MMM yyyy", {
+                      {format(new Date(evento.data_evento), 'd MMM yyyy', {
                         locale: pt,
                       })}
                     </div>
@@ -228,11 +238,7 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
             <Clock className="h-12 w-12 mx-auto mb-3 opacity-50" />
             <p>Nenhum evento registado</p>
             {canEdit && (
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => setIsDialogOpen(true)}
-              >
+              <Button variant="outline" className="mt-4" onClick={() => setIsDialogOpen(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Adicionar primeiro evento
               </Button>
@@ -250,7 +256,7 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
               Registe um novo evento no ciclo de vida do contrato.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="tipoEvento">Tipo de Evento</Label>
@@ -267,7 +273,7 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="dataEvento">Data do Evento</Label>
               <Input
@@ -277,7 +283,7 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
                 onChange={(e) => setDataEvento(e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="descricao">Descrição (opcional)</Label>
               <Textarea
@@ -289,15 +295,12 @@ export function ContractTimeline({ contratoId, canEdit = false, estadoContrato }
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={createEvento.isPending}
-            >
+            <Button onClick={handleSubmit} disabled={createEvento.isPending}>
               {createEvento.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Adicionar
             </Button>

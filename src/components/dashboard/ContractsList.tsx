@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, FileCheck, AlertCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { pt } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 interface ContractsListProps {
@@ -13,14 +12,22 @@ interface ContractsListProps {
   title?: string;
 }
 
-export function ContractsList({ contracts, maxItems = 5, title = "Contratos" }: ContractsListProps) {
+export function ContractsList({
+  contracts,
+  maxItems = 5,
+  title = 'Contratos',
+}: ContractsListProps) {
   const now = new Date();
-  
+
   const displayedContracts = contracts
-    .filter(c => c.estadoContrato === 'VIGENTE')
+    .filter((c) => c.estadoContrato === 'VIGENTE')
     .sort((a, b) => {
-      const daysA = a.dataFimPrevista ? differenceInDays(new Date(a.dataFimPrevista), now) : Infinity;
-      const daysB = b.dataFimPrevista ? differenceInDays(new Date(b.dataFimPrevista), now) : Infinity;
+      const daysA = a.dataFimPrevista
+        ? differenceInDays(new Date(a.dataFimPrevista), now)
+        : Infinity;
+      const daysB = b.dataFimPrevista
+        ? differenceInDays(new Date(b.dataFimPrevista), now)
+        : Infinity;
       return daysA - daysB;
     })
     .slice(0, maxItems);
@@ -51,20 +58,22 @@ export function ContractsList({ contracts, maxItems = 5, title = "Contratos" }: 
       </CardHeader>
       <CardContent className="space-y-3">
         {displayedContracts.map((contract) => {
-          const daysUntilExpiry = contract.dataFimPrevista 
+          const daysUntilExpiry = contract.dataFimPrevista
             ? differenceInDays(new Date(contract.dataFimPrevista), now)
             : null;
           const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 60;
-          
+
           return (
             <div
               key={contract.id}
               className="flex items-center gap-4 p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
             >
-              <div className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                isExpiringSoon ? "bg-risk-medium/10" : "bg-muted"
-              )}>
+              <div
+                className={cn(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
+                  isExpiringSoon ? 'bg-risk-medium/10' : 'bg-muted',
+                )}
+              >
                 {isExpiringSoon ? (
                   <AlertCircle className="h-5 w-5 text-risk-medium" />
                 ) : (
@@ -74,8 +83,8 @@ export function ContractsList({ contracts, maxItems = 5, title = "Contratos" }: 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant={getStatusVariant(contract)} className="text-[10px]">
-                    {daysUntilExpiry !== null 
-                      ? daysUntilExpiry <= 0 
+                    {daysUntilExpiry !== null
+                      ? daysUntilExpiry <= 0
                         ? 'Expirado'
                         : `${daysUntilExpiry} dias`
                       : 'Sem prazo'}
@@ -95,7 +104,7 @@ export function ContractsList({ contracts, maxItems = 5, title = "Contratos" }: 
                 </p>
                 {contract.dataFimPrevista && (
                   <p className="text-xs text-muted-foreground">
-                    até {format(new Date(contract.dataFimPrevista), "dd/MM/yyyy")}
+                    até {format(new Date(contract.dataFimPrevista), 'dd/MM/yyyy')}
                   </p>
                 )}
               </div>
