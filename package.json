@@ -9,12 +9,15 @@
     "build:dev": "vite build --mode development",
     "test": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "analyze": "ANALYZE=true vite build",
     "preview": "vite preview",
+    "gen:types": "supabase gen types typescript --project-id scjxhhkutsiswsgsuiqo > src/integrations/supabase/types.ts",
+    "env:pull": "vercel env pull .env.local",
     "prepare": "husky"
   },
   "lint-staged": {

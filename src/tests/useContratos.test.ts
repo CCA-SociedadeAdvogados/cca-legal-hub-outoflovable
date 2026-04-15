@@ -13,6 +13,18 @@ let mockAuthUser: User | null = MOCK_USER;
 vi.mock('@/integrations/supabase/client', () => ({ supabase: mockSupabase }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: mockAuthUser }) }));
 vi.mock('@/hooks/use-toast', () => ({ toast: vi.fn() }));
+// Mock useOrganizations to avoid deep dependency chain
+let mockCurrentOrg: { id: string; name: string } | null = { id: 'org-abc', name: 'Test Org' };
+vi.mock('@/hooks/useOrganizations', () => ({
+  useOrganizations: () => ({
+    get currentOrganization() {
+      return mockCurrentOrg;
+    },
+    isCCAInternalAuthorized: false,
+    organizations: [],
+    isLoading: false,
+  }),
+}));
 
 import { useContratos, useContrato } from '@/hooks/useContratos';
 
@@ -98,6 +110,7 @@ describe('useContratos — query', () => {
 describe('useContratos — createContrato', () => {
   beforeEach(() => {
     mockAuthUser = MOCK_USER;
+    mockCurrentOrg = { id: ORG_ID, name: 'Test Org' };
     vi.clearAllMocks();
   });
 
@@ -125,11 +138,8 @@ describe('useContratos — createContrato', () => {
   });
 
   it('throws when no organization is found', async () => {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === 'profiles')
-        return createBuilder({ data: { current_organization_id: null }, error: null });
-      return createBuilder({ data: null, error: null });
-    });
+    mockCurrentOrg = null;
+    mockFrom.mockImplementation(() => createBuilder({ data: null, error: null }));
 
     const { result } = renderHookWithProviders(() => useContratos());
     await waitFor(() => expect(result.current.isLoading).toBe(false));

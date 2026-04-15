@@ -1,16 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders as _baseCorsHeaders } from "../_shared/cors.ts";
 
-const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
 function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow = _allowedOrigins.includes("*")
-    ? "*"
-    : _allowedOrigins.includes(origin)
-    ? origin
-    : _allowedOrigins[0] ?? "*";
+  const base = _baseCorsHeaders(req);
   return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-secret, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    ...base,
+    "Access-Control-Allow-Headers": base["Access-Control-Allow-Headers"] + ", x-cron-secret",
   };
 }
 

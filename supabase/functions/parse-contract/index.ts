@@ -4,19 +4,7 @@
 // AI: Claude Sonnet 4.6 (claude-sonnet-4-6) via Anthropic Messages API
 // Context window: 200K tokens — max output: 16K tokens
 
-const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
-function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow = _allowedOrigins.includes("*")
-    ? "*"
-    : _allowedOrigins.includes(origin)
-    ? origin
-    : _allowedOrigins[0] ?? "*";
-  return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  };
-}
+import { corsHeaders } from "../_shared/cors.ts";
 
 const CLAUDE_SONNET = "claude-sonnet-4-6";
 // 150K chars ≈ 37K tokens — seguro para Haiku 200K context.

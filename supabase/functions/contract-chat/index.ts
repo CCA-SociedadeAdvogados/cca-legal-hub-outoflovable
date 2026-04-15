@@ -21,19 +21,7 @@ const COMPLEX_LEGAL_KEYWORDS = [
   "rgpd", "proteção de dados", "dpa", "transferência internacional",
 ];
 
-const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
-function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow = _allowedOrigins.includes("*")
-    ? "*"
-    : _allowedOrigins.includes(origin)
-    ? origin
-    : _allowedOrigins[0] ?? "*";
-  return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { corsHeaders } from "../_shared/cors.ts";
 
 function routeModel(question: string): string {
   const lower = question.toLowerCase();

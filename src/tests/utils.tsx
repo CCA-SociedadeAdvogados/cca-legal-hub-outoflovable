@@ -4,6 +4,7 @@
 import React from 'react';
 import { renderHook, type RenderHookOptions } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ClienteProvider } from '@/contexts/ClienteContext';
 import type { User } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
@@ -48,7 +49,7 @@ function makeWrapper(authValue: MockAuthValue) {
     return (
       <QueryClientProvider client={qc}>
         <AuthContext.Provider value={authValue}>
-          {children}
+          <ClienteProvider>{children}</ClienteProvider>
         </AuthContext.Provider>
       </QueryClientProvider>
     );

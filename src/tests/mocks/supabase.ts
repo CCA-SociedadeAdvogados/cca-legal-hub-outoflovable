@@ -19,9 +19,25 @@ export function createBuilder(result: { data: unknown; error: unknown } | null) 
 
   // Chainable no-op methods — each returns `builder` (i.e. `this`)
   const chainMethods = [
-    'select', 'insert', 'update', 'delete', 'upsert',
-    'eq', 'neq', 'in', 'not', 'is', 'gt', 'lt', 'gte', 'lte',
-    'order', 'range', 'limit', 'filter', 'match',
+    'select',
+    'insert',
+    'update',
+    'delete',
+    'upsert',
+    'eq',
+    'neq',
+    'in',
+    'not',
+    'is',
+    'gt',
+    'lt',
+    'gte',
+    'lte',
+    'order',
+    'range',
+    'limit',
+    'filter',
+    'match',
   ];
   chainMethods.forEach((m) => {
     builder[m] = vi.fn().mockReturnValue(builder);
@@ -33,6 +49,7 @@ export function createBuilder(result: { data: unknown; error: unknown } | null) 
 
   // Make the builder itself thenable so `await supabase.from('t').select(...)` works
   // without an explicit terminal method call.
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   (builder as { then?: Function })['then'] = (
     resolve: (v: unknown) => unknown,
     reject?: (e: unknown) => unknown,
@@ -47,7 +64,7 @@ export function createBuilder(result: { data: unknown; error: unknown } | null) 
 // ---------------------------------------------------------------------------
 export const mockFrom = vi.fn();
 export const mockRpc = vi.fn();
-export const mockFunctionsInvoke = vi.fn();
+export const mockFunctionsInvoke = vi.fn().mockResolvedValue({ data: null, error: null });
 
 export const mockSupabase = {
   from: mockFrom,
@@ -65,7 +82,9 @@ export const mockSupabase = {
   storage: {
     from: vi.fn().mockReturnValue({
       upload: vi.fn().mockResolvedValue({ error: null }),
-      getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://example.com/avatar.png' } }),
+      getPublicUrl: vi
+        .fn()
+        .mockReturnValue({ data: { publicUrl: 'https://example.com/avatar.png' } }),
     }),
   },
   functions: {

@@ -11,19 +11,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CLAUDE_SONNET = "claude-sonnet-4-6";
 
-const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
-function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow = _allowedOrigins.includes("*")
-    ? "*"
-    : _allowedOrigins.includes(origin)
-    ? origin
-    : _allowedOrigins[0] ?? "*";
-  return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { corsHeaders } from "../_shared/cors.ts";
 
 async function callClaude(apiKey: string, system: string, user: string, maxTokens = 2048): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
