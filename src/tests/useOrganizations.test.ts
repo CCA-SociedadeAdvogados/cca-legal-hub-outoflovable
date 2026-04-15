@@ -44,8 +44,7 @@ describe('useOrganizations — queries', () => {
 
   it('fetches organizations and current organization', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'organizations')
-        return createBuilder({ data: [MOCK_ORG], error: null });
+      if (table === 'organizations') return createBuilder({ data: [MOCK_ORG], error: null });
       if (table === 'profiles')
         return createBuilder({ data: { current_organization_id: MOCK_ORG.id }, error: null });
       if (table === 'organization_members')
@@ -62,8 +61,7 @@ describe('useOrganizations — queries', () => {
 
   it('returns empty arrays when user has no organizations', async () => {
     mockFrom.mockImplementation((table: string) => {
-      if (table === 'organization_members')
-        return createBuilder({ data: [], error: null });
+      if (table === 'organization_members') return createBuilder({ data: [], error: null });
       return createBuilder({ data: [], error: null });
     });
 
@@ -134,7 +132,20 @@ describe('useOrganizations — switchOrganization', () => {
   });
 
   it('updates the current_organization_id in profiles', async () => {
-    mockFrom.mockImplementation(() => createBuilder({ data: null, error: null }));
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'vw_cca_client_catalog_overview') {
+        return createBuilder({
+          data: {
+            organization_id: 'org-xyz',
+            client_code: 'C.TEST',
+            nome: 'Test Client',
+            group_code: null,
+          },
+          error: null,
+        });
+      }
+      return createBuilder({ data: null, error: null });
+    });
 
     const { result } = renderHookWithProviders(() => useOrganizations());
     await waitFor(() => expect(result.current.isLoading).toBe(false));
