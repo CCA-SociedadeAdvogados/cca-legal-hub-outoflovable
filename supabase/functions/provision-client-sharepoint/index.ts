@@ -18,19 +18,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
  *     └── LegalBI/
  */
 
-const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
-function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow = _allowedOrigins.includes("*")
-    ? "*"
-    : _allowedOrigins.includes(origin)
-    ? origin
-    : _allowedOrigins[0] ?? "*";
-  return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  };
-}
+import { corsHeaders } from "../_shared/cors.ts";
 
 async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;

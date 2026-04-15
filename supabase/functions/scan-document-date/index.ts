@@ -4,18 +4,11 @@
 // Response: { emission_date: "YYYY-MM-DD" | null, confidence: "high" | "low" | "none" }
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
+import { corsHeaders as _baseCorsHeaders } from "../_shared/cors.ts";
 
-const _allowedOrigins = (Deno.env.get("ALLOWED_ORIGIN") ?? "*").split(",").map((s: string) => s.trim());
 function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow = _allowedOrigins.includes("*")
-    ? "*"
-    : _allowedOrigins.includes(origin)
-    ? origin
-    : _allowedOrigins[0] ?? "*";
   return {
-    "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    ..._baseCorsHeaders(req),
     "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
