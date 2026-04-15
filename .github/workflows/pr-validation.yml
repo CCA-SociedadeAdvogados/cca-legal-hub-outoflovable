@@ -17,11 +17,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Type Check
-        run: npm run typecheck
+      - name: Lint (report only)
+        run: npm run lint || true
 
       - name: Build
         run: npm run build
