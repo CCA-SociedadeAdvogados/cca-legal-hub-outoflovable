@@ -1,4 +1,4 @@
-import { AlertTriangle, X, User, Building2 } from 'lucide-react';
+import { AlertTriangle, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -33,7 +33,9 @@ export function ImpersonationBanner() {
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm">
-              {isUserImpersonation ? 'Modo Impersonation — Utilizador' : 'Modo Impersonation — Organização'}
+              {isUserImpersonation
+                ? 'Modo Impersonation — Utilizador'
+                : 'Modo Impersonation — Organização'}
             </span>
             {!isUserImpersonation && primarySector && (
               <Badge

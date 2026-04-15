@@ -1,23 +1,37 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
-  Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, ShieldCheck, Loader2, Folders } from "lucide-react";
-import { useDepartments } from "@/hooks/useDepartments";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Plus, Pencil, Trash2, ShieldCheck, Loader2, Folders } from 'lucide-react';
+import { useDepartments } from '@/hooks/useDepartments';
 
 interface DepartmentsConfigProps {
   organizationId: string;
@@ -28,17 +42,17 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
     useDepartments(organizationId);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [newName, setNewName] = useState('');
 
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
+  const [editName, setEditName] = useState('');
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
     await createDepartment.mutateAsync({ name: newName.trim(), orgId: organizationId });
-    setNewName("");
+    setNewName('');
     setIsCreateOpen(false);
   };
 
@@ -46,7 +60,7 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
     if (!editingId || !editName.trim()) return;
     await updateDepartment.mutateAsync({ id: editingId, name: editName.trim() });
     setEditingId(null);
-    setEditName("");
+    setEditName('');
   };
 
   const handleDelete = async () => {
@@ -65,7 +79,8 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
               Departamentos
             </CardTitle>
             <CardDescription>
-              Gerir departamentos desta organização. O departamento "Geral" é de sistema e não pode ser editado ou eliminado.
+              Gerir departamentos desta organização. O departamento &quot;Geral&quot; é de sistema e
+              não pode ser editado ou eliminado.
             </CardDescription>
           </div>
           <Button size="sm" onClick={() => setIsCreateOpen(true)}>
@@ -102,7 +117,9 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
                         Sistema
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="w-fit">Normal</Badge>
+                      <Badge variant="outline" className="w-fit">
+                        Normal
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -119,7 +136,7 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
                         size="icon"
                         className="h-8 w-8"
                         disabled={dept.is_system}
-                        title={dept.is_system ? "Departamento de sistema — não editável" : "Editar"}
+                        title={dept.is_system ? 'Departamento de sistema — não editável' : 'Editar'}
                         onClick={() => {
                           setEditingId(dept.id);
                           setEditName(dept.name);
@@ -132,7 +149,9 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                         disabled={dept.is_system}
-                        title={dept.is_system ? "Departamento de sistema — não eliminável" : "Eliminar"}
+                        title={
+                          dept.is_system ? 'Departamento de sistema — não eliminável' : 'Eliminar'
+                        }
                         onClick={() => setDeletingId(dept.id)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -160,11 +179,13 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Ex: Jurídico, Comercial..."
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+              Cancelar
+            </Button>
             <Button onClick={handleCreate} disabled={createDepartment.isPending || !newName.trim()}>
               {createDepartment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Criar
@@ -174,7 +195,12 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
       </Dialog>
 
       {/* Dialog — Editar */}
-      <Dialog open={!!editingId} onOpenChange={(open) => { if (!open) setEditingId(null); }}>
+      <Dialog
+        open={!!editingId}
+        onOpenChange={(open) => {
+          if (!open) setEditingId(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Departamento</DialogTitle>
@@ -186,11 +212,13 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
               id="edit-dept-name"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleEdit()}
+              onKeyDown={(e) => e.key === 'Enter' && handleEdit()}
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingId(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setEditingId(null)}>
+              Cancelar
+            </Button>
             <Button onClick={handleEdit} disabled={updateDepartment.isPending || !editName.trim()}>
               {updateDepartment.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Guardar
@@ -200,13 +228,19 @@ export function DepartmentsConfig({ organizationId }: DepartmentsConfigProps) {
       </Dialog>
 
       {/* AlertDialog — Eliminar */}
-      <AlertDialog open={!!deletingId} onOpenChange={(open) => { if (!open) setDeletingId(null); }}>
+      <AlertDialog
+        open={!!deletingId}
+        onOpenChange={(open) => {
+          if (!open) setDeletingId(null);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar Departamento</AlertDialogTitle>
             <AlertDialogDescription>
               Tem a certeza que deseja eliminar este departamento? Esta ação não pode ser revertida.
-              Os utilizadores associados exclusivamente a este departamento serão removidos do mesmo.
+              Os utilizadores associados exclusivamente a este departamento serão removidos do
+              mesmo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

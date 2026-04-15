@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import { useContratos } from '@/hooks/useContratos';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
-import { ContractFilters, ContractFiltersState } from '@/components/contracts/ContractFilters';
+import { ContractFiltersState } from '@/components/contracts/ContractFilters';
 import { ContractsTable } from '@/components/contracts/ContractsTable';
 import { ContractAIParser } from '@/components/contracts/ContractAIParser';
 import { GenerateContractDialog } from '@/components/contracts/GenerateContractDialog';
@@ -44,7 +44,7 @@ const initialFilters: ContractFiltersState = {
 
 export default function Contratos() {
   const { t } = useTranslation();
-  const [filters, setFilters] = useState<ContractFiltersState>(initialFilters);
+  const [filters, _setFilters] = useState<ContractFiltersState>(initialFilters);
   const [activeTab, setActiveTab] = useState<'contratos' | 'ia' | 'arquivo'>('contratos');
   const [showArchived, setShowArchived] = useState(false);
   const { contratos, isLoading, archiveContrato, restoreContrato, deleteContrato } = useContratos();

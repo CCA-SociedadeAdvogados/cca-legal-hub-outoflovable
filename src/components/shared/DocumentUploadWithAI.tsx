@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -14,10 +15,11 @@ export interface DocumentAnalysisResult {
   recomendacoes: string[];
   riscos_identificados?: string[];
   confianca: number;
-  dados_extraidos?: Record<string, any>;
+  dados_extraidos?: Record<string, unknown>;
 }
 
 // Normaliza o resultado da IA para campos consistentes (PT)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const normalizeAnalysisResult = (result: any): DocumentAnalysisResult => ({
   resumo: result.resumo || result.summary || '',
   pontos_principais: result.pontos_principais || result.key_points || [],
@@ -28,11 +30,11 @@ const normalizeAnalysisResult = (result: any): DocumentAnalysisResult => ({
   dados_extraidos: result.dados_extraidos || result.extracted_data || {},
 });
 
-export type DocumentContext = 
-  | 'evento_legislativo' 
-  | 'impacto' 
-  | 'politica' 
-  | 'template' 
+export type DocumentContext =
+  | 'evento_legislativo'
+  | 'impacto'
+  | 'politica'
+  | 'template'
   | 'documento';
 
 interface DocumentUploadWithAIProps {
@@ -48,10 +50,10 @@ interface DocumentUploadWithAIProps {
 export function DocumentUploadWithAI({
   context,
   onAnalysisComplete,
-  onFileUploaded,
+  onFileUploaded: _onFileUploaded,
   title,
   description,
-  showInDialog = false,
+  showInDialog: _showInDialog = false,
   compact = false,
 }: DocumentUploadWithAIProps) {
   const { t, i18n } = useTranslation();
@@ -62,17 +64,18 @@ export function DocumentUploadWithAI({
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<DocumentAnalysisResult | null>(null);
 
-  const acceptedTypes = [
+  const _acceptedTypes = [
     'application/pdf',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'text/plain'
+    'text/plain',
   ];
 
   const isValidFile = (file: File) => {
     const isPdf = file.type === 'application/pdf' || file.name.endsWith('.pdf');
     const isTxt = file.type === 'text/plain' || file.name.endsWith('.txt');
-    const isWord = file.type?.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
+    const isWord =
+      file.type?.includes('word') || file.name.endsWith('.doc') || file.name.endsWith('.docx');
     return isPdf || isTxt || isWord;
   };
 
@@ -80,7 +83,7 @@ export function DocumentUploadWithAI({
     if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
       return await file.text();
     }
-    
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -133,10 +136,10 @@ export function DocumentUploadWithAI({
         body: {
           type: getContextPromptType(),
           language: i18n.language, // 'pt' ou 'en'
-          data: isTextFile 
+          data: isTextFile
             ? { textContent: content, context }
-            : { fileContent: content, fileName: file.name, mimeType: file.type, context }
-        }
+            : { fileContent: content, fileName: file.name, mimeType: file.type, context },
+        },
       });
 
       if (fnError) {
@@ -155,10 +158,11 @@ export function DocumentUploadWithAI({
       } else {
         throw new Error(t('upload.invalidResponse'));
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error processing file:', err);
-      setError(err.message || t('upload.processingError'));
-      toast.error(err.message || t('upload.processingError'));
+      const message = err instanceof Error ? err.message : t('upload.processingError');
+      setError(message);
+      toast.error(message);
     } finally {
       setIsProcessing(false);
     }
@@ -187,7 +191,7 @@ export function DocumentUploadWithAI({
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file && !isProcessing) {
       processFile(file);
@@ -246,8 +250,8 @@ export function DocumentUploadWithAI({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all ${
-            isDragging 
-              ? 'border-primary bg-primary/10' 
+            isDragging
+              ? 'border-primary bg-primary/10'
               : error
                 ? 'border-destructive/50 hover:border-destructive'
                 : 'hover:border-primary/50 hover:bg-muted/30'
@@ -264,14 +268,23 @@ export function DocumentUploadWithAI({
                 <FileText className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium">{selectedFile.name}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); clearSelection(); }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearSelection();
+                }}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-2">
               <Upload className="h-5 w-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{t('upload.dragOrClickCompact')}</span>
+              <span className="text-sm text-muted-foreground">
+                {t('upload.dragOrClickCompact')}
+              </span>
             </div>
           )}
         </div>
@@ -288,19 +301,26 @@ export function DocumentUploadWithAI({
             <div className="flex items-center gap-2 text-sm font-medium text-primary">
               <Sparkles className="h-4 w-4" />
               {t('upload.analysisResult')}
-              <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
-                analysisResult.confianca >= 80 ? 'bg-green-100 text-green-700' :
-                analysisResult.confianca >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700'
-              }`}>
+              <span
+                className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
+                  analysisResult.confianca >= 80
+                    ? 'bg-green-100 text-green-700'
+                    : analysisResult.confianca >= 60
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-orange-100 text-orange-700'
+                }`}
+              >
                 {analysisResult.confianca}% {t('upload.confidence')}
               </span>
             </div>
-            
+
             <p className="text-sm text-foreground font-medium">{analysisResult.resumo}</p>
-            
+
             {analysisResult.pontos_principais && analysisResult.pontos_principais.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">{t('upload.mainPoints')}:</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  {t('upload.mainPoints')}:
+                </p>
                 <ul className="text-sm space-y-1">
                   {analysisResult.pontos_principais.map((ponto, i) => (
                     <li key={i} className="text-muted-foreground flex items-start gap-2">
@@ -311,10 +331,12 @@ export function DocumentUploadWithAI({
                 </ul>
               </div>
             )}
-            
+
             {analysisResult.recomendacoes && analysisResult.recomendacoes.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">{t('upload.recommendations')}:</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  {t('upload.recommendations')}:
+                </p>
                 <ul className="text-sm space-y-1">
                   {analysisResult.recomendacoes.map((rec, i) => (
                     <li key={i} className="text-muted-foreground flex items-start gap-2">
@@ -325,36 +347,48 @@ export function DocumentUploadWithAI({
                 </ul>
               </div>
             )}
-            
-            {analysisResult.riscos_identificados && analysisResult.riscos_identificados.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">{t('upload.risksIdentified')}:</p>
-                <ul className="text-sm space-y-1">
-                  {analysisResult.riscos_identificados.map((risco, i) => (
-                    <li key={i} className="text-orange-600 flex items-start gap-2">
-                      <AlertCircle className="h-3 w-3 mt-1 flex-shrink-0" />
-                      <span>{risco}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {analysisResult.dados_extraidos && Object.keys(analysisResult.dados_extraidos).length > 0 && (
-              <div className="pt-2 border-t border-border/50">
-                <p className="text-xs font-medium text-muted-foreground mb-2">{t('upload.extractedData')}:</p>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {Object.entries(analysisResult.dados_extraidos).slice(0, 6).map(([key, value]) => (
-                    <div key={key} className="bg-background/50 rounded p-2">
-                      <span className="text-muted-foreground capitalize">{key.replace(/_/g, ' ')}:</span>
-                      <span className="ml-1 text-foreground font-medium">
-                        {Array.isArray(value) ? value.slice(0, 2).join(', ') : String(value).slice(0, 50)}
-                      </span>
-                    </div>
-                  ))}
+
+            {analysisResult.riscos_identificados &&
+              analysisResult.riscos_identificados.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">
+                    {t('upload.risksIdentified')}:
+                  </p>
+                  <ul className="text-sm space-y-1">
+                    {analysisResult.riscos_identificados.map((risco, i) => (
+                      <li key={i} className="text-orange-600 flex items-start gap-2">
+                        <AlertCircle className="h-3 w-3 mt-1 flex-shrink-0" />
+                        <span>{risco}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-            )}
+              )}
+
+            {analysisResult.dados_extraidos &&
+              Object.keys(analysisResult.dados_extraidos).length > 0 && (
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
+                    {t('upload.extractedData')}:
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    {Object.entries(analysisResult.dados_extraidos)
+                      .slice(0, 6)
+                      .map(([key, value]) => (
+                        <div key={key} className="bg-background/50 rounded p-2">
+                          <span className="text-muted-foreground capitalize">
+                            {key.replace(/_/g, ' ')}:
+                          </span>
+                          <span className="ml-1 text-foreground font-medium">
+                            {Array.isArray(value)
+                              ? value.slice(0, 2).join(', ')
+                              : String(value).slice(0, 50)}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
           </div>
         )}
       </div>
@@ -389,8 +423,8 @@ export function DocumentUploadWithAI({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-all ${
-            isDragging 
-              ? 'border-primary bg-primary/10 scale-[1.02]' 
+            isDragging
+              ? 'border-primary bg-primary/10 scale-[1.02]'
               : error
                 ? 'border-destructive/50 hover:border-destructive'
                 : 'hover:border-primary/50 hover:bg-muted/30'
@@ -401,9 +435,7 @@ export function DocumentUploadWithAI({
               <Loader2 className="h-10 w-10 mx-auto text-primary animate-spin" />
               <div>
                 <p className="font-medium">{t('upload.analyzing')}</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('upload.aiExtracting')}
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">{t('upload.aiExtracting')}</p>
               </div>
             </div>
           ) : selectedFile && error ? (
@@ -412,9 +444,7 @@ export function DocumentUploadWithAI({
               <div>
                 <p className="font-medium text-destructive">{t('upload.errorTitle')}</p>
                 <p className="text-sm text-muted-foreground mt-1">{error}</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {t('upload.clickToRetry')}
-                </p>
+                <p className="text-sm text-muted-foreground mt-2">{t('upload.clickToRetry')}</p>
               </div>
             </div>
           ) : selectedFile && analysisResult ? (
@@ -424,19 +454,24 @@ export function DocumentUploadWithAI({
                 <p className="font-medium text-green-600">{t('upload.analysisComplete')}</p>
                 <p className="text-sm text-muted-foreground mt-1">{selectedFile.name}</p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={(e) => { e.stopPropagation(); clearSelection(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clearSelection();
+                }}
               >
                 {t('upload.uploadAnother')}
               </Button>
             </div>
           ) : (
             <div className="space-y-3">
-              <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${
-                isDragging ? 'bg-primary/20' : 'bg-muted'
-              }`}>
+              <div
+                className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${
+                  isDragging ? 'bg-primary/20' : 'bg-muted'
+                }`}
+              >
                 {isDragging ? (
                   <FileText className="h-6 w-6 text-primary" />
                 ) : (
@@ -447,9 +482,7 @@ export function DocumentUploadWithAI({
                 <p className="font-medium">
                   {isDragging ? t('upload.dropHere') : t('upload.dragOrClick')}
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {t('upload.fileTypes')}
-                </p>
+                <p className="text-sm text-muted-foreground mt-1">{t('upload.fileTypes')}</p>
               </div>
             </div>
           )}
@@ -461,10 +494,10 @@ export function DocumentUploadWithAI({
               <Sparkles className="h-4 w-4 text-primary" />
               {t('upload.aiAnalysisTitle')}
             </h4>
-            
+
             <div className="space-y-2">
               <p className="text-sm">{analysisResult.resumo}</p>
-              
+
               {analysisResult.pontos_principais.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-1">{t('upload.mainPoints')}:</p>
@@ -478,7 +511,7 @@ export function DocumentUploadWithAI({
                   </ul>
                 </div>
               )}
-              
+
               {analysisResult.recomendacoes.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-1">{t('upload.recommendations')}:</p>
@@ -492,13 +525,18 @@ export function DocumentUploadWithAI({
                   </ul>
                 </div>
               )}
-              
+
               <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2">
                 <span>{t('upload.confidence')}:</span>
-                <span className={`font-medium ${
-                  analysisResult.confianca >= 80 ? 'text-green-600' :
-                  analysisResult.confianca >= 60 ? 'text-yellow-600' : 'text-orange-600'
-                }`}>
+                <span
+                  className={`font-medium ${
+                    analysisResult.confianca >= 80
+                      ? 'text-green-600'
+                      : analysisResult.confianca >= 60
+                        ? 'text-yellow-600'
+                        : 'text-orange-600'
+                  }`}
+                >
                   {analysisResult.confianca}%
                 </span>
               </div>

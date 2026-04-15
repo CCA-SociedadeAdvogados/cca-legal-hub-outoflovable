@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
-import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { toast } from 'sonner';
 
 export interface Template {
   id: string;
@@ -23,13 +23,14 @@ export function useTemplates() {
   const queryClient = useQueryClient();
 
   const { data: templates = [], isLoading } = useQuery({
-    queryKey: ["templates", profile?.current_organization_id],
+    queryKey: ['templates', profile?.current_organization_id],
     staleTime: 30 * 1000,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("templates")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from('templates')
+        .select('*')
+        .eq('organization_id', profile!.current_organization_id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as Template[];
@@ -46,7 +47,7 @@ export function useTemplates() {
       placeholders?: string[];
     }) => {
       const { data: result, error } = await supabase
-        .from("templates")
+        .from('templates')
         .insert({
           ...data,
           organization_id: profile?.current_organization_id,
@@ -59,11 +60,11 @@ export function useTemplates() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template criado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast.success('Template criado com sucesso!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao criar template");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao criar template');
     },
   });
 
@@ -80,9 +81,9 @@ export function useTemplates() {
       placeholders?: string[];
     }) => {
       const { data: result, error } = await supabase
-        .from("templates")
+        .from('templates')
         .update({ ...data, updated_by_id: user?.id })
-        .eq("id", id)
+        .eq('id', id)
         .select()
         .single();
 
@@ -90,25 +91,25 @@ export function useTemplates() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template atualizado!");
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast.success('Template atualizado!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao atualizar template");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao atualizar template');
     },
   });
 
   const deleteTemplate = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("templates").delete().eq("id", id);
+      const { error } = await supabase.from('templates').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["templates"] });
-      toast.success("Template eliminado!");
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast.success('Template eliminado!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao eliminar template");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao eliminar template');
     },
   });
 

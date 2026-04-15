@@ -8,12 +8,16 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useLegalBiStats } from '@/hooks/useLegalBiStats';
 import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
-import { useContratos } from '@/hooks/useContratos';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip as RechartsTooltip,
 } from 'recharts';
 import {
@@ -34,16 +38,6 @@ const chartTooltipStyle = {
   border: '1px solid hsl(var(--border))',
   borderRadius: '0.5rem',
   fontSize: '0.8rem',
-};
-
-function formatCurrencyShort(value: number): string {
-  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
-}
-
-const RENOVACAO_LABELS: Record<string, string> = {
-  renovacao_automatica: 'Auto',
-  renovacao_mediante_acordo: 'Acordo',
-  sem_renovacao_automatica: 'Sem Renov.',
 };
 
 const ESTADO_ICON_BG: Record<string, string> = {
@@ -86,9 +80,9 @@ export default function Dashboard() {
   const { t } = useTranslation();
 
   const docStats = useMemo(() => {
-    const uploaded = checklistItems.filter(i => i.entry?.status === 'uploaded').length;
-    const expired = checklistItems.filter(i => i.entry?.status === 'expired').length;
-    const missing = checklistItems.filter(i => !i.entry || i.entry.status === 'missing').length;
+    const uploaded = checklistItems.filter((i) => i.entry?.status === 'uploaded').length;
+    const expired = checklistItems.filter((i) => i.entry?.status === 'expired').length;
+    const missing = checklistItems.filter((i) => !i.entry || i.entry.status === 'missing').length;
     const total = checklistItems.length;
     const percent = total > 0 ? Math.round((uploaded / total) * 100) : 0;
     return { uploaded, expired, missing, total, percent };
@@ -104,7 +98,13 @@ export default function Dashboard() {
     );
   }
 
-  const TIPO_COLORS = ['hsl(20,100%,55%)', 'hsl(220,14%,65%)', 'hsl(262,83%,62%)', 'hsl(142,71%,45%)', 'hsl(38,92%,50%)'];
+  const TIPO_COLORS = [
+    'hsl(20,100%,55%)',
+    'hsl(220,14%,65%)',
+    'hsl(262,83%,62%)',
+    'hsl(142,71%,45%)',
+    'hsl(38,92%,50%)',
+  ];
 
   return (
     <AppLayout>
@@ -113,9 +113,7 @@ export default function Dashboard() {
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              {t('dashboard.subtitle')}
-            </p>
+            <p className="text-muted-foreground text-sm mt-0.5">{t('dashboard.subtitle')}</p>
           </div>
           <div className="flex gap-2">
             <ExportPDFButton contentId="dashboard-content" filename="Visao-Geral" />
@@ -135,269 +133,378 @@ export default function Dashboard() {
         </div>
 
         <div id="dashboard-content" className="space-y-4">
-        {/* KPI Row */}
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title={t('dashboard.totalContracts')}
-            value={stats.totalContratos}
-            icon={FileText}
-            variant="primary"
-          />
-          <StatCard
-            title={t('dashboard.activeContracts')}
-            value={stats.contratosActivos}
-            icon={FileCheck}
-            variant="accent"
-          />
-          {/* Compliance Documental KPI */}
-          <Card className={cn(
-            'overflow-hidden relative',
-            checklistAvailable && docStats.total > 0 && docStats.percent < 50 ? 'border-red-200' : ''
-          )}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {t('dashboard.docCompliance', 'Compliance Documental')}
-                  </p>
-                  <p className={cn(
-                    'text-3xl font-bold font-serif tracking-tight',
-                    checklistAvailable && docStats.total > 0 && docStats.percent < 50 ? 'text-red-500' : ''
-                  )}>
-                    {checklistAvailable && docStats.total > 0 ? `${docStats.percent}%` : '—'}
-                  </p>
-                  {checklistAvailable && docStats.total > 0 && (
-                    <p className={cn('text-xs', docStats.percent < 50 ? 'text-red-400' : 'text-muted-foreground')}>
-                      {docStats.expired + docStats.missing} {t('dashboard.docsIssue', 'em falta ou expirados')}
+          {/* KPI Row */}
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title={t('dashboard.totalContracts')}
+              value={stats.totalContratos}
+              icon={FileText}
+              variant="primary"
+            />
+            <StatCard
+              title={t('dashboard.activeContracts')}
+              value={stats.contratosActivos}
+              icon={FileCheck}
+              variant="accent"
+            />
+            {/* Compliance Documental KPI */}
+            <Card
+              className={cn(
+                'overflow-hidden relative',
+                checklistAvailable && docStats.total > 0 && docStats.percent < 50
+                  ? 'border-red-200'
+                  : '',
+              )}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {t('dashboard.docCompliance', 'Compliance Documental')}
                     </p>
-                  )}
-                </div>
-                <div className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-lg',
-                  checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                    ? 'bg-red-50 text-red-500'
-                    : 'bg-primary/10 text-primary'
-                )}>
-                  <AlertTriangle className="h-5 w-5" />
-                </div>
-              </div>
-            </CardContent>
-            {checklistAvailable && docStats.total > 0 && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
-                <div
-                  className={cn(
-                    'h-full transition-all',
-                    docStats.percent >= 100 ? 'bg-emerald-500' : docStats.percent >= 50 ? 'bg-primary' : 'bg-red-500'
-                  )}
-                  style={{ width: `${docStats.percent}%` }}
-                />
-              </div>
-            )}
-          </Card>
-          <StatCard
-            title={t('dashboard.expiring90Days')}
-            value={stats.contratosExpirar90Dias}
-            icon={Clock}
-            variant={stats.contratosExpirar90Dias > 0 ? 'warning' : 'primary'}
-          />
-        </div>
-
-        {/* Mid Grid: Contratos Recentes (fluid) + Validade Documental (fixed 320px) */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_320px]">
-          {/* Contratos Recentes */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
-              <CardTitle className="text-sm font-semibold">{t('dashboard.recentContracts')}</CardTitle>
-              <Button variant="ghost" size="sm" className="text-accent h-7 text-xs px-2" asChild>
-                <Link to="/contratos">
-                  {t('dashboard.viewAll')} <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              {contratos.length === 0 ? (
-                <div className="text-center py-10 text-muted-foreground px-6">
-                  <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                  <p className="text-sm">{t('dashboard.noContracts')}</p>
-                  <Button variant="outline" size="sm" className="mt-4" asChild>
-                    <Link to="/contratos/novo">
-                      <Plus className="mr-2 h-3.5 w-3.5" />
-                      {t('dashboard.createFirstContract')}
-                    </Link>
-                  </Button>
-                </div>
-              ) : (
-                <div className="divide-y divide-border/50">
-                  {contratos.slice(0, 5).map((contrato) => (
-                    <Link
-                      key={contrato.id}
-                      to={`/contratos/${contrato.id}`}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                    <p
+                      className={cn(
+                        'text-3xl font-bold font-serif tracking-tight',
+                        checklistAvailable && docStats.total > 0 && docStats.percent < 50
+                          ? 'text-red-500'
+                          : '',
+                      )}
                     >
-                      <div className={cn(
-                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
-                        ESTADO_ICON_BG[contrato.estado_contrato] || 'bg-muted'
-                      )}>
-                        <FileText className={cn('h-4 w-4', ESTADO_ICON_COLOR[contrato.estado_contrato] || 'text-muted-foreground')} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{contrato.titulo_contrato}</p>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">
-                          {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] || contrato.tipo_contrato}
-                          {contrato.parte_b_nome_legal && <> · {contrato.parte_b_nome_legal}</>}
-                          {!contrato.data_termo
-                            ? <> · {t('contracts.openEnded', 'Prazo indeterminado')}</>
-                            : null
-                          }
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className={cn(
-                          'rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight',
-                          ESTADO_BADGE_CLASS[contrato.estado_contrato] || 'bg-muted text-muted-foreground'
-                        )}>
-                          {ESTADO_CONTRATO_LABELS[contrato.estado_contrato as keyof typeof ESTADO_CONTRATO_LABELS] || contrato.estado_contrato}
-                        </span>
-                        {contrato.created_at && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {format(new Date(contrato.created_at), 'd MMM yyyy', { locale: pt })}
-                          </span>
+                      {checklistAvailable && docStats.total > 0 ? `${docStats.percent}%` : '—'}
+                    </p>
+                    {checklistAvailable && docStats.total > 0 && (
+                      <p
+                        className={cn(
+                          'text-xs',
+                          docStats.percent < 50 ? 'text-red-400' : 'text-muted-foreground',
                         )}
-                      </div>
-                    </Link>
-                  ))}
+                      >
+                        {docStats.expired + docStats.missing}{' '}
+                        {t('dashboard.docsIssue', 'em falta ou expirados')}
+                      </p>
+                    )}
+                  </div>
+                  <div
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-lg',
+                      checklistAvailable && docStats.total > 0 && docStats.percent < 50
+                        ? 'bg-red-50 text-red-500'
+                        : 'bg-primary/10 text-primary',
+                    )}
+                  >
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                </div>
+              </CardContent>
+              {checklistAvailable && docStats.total > 0 && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
+                  <div
+                    className={cn(
+                      'h-full transition-all',
+                      docStats.percent >= 100
+                        ? 'bg-emerald-500'
+                        : docStats.percent >= 50
+                          ? 'bg-primary'
+                          : 'bg-red-500',
+                    )}
+                    style={{ width: `${docStats.percent}%` }}
+                  />
                 </div>
               )}
-              {/* RGPD Footer */}
-              <div className="grid grid-cols-4 gap-2 p-3 border-t border-border/60 bg-muted/20">
-                {[
-                  { label: t('legalbi.comDadosPessoais', 'Com Dados Pessoais'), value: biData.portfolio.rgpdStats.comDadosPessoais },
-                  { label: t('legalbi.comDPA', 'Com DPA'), value: biData.portfolio.rgpdStats.comDPA },
-                  { label: t('legalbi.prazoIndet', 'Prazo Indet.'), value: biData.portfolio.duracaoStats.indeterminado },
-                  { label: t('legalbi.renAutomat', 'Renov. Auto.'), value: biData.portfolio.renovacaoStats.automatica },
-                ].map((item) => (
-                  <div key={item.label} className="bg-card rounded-lg px-2 py-2 text-center border border-border/50">
-                    <p className="text-[10px] text-muted-foreground leading-tight mb-1">{item.label}</p>
-                    <p className="text-base font-bold">{item.value}</p>
+            </Card>
+            <StatCard
+              title={t('dashboard.expiring90Days')}
+              value={stats.contratosExpirar90Dias}
+              icon={Clock}
+              variant={stats.contratosExpirar90Dias > 0 ? 'warning' : 'primary'}
+            />
+          </div>
+
+          {/* Mid Grid: Contratos Recentes (fluid) + Validade Documental (fixed 320px) */}
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_320px]">
+            {/* Contratos Recentes */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
+                <CardTitle className="text-sm font-semibold">
+                  {t('dashboard.recentContracts')}
+                </CardTitle>
+                <Button variant="ghost" size="sm" className="text-accent h-7 text-xs px-2" asChild>
+                  <Link to="/contratos">
+                    {t('dashboard.viewAll')} <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                {contratos.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground px-6">
+                    <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p className="text-sm">{t('dashboard.noContracts')}</p>
+                    <Button variant="outline" size="sm" className="mt-4" asChild>
+                      <Link to="/contratos/novo">
+                        <Plus className="mr-2 h-3.5 w-3.5" />
+                        {t('dashboard.createFirstContract')}
+                      </Link>
+                    </Button>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Validade Documental */}
-          <DocumentValidityAlerts />
-        </div>
-
-        {/* Bottom Grid: Evolução + Por Tipo + A Expirar */}
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_1fr_220px]">
-          {/* Evolução 12 meses */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
-              <CardTitle className="text-sm font-semibold">{t('legalbi.evolucao', 'Evolução (12 meses)')}</CardTitle>
-              <div className="flex gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 rounded-full bg-primary inline-block" />
-                  {t('legalbi.criados', 'Criados')}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3 h-0.5 rounded-full bg-red-400 inline-block" />
-                  {t('legalbi.terminados', 'Terminados')}
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 pb-4 pt-0">
-              <div className="h-[100px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={biData.portfolio.contratosPorMes}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                    <XAxis dataKey="month" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={20} />
-                    <RechartsTooltip contentStyle={chartTooltipStyle} />
-                    <Area type="monotone" dataKey="criados" stroke="hsl(20,100%,63%)" fill="hsl(20,100%,63%)" fillOpacity={0.15} strokeWidth={1.5} dot={false} />
-                    <Area type="monotone" dataKey="expirados" stroke="hsl(0,84%,70%)" fill="hsl(0,84%,70%)" fillOpacity={0.1} strokeWidth={1.5} dot={false} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Por Tipo de Contrato */}
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm font-semibold">{t('dashboard.byContractType')}</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-3 pt-0">
-              {Object.entries(stats.contratosPorTipo).length === 0 ? (
-                <p className="text-center text-muted-foreground py-4 text-sm">{t('dashboard.noData')}</p>
-              ) : (() => {
-                const sorted = Object.entries(stats.contratosPorTipo).sort(([, a], [, b]) => b - a).slice(0, 5);
-                const maxCount = Math.max(...sorted.map(([, c]) => c), 1);
-                return (
-                  <div className="space-y-2.5 mb-3">
-                    {sorted.map(([tipo, count], i) => (
-                      <div key={tipo} className="flex items-center gap-2.5">
-                        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: TIPO_COLORS[i % TIPO_COLORS.length] }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-sm truncate">{TIPO_CONTRATO_LABELS[tipo as keyof typeof TIPO_CONTRATO_LABELS] || tipo}</span>
-                            <span className="text-sm font-bold ml-2">{count}</span>
-                          </div>
-                          <div className="h-1 rounded-full bg-muted overflow-hidden">
-                            <div
-                              className="h-full rounded-full"
-                              style={{ width: `${(count / maxCount) * 100}%`, background: TIPO_COLORS[i % TIPO_COLORS.length] }}
-                            />
-                          </div>
+                ) : (
+                  <div className="divide-y divide-border/50">
+                    {contratos.slice(0, 5).map((contrato) => (
+                      <Link
+                        key={contrato.id}
+                        to={`/contratos/${contrato.id}`}
+                        className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                      >
+                        <div
+                          className={cn(
+                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg',
+                            ESTADO_ICON_BG[contrato.estado_contrato] || 'bg-muted',
+                          )}
+                        >
+                          <FileText
+                            className={cn(
+                              'h-4 w-4',
+                              ESTADO_ICON_COLOR[contrato.estado_contrato] ||
+                                'text-muted-foreground',
+                            )}
+                          />
                         </div>
-                      </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">
+                            {contrato.titulo_contrato}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] || contrato.tipo_contrato}
+                            {contrato.parte_b_nome_legal && <> · {contrato.parte_b_nome_legal}</>}
+                            {!contrato.data_termo ? (
+                              <> · {t('contracts.openEnded', 'Prazo indeterminado')}</>
+                            ) : null}
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <span
+                            className={cn(
+                              'rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight',
+                              ESTADO_BADGE_CLASS[contrato.estado_contrato] ||
+                                'bg-muted text-muted-foreground',
+                            )}
+                          >
+                            {ESTADO_CONTRATO_LABELS[
+                              contrato.estado_contrato as keyof typeof ESTADO_CONTRATO_LABELS
+                            ] || contrato.estado_contrato}
+                          </span>
+                          {contrato.created_at && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {format(new Date(contrato.created_at), 'd MMM yyyy', { locale: pt })}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
                     ))}
                   </div>
-                );
-              })()}
-              {/* RGPD pills */}
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
-                  {biData.portfolio.rgpdStats.comDadosPessoais} {t('legalbi.comDadosPessoais', 'com dados pessoais')}
-                </span>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-                  {biData.portfolio.rgpdStats.transferenciaInternacional} {t('legalbi.transferInt', 'Transf. Internacional')}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* A Expirar */}
-          <Card>
-            <CardHeader className="py-3 px-4">
-              <CardTitle className="text-sm font-semibold">{t('dashboard.contractsExpiring', 'A Expirar')}</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4 pt-0">
-              {contratosAExpirar.length === 0 ? (
-                <div className="flex flex-col items-center py-6 text-muted-foreground">
-                  <Clock className="h-7 w-7 mb-2 opacity-25" />
-                  <p className="text-xs text-center leading-relaxed">
-                    {t('dashboard.noExpiringContracts', 'Sem expirações nos próximos 90 dias')}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2.5">
-                  {contratosAExpirar.slice(0, 4).map((c) => (
-                    <Link key={c.id} to={`/contratos/${c.id}`} className="block hover:opacity-80 transition-opacity">
-                      <p className="text-xs font-semibold truncate">{c.titulo_contrato}</p>
-                      {c.data_termo && (
-                        <p className="text-[10px] text-muted-foreground">
-                          {format(new Date(c.data_termo), 'dd/MM/yyyy')}
-                        </p>
-                      )}
-                    </Link>
+                )}
+                {/* RGPD Footer */}
+                <div className="grid grid-cols-4 gap-2 p-3 border-t border-border/60 bg-muted/20">
+                  {[
+                    {
+                      label: t('legalbi.comDadosPessoais', 'Com Dados Pessoais'),
+                      value: biData.portfolio.rgpdStats.comDadosPessoais,
+                    },
+                    {
+                      label: t('legalbi.comDPA', 'Com DPA'),
+                      value: biData.portfolio.rgpdStats.comDPA,
+                    },
+                    {
+                      label: t('legalbi.prazoIndet', 'Prazo Indet.'),
+                      value: biData.portfolio.duracaoStats.indeterminado,
+                    },
+                    {
+                      label: t('legalbi.renAutomat', 'Renov. Auto.'),
+                      value: biData.portfolio.renovacaoStats.automatica,
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="bg-card rounded-lg px-2 py-2 text-center border border-border/50"
+                    >
+                      <p className="text-[10px] text-muted-foreground leading-tight mb-1">
+                        {item.label}
+                      </p>
+                      <p className="text-base font-bold">{item.value}</p>
+                    </div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Validade Documental */}
+            <DocumentValidityAlerts />
+          </div>
+
+          {/* Bottom Grid: Evolução + Por Tipo + A Expirar */}
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_1fr_220px]">
+            {/* Evolução 12 meses */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
+                <CardTitle className="text-sm font-semibold">
+                  {t('legalbi.evolucao', 'Evolução (12 meses)')}
+                </CardTitle>
+                <div className="flex gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-0.5 rounded-full bg-primary inline-block" />
+                    {t('legalbi.criados', 'Criados')}
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-3 h-0.5 rounded-full bg-red-400 inline-block" />
+                    {t('legalbi.terminados', 'Terminados')}
+                  </span>
+                </div>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 pt-0">
+                <div className="h-[100px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={biData.portfolio.contratosPorMes}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+                      <XAxis
+                        dataKey="month"
+                        tick={{ fontSize: 9 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fontSize: 9 }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={20}
+                      />
+                      <RechartsTooltip contentStyle={chartTooltipStyle} />
+                      <Area
+                        type="monotone"
+                        dataKey="criados"
+                        stroke="hsl(20,100%,63%)"
+                        fill="hsl(20,100%,63%)"
+                        fillOpacity={0.15}
+                        strokeWidth={1.5}
+                        dot={false}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="expirados"
+                        stroke="hsl(0,84%,70%)"
+                        fill="hsl(0,84%,70%)"
+                        fillOpacity={0.1}
+                        strokeWidth={1.5}
+                        dot={false}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Por Tipo de Contrato */}
+            <Card>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm font-semibold">
+                  {t('dashboard.byContractType')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-3 pt-0">
+                {Object.entries(stats.contratosPorTipo).length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4 text-sm">
+                    {t('dashboard.noData')}
+                  </p>
+                ) : (
+                  (() => {
+                    const sorted = Object.entries(stats.contratosPorTipo)
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 5);
+                    const maxCount = Math.max(...sorted.map(([, c]) => c), 1);
+                    return (
+                      <div className="space-y-2.5 mb-3">
+                        {sorted.map(([tipo, count], i) => (
+                          <div key={tipo} className="flex items-center gap-2.5">
+                            <div
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ background: TIPO_COLORS[i % TIPO_COLORS.length] }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <span className="text-sm truncate">
+                                  {TIPO_CONTRATO_LABELS[
+                                    tipo as keyof typeof TIPO_CONTRATO_LABELS
+                                  ] || tipo}
+                                </span>
+                                <span className="text-sm font-bold ml-2">{count}</span>
+                              </div>
+                              <div className="h-1 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${(count / maxCount) * 100}%`,
+                                    background: TIPO_COLORS[i % TIPO_COLORS.length],
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()
+                )}
+                {/* RGPD pills */}
+                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
+                    {biData.portfolio.rgpdStats.comDadosPessoais}{' '}
+                    {t('legalbi.comDadosPessoais', 'com dados pessoais')}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+                    {biData.portfolio.rgpdStats.transferenciaInternacional}{' '}
+                    {t('legalbi.transferInt', 'Transf. Internacional')}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* A Expirar */}
+            <Card>
+              <CardHeader className="py-3 px-4">
+                <CardTitle className="text-sm font-semibold">
+                  {t('dashboard.contractsExpiring', 'A Expirar')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 pb-4 pt-0">
+                {contratosAExpirar.length === 0 ? (
+                  <div className="flex flex-col items-center py-6 text-muted-foreground">
+                    <Clock className="h-7 w-7 mb-2 opacity-25" />
+                    <p className="text-xs text-center leading-relaxed">
+                      {t('dashboard.noExpiringContracts', 'Sem expirações nos próximos 90 dias')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {contratosAExpirar.slice(0, 4).map((c) => (
+                      <Link
+                        key={c.id}
+                        to={`/contratos/${c.id}`}
+                        className="block hover:opacity-80 transition-opacity"
+                      >
+                        <p className="text-xs font-semibold truncate">{c.titulo_contrato}</p>
+                        {c.data_termo && (
+                          <p className="text-[10px] text-muted-foreground">
+                            {format(new Date(c.data_termo), 'dd/MM/yyyy')}
+                          </p>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
-        </div>{/* end dashboard-content */}
+        {/* end dashboard-content */}
       </div>
     </AppLayout>
   );

@@ -1,27 +1,42 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { useCCANews, type CCANews } from "@/hooks/useCCANews";
-import { useContentTranslation } from "@/hooks/useContentTranslation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Plus, Newspaper, Edit, Trash2, Eye, Send, Archive, 
-  Clock, CheckCircle, FileText, Calendar, Languages
-} from "lucide-react";
-import { format } from "date-fns";
-import { pt, enUS } from "date-fns/locale";
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { useCCANews, type CCANews } from '@/hooks/useCCANews';
+import { useContentTranslation } from '@/hooks/useContentTranslation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Plus,
+  Newspaper,
+  Edit,
+  Trash2,
+  Eye,
+  Send,
+  Archive,
+  Clock,
+  CheckCircle,
+  Calendar,
+  Languages,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { pt, enUS } from 'date-fns/locale';
 
 const estadoColors: Record<string, string> = {
-  rascunho: "bg-muted text-muted-foreground",
-  publicado: "bg-green-500/20 text-green-700",
-  arquivado: "bg-orange-500/20 text-orange-700",
+  rascunho: 'bg-muted text-muted-foreground',
+  publicado: 'bg-green-500/20 text-green-700',
+  arquivado: 'bg-orange-500/20 text-orange-700',
 };
 
 const estadoIcons: Record<string, React.ReactNode> = {
@@ -32,21 +47,32 @@ const estadoIcons: Record<string, React.ReactNode> = {
 
 export default function NovidadesCCA() {
   const { t, i18n } = useTranslation();
-  const { news, isLoading, isPlatformAdmin, createNews, updateNews, deleteNews, publishNews, archiveNews } = useCCANews();
+  const {
+    news,
+    isLoading,
+    isPlatformAdmin,
+    createNews,
+    updateNews,
+    deleteNews,
+    publishNews,
+    archiveNews,
+  } = useCCANews();
   const { translate, isTranslating, needsTranslation } = useContentTranslation();
-  
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState<CCANews | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterEstado, setFilterEstado] = useState<string>("all");
-  const [translatedContent, setTranslatedContent] = useState<Record<string, { titulo: string; resumo: string; conteudo: string }>>({});
-  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterEstado, setFilterEstado] = useState<string>('all');
+  const [translatedContent, setTranslatedContent] = useState<
+    Record<string, { titulo: string; resumo: string; conteudo: string }>
+  >({});
+
   const [formData, setFormData] = useState({
-    titulo: "",
-    resumo: "",
-    conteudo: "",
-    estado: "rascunho" as "rascunho" | "publicado" | "arquivado",
+    titulo: '',
+    resumo: '',
+    conteudo: '',
+    estado: 'rascunho' as 'rascunho' | 'publicado' | 'arquivado',
   });
 
   const dateLocale = i18n.language === 'pt' ? pt : enUS;
@@ -56,10 +82,7 @@ export default function NovidadesCCA() {
   translateRef.current = translate;
 
   // Stable key for useEffect dependency
-  const newsIds = useMemo(() => 
-    news.map(n => n.id).join(','),
-    [news]
-  );
+  const newsIds = useMemo(() => news.map((n) => n.id).join(','), [news]);
 
   // Translate news content when language changes to English
   useEffect(() => {
@@ -77,12 +100,16 @@ export default function NovidadesCCA() {
 
     const translateNews = async () => {
       try {
-        const textsToTranslate = news.flatMap(n => [n.titulo, n.resumo || '', n.conteudo]);
-        const translated = await translateRef.current(textsToTranslate, 'platform news and announcements');
-        
+        const textsToTranslate = news.flatMap((n) => [n.titulo, n.resumo || '', n.conteudo]);
+        const translated = await translateRef.current(
+          textsToTranslate,
+          'platform news and announcements',
+        );
+
         if (cancelled) return;
-        
-        const newTranslated: Record<string, { titulo: string; resumo: string; conteudo: string }> = {};
+
+        const newTranslated: Record<string, { titulo: string; resumo: string; conteudo: string }> =
+          {};
         news.forEach((n, i) => {
           newTranslated[n.id] = {
             titulo: translated[i * 3] || n.titulo,
@@ -97,9 +124,11 @@ export default function NovidadesCCA() {
     };
 
     translateNews();
-    
-    return () => { cancelled = true; };
-  }, [needsTranslation, newsIds]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsTranslation, newsIds, news]);
 
   // Helper to get translated or original content
   const getContent = (item: CCANews) => {
@@ -120,10 +149,10 @@ export default function NovidadesCCA() {
 
   const resetForm = () => {
     setFormData({
-      titulo: "",
-      resumo: "",
-      conteudo: "",
-      estado: "rascunho",
+      titulo: '',
+      resumo: '',
+      conteudo: '',
+      estado: 'rascunho',
     });
     setSelectedNews(null);
   };
@@ -137,7 +166,7 @@ export default function NovidadesCCA() {
     setSelectedNews(item);
     setFormData({
       titulo: item.titulo,
-      resumo: item.resumo || "",
+      resumo: item.resumo || '',
       conteudo: item.conteudo,
       estado: item.estado,
     });
@@ -151,13 +180,13 @@ export default function NovidadesCCA() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (selectedNews) {
       await updateNews.mutateAsync({ id: selectedNews.id, ...formData });
     } else {
       await createNews.mutateAsync(formData);
     }
-    
+
     setIsDialogOpen(false);
     resetForm();
   };
@@ -178,17 +207,18 @@ export default function NovidadesCCA() {
   };
 
   const filteredNews = news.filter((n) => {
-    const matchesSearch = n.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (n.resumo?.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesEstado = filterEstado === "all" || n.estado === filterEstado;
+    const matchesSearch =
+      n.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      n.resumo?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesEstado = filterEstado === 'all' || n.estado === filterEstado;
     return matchesSearch && matchesEstado;
   });
 
   const stats = {
     total: news.length,
-    publicados: news.filter((n) => n.estado === "publicado").length,
-    rascunhos: news.filter((n) => n.estado === "rascunho").length,
-    arquivados: news.filter((n) => n.estado === "arquivado").length,
+    publicados: news.filter((n) => n.estado === 'publicado').length,
+    rascunhos: news.filter((n) => n.estado === 'rascunho').length,
+    arquivados: news.filter((n) => n.estado === 'arquivado').length,
   };
 
   return (
@@ -198,9 +228,7 @@ export default function NovidadesCCA() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">{t('ccaNews.title')}</h1>
             <p className="text-muted-foreground">
-              {isPlatformAdmin 
-                ? t('ccaNews.subtitleAdmin')
-                : t('ccaNews.subtitle')}
+              {isPlatformAdmin ? t('ccaNews.subtitleAdmin') : t('ccaNews.subtitle')}
             </p>
           </div>
           {isPlatformAdmin && (
@@ -303,7 +331,7 @@ export default function NovidadesCCA() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="resumo">{t('ccaNews.summary')}</Label>
                 <Input
@@ -313,7 +341,7 @@ export default function NovidadesCCA() {
                   placeholder={t('ccaNews.summaryPlaceholder')}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="conteudo">{t('ccaNews.content')} *</Label>
                 <Textarea
@@ -325,12 +353,17 @@ export default function NovidadesCCA() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="estado">{t('ccaNews.stateLabel')}</Label>
-                <Select 
-                  value={formData.estado} 
-                  onValueChange={(v) => setFormData({ ...formData, estado: v as "rascunho" | "publicado" | "arquivado" })}
+                <Select
+                  value={formData.estado}
+                  onValueChange={(v) =>
+                    setFormData({
+                      ...formData,
+                      estado: v as 'rascunho' | 'publicado' | 'arquivado',
+                    })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -342,7 +375,7 @@ export default function NovidadesCCA() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   {t('common.cancel')}
@@ -362,9 +395,7 @@ export default function NovidadesCCA() {
               <DialogTitle className="flex items-center gap-2">
                 <Newspaper className="h-5 w-5" />
                 {selectedNews && getContent(selectedNews).titulo}
-                {needsTranslation && (
-                  <Languages className="h-4 w-4 text-muted-foreground" />
-                )}
+                {needsTranslation && <Languages className="h-4 w-4 text-muted-foreground" />}
               </DialogTitle>
             </DialogHeader>
             {selectedNews && (
@@ -377,15 +408,19 @@ export default function NovidadesCCA() {
                   {selectedNews.data_publicacao && (
                     <span className="text-sm text-muted-foreground flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {format(new Date(selectedNews.data_publicacao), i18n.language === 'pt' ? "dd 'de' MMMM 'de' yyyy" : "MMMM d, yyyy", { locale: dateLocale })}
+                      {format(
+                        new Date(selectedNews.data_publicacao),
+                        i18n.language === 'pt' ? "dd 'de' MMMM 'de' yyyy" : 'MMMM d, yyyy',
+                        { locale: dateLocale },
+                      )}
                     </span>
                   )}
                 </div>
-                
+
                 {getContent(selectedNews).resumo && (
                   <p className="text-muted-foreground italic">{getContent(selectedNews).resumo}</p>
                 )}
-                
+
                 <div className="prose prose-sm max-w-none">
                   <div className="whitespace-pre-wrap">{getContent(selectedNews).conteudo}</div>
                 </div>
@@ -396,16 +431,14 @@ export default function NovidadesCCA() {
 
         {/* Lista de novidades */}
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">{t("common.loading")}</div>
+          <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
         ) : filteredNews.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Newspaper className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">{t('ccaNews.noNews')}</h3>
               <p className="text-muted-foreground mb-4">
-                {isPlatformAdmin 
-                  ? t('ccaNews.noNewsDescription')
-                  : t('ccaNews.noNewsPublished')}
+                {isPlatformAdmin ? t('ccaNews.noNewsDescription') : t('ccaNews.noNewsPublished')}
               </p>
               {isPlatformAdmin && (
                 <Button onClick={handleOpenCreate}>
@@ -427,9 +460,9 @@ export default function NovidadesCCA() {
                           {estadoIcons[item.estado]}
                           <span className="ml-1">{getEstadoLabel(item.estado)}</span>
                         </Badge>
-                        {item.data_publicacao && item.estado === "publicado" && (
+                        {item.data_publicacao && item.estado === 'publicado' && (
                           <span className="text-xs text-muted-foreground">
-                            {format(new Date(item.data_publicacao), "dd/MM/yyyy")}
+                            {format(new Date(item.data_publicacao), 'dd/MM/yyyy')}
                           </span>
                         )}
                       </div>
@@ -440,7 +473,9 @@ export default function NovidadesCCA() {
                         )}
                       </CardTitle>
                       {getContent(item).resumo && (
-                        <CardDescription className="mt-1">{getContent(item).resumo}</CardDescription>
+                        <CardDescription className="mt-1">
+                          {getContent(item).resumo}
+                        </CardDescription>
                       )}
                     </div>
                   </div>
@@ -451,7 +486,12 @@ export default function NovidadesCCA() {
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
-                      {t('ccaNews.createdAt')} {format(new Date(item.created_at), i18n.language === 'pt' ? "dd/MM/yyyy 'às' HH:mm" : "MM/dd/yyyy 'at' HH:mm", { locale: dateLocale })}
+                      {t('ccaNews.createdAt')}{' '}
+                      {format(
+                        new Date(item.created_at),
+                        i18n.language === 'pt' ? "dd/MM/yyyy 'às' HH:mm" : "MM/dd/yyyy 'at' HH:mm",
+                        { locale: dateLocale },
+                      )}
                     </span>
                     <div className="flex gap-2">
                       <Button variant="ghost" size="sm" onClick={() => handleOpenView(item)}>
@@ -462,13 +502,21 @@ export default function NovidadesCCA() {
                           <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(item)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          {item.estado === "rascunho" && (
-                            <Button variant="ghost" size="sm" onClick={() => handlePublish(item.id)}>
+                          {item.estado === 'rascunho' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handlePublish(item.id)}
+                            >
                               <Send className="h-4 w-4" />
                             </Button>
                           )}
-                          {item.estado === "publicado" && (
-                            <Button variant="ghost" size="sm" onClick={() => handleArchive(item.id)}>
+                          {item.estado === 'publicado' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleArchive(item.id)}
+                            >
                               <Archive className="h-4 w-4" />
                             </Button>
                           )}

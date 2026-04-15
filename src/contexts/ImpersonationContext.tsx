@@ -90,7 +90,7 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
             sessionStorage.removeItem(STORAGE_KEY);
           }
         });
-      } catch (e) {
+      } catch {
         sessionStorage.removeItem(STORAGE_KEY);
       }
     }
@@ -109,7 +109,9 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
 
   const checkPlatformAdmin = async (): Promise<boolean> => {
     if (!user) return false;
-    const { data: isPlatformAdmin } = await supabase.rpc('is_platform_admin', { _user_id: user.id });
+    const { data: isPlatformAdmin } = await supabase.rpc('is_platform_admin', {
+      _user_id: user.id,
+    });
     if (!isPlatformAdmin) {
       toast.error('Apenas administradores da plataforma podem usar esta funcionalidade');
       return false;
@@ -117,114 +119,134 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
     return true;
   };
 
-  const startImpersonation = useCallback(async (
-    orgId: string,
-    orgName: string,
-    reason: string
-  ): Promise<boolean> => {
-    if (!user) { toast.error('Sessão não autenticada'); return false; }
-    if (reason.length < 5) { toast.error('O motivo deve ter pelo menos 5 caracteres'); return false; }
-    if (!await checkPlatformAdmin()) return false;
+  const startImpersonation = useCallback(
+    async (orgId: string, orgName: string, reason: string): Promise<boolean> => {
+      if (!user) {
+        toast.error('Sessão não autenticada');
+        return false;
+      }
+      if (reason.length < 5) {
+        toast.error('O motivo deve ter pelo menos 5 caracteres');
+        return false;
+      }
+      if (!(await checkPlatformAdmin())) return false;
 
-    try {
-      const { data: session, error } = await supabase
-        .from('impersonation_sessions')
-        .insert({
-          real_user_id: user.id,
-          impersonated_organization_id: orgId,
+      try {
+        const { data: session, error } = await supabase
+          .from('impersonation_sessions')
+          .insert({
+            real_user_id: user.id,
+            impersonated_organization_id: orgId,
+            reason,
+            user_agent: navigator.userAgent,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          toast.error('Erro ao iniciar impersonation');
+          return false;
+        }
+
+        const stored: StoredSession = {
+          impersonatedOrgId: orgId,
+          impersonatedOrgName: orgName,
+          impersonatedUserId: null,
+          impersonatedUserName: null,
+          impersonationType: 'org',
           reason,
-          user_agent: navigator.userAgent,
-        })
-        .select()
-        .single();
+          sessionId: session.id,
+        };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
 
-      if (error) { toast.error('Erro ao iniciar impersonation'); return false; }
-
-      const stored: StoredSession = {
-        impersonatedOrgId: orgId,
-        impersonatedOrgName: orgName,
-        impersonatedUserId: null,
-        impersonatedUserName: null,
-        impersonationType: 'org',
-        reason,
-        sessionId: session.id,
-      };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
-
-      setState({
-        isImpersonating: true,
-        impersonatedOrgId: orgId,
-        impersonatedOrgName: orgName,
-        impersonatedUserId: null,
-        impersonatedUserName: null,
-        impersonationType: 'org',
-        reason,
-        sessionId: session.id,
-      });
-
-      invalidateCaches();
-      toast.success(`A atuar no contexto de: ${orgName}`);
-      return true;
-    } catch (e) {
-      toast.error('Erro ao iniciar impersonation');
-      return false;
-    }
-  }, [user, invalidateCaches]);
-
-  const startUserImpersonation = useCallback(async (
-    userId: string,
-    userName: string,
-    reason: string
-  ): Promise<boolean> => {
-    if (!user) { toast.error('Sessão não autenticada'); return false; }
-    if (reason.length < 5) { toast.error('O motivo deve ter pelo menos 5 caracteres'); return false; }
-    if (!await checkPlatformAdmin()) return false;
-
-    try {
-      const { data: session, error } = await supabase
-        .from('impersonation_sessions')
-        .insert({
-          real_user_id: user.id,
-          impersonated_user_id: userId,
-          impersonated_user_name: userName,
+        setState({
+          isImpersonating: true,
+          impersonatedOrgId: orgId,
+          impersonatedOrgName: orgName,
+          impersonatedUserId: null,
+          impersonatedUserName: null,
+          impersonationType: 'org',
           reason,
-          user_agent: navigator.userAgent,
-        } as any)
-        .select()
-        .single();
+          sessionId: session.id,
+        });
 
-      if (error) { console.error(error); toast.error('Erro ao iniciar impersonação de utilizador'); return false; }
+        invalidateCaches();
+        toast.success(`A atuar no contexto de: ${orgName}`);
+        return true;
+      } catch {
+        toast.error('Erro ao iniciar impersonation');
+        return false;
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [user, invalidateCaches],
+  );
 
-      const stored: StoredSession = {
-        impersonatedOrgId: null,
-        impersonatedOrgName: null,
-        impersonatedUserId: userId,
-        impersonatedUserName: userName,
-        impersonationType: 'user',
-        reason,
-        sessionId: session.id,
-      };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+  const startUserImpersonation = useCallback(
+    async (userId: string, userName: string, reason: string): Promise<boolean> => {
+      if (!user) {
+        toast.error('Sessão não autenticada');
+        return false;
+      }
+      if (reason.length < 5) {
+        toast.error('O motivo deve ter pelo menos 5 caracteres');
+        return false;
+      }
+      if (!(await checkPlatformAdmin())) return false;
 
-      setState({
-        isImpersonating: true,
-        impersonatedOrgId: null,
-        impersonatedOrgName: null,
-        impersonatedUserId: userId,
-        impersonatedUserName: userName,
-        impersonationType: 'user',
-        reason,
-        sessionId: session.id,
-      });
+      try {
+        const { data: session, error } = await supabase
+          .from('impersonation_sessions')
+          .insert({
+            real_user_id: user.id,
+            impersonated_user_id: userId,
+            impersonated_user_name: userName,
+            reason,
+            user_agent: navigator.userAgent,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
+          .select()
+          .single();
 
-      invalidateCaches();
-      toast.success(`A impersonar: ${userName}`);
-      return true;
-    } catch (e) {
-      toast.error('Erro ao iniciar impersonação de utilizador');
-      return false;
-    }
-  }, [user, invalidateCaches]);
+        if (error) {
+          console.error(error);
+          toast.error('Erro ao iniciar impersonação de utilizador');
+          return false;
+        }
+
+        const stored: StoredSession = {
+          impersonatedOrgId: null,
+          impersonatedOrgName: null,
+          impersonatedUserId: userId,
+          impersonatedUserName: userName,
+          impersonationType: 'user',
+          reason,
+          sessionId: session.id,
+        };
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
+
+        setState({
+          isImpersonating: true,
+          impersonatedOrgId: null,
+          impersonatedOrgName: null,
+          impersonatedUserId: userId,
+          impersonatedUserName: userName,
+          impersonationType: 'user',
+          reason,
+          sessionId: session.id,
+        });
+
+        invalidateCaches();
+        toast.success(`A impersonar: ${userName}`);
+        return true;
+      } catch {
+        toast.error('Erro ao iniciar impersonação de utilizador');
+        return false;
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [user, invalidateCaches],
+  );
 
   const stopImpersonation = useCallback(async () => {
     if (!state.sessionId) return;
@@ -239,7 +261,7 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
       setState(INITIAL_STATE);
       invalidateCaches();
       toast.success('Saiu do modo de impersonação');
-    } catch (e) {
+    } catch {
       toast.error('Erro ao terminar impersonation');
     }
   }, [state.sessionId, invalidateCaches]);

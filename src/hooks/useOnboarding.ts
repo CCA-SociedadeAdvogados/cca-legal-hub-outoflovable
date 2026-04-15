@@ -20,13 +20,14 @@ export function useOnboarding() {
       if (!user?.id) throw new Error('User not authenticated');
 
       // Use upsert to handle case where profile might not exist
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
+      const { error } = await supabase.from('profiles').upsert(
+        {
           id: user.id,
           email: user.email,
           onboarding_completed: true,
-        }, { onConflict: 'id' });
+        },
+        { onConflict: 'id' },
+      );
 
       if (error) throw error;
     },
@@ -54,7 +55,9 @@ export function useOnboarding() {
 
       autoCompleteTriggered.current = true;
       retryCount.current += 1;
-      console.log(`[Onboarding] SSO user detected — auto-completing onboarding (attempt ${retryCount.current})`);
+      console.log(
+        `[Onboarding] SSO user detected — auto-completing onboarding (attempt ${retryCount.current})`,
+      );
 
       completeOnboarding.mutate(undefined, {
         onError: (err) => {
@@ -64,6 +67,7 @@ export function useOnboarding() {
         },
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, profile, user?.id, ssoAutoCompleteGaveUp]);
 
   // Timeout fallback: if auto-complete hasn't resolved within 10s, stop blocking

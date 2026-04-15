@@ -54,7 +54,14 @@
     "darkMode": "Dark Mode",
     "optional": "optional",
     "saving": "Saving...",
-    "continue": "Continue"
+    "continue": "Continue",
+    "add": "Add",
+    "createdAt": "Created at",
+    "downloadComplete": "Download complete",
+    "error": "Error",
+    "notes": "Notes",
+    "success": "Success",
+    "user": "User"
   },
   "department": {
     "label": "Department",
@@ -112,8 +119,7 @@
     "admin": "Administration",
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
-    "legalbi": "LegalBI",
-    "documents": "Documents"
+    "legalbi": "LegalBI"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -143,7 +149,10 @@
     "noData": "No data",
     "financialSummary": "Financial Summary",
     "totalEstimatedValue": "Total Estimated Value",
-    "annualRecurringValue": "Annual Recurring Value"
+    "annualRecurringValue": "Annual Recurring Value",
+    "docCompliance": "Document Compliance",
+    "docsIssue": "missing or expired",
+    "noExpiringContracts": "No expirations in the next 90 days"
   },
   "contractsOld": {},
   "events": {
@@ -214,7 +223,11 @@
       "high": "High",
       "medium": "Medium",
       "low": "Low"
-    }
+    },
+    "confirmDelete": "Are you sure you want to delete this requirement?",
+    "deadlineLabel": "Deadline",
+    "editRequirement": "Edit Requirement",
+    "legalSourcePlaceholder": "E.g.: Law No. XX/2025, Article Y"
   },
   "policies": {
     "title": "Policies",
@@ -376,7 +389,9 @@
     "status": {
       "active": "Active",
       "locked": "Locked"
-    }
+    },
+    "cannotDeleteSelf": "You cannot delete your own account",
+    "deleteUser": "Delete user"
   },
   "auth": {
     "login": "Sign in",
@@ -448,7 +463,12 @@
       "admin": "Administrator",
       "editor": "Editor",
       "viewer": "Viewer"
-    }
+    },
+    "contactAdmin": "Please contact the administrator to be added to an organization.",
+    "noOrganization": "No Organization",
+    "noOrganizationDescription": "You do not belong to any organization yet.",
+    "selectOrganization": "Select your Organization",
+    "selectOrganizationDescription": "You belong to the following organizations. Select one to continue."
   },
   "settings": {
     "title": "Settings",
@@ -586,7 +606,9 @@
     "environment": "Environment",
     "workSafety": "Work Safety",
     "corporate": "Corporate",
-    "other": "Other"
+    "other": "Other",
+    "fiscal": "Tax",
+    "workplaceSafety": "Workplace Safety"
   },
   "jurisdiction": {
     "national": "National",
@@ -907,6 +929,30 @@
       "archive": "Archive",
       "selectedContracts": "contract(s) selected",
       "clearSelection": "Clear selection"
+    },
+    "archiveTab": "Archive",
+    "openEnded": "Open-ended",
+    "risk": "Risk",
+    "triage": {
+      "analyze": "Analyze Contract",
+      "analyzing": "Analyzing contract...",
+      "clauseAnalysis": "Clause-by-Clause Analysis",
+      "collapseAll": "Collapse All",
+      "contractName": "Contract Name (optional)",
+      "contractNamePlaceholder": "E.g.: SaaS Contract with Supplier X",
+      "contractText": "Contract Text",
+      "contractTextPlaceholder": "Paste the full contract text here for analysis...",
+      "description": "Automated contract analysis based on the BAE Contractual Playbook",
+      "errorEmptyText": "Please enter the contract text.",
+      "executiveSummary": "Executive Summary",
+      "expandAll": "Expand All",
+      "exportReport": "Export Report (JSON)",
+      "inputTab": "Enter Contract",
+      "nextSteps": "Next Steps",
+      "priorityRedFlags": "Priority Red Flags",
+      "recommendations": "Recommendations",
+      "resultsTab": "Results",
+      "title": "Contract Triage Agent"
     }
   },
   "financial": {
@@ -1118,7 +1164,8 @@
       "siteId": "Site ID",
       "siteIdHelp": "Get the Site ID through Microsoft Graph Explorer. Format: hostname,site-guid,web-guid",
       "connected": "Connected to:",
-      "save": "Save Configuration"
+      "save": "Save Configuration",
+      "rootFolderPath": "Root Folder"
     },
     "sync": {
       "title": "Synchronization",
@@ -1159,14 +1206,29 @@
       "root": "Root",
       "back": "Back",
       "empty": "No documents in this folder",
-      "archiveHint": "Store your active documents here to keep everything organized and accessible."
+      "archiveHint": "Store your active documents here to keep everything organized and accessible.",
+      "fullSync": "Full synchronization",
+      "upload": "Upload"
     },
     "configSaved": "SharePoint configuration saved",
     "configError": "Error saving configuration",
     "configDeleted": "SharePoint configuration removed",
     "deleteError": "Error removing configuration",
     "syncSuccess": "Sync completed: {{added}} new, {{updated}} updated, {{deleted}} deleted",
-    "syncError": "Sync error: {{message}}"
+    "syncError": "Sync error: {{message}}",
+    "createFolder": {
+      "error": "Error creating folder: {{message}}"
+    },
+    "upload": {
+      "description": "The file will be uploaded to the folder: {{path}}",
+      "dropzone": "Click to select a file",
+      "error": "Error uploading file: {{message}}",
+      "sizeLimit": "Limit: 4MB",
+      "submit": "Upload",
+      "success": "File uploaded successfully",
+      "title": "Upload file to SharePoint",
+      "tooLarge": "File too large. Limit: 4MB"
+    }
   },
   "organizations": {
     "title": "Organizations",
@@ -1331,7 +1393,11 @@
     "hasDPA": "DPA/GDPR verified",
     "hasSignature": "Signature method defined",
     "hasDepartment": "Responsible department defined",
-    "hasObject": "Object summary filled in"
+    "hasObject": "Object summary filled in",
+    "attention": "Attention",
+    "good": "Good",
+    "hasSigned": "Signature registered",
+    "incomplete": "Incomplete"
   },
   "prazos": {
     "title": "Deadlines & Critical Dates",
@@ -1351,7 +1417,23 @@
     "daysRemaining": "{{count}}d remaining",
     "viewContract": "View contract",
     "criticalLabel": "Critical",
-    "warningLabel": "Warning"
+    "warningLabel": "Warning",
+    "all": "All",
+    "expiration": "Expiration",
+    "expirations": "Expirations",
+    "exportICS": "Export .ics",
+    "financial": "Financial",
+    "financialTab": "Financial",
+    "guarantee": "Guarantee",
+    "guarantees": "Guarantees",
+    "invoiceDue": "Invoice",
+    "next30": "Next 30 days",
+    "noDates": "No pending dates",
+    "noEventsDesc": "There are no relevant deadlines in this period",
+    "overdue": "Overdue",
+    "renewal": "Renewal",
+    "renewalDeadline": "Renewal decision deadline",
+    "renewals": "Renewals"
   },
   "faq": {
     "title": "Frequently Asked Questions",
@@ -1532,7 +1614,22 @@
     "aiSuggestedApplied": "AI-suggested date applied",
     "aiSuggestError": "Error getting date suggestion",
     "suggestDate": "Suggest date (AI)",
-    "noClient": "Select a client to manage the document checklist."
+    "noClient": "Select a client to manage the document checklist.",
+    "aiDateError": "AI could not read the date",
+    "aiDateNotFound": "Date not detected in the document",
+    "aiDateNotFoundDesc": "Please adjust manually if necessary.",
+    "aiSuggestion": "AI Suggestion",
+    "complete": "complete",
+    "fileTooLarge": "File too large for AI analysis",
+    "replaceFile": "Click to replace: {{name}}",
+    "required": "Required",
+    "selectFile": "Click to select the file",
+    "update": "Update",
+    "upload": "Register",
+    "uploadFile": "File",
+    "uploading": "Uploading...",
+    "useSuggestion": "Use",
+    "validityDate": "Validity Date"
   },
   "notifPrefs": {
     "title": "Notification Preferences",
@@ -1567,5 +1664,60 @@
   },
   "export": {
     "pdf": "Export PDF"
+  },
+  "admin": {
+    "addAdmin": "Add",
+    "allContracts": "All Contracts",
+    "confirmDeleteUser": "Delete User",
+    "contracts": "Contracts",
+    "deleteUserConfirm": "Are you sure you want to permanently delete the user",
+    "deleteUserSsoWarning": "SSO users can create a new account through CCA SSO",
+    "deleteUserTitle": "Delete User",
+    "deleteUserWarning": "WARNING: This action is irreversible!",
+    "deletingUser": "Deleting...",
+    "organization": "Organization",
+    "organizations": "Organizations",
+    "platformAdmins": "Platform Admins",
+    "subtitle": "Global management of organizations and contracts",
+    "title": "Platform Administration",
+    "userDeleteError": "Error deleting user",
+    "userDeletedSuccess": "User deleted successfully",
+    "users": "Users",
+    "usersTab": {
+      "allOrganizations": "All Organizations",
+      "authMethod": "Authentication",
+      "lastLogin": "Last Login",
+      "noUsers": "No users found.",
+      "scope": "Scope",
+      "scopeDescription": "Select an organization to view its users or view all.",
+      "selectOrg": "Select organization...",
+      "usersList": "User List"
+    }
+  },
+  "security": {
+    "recommendations": {
+      "checkSessions": "Regularly check active sessions",
+      "strongPassword": "Use a strong and unique password",
+      "title": "Security Recommendations"
+    },
+    "sessions": {
+      "active": "Active",
+      "browser": "Browser",
+      "currentSession": "Current Session",
+      "description": "View and manage your active sessions.",
+      "title": "Session Management"
+    },
+    "twoFactor": {
+      "active": "Active",
+      "authenticatorApp": "Authenticator App",
+      "authenticatorDesc": "Use an app like Google Authenticator or Authy.",
+      "description": "Add an extra layer of security to your account.",
+      "disable": "Disable",
+      "enable": "Enable",
+      "manualKey": "Manual key:",
+      "setupTitle": "Set Up Two-Factor Authentication",
+      "title": "Two-Factor Authentication (2FA)",
+      "verify": "Verify and Enable"
+    }
   }
 }

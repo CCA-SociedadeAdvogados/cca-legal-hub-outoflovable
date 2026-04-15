@@ -1,34 +1,41 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "@/hooks/use-toast";
-import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2, ArrowLeft } from "lucide-react";
-import type { TablesInsert } from "@/integrations/supabase/types";
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
+import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import type { TablesInsert } from '@/integrations/supabase/types';
 
-const BUCKET = "contratos";
+const BUCKET = 'contratos';
 const MAX_FILES = 10;
 const MAX_CONCURRENCY = 3;
 const MAX_FILE_SIZE_MB = 10;
 
 const ACCEPTED_MIME = new Set([
-  "application/pdf",
-  "text/plain",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/msword",
+  'application/pdf',
+  'text/plain',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword',
 ]);
 
-type FileUploadStatus = "pending" | "uploading" | "parsing" | "ready" | "saving" | "completed" | "error";
+type FileUploadStatus =
+  | 'pending'
+  | 'uploading'
+  | 'parsing'
+  | 'ready'
+  | 'saving'
+  | 'completed'
+  | 'error';
 
 type ExtractedContractData = Record<string, string | number | boolean | null | undefined>;
 
@@ -55,7 +62,7 @@ function uid() {
 }
 
 function safeFileName(name: string) {
-  return name.replace(/[^\w.\-]+/g, "_");
+  return name.replace(/[^\w.-]+/g, '_');
 }
 
 function formatBytes(bytes: number) {
@@ -89,14 +96,17 @@ function createConcurrencyLimiter(concurrency: number) {
   };
 }
 
-const statusVariants: Record<FileUploadStatus, "default" | "secondary" | "destructive" | "outline"> = {
-  pending: "secondary",
-  uploading: "outline",
-  parsing: "outline",
-  ready: "default",
-  saving: "outline",
-  completed: "default",
-  error: "destructive",
+const statusVariants: Record<
+  FileUploadStatus,
+  'default' | 'secondary' | 'destructive' | 'outline'
+> = {
+  pending: 'secondary',
+  uploading: 'outline',
+  parsing: 'outline',
+  ready: 'default',
+  saving: 'outline',
+  completed: 'default',
+  error: 'destructive',
 };
 
 export default function ContratosUploadMassa() {
@@ -122,10 +132,7 @@ export default function ContratosUploadMassa() {
     return labels[status];
   };
 
-  const limiter = useMemo(
-    () => createConcurrencyLimiter(Math.max(1, MAX_CONCURRENCY)),
-    []
-  );
+  const limiter = useMemo(() => createConcurrencyLimiter(Math.max(1, MAX_CONCURRENCY)), []);
 
   const totalProgress = useMemo(() => {
     if (items.length === 0) return 0;
@@ -134,71 +141,86 @@ export default function ContratosUploadMassa() {
   }, [items]);
 
   const selectedCount = useMemo(
-    () => items.filter((x) => x.include && x.status === "ready").length,
-    [items]
+    () => items.filter((x) => x.include && x.status === 'ready').length,
+    [items],
   );
 
-  const canProcess = useMemo(
-    () => items.some((x) => x.status === "pending"),
-    [items]
-  );
+  const canProcess = useMemo(() => items.some((x) => x.status === 'pending'), [items]);
 
-  const canRetry = useMemo(
-    () => items.some((x) => x.status === "error"),
-    [items]
-  );
+  const canRetry = useMemo(() => items.some((x) => x.status === 'error'), [items]);
 
   const updateItem = useCallback((id: string, patch: Partial<FileUploadItem>) => {
     setItems((prev) => prev.map((x) => (x.id === id ? { ...x, ...patch } : x)));
   }, []);
 
-  const addFiles = useCallback((fileList: FileList | File[]) => {
-    const incoming = Array.from(fileList);
-    setItems((prev) => {
-      const remaining = Math.max(0, MAX_FILES - prev.length);
-      const picked = incoming.slice(0, remaining);
+  const addFiles = useCallback(
+    (fileList: FileList | File[]) => {
+      const incoming = Array.from(fileList);
+      setItems((prev) => {
+        const remaining = Math.max(0, MAX_FILES - prev.length);
+        const picked = incoming.slice(0, remaining);
 
-      const mapped: FileUploadItem[] = picked.map((file) => {
-        const tooBig = file.size > MAX_FILE_SIZE_MB * 1024 * 1024;
-        const invalidMime = file.type && !ACCEPTED_MIME.has(file.type);
+        const mapped: FileUploadItem[] = picked.map((file) => {
+          const tooBig = file.size > MAX_FILE_SIZE_MB * 1024 * 1024;
+          const invalidMime = file.type && !ACCEPTED_MIME.has(file.type);
 
-        if (tooBig) {
+          if (tooBig) {
+            return {
+              id: uid(),
+              file,
+              status: 'error' as const,
+              progress: 0,
+              include: false,
+              draft: {
+                titulo_contrato: file.name,
+                parte_a_nome_legal: '',
+                parte_b_nome_legal: '',
+                data_inicio_vigencia: '',
+                data_termo: '',
+              },
+              error: t('bulkUpload.errors.fileTooLarge', { size: MAX_FILE_SIZE_MB }),
+            };
+          }
+
+          if (invalidMime) {
+            return {
+              id: uid(),
+              file,
+              status: 'error' as const,
+              progress: 0,
+              include: false,
+              draft: {
+                titulo_contrato: file.name,
+                parte_a_nome_legal: '',
+                parte_b_nome_legal: '',
+                data_inicio_vigencia: '',
+                data_termo: '',
+              },
+              error: t('bulkUpload.errors.unsupportedType'),
+            };
+          }
+
           return {
             id: uid(),
             file,
-            status: "error" as const,
+            status: 'pending' as const,
             progress: 0,
-            include: false,
-            draft: { titulo_contrato: file.name, parte_a_nome_legal: "", parte_b_nome_legal: "", data_inicio_vigencia: "", data_termo: "" },
-            error: t('bulkUpload.errors.fileTooLarge', { size: MAX_FILE_SIZE_MB }),
+            include: true,
+            draft: {
+              titulo_contrato: file.name,
+              parte_a_nome_legal: '',
+              parte_b_nome_legal: '',
+              data_inicio_vigencia: '',
+              data_termo: '',
+            },
           };
-        }
+        });
 
-        if (invalidMime) {
-          return {
-            id: uid(),
-            file,
-            status: "error" as const,
-            progress: 0,
-            include: false,
-            draft: { titulo_contrato: file.name, parte_a_nome_legal: "", parte_b_nome_legal: "", data_inicio_vigencia: "", data_termo: "" },
-            error: t('bulkUpload.errors.unsupportedType'),
-          };
-        }
-
-        return {
-          id: uid(),
-          file,
-          status: "pending" as const,
-          progress: 0,
-          include: true,
-          draft: { titulo_contrato: file.name, parte_a_nome_legal: "", parte_b_nome_legal: "", data_inicio_vigencia: "", data_termo: "" },
-        };
+        return [...prev, ...mapped];
       });
-
-      return [...prev, ...mapped];
-    });
-  }, [t]);
+    },
+    [t],
+  );
 
   const removeItem = (id: string) => {
     setItems((prev) => prev.filter((x) => x.id !== id));
@@ -215,7 +237,7 @@ export default function ContratosUploadMassa() {
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        const base64 = result.split(",")[1];
+        const base64 = result.split(',')[1];
         resolve(base64);
       };
       reader.onerror = reject;
@@ -227,12 +249,10 @@ export default function ContratosUploadMassa() {
     const safeName = safeFileName(file.name);
     const path = `${userId}/${Date.now()}_${uid()}_${safeName}`;
 
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file, {
-        contentType: file.type || "application/octet-stream",
-        upsert: false,
-      });
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
+      contentType: file.type || 'application/octet-stream',
+      upsert: false,
+    });
 
     if (error) throw error;
     return path;
@@ -240,50 +260,57 @@ export default function ContratosUploadMassa() {
 
   async function parseContractFile(file: File) {
     const base64Content = await readFileAsBase64(file);
-    
-    const { data, error } = await supabase.functions.invoke("parse-contract", {
-      body: { 
-        fileContent: base64Content, 
-        fileName: file.name, 
-        mimeType: file.type 
+
+    const { data, error } = await supabase.functions.invoke('parse-contract', {
+      body: {
+        fileContent: base64Content,
+        fileName: file.name,
+        mimeType: file.type,
       },
     });
-    
+
     if (error) throw error;
     return data as ExtractedContractData;
   }
 
   async function processOne(item: FileUploadItem) {
     if (!user?.id) {
-      updateItem(item.id, { status: "error", error: t('bulkUpload.errors.notAuthenticated') });
+      updateItem(item.id, { status: 'error', error: t('bulkUpload.errors.notAuthenticated') });
       return false;
     }
 
     try {
-      updateItem(item.id, { status: "uploading", progress: 10, error: undefined });
+      updateItem(item.id, { status: 'uploading', progress: 10, error: undefined });
 
       const storagePath = await uploadToStorage(item.file, user.id);
-      updateItem(item.id, { storagePath, status: "parsing", progress: 40 });
+      updateItem(item.id, { storagePath, status: 'parsing', progress: 40 });
 
       const extracted = await parseContractFile(item.file);
 
-      const titulo = (extracted?.titulo_contrato as string) || (extracted?.title as string) || item.file.name;
-      const parteA = (extracted?.parte_a_nome_legal as string) || (extracted?.parteA as string) || "";
-      const parteB = (extracted?.parte_b_nome_legal as string) || (extracted?.contraparte as string) || (extracted?.parteB as string) || "";
-      const dataInicio = (extracted?.data_inicio_vigencia as string) || (extracted?.dataInicio as string) || "";
-      const dataFim = (extracted?.data_termo as string) || (extracted?.dataFim as string) || "";
+      const titulo =
+        (extracted?.titulo_contrato as string) || (extracted?.title as string) || item.file.name;
+      const parteA =
+        (extracted?.parte_a_nome_legal as string) || (extracted?.parteA as string) || '';
+      const parteB =
+        (extracted?.parte_b_nome_legal as string) ||
+        (extracted?.contraparte as string) ||
+        (extracted?.parteB as string) ||
+        '';
+      const dataInicio =
+        (extracted?.data_inicio_vigencia as string) || (extracted?.dataInicio as string) || '';
+      const dataFim = (extracted?.data_termo as string) || (extracted?.dataFim as string) || '';
 
       updateItem(item.id, {
         extractedData: extracted,
-        status: "ready",
+        status: 'ready',
         progress: 100,
         include: true,
-        draft: { 
-          titulo_contrato: titulo, 
-          parte_a_nome_legal: parteA, 
-          parte_b_nome_legal: parteB, 
-          data_inicio_vigencia: dataInicio, 
-          data_termo: dataFim 
+        draft: {
+          titulo_contrato: titulo,
+          parte_a_nome_legal: parteA,
+          parte_b_nome_legal: parteB,
+          data_inicio_vigencia: dataInicio,
+          data_termo: dataFim,
         },
       });
 
@@ -291,7 +318,7 @@ export default function ContratosUploadMassa() {
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : t('bulkUpload.errors.globalError');
       updateItem(item.id, {
-        status: "error",
+        status: 'error',
         progress: 0,
         include: false,
         error: errorMessage,
@@ -304,7 +331,7 @@ export default function ContratosUploadMassa() {
     setBusy(true);
     setGlobalError(null);
     try {
-      const pendings = items.filter((x) => x.status === "pending");
+      const pendings = items.filter((x) => x.status === 'pending');
       await Promise.all(pendings.map((it) => limiter(() => processOne(it))));
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : t('bulkUpload.errors.globalError');
@@ -317,12 +344,12 @@ export default function ContratosUploadMassa() {
   const retryFailed = async () => {
     setItems((prev) =>
       prev.map((x) =>
-        x.status === "error"
-          ? { ...x, status: "pending" as const, include: true, error: undefined, progress: 0 }
-          : x
-      )
+        x.status === 'error'
+          ? { ...x, status: 'pending' as const, include: true, error: undefined, progress: 0 }
+          : x,
+      ),
     );
-    
+
     setTimeout(() => processPending(), 100);
   };
 
@@ -336,7 +363,7 @@ export default function ContratosUploadMassa() {
     setGlobalError(null);
 
     try {
-      const toCreate = items.filter((x) => x.include && x.status === "ready");
+      const toCreate = items.filter((x) => x.include && x.status === 'ready');
       if (toCreate.length === 0) {
         setGlobalError(t('bulkUpload.errors.noContractsReady'));
         setBusy(false);
@@ -344,34 +371,34 @@ export default function ContratosUploadMassa() {
       }
 
       toCreate.forEach((it) => {
-        updateItem(it.id, { status: "saving", progress: 85 });
+        updateItem(it.id, { status: 'saving', progress: 85 });
       });
 
-      const payload: TablesInsert<"contratos">[] = toCreate.map((item, index) => ({
+      const payload: TablesInsert<'contratos'>[] = toCreate.map((item, index) => ({
         id_interno: `BULK-${Date.now()}-${index}`,
         titulo_contrato: item.draft.titulo_contrato || item.file.name,
-        parte_a_nome_legal: item.draft.parte_a_nome_legal || "A definir",
-        parte_b_nome_legal: item.draft.parte_b_nome_legal || "A definir",
+        parte_a_nome_legal: item.draft.parte_a_nome_legal || 'A definir',
+        parte_b_nome_legal: item.draft.parte_b_nome_legal || 'A definir',
         data_inicio_vigencia: item.draft.data_inicio_vigencia || null,
         data_termo: item.draft.data_termo || null,
         organization_id: profile.current_organization_id,
         created_by_id: user?.id,
         updated_by_id: user?.id,
-        tipo_contrato: "outro",
-        estado_contrato: "rascunho",
-        tipo_duracao: "prazo_determinado",
-        tipo_renovacao: "sem_renovacao_automatica",
+        tipo_contrato: 'outro',
+        estado_contrato: 'rascunho',
+        tipo_duracao: 'prazo_determinado',
+        tipo_renovacao: 'sem_renovacao_automatica',
         arquivo_storage_path: item.storagePath || null,
         arquivo_nome_original: item.file.name,
         arquivo_mime_type: item.file.type || null,
         extraido_json: item.extractedData ? JSON.parse(JSON.stringify(item.extractedData)) : null,
       }));
 
-      const { error } = await supabase.from("contratos").insert(payload);
+      const { error } = await supabase.from('contratos').insert(payload);
       if (error) throw error;
 
       toCreate.forEach((it) => {
-        updateItem(it.id, { status: "completed", progress: 100 });
+        updateItem(it.id, { status: 'completed', progress: 100 });
       });
 
       toast({ title: t('bulkUpload.success.created', { count: toCreate.length }) });
@@ -379,7 +406,7 @@ export default function ContratosUploadMassa() {
       const errorMessage = e instanceof Error ? e.message : t('bulkUpload.errors.createFailed');
       setGlobalError(errorMessage);
       setItems((prev) =>
-        prev.map((x) => (x.status === "saving" ? { ...x, status: "ready" as const } : x))
+        prev.map((x) => (x.status === 'saving' ? { ...x, status: 'ready' as const } : x)),
       );
     } finally {
       setBusy(false);
@@ -398,7 +425,7 @@ export default function ContratosUploadMassa() {
     <AppLayout>
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/contratos")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate('/contratos')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -411,7 +438,10 @@ export default function ContratosUploadMassa() {
 
         <Card className="p-6">
           <div className="flex flex-wrap gap-2 mb-4">
-            <Button onClick={() => inputRef.current?.click()} disabled={busy || items.length >= MAX_FILES}>
+            <Button
+              onClick={() => inputRef.current?.click()}
+              disabled={busy || items.length >= MAX_FILES}
+            >
               <Upload className="mr-2 h-4 w-4" />
               {t('bulkUpload.addFiles')}
             </Button>
@@ -423,7 +453,7 @@ export default function ContratosUploadMassa() {
               {t('bulkUpload.retry')}
             </Button>
             <Button onClick={createSelected} disabled={busy || selectedCount === 0}>
-              {t('bulkUpload.createSelected')} {selectedCount > 0 ? `(${selectedCount})` : ""}
+              {t('bulkUpload.createSelected')} {selectedCount > 0 ? `(${selectedCount})` : ''}
             </Button>
             <Button onClick={clearAll} disabled={busy} variant="ghost">
               {t('bulkUpload.clearAll')}
@@ -441,6 +471,7 @@ export default function ContratosUploadMassa() {
             </div>
           )}
 
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
           <div
             onDrop={onDrop}
             onDragOver={onDragOver}
@@ -460,25 +491,23 @@ export default function ContratosUploadMassa() {
             className="hidden"
             onChange={(e) => {
               if (e.target.files) addFiles(e.target.files);
-              e.currentTarget.value = "";
+              e.currentTarget.value = '';
             }}
           />
         </Card>
 
         <div className="space-y-4">
           {items.length === 0 && (
-            <Card className="p-8 text-center text-muted-foreground">
-              {t('bulkUpload.noFiles')}
-            </Card>
+            <Card className="p-8 text-center text-muted-foreground">{t('bulkUpload.noFiles')}</Card>
           )}
 
           {items.map((it) => (
             <Card key={it.id} className="p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  {it.status === "completed" ? (
+                  {it.status === 'completed' ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                  ) : it.status === "error" ? (
+                  ) : it.status === 'error' ? (
                     <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
                   ) : (
                     <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
@@ -486,7 +515,9 @@ export default function ContratosUploadMassa() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{it.file.name}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-muted-foreground">{formatBytes(it.file.size)}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatBytes(it.file.size)}
+                      </span>
                       <Badge variant={statusVariants[it.status]}>{getStatusLabel(it.status)}</Badge>
                     </div>
                     {it.error && <p className="text-sm text-destructive mt-1">{it.error}</p>}
@@ -497,7 +528,7 @@ export default function ContratosUploadMassa() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       checked={it.include}
-                      disabled={it.status !== "ready"}
+                      disabled={it.status !== 'ready'}
                       onCheckedChange={(v) => updateItem(it.id, { include: Boolean(v) })}
                     />
                     <span className="text-sm">{t('bulkUpload.select')}</span>
@@ -506,7 +537,7 @@ export default function ContratosUploadMassa() {
                     variant="ghost"
                     size="icon"
                     onClick={() => removeItem(it.id)}
-                    disabled={busy || ["uploading", "parsing", "saving"].includes(it.status)}
+                    disabled={busy || ['uploading', 'parsing', 'saving'].includes(it.status)}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -517,7 +548,7 @@ export default function ContratosUploadMassa() {
                 <Progress value={it.progress} className="h-1" />
               </div>
 
-              {(it.status === "ready" || it.status === "completed") && (
+              {(it.status === 'ready' || it.status === 'completed') && (
                 <>
                   <Separator className="my-4" />
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -525,16 +556,24 @@ export default function ContratosUploadMassa() {
                       <label className="text-sm font-medium">{t('bulkUpload.titleLabel')}</label>
                       <Input
                         value={it.draft.titulo_contrato}
-                        onChange={(e) => updateItem(it.id, { draft: { ...it.draft, titulo_contrato: e.target.value } })}
-                        disabled={busy || it.status === "completed"}
+                        onChange={(e) =>
+                          updateItem(it.id, {
+                            draft: { ...it.draft, titulo_contrato: e.target.value },
+                          })
+                        }
+                        disabled={busy || it.status === 'completed'}
                       />
                     </div>
                     <div>
                       <label className="text-sm font-medium">{t('bulkUpload.partyA')}</label>
                       <Input
                         value={it.draft.parte_a_nome_legal}
-                        onChange={(e) => updateItem(it.id, { draft: { ...it.draft, parte_a_nome_legal: e.target.value } })}
-                        disabled={busy || it.status === "completed"}
+                        onChange={(e) =>
+                          updateItem(it.id, {
+                            draft: { ...it.draft, parte_a_nome_legal: e.target.value },
+                          })
+                        }
+                        disabled={busy || it.status === 'completed'}
                         placeholder={t('bulkUpload.partyAPlaceholder')}
                       />
                     </div>
@@ -542,8 +581,12 @@ export default function ContratosUploadMassa() {
                       <label className="text-sm font-medium">{t('bulkUpload.partyB')}</label>
                       <Input
                         value={it.draft.parte_b_nome_legal}
-                        onChange={(e) => updateItem(it.id, { draft: { ...it.draft, parte_b_nome_legal: e.target.value } })}
-                        disabled={busy || it.status === "completed"}
+                        onChange={(e) =>
+                          updateItem(it.id, {
+                            draft: { ...it.draft, parte_b_nome_legal: e.target.value },
+                          })
+                        }
+                        disabled={busy || it.status === 'completed'}
                         placeholder={t('bulkUpload.partyBPlaceholder')}
                       />
                     </div>
@@ -552,8 +595,12 @@ export default function ContratosUploadMassa() {
                       <Input
                         type="date"
                         value={it.draft.data_inicio_vigencia}
-                        onChange={(e) => updateItem(it.id, { draft: { ...it.draft, data_inicio_vigencia: e.target.value } })}
-                        disabled={busy || it.status === "completed"}
+                        onChange={(e) =>
+                          updateItem(it.id, {
+                            draft: { ...it.draft, data_inicio_vigencia: e.target.value },
+                          })
+                        }
+                        disabled={busy || it.status === 'completed'}
                       />
                     </div>
                     <div>
@@ -561,8 +608,10 @@ export default function ContratosUploadMassa() {
                       <Input
                         type="date"
                         value={it.draft.data_termo}
-                        onChange={(e) => updateItem(it.id, { draft: { ...it.draft, data_termo: e.target.value } })}
-                        disabled={busy || it.status === "completed"}
+                        onChange={(e) =>
+                          updateItem(it.id, { draft: { ...it.draft, data_termo: e.target.value } })
+                        }
+                        disabled={busy || it.status === 'completed'}
                       />
                     </div>
                   </div>

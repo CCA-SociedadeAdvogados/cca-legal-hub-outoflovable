@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -18,10 +18,10 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { 
-  FileText, 
-  Download, 
-  Trash2, 
+import {
+  FileText,
+  Download,
+  Trash2,
   Upload,
   File,
   FilePlus,
@@ -74,7 +74,9 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
   const { anexos, isLoading, uploadAnexo, deleteAnexo, downloadAnexo } = useAnexos(contratoId);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [tipoAnexo, setTipoAnexo] = useState<'pdf_principal' | 'anexo' | 'adenda' | 'outro'>('anexo');
+  const [tipoAnexo, setTipoAnexo] = useState<'pdf_principal' | 'anexo' | 'adenda' | 'outro'>(
+    'anexo',
+  );
   const [descricao, setDescricao] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<Anexo | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -89,13 +91,13 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
 
   const handleUpload = async () => {
     if (!selectedFile) return;
-    
+
     await uploadAnexo.mutateAsync({
       file: selectedFile,
       tipoAnexo,
       descricao: descricao || undefined,
     });
-    
+
     setIsUploadDialogOpen(false);
     setSelectedFile(null);
     setTipoAnexo('anexo');
@@ -130,11 +132,7 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
             onChange={handleFileSelect}
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
           />
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-          >
+          <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
             <Upload className="mr-2 h-4 w-4" />
             Carregar Ficheiro
           </Button>
@@ -153,7 +151,7 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                 <Icon className="h-5 w-5 text-primary" />
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium truncate">{anexo.nome_ficheiro}</span>
@@ -162,31 +160,23 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
                   </Badge>
                 </div>
                 {anexo.descricao && (
-                  <p className="text-sm text-muted-foreground truncate">
-                    {anexo.descricao}
-                  </p>
+                  <p className="text-sm text-muted-foreground truncate">{anexo.descricao}</p>
                 )}
                 <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span>{formatFileSize(anexo.tamanho_bytes)}</span>
                   <span>•</span>
-                  <span>
-                    {format(new Date(anexo.uploaded_at), "d MMM yyyy", { locale: pt })}
-                  </span>
+                  <span>{format(new Date(anexo.uploaded_at), 'd MMM yyyy', { locale: pt })}</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => downloadAnexo(anexo)}
-                >
+                <Button variant="ghost" size="icon" onClick={() => downloadAnexo(anexo)}>
                   <Download className="h-4 w-4" />
                 </Button>
                 {canEdit && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     className="text-destructive"
                     onClick={() => setDeleteConfirm(anexo)}
                   >
@@ -215,18 +205,16 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
               Configure o tipo e descrição do ficheiro antes de carregar.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Ficheiro Selecionado</Label>
-              <p className="text-sm text-muted-foreground truncate">
-                {selectedFile?.name}
-              </p>
+              <p className="text-sm text-muted-foreground truncate">{selectedFile?.name}</p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="tipoAnexo">Tipo de Documento</Label>
-              <Select value={tipoAnexo} onValueChange={(v: any) => setTipoAnexo(v)}>
+              <Select value={tipoAnexo} onValueChange={(v: typeof tipoAnexo) => setTipoAnexo(v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -238,7 +226,7 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="descricao">Descrição (opcional)</Label>
               <Input
@@ -249,15 +237,12 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button 
-              onClick={handleUpload}
-              disabled={uploadAnexo.isPending}
-            >
+            <Button onClick={handleUpload} disabled={uploadAnexo.isPending}>
               {uploadAnexo.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Carregar
             </Button>
@@ -271,18 +256,15 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
           <DialogHeader>
             <DialogTitle>Eliminar Ficheiro</DialogTitle>
             <DialogDescription>
-              Tem a certeza que deseja eliminar "{deleteConfirm?.nome_ficheiro}"? Esta ação não pode ser revertida.
+              Tem a certeza que deseja eliminar &quot;{deleteConfirm?.nome_ficheiro}&quot;? Esta
+              ação não pode ser revertida.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteAnexo.isPending}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteAnexo.isPending}>
               {deleteAnexo.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Eliminar
             </Button>
