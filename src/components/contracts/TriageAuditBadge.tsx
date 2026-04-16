@@ -13,17 +13,17 @@ interface TriageAuditBadgeProps {
   textLength: number;
 }
 
-export function TriageAuditBadge({ 
-  analysisId, 
-  analyzedAt, 
+export function TriageAuditBadge({
+  analysisId,
+  analyzedAt,
   aiModel = 'google/gemini-3-flash-preview',
   textSource,
-  textLength
+  textLength,
 }: TriageAuditBadgeProps) {
-  const modelDisplayName = aiModel.includes('gemini') 
-    ? 'Gemini (Google)' 
-    : aiModel.includes('gpt-5') 
-      ? 'GPT-5 (OpenAI)' 
+  const modelDisplayName = aiModel.includes('gemini')
+    ? 'Gemini (Google)'
+    : aiModel.includes('gpt-5')
+      ? 'GPT-5 (OpenAI)'
       : aiModel;
 
   const modelIcon = aiModel.includes('gemini') ? '✨' : '🧠';
@@ -100,7 +100,7 @@ export function TriageAuditBadge({
             <Shield className="h-3 w-3" />
             <span>Trilho de auditoria registado automaticamente</span>
           </div>
-          <span className="font-mono bg-muted px-2 py-0.5 rounded">CCA AI Agent v1.0</span>
+          <span className="font-mono bg-muted px-2 py-0.5 rounded">Análise IA v1.0</span>
         </div>
       </CardContent>
     </Card>

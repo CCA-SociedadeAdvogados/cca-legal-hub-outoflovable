@@ -1,7 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, Clock, AlertTriangle, XCircle, Loader2, HelpCircle } from 'lucide-react';
 
-export type ValidationStatusType = 'none' | 'draft_only' | 'validating' | 'validated' | 'needs_review' | 'failed';
+export type ValidationStatusType =
+  | 'none'
+  | 'draft_only'
+  | 'validating'
+  | 'validated'
+  | 'needs_review'
+  | 'failed';
+// Note: 'validating' is kept in the type for backwards compatibility with existing DB records
 
 interface ValidationBadgeProps {
   status: ValidationStatusType;
@@ -9,13 +16,17 @@ interface ValidationBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<ValidationStatusType, {
-  icon: any;
-  label: string;
-  compactLabel: string;
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
-  className: string;
-}> = {
+const statusConfig: Record<
+  ValidationStatusType,
+  {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    icon: any;
+    label: string;
+    compactLabel: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    className: string;
+  }
+> = {
   none: {
     icon: HelpCircle,
     label: 'Sem extracção',
@@ -25,21 +36,21 @@ const statusConfig: Record<ValidationStatusType, {
   },
   draft_only: {
     icon: Clock,
-    label: 'Provisório (em validação pelo CCA)',
+    label: 'Provisório',
     compactLabel: 'Provisório',
     variant: 'outline',
     className: 'border-amber-400 text-amber-700 bg-amber-50',
   },
   validating: {
     icon: Loader2,
-    label: 'A validar pelo CCA...',
+    label: 'A validar...',
     compactLabel: 'Validando...',
     variant: 'outline',
     className: 'border-blue-400 text-blue-700 bg-blue-50',
   },
   validated: {
     icon: ShieldCheck,
-    label: 'Validado pelo CCA',
+    label: 'Validado',
     compactLabel: 'Validado',
     variant: 'default',
     className: 'bg-green-600 hover:bg-green-700 text-white border-green-600',
@@ -53,7 +64,7 @@ const statusConfig: Record<ValidationStatusType, {
   },
   failed: {
     icon: XCircle,
-    label: 'Falha na validação CCA',
+    label: 'Falha na validação',
     compactLabel: 'Falha',
     variant: 'destructive',
     className: '',

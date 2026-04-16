@@ -3,17 +3,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
-import { 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
-  RefreshCw, 
-  FileText, 
-  Clock, 
+import {
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  FileText,
+  Clock,
   Bot,
   Shield,
   Lightbulb,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -83,7 +83,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            CCA AI Agent
+            Análise IA
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -95,8 +95,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
             <Button onClick={handleRunTriage} disabled={isRunning}>
               {isRunning ? (
                 <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  A analisar...
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />A analisar...
                 </>
               ) : (
                 <>
@@ -128,7 +127,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              CCA AI Agent
+              Análise IA
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleRunTriage} disabled={isRunning}>
               {isRunning ? (
@@ -148,16 +147,13 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
                 {analysis.score_global.toFixed(0)}
               </div>
               <p className="text-sm text-muted-foreground">Score de Conformidade</p>
-              <Progress 
-                value={analysis.score_global} 
-                className="mt-2 h-2"
-              />
+              <Progress value={analysis.score_global} className="mt-2 h-2" />
             </div>
 
             {/* Risk Level */}
             <div className="text-center">
-              <Badge 
-                variant={getRiskBadgeVariant(analysis.nivel_risco_global)} 
+              <Badge
+                variant={getRiskBadgeVariant(analysis.nivel_risco_global)}
                 className="text-lg px-4 py-1"
               >
                 {getRiskIcon(analysis.nivel_risco_global)}
@@ -223,10 +219,15 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
           <CardContent>
             {analysis.red_flags_prioritarios && analysis.red_flags_prioritarios.length > 0 ? (
               <ul className="space-y-2">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {analysis.red_flags_prioritarios.map((flag: any, index: number) => (
                   <li key={index} className="flex items-start gap-2 text-sm">
                     <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <span>{typeof flag === 'string' ? flag : flag.descricao || flag.description || JSON.stringify(flag)}</span>
+                    <span>
+                      {typeof flag === 'string'
+                        ? flag
+                        : flag.descricao || flag.description || JSON.stringify(flag)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -300,11 +301,15 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
               <p className="text-xs text-muted-foreground">Cláusulas Analisadas</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-950/20">
-              <div className="text-2xl font-bold text-green-600">{analysis.clausulas_conformes}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {analysis.clausulas_conformes}
+              </div>
               <p className="text-xs text-muted-foreground">Conformes</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
-              <div className="text-2xl font-bold text-yellow-600">{analysis.clausulas_alto_risco}</div>
+              <div className="text-2xl font-bold text-yellow-600">
+                {analysis.clausulas_alto_risco}
+              </div>
               <p className="text-xs text-muted-foreground">Alto Risco</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-red-50 dark:bg-red-950/20">
@@ -318,7 +323,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
       {/* Analysis Source Badge */}
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <Bot className="h-3 w-3" />
-        <span>Análise realizada por CCA AI Agent • Dados extraídos automaticamente do contrato</span>
+        <span>Análise realizada por IA • Dados extraídos automaticamente do contrato</span>
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ import { ContractComplianceAnalyzer } from '@/components/contracts/ContractCompl
 import { ContractClassification } from '@/components/contracts/ContractClassification';
 import { ContractMainUpload } from '@/components/contracts/ContractMainUpload';
 import { ContractInitialUpload } from '@/components/contracts/ContractInitialUpload';
-// TriageAuditBadge removed — analysis done by external CCA agent
+// TriageAuditBadge removed — analysis done by single-pass extraction
 import { cn } from '@/lib/utils';
 import { useContratos, useContrato, type ContratoInsert } from '@/hooks/useContratos';
 import {
@@ -177,7 +177,7 @@ export default function ContratoForm() {
   const [showUploadStep, setShowUploadStep] = useState(true);
   const [_uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedContractText, setExtractedContractText] = useState<string>('');
-  // triageResult removed — analysis done by external CCA agent
+  // triageResult removed — analysis done by single-pass extraction
 
   const [classifiedAreas, setClassifiedAreas] = useState<string[]>(
     existingContrato?.areas_direito_aplicaveis || [],
@@ -449,7 +449,7 @@ export default function ContratoForm() {
     if (isEditing && id) {
       await updateContrato.mutateAsync({ id, ...contratoData });
 
-      // === PIPELINE IA: Gravar draft e enviar ao CCA (edição) ===
+      // === PIPELINE IA: Gravar draft (edição) ===
       const savedId = id;
       if (extractedContractText && savedId) {
         try {
@@ -469,27 +469,12 @@ export default function ContratoForm() {
           await supabase
             .from('contract_extractions')
             .upsert(draftPayload, { onConflict: 'contrato_id,source' });
-          supabase.functions
-            .invoke('validate-contract', {
-              body: { contract_id: savedId, extraction_draft: draftPayload.extraction_data },
-            })
-            .catch((err) => console.warn('[CCA Pipeline] Non-blocking error:', err));
           await supabase
             .from('contratos')
             .update({ validation_status: 'draft_only' } as any)
             .eq('id', savedId);
-          try {
-            const { callCCAAgent } = await import('@/lib/ccaAgent');
-            callCCAAgent({
-              contractId: savedId,
-              documentPath: '',
-              extractionDraft: draftPayload.extraction_data as Record<string, unknown>,
-            });
-          } catch {
-            // Silencioso — não bloqueia o utilizador
-          }
         } catch (err) {
-          console.warn('[CCA Pipeline] Failed to save draft (non-blocking):', err);
+          console.warn('[Pipeline] Failed to save draft (non-blocking):', err);
         }
       }
       // Stay on page when editing - success toast is shown by the mutation
@@ -497,7 +482,7 @@ export default function ContratoForm() {
       const result = await createContrato.mutateAsync(contratoData);
       const savedId = result?.id;
 
-      // === PIPELINE IA: Gravar draft e enviar ao CCA (criação) ===
+      // === PIPELINE IA: Gravar draft (criação) ===
       if (extractedContractText && savedId) {
         try {
           const draftPayload: any = {
@@ -516,27 +501,12 @@ export default function ContratoForm() {
           await supabase
             .from('contract_extractions')
             .upsert(draftPayload, { onConflict: 'contrato_id,source' });
-          supabase.functions
-            .invoke('validate-contract', {
-              body: { contract_id: savedId, extraction_draft: draftPayload.extraction_data },
-            })
-            .catch((err) => console.warn('[CCA Pipeline] Non-blocking error:', err));
           await supabase
             .from('contratos')
             .update({ validation_status: 'draft_only' } as any)
             .eq('id', savedId);
-          try {
-            const { callCCAAgent } = await import('@/lib/ccaAgent');
-            callCCAAgent({
-              contractId: savedId,
-              documentPath: '',
-              extractionDraft: draftPayload.extraction_data as Record<string, unknown>,
-            });
-          } catch {
-            // Silencioso — não bloqueia o utilizador
-          }
         } catch (err) {
-          console.warn('[CCA Pipeline] Failed to save draft (non-blocking):', err);
+          console.warn('[Pipeline] Failed to save draft (non-blocking):', err);
         }
       }
 
@@ -1299,11 +1269,10 @@ export default function ContratoForm() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {isLocal ? (
-                      /* Utilizadores cliente: apenas 3 indicadores de leitura preenchidos pelo Agente CCA */
+                      /* Utilizadores cliente: apenas 3 indicadores de leitura */
                       <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                          Indicadores detectados automaticamente pelo Agente CCA após análise do
-                          documento.
+                          Indicadores detectados automaticamente após análise do documento.
                         </p>
                         <div className="grid gap-4 md:grid-cols-3">
                           <div className="flex items-center gap-3 rounded-lg border p-4">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -40,7 +41,7 @@ export interface ExtractionData {
   [key: string]: any; // extensível
 }
 
-export type ValidationStatus = 'none' | 'draft_only' | 'validating' | 'validated' | 'needs_review' | 'failed';
+export type ValidationStatus = 'none' | 'draft_only' | 'validated' | 'needs_review' | 'failed';
 
 export interface ContractExtraction {
   id: string;
@@ -51,7 +52,6 @@ export interface ContractExtraction {
   confidence: number | null;
   evidence: any[];
   review_notes: string | null;
-  diff_from_draft: Record<string, { draft: any; canonical: any }> | null;
   classificacao_juridica: any;
   prazos: any;
   denuncia_rescisao: any;
@@ -83,21 +83,25 @@ export function useContractExtractions(contratoId?: string) {
     enabled: !!user && !!contratoId,
   });
 
-  const draft = extractions?.find(e => e.source === 'ai_extraction') || null;
-  const canonical = extractions?.find(e => e.source === 'cca_agent') || null;
-  const activeExtraction = (canonical && canonical.status !== 'failed') ? canonical : draft;
+  const draft = extractions?.find((e) => e.source === 'ai_extraction') || null;
+  const activeExtraction = draft;
 
-  const validationStatus: ValidationStatus =
-    !draft && !canonical ? 'none' :
-    canonical?.status === 'validated' ? 'validated' :
-    canonical?.status === 'needs_review' ? 'needs_review' :
-    canonical?.status === 'failed' ? 'failed' :
-    canonical?.status === 'provisional' ? 'validating' :
-    draft && !canonical ? 'draft_only' :
-    'none';
+  const validationStatus: ValidationStatus = !draft
+    ? 'none'
+    : draft.status === 'validated'
+      ? 'validated'
+      : draft.status === 'needs_review'
+        ? 'needs_review'
+        : draft.status === 'failed'
+          ? 'failed'
+          : 'draft_only';
 
   const saveDraft = useMutation({
-    mutationFn: async (params: { extractionData: ExtractionData; confidence?: number; evidence?: any[] }) => {
+    mutationFn: async (params: {
+      extractionData: ExtractionData;
+      confidence?: number;
+      evidence?: any[];
+    }) => {
       const payload: any = {
         contrato_id: contratoId,
         source: 'ai_extraction',
@@ -113,52 +117,23 @@ export function useContractExtractions(contratoId?: string) {
         .select()
         .single();
       if (error) throw error;
-      await supabase.from('contratos').update({ validation_status: 'draft_only' } as any).eq('id', contratoId!);
+      await supabase
+        .from('contratos')
+        .update({ validation_status: 'draft_only' } as any)
+        .eq('id', contratoId!);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contract-extractions', contratoId] });
-    },
-  });
-
-  const triggerCCAValidation = useMutation({
-    mutationFn: async (params?: { reuseExistingDraft?: boolean }) => {
-      const draftData = params?.reuseExistingDraft && draft
-        ? draft.extraction_data
-        : activeExtraction?.extraction_data || {};
-
-      await supabase.from('contratos').update({ validation_status: 'validating' } as any).eq('id', contratoId!);
-
-      const { data, error } = await supabase.functions.invoke('validate-contract', {
-        body: {
-          contract_id: contratoId,
-          extraction_draft: draftData,
-          document_reference: null,
-        },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contract-extractions', contratoId] });
-      queryClient.invalidateQueries({ queryKey: ['contratos'] });
-    },
-    onError: async () => {
-      await supabase.from('contratos').update({ validation_status: 'failed' } as any).eq('id', contratoId!);
       queryClient.invalidateQueries({ queryKey: ['contract-extractions', contratoId] });
     },
   });
 
   return {
     draft,
-    canonical,
     activeExtraction,
     validationStatus,
     extractions,
     isLoading,
     saveDraft,
-    triggerCCAValidation,
   };
 }
