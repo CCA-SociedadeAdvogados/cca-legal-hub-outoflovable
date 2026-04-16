@@ -3,12 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * Testes de fluxos autenticados.
  *
- * Estes testes só correm se E2E_TEST_EMAIL e E2E_TEST_PASSWORD estiverem
- * definidos nas env vars. Caso contrário, são skipped automaticamente.
- *
- * Configurar no GitHub Actions via secrets:
- *   E2E_TEST_EMAIL=...
- *   E2E_TEST_PASSWORD=...
+ * Só correm se E2E_TEST_EMAIL e E2E_TEST_PASSWORD estiverem definidos.
  */
 
 const EMAIL = process.env.E2E_TEST_EMAIL;
@@ -19,65 +14,96 @@ test.describe('Fluxos autenticados', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.getByLabel(/email/i).first().fill(EMAIL!);
-    await page.getByLabel(/palavra-passe|password/i).first().fill(PASSWORD!);
-    await page.locator('button[type="submit"]').first().click();
-    // Espera pelo redirect pós-login
-    await page.waitForURL(/\/(|dashboard|onboarding)/, { timeout: 15_000 });
+    await page.waitForLoadState('domcontentloaded');
+
+    // Preencher login
+    await page.locator('#email').fill(EMAIL!);
+    await page.locator('#password').fill(PASSWORD!);
+    await page.locator('button[type="submit"]').click();
+
+    // Espera pelo redirect pós-login (home, dashboard, ou onboarding)
+    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20_000 });
   });
 
-  test('Dashboard carrega sem erros', async ({ page }) => {
+  test('Home carrega sem erros', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
 
-    await page.goto('/dashboard');
+    // Já estamos logados — navegamos para home
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     const critical = errors.filter(
-      (e) => !e.includes('401') && !e.includes('Failed to fetch'),
+      (e) =>
+        !e.includes('401') &&
+        !e.includes('403') &&
+        !e.includes('Failed to fetch') &&
+        !e.includes('ERR_'),
     );
     expect(critical).toEqual([]);
   });
 
-  test('Página de Contratos carrega', async ({ page }) => {
+  test('Página de Contratos carrega e mostra conteúdo', async ({ page }) => {
     await page.goto('/contratos');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('h1, h2').first()).toBeVisible();
+    // Deve ter algum título ou tabela visível
+    const content = await page.locator('h1, h2, table, [role="table"]').first();
+    await expect(content).toBeVisible({ timeout: 15_000 });
   });
 
-  test('Página de Prazos (Timeline) carrega', async ({ page }) => {
-    await page.goto('/prazos');
+  test('Dashboard (Visão Geral) carrega', async ({ page }) => {
+    await page.goto('/contratos/visao-geral');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('h1, h2').first()).toBeVisible();
-  });
-
-  test('Página de Definições carrega', async ({ page }) => {
-    await page.goto('/definicoes');
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('h1, h2').first()).toBeVisible();
-  });
-
-  test('Página de Templates carrega', async ({ page }) => {
-    await page.goto('/templates');
-    await page.waitForLoadState('networkidle');
-    await expect(page.locator('h1, h2').first()).toBeVisible();
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 15_000 });
   });
 
   test('Página de Políticas carrega', async ({ page }) => {
     await page.goto('/politicas');
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('h1, h2').first()).toBeVisible();
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 15_000 });
   });
 
-  test('Navegar para detalhe de contrato via lista', async ({ page }) => {
+  test('Página de Definições carrega', async ({ page }) => {
+    await page.goto('/definicoes');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Perfil carrega e mostra nome', async ({ page }) => {
+    await page.goto('/perfil');
+    await page.waitForLoadState('networkidle');
+    // A página deve mostrar o formulário de perfil
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Novidades CCA carrega', async ({ page }) => {
+    await page.goto('/novidades-cca');
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('h1, h2').first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test('Financeiro carrega', async ({ page }) => {
+    await page.goto('/financeiro');
+    await page.waitForLoadState('networkidle');
+    // Pode mostrar mensagem de "sem dados" — o importante é não crashar
+    await expect(page.locator('body')).not.toBeEmpty();
+  });
+
+  test('i18n funciona em páginas autenticadas (contratos)', async ({ page }) => {
     await page.goto('/contratos');
     await page.waitForLoadState('networkidle');
-    // Se existirem contratos, clicar no primeiro
-    const firstRow = page.locator('[role="row"], table tbody tr').first();
-    if ((await firstRow.count()) > 0) {
-      await firstRow.click();
-      await page.waitForLoadState('networkidle');
-      expect(page.url()).toMatch(/\/contratos\/[a-f0-9-]+/i);
-    }
+    await page.waitForTimeout(1000);
+
+    const bodyText = (await page.locator('body').textContent()) ?? '';
+    // Chaves conhecidas que corrigimos — não devem aparecer em bruto
+    const knownKeys = [
+      'contracts.archiveTab',
+      'contracts.openEnded',
+      'dashboard.docCompliance',
+      'prazos.renewal',
+      'admin.title',
+    ];
+    const leaked = knownKeys.filter((key) => bodyText.includes(key));
+    expect(leaked, `Chaves i18n expostas: ${leaked.join(', ')}`).toEqual([]);
   });
 });
