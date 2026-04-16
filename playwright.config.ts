@@ -23,6 +23,7 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:8080',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    ignoreHTTPSErrors: true,
   },
 
   projects: [

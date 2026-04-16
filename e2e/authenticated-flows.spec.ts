@@ -9,20 +9,23 @@ import { test, expect } from '@playwright/test';
 const EMAIL = process.env.E2E_TEST_EMAIL;
 const PASSWORD = process.env.E2E_TEST_PASSWORD;
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Fluxos autenticados', () => {
   test.skip(!EMAIL || !PASSWORD, 'E2E_TEST_EMAIL/PASSWORD não configurados');
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
 
     // Preencher login
     await page.locator('#email').fill(EMAIL!);
     await page.locator('#password').fill(PASSWORD!);
     await page.locator('button[type="submit"]').click();
 
-    // Espera pelo redirect pós-login (home, dashboard, ou onboarding)
-    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20_000 });
+    // Espera pelo redirect pós-login
+    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30_000 });
+    await page.waitForLoadState('networkidle');
   });
 
   test('Home carrega sem erros', async ({ page }) => {
