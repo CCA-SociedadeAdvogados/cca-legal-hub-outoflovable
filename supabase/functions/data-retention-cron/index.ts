@@ -129,88 +129,27 @@ Deno.serve(async (req) => {
             const userId = deletion.user_id;
             console.log(`[Data-Retention-Cron] Processing deletion for user: ${userId}`);
 
-            // 2a. Anonymize audit logs (keep for legal compliance, remove PII)
-            await supabase
-              .from("audit_logs")
-              .update({ 
-                user_email: "DELETED_USER",
-                metadata: { anonymized: true, original_user_id: userId, anonymized_at: new Date().toISOString() }
-              })
-              .eq("user_id", userId);
-
-            // 2b. Anonymize auth activity logs
-            await supabase
-              .from("auth_activity_logs")
-              .update({ 
-                ip_address: null,
-                user_agent: null,
-                metadata: { anonymized: true }
-              })
-              .eq("user_id", userId);
-
-            // 2c. Delete notifications
-            await supabase
-              .from("notifications")
-              .delete()
-              .eq("user_id", userId);
-
-            // 2d. Delete user consents
-            await supabase
-              .from("user_consents")
-              .delete()
-              .eq("user_id", userId);
-
-            // 2e. Anonymize contracts (keep for legal, remove creator reference)
-            await supabase
-              .from("contratos")
-              .update({ 
-                created_by_id: null,
-                updated_by_id: null,
-                responsavel_interno_id: null,
-              })
-              .or(`created_by_id.eq.${userId},updated_by_id.eq.${userId},responsavel_interno_id.eq.${userId}`);
-
-            // 2f. Anonymize other tables with user references
-            await supabase
-              .from("templates")
-              .update({ created_by_id: null, updated_by_id: null })
-              .or(`created_by_id.eq.${userId},updated_by_id.eq.${userId}`);
-
-            await supabase
-              .from("documentos_gerados")
-              .update({ created_by_id: null })
-              .eq("created_by_id", userId);
-
-            // 2g. Remove organization memberships
-            await supabase
-              .from("organization_members")
-              .delete()
-              .eq("user_id", userId);
-
-            // 2h. Update profile to anonymized state
-            await supabase
-              .from("profiles")
-              .update({
-                email: `deleted_${userId.substring(0, 8)}@deleted.local`,
-                nome_completo: "Utilizador Eliminado",
-                avatar_url: null,
-                departamento: null,
-                sso_external_id: null,
-                sso_provider: null,
-              })
-              .eq("id", userId);
-
-            // 2i. Delete auth user (this removes from auth.users)
-            const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
-            if (deleteUserError) {
-              console.error(`[Data-Retention-Cron] Delete user error: ${deleteUserError.message}`);
-              // Continue even if auth deletion fails - profile is already anonymized
+            // 2a. Atomic anonymisation in a single Postgres transaction.
+            //     Either every table is updated, or nothing is.
+            const { data: anonResult, error: anonError } = await supabase.rpc(
+              "fn_anonymize_user_data",
+              { p_user_id: userId },
+            );
+            if (anonError) {
+              throw new Error(`fn_anonymize_user_data failed: ${anonError.message}`);
             }
 
-            // 2j. Update DSAR request status
+            // 2b. Delete auth user (auth.users — must go through admin API).
+            //     Profile is already anonymised; failing here is non-fatal.
+            const { error: deleteUserError } = await supabase.auth.admin.deleteUser(userId);
+            if (deleteUserError) {
+              console.error(`[Data-Retention-Cron] Delete auth user error: ${deleteUserError.message}`);
+            }
+
+            // 2c. Mark DSAR request as completed
             await supabase
               .from("dsar_requests")
-              .update({ 
+              .update({
                 status: "completed",
                 completed_at: new Date().toISOString(),
               })
@@ -220,6 +159,7 @@ Deno.serve(async (req) => {
               request_id: deletion.id,
               user_id: userId,
               status: "completed",
+              anon_result: anonResult,
             });
 
             console.log(`[Data-Retention-Cron] Deletion completed for user: ${userId}`);
