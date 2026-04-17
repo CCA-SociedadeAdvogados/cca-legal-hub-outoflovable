@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { rateLimit, getRateLimitKey, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -28,6 +29,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders(req) });
   }
+
+  const rl = rateLimit("ai:match-legislation", getRateLimitKey(req), { windowMs: 5 * 60_000, max: 30 });
+  if (!rl.allowed) return rateLimitResponse(req, rl);
 
   try {
     const { contrato_id } = await req.json();

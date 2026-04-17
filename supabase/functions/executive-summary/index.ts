@@ -13,6 +13,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const CLAUDE_HAIKU = "claude-haiku-4-5-20251001";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { rateLimit, getRateLimitKey, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 async function callClaude(apiKey: string, system: string, user: string, maxTokens = 1024): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -78,6 +79,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req) });
   }
+
+  const rl = rateLimit("ai:executive-summary", getRateLimitKey(req), { windowMs: 5 * 60_000, max: 30 });
+  if (!rl.allowed) return rateLimitResponse(req, rl);
 
   try {
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");

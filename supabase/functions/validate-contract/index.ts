@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { rateLimit, getRateLimitKey, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 // AI: Claude Sonnet 4.6 — segunda passagem de validação e correcção de campos críticos
 const CLAUDE_SONNET = "claude-sonnet-4-6";
@@ -108,6 +109,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req) });
   }
+
+  const rl = rateLimit("ai:validate-contract", getRateLimitKey(req), { windowMs: 5 * 60_000, max: 30 });
+  if (!rl.allowed) return rateLimitResponse(req, rl);
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

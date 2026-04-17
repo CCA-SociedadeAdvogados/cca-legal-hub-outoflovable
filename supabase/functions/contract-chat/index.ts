@@ -22,6 +22,7 @@ const COMPLEX_LEGAL_KEYWORDS = [
 ];
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { rateLimit, getRateLimitKey, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 function routeModel(question: string): string {
   const lower = question.toLowerCase();
@@ -60,6 +61,9 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req) });
   }
+
+  const rl = rateLimit("ai:contract-chat", getRateLimitKey(req), { windowMs: 5 * 60_000, max: 60 });
+  if (!rl.allowed) return rateLimitResponse(req, rl);
 
   try {
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");

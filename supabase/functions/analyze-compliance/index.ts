@@ -5,6 +5,7 @@
 // Context window: 1M tokens — análise jurídica complexa em português
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { rateLimit, getRateLimitKey, rateLimitResponse } from "../_shared/rateLimit.ts";
 
 const CLAUDE_SONNET = "claude-sonnet-4-6";
 
@@ -97,6 +98,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: corsHeaders(req) });
   }
+
+  const rl = rateLimit("ai:analyze-compliance", getRateLimitKey(req), { windowMs: 5 * 60_000, max: 20 });
+  if (!rl.allowed) return rateLimitResponse(req, rl);
 
   try {
     let body: unknown;
