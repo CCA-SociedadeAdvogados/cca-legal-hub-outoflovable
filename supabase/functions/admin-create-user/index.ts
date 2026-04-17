@@ -92,11 +92,27 @@ serve(async (req) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Fetch up to 10 000 users to reliably detect duplicate emails
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({ perPage: 10000 });
-    const existingAuthUser = (existingUsers?.users ?? []).find(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
+    // Look up existing auth user by email via admin API (scales beyond 10k users).
+    // Falls back to a paginated scan only if the SDK build does not expose getUserByEmail.
+    let existingAuthUser: { id: string; email: string | null } | null = null;
+    const adminApi = supabaseAdmin.auth.admin as unknown as {
+      getUserByEmail?: (email: string) => Promise<{ data?: { user?: { id: string; email: string | null } | null }; error?: unknown }>;
+    };
+    if (typeof adminApi.getUserByEmail === "function") {
+      const { data: byEmail } = await adminApi.getUserByEmail(normalizedEmail);
+      if (byEmail?.user) existingAuthUser = { id: byEmail.user.id, email: byEmail.user.email };
+    } else {
+      // Fallback: query auth.users via service role (no row limit)
+      const { data: rows } = await supabaseAdmin
+        .schema("auth")
+        .from("users")
+        .select("id, email")
+        .ilike("email", normalizedEmail)
+        .limit(1);
+      if (rows && rows.length > 0) {
+        existingAuthUser = { id: rows[0].id as string, email: (rows[0].email as string | null) ?? null };
+      }
+    }
 
     if (existingAuthUser) {
       const { data: existingMember } = await supabaseAdmin
@@ -244,21 +260,46 @@ serve(async (req) => {
   }
 });
 
+function secureRandomInt(maxExclusive: number): number {
+  if (maxExclusive <= 0 || maxExclusive > 0x100000000) {
+    throw new Error("secureRandomInt: invalid range");
+  }
+  // Rejection sampling to avoid modulo bias
+  const limit = Math.floor(0x100000000 / maxExclusive) * maxExclusive;
+  const buf = new Uint32Array(1);
+  while (true) {
+    crypto.getRandomValues(buf);
+    if (buf[0] < limit) return buf[0] % maxExclusive;
+  }
+}
+
+function pickRandomChar(charset: string): string {
+  return charset[secureRandomInt(charset.length)];
+}
+
+function shuffleSecure<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = secureRandomInt(i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 function generateSecurePassword(): string {
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lowercase = 'abcdefghijklmnopqrstuvwxyz';
   const numbers = '0123456789';
   const special = '!@#$%&*';
   const allChars = uppercase + lowercase + numbers + special;
-  let password = '';
-  password += uppercase[Math.floor(Math.random() * uppercase.length)];
-  password += lowercase[Math.floor(Math.random() * lowercase.length)];
-  password += numbers[Math.floor(Math.random() * numbers.length)];
-  password += special[Math.floor(Math.random() * special.length)];
-  for (let i = 0; i < 8; i++) {
-    password += allChars[Math.floor(Math.random() * allChars.length)];
-  }
-  return password.split('').sort(() => Math.random() - 0.5).join('');
+  const chars: string[] = [
+    pickRandomChar(uppercase),
+    pickRandomChar(lowercase),
+    pickRandomChar(numbers),
+    pickRandomChar(special),
+  ];
+  for (let i = 0; i < 8; i++) chars.push(pickRandomChar(allChars));
+  return shuffleSecure(chars).join('');
 }
 
 function getCorsHeaders(req: Request) {
