@@ -62,9 +62,24 @@ export const useEventosLegislativos = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['eventos_legislativos', organizationId] });
       toast({ title: 'Evento criado com sucesso' });
+
+      // Fire-and-forget: auto-match legislation to contracts
+      if (organizationId) {
+        supabase.functions
+          .invoke('match-legislation', {
+            body: {
+              organization_id: organizationId,
+              event_id: data?.id,
+            },
+          })
+          .catch((err) =>
+            console.warn('[Legislation match] Auto-match failed (non-blocking):', err?.message),
+          );
+        toast({ title: 'A analisar impacto nos seus contratos...' });
+      }
     },
     onError: (error: Error) => {
       toast({ title: 'Erro ao criar evento', description: error.message, variant: 'destructive' });

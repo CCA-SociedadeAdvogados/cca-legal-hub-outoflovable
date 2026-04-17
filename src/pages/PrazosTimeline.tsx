@@ -7,6 +7,9 @@ import { pt } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useContratos } from '@/hooks/useContratos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -69,9 +72,30 @@ function downloadICS(events: TimelineEvent[]) {
 
 export default function PrazosTimeline() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { contratos, isLoading: isLoadingContratos } = useContratos();
   const { financialItems, isLoading: isLoadingFinanceiro } = useFinanceiro();
   const [tab, setTab] = useState('all');
+
+  // Fetch AI-extracted deadlines from contract_extractions
+  const { data: extractions } = useQuery({
+    queryKey: ['contract-extractions-prazos'],
+    queryFn: async () => {
+      const activeIds = (contratos ?? [])
+        .filter((c) => !c.arquivado && c.estado_contrato === 'activo')
+        .map((c) => c.id);
+      if (activeIds.length === 0) return [];
+      const { data } = await supabase
+        .from('contract_extractions')
+        .select('contrato_id, prazos, denuncia_rescisao')
+        .in('contrato_id', activeIds)
+        .eq('source', 'ai_extraction');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data ?? []) as { contrato_id: string; prazos: any; denuncia_rescisao: any }[];
+    },
+    enabled: !!user && (contratos ?? []).length > 0,
+    staleTime: 60_000,
+  });
 
   const events = useMemo<TimelineEvent[]>(() => {
     const now = new Date();
@@ -134,6 +158,85 @@ export default function PrazosTimeline() {
         }
       });
 
+    // AI-extracted deadlines from contract_extractions
+    const contractTitleMap = new Map((contratos ?? []).map((c) => [c.id, c.titulo_contrato]));
+    (extractions ?? []).forEach((ext) => {
+      const contractTitle = contractTitleMap.get(ext.contrato_id) || 'Contrato';
+      const prazos = ext.prazos as Record<string, string | number | null> | null;
+      const denuncia = ext.denuncia_rescisao as Record<string, string | number | null> | null;
+
+      if (prazos) {
+        // Check for denunciation deadline
+        const denunciaDate = prazos.data_limite_denuncia || denuncia?.data_limite_denuncia;
+        if (denunciaDate && typeof denunciaDate === 'string') {
+          try {
+            const date = new Date(denunciaDate);
+            const daysUntil = differenceInDays(date, now);
+            if (daysUntil > 0 && daysUntil <= 365) {
+              result.push({
+                id: `ai-den-${ext.contrato_id}`,
+                date,
+                daysUntil,
+                title: `Prazo denúncia (IA): ${contractTitle}`,
+                subtitle: prazos.prazo_denuncia_dias
+                  ? `${prazos.prazo_denuncia_dias} dias de aviso prévio`
+                  : undefined,
+                type: 'renewal_deadline',
+                contractId: ext.contrato_id,
+                urgency: daysUntil <= 30 ? 'critical' : daysUntil <= 60 ? 'warning' : 'normal',
+              });
+            }
+          } catch {
+            /* date inválida */
+          }
+        }
+
+        // Check for renewal date
+        const renovacaoDate = prazos.data_renovacao;
+        if (renovacaoDate && typeof renovacaoDate === 'string') {
+          try {
+            const date = new Date(renovacaoDate);
+            const daysUntil = differenceInDays(date, now);
+            if (daysUntil > 0 && daysUntil <= 365) {
+              result.push({
+                id: `ai-ren-${ext.contrato_id}`,
+                date,
+                daysUntil,
+                title: `Renovação (IA): ${contractTitle}`,
+                type: 'renewal_deadline',
+                contractId: ext.contrato_id,
+                urgency: daysUntil <= 30 ? 'critical' : daysUntil <= 60 ? 'warning' : 'normal',
+              });
+            }
+          } catch {
+            /* date inválida */
+          }
+        }
+
+        // Check for guarantee date
+        const garantiaDate = prazos.data_garantia || prazos.data_validade_garantia;
+        if (garantiaDate && typeof garantiaDate === 'string') {
+          try {
+            const date = new Date(garantiaDate);
+            const daysUntil = differenceInDays(date, now);
+            if (daysUntil > 0 && daysUntil <= 365) {
+              result.push({
+                id: `ai-gar-${ext.contrato_id}`,
+                date,
+                daysUntil,
+                title: `Garantia (IA): ${contractTitle}`,
+                type: 'guarantee',
+                contractId: ext.contrato_id,
+                urgency: daysUntil <= 30 ? 'critical' : daysUntil <= 60 ? 'warning' : 'normal',
+              });
+            }
+          } catch {
+            /* date inválida */
+          }
+        }
+      }
+    });
+
     // Financial due dates
     (financialItems ?? []).forEach((item) => {
       if (item.data_vencimento && item.estado !== 'pago') {
@@ -156,7 +259,7 @@ export default function PrazosTimeline() {
     });
 
     return result.sort((a, b) => a.daysUntil - b.daysUntil);
-  }, [contratos, financialItems, t]);
+  }, [contratos, financialItems, extractions, t]);
 
   const filteredEvents = tab === 'all' ? events : events.filter((e) => e.type === tab);
   const isLoading = isLoadingContratos || isLoadingFinanceiro;

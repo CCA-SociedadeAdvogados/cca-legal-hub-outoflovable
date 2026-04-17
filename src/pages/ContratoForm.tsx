@@ -108,6 +108,37 @@ const formSchema = z.object({
   garantia_valor: z.number().optional().nullable(),
   garantia_data_validade: z.date().optional().nullable(),
 
+  // Assinatura
+  metodo_assinatura: z.string().optional(),
+  ferramenta_assinatura: z.string().optional(),
+
+  // Contactos
+  contacto_comercial_nome: z.string().optional(),
+  contacto_comercial_email: z.string().optional(),
+  contacto_comercial_telefone: z.string().optional(),
+  contacto_operacional_nome: z.string().optional(),
+  contacto_operacional_email: z.string().optional(),
+  contacto_faturacao_nome: z.string().optional(),
+  contacto_faturacao_email: z.string().optional(),
+  contacto_legal_nome: z.string().optional(),
+  contacto_legal_email: z.string().optional(),
+
+  // Prazos extra
+  data_limite_decisao_renovacao: z.date().optional().nullable(),
+  prazos_denuncia_rescisao: z.string().optional(),
+  data_conclusao_assinatura: z.date().optional().nullable(),
+  condicoes_subcontratacao: z.string().optional(),
+
+  // Financeiro
+  valor_total_estimado: z.number().optional().nullable(),
+  valor_anual_recorrente: z.number().optional().nullable(),
+  moeda: z.string().default('EUR'),
+  estrutura_precos: z.string().optional(),
+  periodicidade_faturacao: z.string().optional(),
+  prazo_pagamento_dias: z.number().optional().nullable(),
+  numero_encomenda_po: z.string().optional(),
+  centro_custo: z.string().optional(),
+
   // RGPD
   tratamento_dados_pessoais: z.boolean().default(false),
   papel_entidade: z.string().optional(),
@@ -249,6 +280,33 @@ export default function ContratoForm() {
           referencia_dpa: existingContrato.referencia_dpa || '',
           dpia_realizada: existingContrato.dpia_realizada || false,
           referencia_dpia: existingContrato.referencia_dpia || '',
+          metodo_assinatura: existingContrato.metodo_assinatura || '',
+          ferramenta_assinatura: existingContrato.ferramenta_assinatura || '',
+          contacto_comercial_nome: existingContrato.contacto_comercial_nome || '',
+          contacto_comercial_email: existingContrato.contacto_comercial_email || '',
+          contacto_comercial_telefone: existingContrato.contacto_comercial_telefone || '',
+          contacto_operacional_nome: existingContrato.contacto_operacional_nome || '',
+          contacto_operacional_email: existingContrato.contacto_operacional_email || '',
+          contacto_faturacao_nome: existingContrato.contacto_faturacao_nome || '',
+          contacto_faturacao_email: existingContrato.contacto_faturacao_email || '',
+          contacto_legal_nome: existingContrato.contacto_legal_nome || '',
+          contacto_legal_email: existingContrato.contacto_legal_email || '',
+          data_limite_decisao_renovacao: existingContrato.data_limite_decisao_renovacao
+            ? new Date(existingContrato.data_limite_decisao_renovacao)
+            : null,
+          prazos_denuncia_rescisao: existingContrato.prazos_denuncia_rescisao || '',
+          data_conclusao_assinatura: existingContrato.data_conclusao_assinatura
+            ? new Date(existingContrato.data_conclusao_assinatura)
+            : null,
+          condicoes_subcontratacao: existingContrato.condicoes_subcontratacao || '',
+          valor_total_estimado: existingContrato.valor_total_estimado,
+          valor_anual_recorrente: existingContrato.valor_anual_recorrente,
+          moeda: existingContrato.moeda || 'EUR',
+          estrutura_precos: existingContrato.estrutura_precos || '',
+          periodicidade_faturacao: existingContrato.periodicidade_faturacao || '',
+          prazo_pagamento_dias: existingContrato.prazo_pagamento_dias,
+          numero_encomenda_po: existingContrato.numero_encomenda_po || '',
+          centro_custo: existingContrato.centro_custo || '',
         }
       : {
           titulo_contrato: '',
@@ -261,6 +319,7 @@ export default function ContratoForm() {
           tipo_duracao: 'prazo_determinado',
           tipo_renovacao: 'sem_renovacao_automatica',
           aviso_previo_nao_renovacao_dias: 30,
+          moeda: 'EUR',
         },
   });
 
@@ -323,6 +382,33 @@ export default function ContratoForm() {
         referencia_dpa: existingContrato.referencia_dpa || '',
         dpia_realizada: existingContrato.dpia_realizada || false,
         referencia_dpia: existingContrato.referencia_dpia || '',
+        metodo_assinatura: existingContrato.metodo_assinatura || '',
+        ferramenta_assinatura: existingContrato.ferramenta_assinatura || '',
+        contacto_comercial_nome: existingContrato.contacto_comercial_nome || '',
+        contacto_comercial_email: existingContrato.contacto_comercial_email || '',
+        contacto_comercial_telefone: existingContrato.contacto_comercial_telefone || '',
+        contacto_operacional_nome: existingContrato.contacto_operacional_nome || '',
+        contacto_operacional_email: existingContrato.contacto_operacional_email || '',
+        contacto_faturacao_nome: existingContrato.contacto_faturacao_nome || '',
+        contacto_faturacao_email: existingContrato.contacto_faturacao_email || '',
+        contacto_legal_nome: existingContrato.contacto_legal_nome || '',
+        contacto_legal_email: existingContrato.contacto_legal_email || '',
+        data_limite_decisao_renovacao: existingContrato.data_limite_decisao_renovacao
+          ? new Date(existingContrato.data_limite_decisao_renovacao)
+          : null,
+        prazos_denuncia_rescisao: existingContrato.prazos_denuncia_rescisao || '',
+        data_conclusao_assinatura: existingContrato.data_conclusao_assinatura
+          ? new Date(existingContrato.data_conclusao_assinatura)
+          : null,
+        condicoes_subcontratacao: existingContrato.condicoes_subcontratacao || '',
+        valor_total_estimado: existingContrato.valor_total_estimado,
+        valor_anual_recorrente: existingContrato.valor_anual_recorrente,
+        moeda: existingContrato.moeda || 'EUR',
+        estrutura_precos: existingContrato.estrutura_precos || '',
+        periodicidade_faturacao: existingContrato.periodicidade_faturacao || '',
+        prazo_pagamento_dias: existingContrato.prazo_pagamento_dias,
+        numero_encomenda_po: existingContrato.numero_encomenda_po || '',
+        centro_custo: existingContrato.centro_custo || '',
       });
       setClassifiedAreas(existingContrato?.areas_direito_aplicaveis || []);
     }
@@ -444,6 +530,31 @@ export default function ContratoForm() {
       referencia_dpa: data.referencia_dpa || null,
       dpia_realizada: data.dpia_realizada,
       referencia_dpia: data.referencia_dpia || null,
+      metodo_assinatura: (data.metodo_assinatura as any) || null,
+      ferramenta_assinatura: data.ferramenta_assinatura || null,
+      contacto_comercial_nome: data.contacto_comercial_nome || null,
+      contacto_comercial_email: data.contacto_comercial_email || null,
+      contacto_comercial_telefone: data.contacto_comercial_telefone || null,
+      contacto_operacional_nome: data.contacto_operacional_nome || null,
+      contacto_operacional_email: data.contacto_operacional_email || null,
+      contacto_faturacao_nome: data.contacto_faturacao_nome || null,
+      contacto_faturacao_email: data.contacto_faturacao_email || null,
+      contacto_legal_nome: data.contacto_legal_nome || null,
+      contacto_legal_email: data.contacto_legal_email || null,
+      data_limite_decisao_renovacao:
+        data.data_limite_decisao_renovacao?.toISOString().split('T')[0] || null,
+      prazos_denuncia_rescisao: data.prazos_denuncia_rescisao || null,
+      data_conclusao_assinatura:
+        data.data_conclusao_assinatura?.toISOString().split('T')[0] || null,
+      condicoes_subcontratacao: data.condicoes_subcontratacao || null,
+      valor_total_estimado: data.valor_total_estimado ?? null,
+      valor_anual_recorrente: data.valor_anual_recorrente ?? null,
+      moeda: data.moeda || 'EUR',
+      estrutura_precos: (data.estrutura_precos as any) || null,
+      periodicidade_faturacao: (data.periodicidade_faturacao as any) || null,
+      prazo_pagamento_dias: data.prazo_pagamento_dias ?? null,
+      numero_encomenda_po: data.numero_encomenda_po || null,
+      centro_custo: data.centro_custo || null,
     };
 
     if (isEditing && id) {
@@ -617,12 +728,13 @@ export default function ContratoForm() {
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList
-                className={`grid w-full ${isLocal ? 'grid-cols-3 lg:grid-cols-6' : 'grid-cols-3 lg:grid-cols-7'}`}
+                className={`grid w-full ${isLocal ? 'grid-cols-4 lg:grid-cols-7' : 'grid-cols-4 lg:grid-cols-8'}`}
               >
                 <TabsTrigger value="identificacao">Contrato</TabsTrigger>
                 <TabsTrigger value="partes">Partes</TabsTrigger>
                 <TabsTrigger value="datas">Prazos</TabsTrigger>
                 {!isLocal && <TabsTrigger value="obrigacoes">Obrigações</TabsTrigger>}
+                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
                 <TabsTrigger value="rgpd">RGPD</TabsTrigger>
                 <TabsTrigger value="classificacao">Classificação</TabsTrigger>
                 <TabsTrigger value="anexos">Documentos</TabsTrigger>
@@ -726,6 +838,46 @@ export default function ContratoForm() {
                               rows={3}
                               {...field}
                             />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="metodo_assinatura"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Método de Assinatura</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="assinatura_digital_qualificada">
+                                Assinatura Digital Qualificada
+                              </SelectItem>
+                              <SelectItem value="assinatura_avancada">
+                                Assinatura Avançada
+                              </SelectItem>
+                              <SelectItem value="assinatura_simples">Assinatura Simples</SelectItem>
+                              <SelectItem value="manuscrita">Manuscrita</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="ferramenta_assinatura"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ferramenta de Assinatura</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: DocuSign, AMA CMD, Adobe Sign..." {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -895,6 +1047,159 @@ export default function ContratoForm() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Contactos */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contactos</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Contacto Comercial */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Contacto Comercial</h4>
+                      <div className="grid gap-4 md:grid-cols-3">
+                        <FormField
+                          control={form.control}
+                          name="contacto_comercial_nome"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nome do contacto" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contacto_comercial_email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="email@exemplo.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contacto_comercial_telefone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Telefone</FormLabel>
+                              <FormControl>
+                                <Input placeholder="+351 ..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contacto Operacional */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Contacto Operacional</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="contacto_operacional_nome"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nome do contacto" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contacto_operacional_email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="email@exemplo.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contacto Facturação */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Contacto Facturação</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="contacto_faturacao_nome"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nome do contacto" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contacto_faturacao_email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="email@exemplo.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contacto Legal */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Contacto Legal</h4>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="contacto_legal_nome"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nome do contacto" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="contacto_legal_email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="email@exemplo.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Tab 3: Prazos */}
@@ -1029,6 +1334,60 @@ export default function ContratoForm() {
                         </FormItem>
                       )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="data_limite_decisao_renovacao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data Limite Decisão Renovação</FormLabel>
+                          <DatePickerField value={field.value} onChange={field.onChange} />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="data_conclusao_assinatura"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data Conclusão Assinatura</FormLabel>
+                          <DatePickerField value={field.value} onChange={field.onChange} />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="prazos_denuncia_rescisao"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Prazos de Denúncia/Rescisão</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Descreva os prazos de denúncia ou rescisão aplicáveis"
+                              rows={2}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="condicoes_subcontratacao"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Condições de Subcontratação</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Condições aplicáveis à subcontratação"
+                              rows={2}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
 
@@ -1042,6 +1401,170 @@ export default function ContratoForm() {
                       Os alertas são configurados automaticamente com base nas datas definidas.
                       Receberá notificações 90, 60 e 30 dias antes da expiração do contrato.
                     </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Tab Financeiro */}
+              <TabsContent value="financeiro" className="space-y-6 mt-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Dados Financeiros</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid gap-6 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="valor_total_estimado"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor Total Estimado</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(e.target.value ? Number(e.target.value) : null)
+                              }
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="valor_anual_recorrente"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor Anual Recorrente</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="0.00"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(e.target.value ? Number(e.target.value) : null)
+                              }
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="moeda"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Moeda</FormLabel>
+                          <FormControl>
+                            <Input placeholder="EUR" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="estrutura_precos"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Estrutura de Preços</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="fixo">Fixo</SelectItem>
+                              <SelectItem value="hora">Por Hora</SelectItem>
+                              <SelectItem value="unidade">Por Unidade</SelectItem>
+                              <SelectItem value="success_fee">Success Fee</SelectItem>
+                              <SelectItem value="misto">Misto</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="periodicidade_faturacao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Periodicidade de Facturação</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="mensal">Mensal</SelectItem>
+                              <SelectItem value="trimestral">Trimestral</SelectItem>
+                              <SelectItem value="semestral">Semestral</SelectItem>
+                              <SelectItem value="anual">Anual</SelectItem>
+                              <SelectItem value="por_marco">Por Marco</SelectItem>
+                              <SelectItem value="a_cabeca">A Cabeça</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="prazo_pagamento_dias"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prazo de Pagamento (dias)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="30"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(e.target.value ? Number(e.target.value) : null)
+                              }
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="numero_encomenda_po"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número de Encomenda / PO</FormLabel>
+                          <FormControl>
+                            <Input placeholder="PO-2024-001" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="centro_custo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Centro de Custo</FormLabel>
+                          <FormControl>
+                            <Input placeholder="CC-001" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>

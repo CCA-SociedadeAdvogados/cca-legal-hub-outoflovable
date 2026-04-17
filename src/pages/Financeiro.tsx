@@ -1,9 +1,10 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useCallback, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useFinanceiro, type AccountStatus } from '@/hooks/useFinanceiro';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -56,6 +57,33 @@ export default function Financeiro() {
   } = useFinanceiro();
 
   const [activeTab, setActiveTab] = useState('financeiro');
+
+  // Local payment tracking (persisted in localStorage per org)
+  const paidStorageKey = `cca_paid_invoices_${organizationId}`;
+  const [paidInvoices, setPaidInvoices] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(paidStorageKey);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const togglePaid = useCallback(
+    (invoiceRef: string) => {
+      setPaidInvoices((prev) => {
+        const next = new Set(prev);
+        if (next.has(invoiceRef)) {
+          next.delete(invoiceRef);
+        } else {
+          next.add(invoiceRef);
+        }
+        localStorage.setItem(paidStorageKey, JSON.stringify([...next]));
+        return next;
+      });
+    },
+    [paidStorageKey],
+  );
 
   // SharePoint: verificar se o cliente tem config própria.
   // Se não tiver e for utilizador CCA, usa a config umbrella da CCA.
@@ -341,7 +369,7 @@ export default function Financeiro() {
                     <TableHead>{t('financial.dueDate')}</TableHead>
                     <TableHead className="text-right">{t('financial.amount')}</TableHead>
                     <TableHead>{t('financial.invoiceStatus')}</TableHead>
-                    <TableHead>Sincronização</TableHead>
+                    <TableHead>Ação</TableHead>
                   </TableRow>
                 </TableHeader>
 
@@ -375,7 +403,11 @@ export default function Financeiro() {
                           {formatCurrency(item.valor)}
                         </TableCell>
                         <TableCell>
-                          {item.estado === 'vencido' ? (
+                          {paidInvoices.has(item.numero_documento ?? `idx-${index}`) ? (
+                            <Badge className="bg-risk-low/20 text-risk-low border-risk-low/30 text-xs">
+                              Pago
+                            </Badge>
+                          ) : item.estado === 'vencido' ? (
                             <Badge variant="destructive" className="text-xs">
                               {t('financial.overdue')}
                             </Badge>
@@ -385,7 +417,18 @@ export default function Financeiro() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell>{formatDateTime(item.synced_at)}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => togglePaid(item.numero_documento ?? `idx-${index}`)}
+                          >
+                            {paidInvoices.has(item.numero_documento ?? `idx-${index}`)
+                              ? 'Desmarcar'
+                              : 'Marcar pago'}
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
