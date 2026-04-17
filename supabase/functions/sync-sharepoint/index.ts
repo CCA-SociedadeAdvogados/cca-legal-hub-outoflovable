@@ -194,13 +194,54 @@ async function resolveFolderPathToId(
     );
 
     if (!match) {
-      const available = children
-        .filter((c) => c.folder !== undefined)
-        .map((c) => c.name)
-        .join(", ");
-      throw new Error(
-        `Fallback: folder "${segment}" not found among children of "${currentName}". Available folders: [${available}]`
-      );
+      // Folder doesn't exist — create it automatically
+      console.log(`Fallback: folder "${segment}" not found in "${currentName}" — creating it`);
+      const createUrl =
+        currentId === "root"
+          ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
+          : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${currentId}/children`;
+      const createResp = await fetch(createUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: segment,
+          folder: {},
+          "@microsoft.graph.conflictBehavior": "fail",
+        }),
+      });
+
+      if (createResp.ok) {
+        const created = await createResp.json();
+        currentId = created.id;
+        currentName = segment;
+        console.log(`Fallback: created folder "${segment}" → id=${currentId}`);
+      } else if (createResp.status === 409) {
+        // Race condition: created between list and create — re-list
+        await createResp.text();
+        const relistResp = await fetch(childrenUrl, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (relistResp.ok) {
+          const relistData = await relistResp.json();
+          const reMatch = (relistData.value || []).find(
+            (c: { name: string; folder?: unknown }) => c.name.toLowerCase() === segment.toLowerCase() && c.folder !== undefined
+          );
+          if (reMatch) {
+            currentId = reMatch.id;
+            currentName = segment;
+          } else {
+            throw new Error(`Folder "${segment}" conflict but not found on re-list`);
+          }
+        } else {
+          throw new Error(`Failed to re-list after conflict for "${segment}"`);
+        }
+      } else {
+        const errText = await createResp.text();
+        throw new Error(`Failed to auto-create folder "${segment}": ${createResp.status} - ${errText}`);
+      }
     }
 
     currentId = match.id;
