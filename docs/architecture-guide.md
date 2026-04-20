@@ -145,6 +145,95 @@ Estas funções correm perto do utilizador (edge), reduzindo latência, e são i
 
 ---
 
+## Dois tipos de utilizadores: SSO vs. local
+
+Esta é uma distinção fundamental que confunde quem chega ao projecto pela primeira vez.
+
+**Utilizadores CCA (internos)** — fazem login via **SSO** (Azure AD da CCA):
+- `auth_method = 'sso_cca'`
+- Podem ver e gerir qualquer organização cliente
+- Role `cca_manager` (admin) ou `cca_user`
+
+**Utilizadores das organizações clientes (externos)** — fazem login com **email + password**:
+- Auth local do Supabase
+- Só vêem a sua própria organização
+- Role `org_manager` (owner/admin/editor) ou `org_user` (viewer)
+
+Existe ainda o `app_admin` — um utilizador CCA com a flag `platform_admin = true` na base de dados. É o único que acede ao painel de administração da plataforma.
+
+```
+app_admin          ← CCA + platform_admin flag
+  cca_manager      ← CCA SSO + role admin
+  cca_user         ← CCA SSO + outros roles
+    org_manager    ← cliente local + owner/admin/editor
+    org_user       ← cliente local + viewer
+```
+
+---
+
+## A máquina de estados dos contratos
+
+Um contrato não pode mudar de estado livremente — existe uma máquina de estados que define as transições válidas. Antes de qualquer mudança de estado, o código chama sempre `canTransitionTo()`.
+
+```
+rascunho ──────────────────────────────────────────────┐
+    ↓                                                   │
+em_revisao ──────────────────────────────────────────── activo
+    ↓                                                      ↓
+em_aprovacao                                           expirado
+    ↓                                                      ↓ (renovação)
+enviado_para_assinatura                               activo
+    ↓
+  activo → denunciado (terminal)
+         → rescindido (terminal)
+```
+
+Alguns eventos **mudam o estado automaticamente**:
+- Evento `rescisao` → estado passa a `rescindido`
+- Evento `denuncia` → estado passa a `denunciado`
+- Evento `expiracao` → estado passa a `expirado`
+- Evento `renovacao` → estado volta a `activo`
+
+`denunciado` e `rescindido` são estados terminais — só se pode adicionar notas internas, não há retorno.
+
+---
+
+## A inteligência artificial
+
+A app usa o modelo **Claude Sonnet 4.6** da Anthropic para análise de contratos. Quando um utilizador faz upload de um contrato (PDF, Word ou TXT), pode pedir à IA que extraia automaticamente mais de 40 campos estruturados:
+
+- Partes contratuais (nome legal, NIF, morada, representante)
+- Datas (início, fim, assinatura)
+- Termos financeiros (valor, forma de pagamento, penalidades)
+- Obrigações de cada parte
+- Cláusulas especiais (confidencialidade, propriedade intelectual, não-concorrência)
+- Conformidade RGPD (DPA, transferências internacionais, categorias de dados)
+- Riscos identificados e recomendações
+- Score de confiança da extracção (0–100)
+
+A análise acontece numa **Edge Function** (`parse-contract`) que recebe o texto do contrato (máx. 150 mil caracteres), envia para a API da Anthropic, e devolve o JSON estruturado. PDFs digitalizados (scanned) são detectados e processados com um aviso de menor fiabilidade.
+
+Além da extracção, existem funções de IA para análise de conformidade, resumos executivos, sugestões de alterações (redline), triagem automática e chat sobre o contrato.
+
+---
+
+## Regras de desenvolvimento a conhecer
+
+Quem trabalhar no código deve respeitar estas convenções para não partir coisas:
+
+| Regra | Porquê |
+|-------|--------|
+| Nunca editar `src/components/ui/` | São componentes shadcn gerados automaticamente; alterações serão sobrescritas |
+| Nunca editar `src/integrations/supabase/types.ts` | É gerado por `npm run gen:types`; editar à mão causa inconsistências |
+| Sempre filtrar queries por `organization_id` | Sem este filtro, dados de outras organizações podem aparecer |
+| `created_by_id` + `updated_by_id` em todos os inserts/updates | Rastreabilidade obrigatória para auditoria |
+| Usar `canTransitionTo()` antes de mudar estado | Evita transições inválidas que corrompem o ciclo de vida do contrato |
+| Dados financeiros só via RPCs `fn_get_*_for_actor` | As tabelas financeiras não têm RLS directa — as RPCs fazem a validação |
+| Chaves i18n em `pt.json` e `en.json` | Texto novo sem tradução em ambos os ficheiros quebra a versão EN |
+| Usar `@/` nos imports, nunca caminhos relativos | Consistência e refactoring mais fácil |
+
+---
+
 ## Resumo em uma frase
 
-> Aplicação React em TypeScript, renderizada no browser (CSR/SPA), com Supabase como backend completo, React Query para sincronização de dados, e Edge Functions para lógica de servidor e IA.
+> Aplicação React em TypeScript, renderizada no browser (CSR/SPA), com Supabase (PostgreSQL + Auth + Edge Functions) como backend, React Query para cache de dados, IA da Anthropic para análise de contratos, e um sistema multi-tenant com dois tipos de utilizadores (SSO interno e login local para clientes).
