@@ -72,6 +72,58 @@ React renderiza a interface
 
 ---
 
+## A base de dados
+
+### O que é o Supabase?
+
+O **Supabase** é uma plataforma BaaS (Backend-as-a-Service) que fornece tudo o que uma app precisa no lado do servidor, sem ter de instalar nem gerir nada:
+
+| O que oferece | Para que serve nesta app |
+|--------------|--------------------------|
+| **PostgreSQL** | Base de dados relacional onde vivem contratos, organizações, utilizadores, eventos, etc. |
+| **Auth** | Login com email/password e SSO (login corporativo via Azure AD) |
+| **Row-Level Security (RLS)** | Regras na própria base de dados que impedem acesso a dados de outras organizações |
+| **Edge Functions** | Funções de servidor em TypeScript (IA, integrações, tarefas agendadas) |
+| **Storage** | Armazenamento de ficheiros (documentos, PDFs) |
+| **Realtime** | Notificações em tempo real via WebSocket |
+
+### Por que PostgreSQL e não outra base de dados?
+
+O PostgreSQL foi escolhido por ser **relacional** — os dados jurídicos têm muitas relações (um contrato tem partes, eventos, documentos, impactos, cláusulas financeiras) que se modelam naturalmente em tabelas com chaves estrangeiras.
+
+Alternativas como MongoDB (NoSQL) seriam menos adequadas porque os dados têm estrutura bem definida e as queries envolvem muitos JOINs.
+
+### Como funciona o isolamento de dados entre organizações?
+
+A base de dados usa **Row-Level Security (RLS)** — um mecanismo nativo do PostgreSQL que adiciona uma camada de segurança diretamente nas tabelas:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Tabela: contratos                                  │
+│                                                     │
+│  Regra RLS: só devolve linhas onde                  │
+│  organization_id = organização do utilizador atual  │
+└─────────────────────────────────────────────────────┘
+```
+
+Isto significa que **mesmo que o código do frontend tivesse um bug**, a base de dados recusaria devolver dados de outra organização. É uma defesa em duas camadas: o frontend filtra por `organization_id` E a base de dados confirma.
+
+### Como se acede à base de dados?
+
+O frontend não fala diretamente com o PostgreSQL. Usa o **Supabase JS client**, que:
+
+1. Envia pedidos HTTP para a API REST do Supabase
+2. Inclui automaticamente o token de autenticação do utilizador
+3. O Supabase valida o token e aplica as regras RLS antes de devolver dados
+
+Para dados financeiros sensíveis, o acesso é ainda mais restrito — só é possível via **RPCs** (funções guardadas na base de dados), nunca directamente nas tabelas.
+
+### Os tipos TypeScript são gerados automaticamente
+
+O comando `npm run gen:types` lê a estrutura da base de dados e gera o ficheiro `src/integrations/supabase/types.ts` automaticamente. Isto significa que se uma coluna mudar na base de dados, o TypeScript alerta imediatamente todos os sítios do código que precisam de ser actualizados.
+
+---
+
 ## Como funciona o multi-tenant?
 
 Cada utilizador pertence a uma **organização**. Todas as queries à base de dados filtram sempre por `organization_id`. O Supabase impõe isso também ao nível da base de dados (RLS), por isso mesmo que houvesse um bug no frontend, os dados de outras organizações nunca seriam devolvidos.
