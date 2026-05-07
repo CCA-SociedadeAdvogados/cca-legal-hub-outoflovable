@@ -273,9 +273,11 @@ export default function Politicas() {
                         <Label htmlFor="estado">{t('common.status')}</Label>
                         <Select
                           value={formData.estado}
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           onValueChange={(value) =>
-                            setFormData({ ...formData, estado: value as any })
+                            setFormData({
+                              ...formData,
+                              estado: value as 'rascunho' | 'em_revisao' | 'aprovada' | 'arquivada',
+                            })
                           }
                         >
                           <SelectTrigger>

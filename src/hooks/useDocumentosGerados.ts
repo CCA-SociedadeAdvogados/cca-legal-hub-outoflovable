@@ -1,9 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/hooks/useProfile";
-import { toast } from "sonner";
-import type { Json } from "@/integrations/supabase/types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface Assinante {
   nome: string;
@@ -41,21 +41,21 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
   const queryClient = useQueryClient();
 
   const { data: documentos = [], isLoading } = useQuery({
-    queryKey: ["documentos-gerados", profile?.current_organization_id, options?.modulo],
+    queryKey: ['documentos-gerados', profile?.current_organization_id, options?.modulo],
     staleTime: 30 * 1000,
     queryFn: async () => {
       const orgId = profile?.current_organization_id;
       if (!orgId) return [];
 
       let query = supabase
-        .from("documentos_gerados")
-        .select("*")
-        .eq("organization_id", orgId)
-        .order("created_at", { ascending: false });
+        .from('documentos_gerados')
+        .select('*')
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false });
 
       // Filter by module if specified
       if (options?.modulo) {
-        query = query.eq("modulo", options.modulo);
+        query = query.eq('modulo', options.modulo);
       }
 
       const { data, error } = await query;
@@ -81,7 +81,7 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
       modulo?: string;
     }) => {
       const { data: result, error } = await supabase
-        .from("documentos_gerados")
+        .from('documentos_gerados')
         .insert({
           ...data,
           organization_id: profile?.current_organization_id,
@@ -95,11 +95,11 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documentos-gerados"] });
-      toast.success("Documento criado com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ['documentos-gerados'] });
+      toast.success('Documento criado com sucesso!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao criar documento");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao criar documento');
     },
   });
 
@@ -119,12 +119,12 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
       if (assinantes !== undefined) {
         updateData.assinantes = assinantes as unknown as Json;
       }
-      
+
       const { data: result, error } = await supabase
-        .from("documentos_gerados")
+        .from('documentos_gerados')
         .update(updateData)
-        .eq("id", id)
-        .eq("organization_id", profile?.current_organization_id)
+        .eq('id', id)
+        .eq('organization_id', profile?.current_organization_id)
         .select()
         .single();
 
@@ -132,25 +132,29 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documentos-gerados"] });
-      toast.success("Documento atualizado!");
+      queryClient.invalidateQueries({ queryKey: ['documentos-gerados'] });
+      toast.success('Documento atualizado!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao atualizar documento");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao atualizar documento');
     },
   });
 
   const deleteDocumento = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("documentos_gerados").delete().eq("id", id).eq("organization_id", profile?.current_organization_id);
+      const { error } = await supabase
+        .from('documentos_gerados')
+        .delete()
+        .eq('id', id)
+        .eq('organization_id', profile?.current_organization_id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documentos-gerados"] });
-      toast.success("Documento eliminado!");
+      queryClient.invalidateQueries({ queryKey: ['documentos-gerados'] });
+      toast.success('Documento eliminado!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao eliminar documento");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao eliminar documento');
     },
   });
 
@@ -170,13 +174,13 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
       }));
 
       const { data: result, error } = await supabase
-        .from("documentos_gerados")
+        .from('documentos_gerados')
         .update({
-          estado_assinatura: "enviado",
+          estado_assinatura: 'enviado',
           assinantes: assinantesFormatted,
         })
-        .eq("id", id)
-        .eq("organization_id", profile?.current_organization_id)
+        .eq('id', id)
+        .eq('organization_id', profile?.current_organization_id)
         .select()
         .single();
 
@@ -184,11 +188,11 @@ export function useDocumentosGerados(options?: { modulo?: string }) {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documentos-gerados"] });
-      toast.success("Documento enviado para assinatura!");
+      queryClient.invalidateQueries({ queryKey: ['documentos-gerados'] });
+      toast.success('Documento enviado para assinatura!');
     },
-    onError: (error: any) => {
-      toast.error(error.message || "Erro ao enviar para assinatura");
+    onError: (error: Error) => {
+      toast.error(error.message || 'Erro ao enviar para assinatura');
     },
   });
 

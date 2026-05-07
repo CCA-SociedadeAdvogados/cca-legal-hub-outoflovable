@@ -92,12 +92,18 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
 
   const getStepMessage = (step: ProcessingStep) => {
     switch (step) {
-      case 'uploading':  return 'A carregar ficheiro…';
-      case 'extracting': return 'A extrair texto do documento…';
-      case 'parsing':    return 'A analisar dados do contrato com IA…';
-      case 'complete':   return 'Extracção completa!';
-      case 'error':      return 'Erro no processamento';
-      default:           return '';
+      case 'uploading':
+        return 'A carregar ficheiro…';
+      case 'extracting':
+        return 'A extrair texto do documento…';
+      case 'parsing':
+        return 'A analisar dados do contrato com IA…';
+      case 'complete':
+        return 'Extracção completa!';
+      case 'error':
+        return 'Erro no processamento';
+      default:
+        return '';
     }
   };
 
@@ -128,9 +134,12 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         setProcessingStep('parsing');
         setProgress(70);
 
-        const { data: parseData, error: parseError } = await supabase.functions.invoke('parse-contract', {
-          body: { textContent },
-        });
+        const { data: parseData, error: parseError } = await supabase.functions.invoke(
+          'parse-contract',
+          {
+            body: { textContent },
+          },
+        );
 
         if (parseError) {
           let errorMessage = parseError.message;
@@ -139,7 +148,9 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
               const body = await parseError.context.json();
               if (body?.error) errorMessage = body.error;
             }
-          } catch { /* use original message */ }
+          } catch {
+            /* use original message */
+          }
           throw new Error(errorMessage);
         }
         if (parseData?.error) throw new Error(parseData.error);
@@ -148,7 +159,6 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         if (!extractedData) throw new Error('Não foi possível extrair dados do contrato');
 
         await finishExtraction(extractedData, parseData?.extractedText ?? textContent, file);
-
       } else {
         // ── PDF / Word: upload para storage temp, depois edge function ────
         // Evita enviar ficheiros grandes no corpo JSON (limite edge function)
@@ -168,18 +178,25 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         setProcessingStep('extracting');
         setProgress(50);
 
-        let parseData: any = null;
-        let parseError: any = null;
+        type ParseContractResponse = {
+          data?: { data?: ExtractedContractData; extractedText?: string; error?: string };
+          error?: { message: string; context?: { json?: () => Promise<{ error?: string }> } };
+        };
+        let parseData: ParseContractResponse['data'] = undefined;
+        let parseError: ParseContractResponse['error'] = undefined;
 
         try {
-          const result = await supabase.functions.invoke('parse-contract', {
+          const result = (await supabase.functions.invoke('parse-contract', {
             body: { storagePath: tempPath, fileName: file.name, mimeType: file.type },
-          });
+          })) as ParseContractResponse;
           parseData = result.data;
           parseError = result.error;
         } finally {
           // Limpar ficheiro temporário (melhor-esforço)
-          supabase.storage.from('contratos').remove([tempPath]).catch(() => {});
+          supabase.storage
+            .from('contratos')
+            .remove([tempPath])
+            .catch(() => {});
         }
 
         setProcessingStep('parsing');
@@ -192,7 +209,9 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
               const body = await parseError.context.json();
               if (body?.error) errorMessage = body.error;
             }
-          } catch { /* use original message */ }
+          } catch {
+            /* use original message */
+          }
           throw new Error(errorMessage);
         }
         if (parseData?.error) throw new Error(parseData.error);
@@ -202,11 +221,10 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
 
         await finishExtraction(extractedData, parseData?.extractedText ?? '', file);
       }
-
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error processing file:', err);
       setProcessingStep('error');
-      setError(err.message || 'Erro ao processar o ficheiro');
+      setError(err instanceof Error ? err.message : 'Erro ao processar o ficheiro');
       toast({
         title: 'Erro ao processar',
         description: err.message || 'Não foi possível extrair os dados do contrato',
@@ -229,7 +247,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
       description: `Confiança: ${confidenceDisplay} — A análise de risco será feita pelo CCA.`,
     });
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     onDataExtracted(extractedData, file, extractedText);
   };
 
@@ -276,7 +294,8 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
           </div>
           <h2 className="text-xl font-semibold mb-2">Carregar Contrato</h2>
           <p className="text-muted-foreground">
-            Carregue o documento e a IA extrairá os dados. A análise de risco será feita pelo agente CCA.
+            Carregue o documento e a IA extrairá os dados. A análise de risco será feita pelo agente
+            CCA.
           </p>
         </div>
 
@@ -319,7 +338,9 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
               <CheckCircle2 className="h-12 w-12 mx-auto text-green-500" />
               <div>
                 <p className="font-medium text-green-600">Extracção completa!</p>
-                <p className="text-sm text-muted-foreground mt-1">A redirecionar para o formulário…</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  A redirecionar para o formulário…
+                </p>
               </div>
             </div>
           ) : processingStep === 'error' ? (
@@ -335,9 +356,11 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
             </div>
           ) : (
             <div className="space-y-3">
-              <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${
-                isDragging ? 'bg-primary/20' : 'bg-muted'
-              }`}>
+              <div
+                className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center ${
+                  isDragging ? 'bg-primary/20' : 'bg-muted'
+                }`}
+              >
                 {isDragging ? (
                   <FileText className="h-6 w-6 text-primary" />
                 ) : (
@@ -346,7 +369,9 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
               </div>
               <div>
                 <p className="font-medium">
-                  {isDragging ? 'Largue o ficheiro aqui' : 'Arraste o contrato ou clique para selecionar'}
+                  {isDragging
+                    ? 'Largue o ficheiro aqui'
+                    : 'Arraste o contrato ou clique para selecionar'}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   PDF, Word (.docx) ou TXT (máx. 10 MB)
@@ -357,11 +382,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         </div>
 
         <div className="mt-6 flex justify-center">
-          <Button
-            variant="ghost"
-            onClick={onSkip}
-            disabled={isProcessing}
-          >
+          <Button variant="ghost" onClick={onSkip} disabled={isProcessing}>
             Preencher manualmente
           </Button>
         </div>

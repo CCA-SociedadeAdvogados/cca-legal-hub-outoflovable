@@ -19,9 +19,11 @@ function getDemoCredentials(): { email: string; password: string } {
 const DEMO_ORG_SLUG = "demo";
 const DEMO_ORG_NAME = "Organização Demo";
 
+// Edge Functions don't have DB types available; use SupabaseClient<Database> in main app.
+type SupabaseAdmin = ReturnType<typeof createClient>;
+
 async function ensureDemoTenant(
-  // Note: Edge Functions don't have DB types available here; use `any` to avoid `never` inference.
-  supabaseAdmin: any,
+  supabaseAdmin: SupabaseAdmin,
   userId: string,
   email: string | null,
 ) {
@@ -37,13 +39,14 @@ async function ensureDemoTenant(
     console.log(`[Demo-Login] Warning: Could not fetch old memberships: ${oldMembershipsError.message}`);
   } else if (oldMemberships && oldMemberships.length > 0) {
     // Remove memberships from non-demo organizations
-    const nonDemoMemberships = oldMemberships.filter(
-      (m: any) => m.organizations?.slug !== DEMO_ORG_SLUG
+    type MembershipRow = { id: string; organizations?: { slug?: string } | null };
+    const nonDemoMemberships = (oldMemberships as MembershipRow[]).filter(
+      (m) => m.organizations?.slug !== DEMO_ORG_SLUG
     );
-    
+
     if (nonDemoMemberships.length > 0) {
       console.log(`[Demo-Login] Removing ${nonDemoMemberships.length} old membership(s) from non-demo orgs`);
-      const idsToRemove = nonDemoMemberships.map((m: any) => m.id);
+      const idsToRemove = nonDemoMemberships.map((m) => m.id);
       const { error: deleteError } = await supabaseAdmin
         .from("organization_members")
         .delete()
@@ -300,7 +303,7 @@ Deno.serve(async (req) => {
 
     // Demo access must be instant: ensure onboarding + organization are auto-configured
     if (data.user?.id) {
-      await ensureDemoTenant(supabaseAdmin as any, data.user.id, data.user.email ?? null);
+      await ensureDemoTenant(supabaseAdmin, data.user.id, data.user.email ?? null);
     }
 
     console.log(`[Demo-Login] Success. User: ${data.user?.id}`);

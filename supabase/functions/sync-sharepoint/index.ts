@@ -40,6 +40,13 @@ interface GraphDriveItem {
   deleted?: { state: string };
 }
 
+interface GraphDrive {
+  id: string;
+  name: string;
+  webUrl: string;
+  driveType?: string;
+}
+
 // Get Microsoft Graph access token using client credentials flow
 async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
@@ -295,7 +302,7 @@ async function ensureFolderPath(
       if (listResp.ok) {
         const listData = await listResp.json();
         const found = (listData.value || []).find(
-          (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined,
+          (item: GraphDriveItem) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined,
         );
         if (found) {
           parentId = found.id;
@@ -652,7 +659,7 @@ serve(async (req) => {
       });
       if (!drivesResp.ok) throw new Error(`Drives query failed: ${drivesResp.status}`);
       const drivesData = await drivesResp.json();
-      const drives = (drivesData.value || []).map((d: any) => ({
+      const drives = ((drivesData.value || []) as GraphDrive[]).map((d) => ({
         id: d.id,
         name: d.name,
         webUrl: d.webUrl,
@@ -701,7 +708,7 @@ serve(async (req) => {
         throw new Error(`Browse failed: ${browseResp.status} - ${errText}`);
       }
       const browseData = await browseResp.json();
-      const folders = (browseData.value || []).map((item: any) => ({
+      const folders = ((browseData.value || []) as GraphDriveItem[]).map((item) => ({
         name: item.name,
         isFolder: !!item.folder,
         childCount: item.folder?.childCount ?? null,
@@ -767,7 +774,7 @@ serve(async (req) => {
         if (existsResp.ok) {
           const existsData = await existsResp.json();
           const existing = (existsData.value || []).find(
-            (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
+            (item: GraphDriveItem) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
           );
           if (existing) {
             parentId = existing.id;
@@ -807,7 +814,7 @@ serve(async (req) => {
             if (retryResp.ok) {
               const retryData = await retryResp.json();
               const found = (retryData.value || []).find(
-                (item: any) => item.folder !== undefined
+                (item: GraphDriveItem) => item.folder !== undefined
               );
               if (found) {
                 parentId = found.id;
@@ -919,7 +926,7 @@ serve(async (req) => {
             if (listResp.ok) {
               const listData = await listResp.json();
               const found = (listData.value || []).find(
-                (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
+                (item: GraphDriveItem) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
               );
               if (found) {
                 parentId = found.id;
@@ -1452,15 +1459,16 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
-    } catch (syncError: any) {
+    } catch (syncError) {
       console.error("Sync error:", syncError);
+      const syncMsg = syncError instanceof Error ? syncError.message : String(syncError);
 
       await supabase
         .from("sharepoint_config")
         .update({
           last_sync_at: new Date().toISOString(),
           last_sync_status: "error",
-          last_sync_error: syncError.message,
+          last_sync_error: syncMsg,
         })
         .eq("id", spConfig.id);
 
@@ -1470,17 +1478,18 @@ serve(async (req) => {
           .update({
             completed_at: new Date().toISOString(),
             status: "error",
-            error_message: syncError.message,
+            error_message: syncMsg,
           })
           .eq("id", logId);
       }
 
       throw syncError;
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in sync-sharepoint function:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: msg }),
       { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }

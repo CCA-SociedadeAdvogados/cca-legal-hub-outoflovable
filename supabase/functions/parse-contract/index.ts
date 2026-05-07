@@ -317,9 +317,10 @@ INSTRUÇÕES IMPORTANTES:
     let parsedData;
     try {
       parsedData = parseJSONResponse(content);
-    } catch (parseErr: any) {
+    } catch (parseErr) {
+      const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
       console.error("[parse-contract] Failed to parse AI response as JSON.");
-      console.error("[parse-contract] Parse error:", parseErr.message);
+      console.error("[parse-contract] Parse error:", msg);
       console.error("[parse-contract] Response length:", content.length, "chars");
       console.error("[parse-contract] Response start:", content.substring(0, 300));
       console.error("[parse-contract] Response end:", content.substring(content.length - 300));
@@ -337,10 +338,11 @@ INSTRUÇÕES IMPORTANTES:
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("[parse-contract] Error:", error);
+    const msg = error instanceof Error ? error.message : "Erro ao processar contrato";
     return new Response(
-      JSON.stringify({ error: error.message || "Erro ao processar contrato" }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
@@ -350,11 +352,25 @@ INSTRUÇÕES IMPORTANTES:
 async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string; isScanned: boolean }> {
   console.log("[parse-contract] Extracting text from PDF, size:", fileBytes.length);
 
-  let pdfjs: any;
+  type PDFJSLib = {
+    GlobalWorkerOptions: { workerSrc: string };
+    getDocument: (options: { data: Uint8Array }) => {
+      promise: Promise<{
+        numPages: number;
+        getPage: (n: number) => Promise<{
+          getTextContent: () => Promise<{ items: { str: string }[] }>;
+        }>;
+      }>;
+    };
+  };
+  let pdfjs: PDFJSLib;
   try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas");
-  } catch (importErr: any) {
-    console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
+    pdfjs = (await import(
+      "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas"
+    )) as unknown as PDFJSLib;
+  } catch (importErr) {
+    const msg = importErr instanceof Error ? importErr.message : String(importErr);
+    console.error("[parse-contract] Failed to import pdfjs-dist:", msg);
     throw new Error(
       "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt.",
     );
@@ -371,7 +387,7 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const pageText = content.items
-      .map((item: any) => item.str)
+      .map((item) => item.str)
       .join(" ");
     pages.push(pageText);
   }
@@ -404,8 +420,12 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
     const zipReader = new ZipReader(new BlobReader(blob));
     const entries = await zipReader.getEntries();
 
-    const documentEntry = entries.find(
-      (e: any) => e.filename === "word/document.xml" || e.filename === "word\\document.xml",
+    type ZipEntry = {
+      filename: string;
+      getData?: (writer: unknown) => Promise<string>;
+    };
+    const documentEntry = (entries as ZipEntry[]).find(
+      (e) => e.filename === "word/document.xml" || e.filename === "word\\document.xml",
     );
 
     if (!documentEntry || !documentEntry.getData) {
@@ -424,7 +444,7 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
 
     console.log("[parse-contract] Word text extracted, length:", text.length);
     return text;
-  } catch (error: any) {
+  } catch (error) {
     console.error("[parse-contract] Error extracting text from Word:", error);
 
     if (fileName?.endsWith(".doc") && !fileName?.endsWith(".docx")) {

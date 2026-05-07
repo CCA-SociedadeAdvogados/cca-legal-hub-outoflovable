@@ -1,7 +1,21 @@
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheck, Clock, AlertTriangle, XCircle, Loader2, HelpCircle } from 'lucide-react';
+import {
+  ShieldCheck,
+  Clock,
+  AlertTriangle,
+  XCircle,
+  Loader2,
+  HelpCircle,
+  type LucideIcon,
+} from 'lucide-react';
 
-export type ValidationStatusType = 'none' | 'draft_only' | 'validating' | 'validated' | 'needs_review' | 'failed';
+export type ValidationStatusType =
+  | 'none'
+  | 'draft_only'
+  | 'validating'
+  | 'validated'
+  | 'needs_review'
+  | 'failed';
 
 interface ValidationBadgeProps {
   status: ValidationStatusType;
@@ -9,13 +23,16 @@ interface ValidationBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<ValidationStatusType, {
-  icon: any;
-  label: string;
-  compactLabel: string;
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
-  className: string;
-}> = {
+const statusConfig: Record<
+  ValidationStatusType,
+  {
+    icon: LucideIcon;
+    label: string;
+    compactLabel: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    className: string;
+  }
+> = {
   none: {
     icon: HelpCircle,
     label: 'Sem extracção',

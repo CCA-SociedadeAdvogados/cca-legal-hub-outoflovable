@@ -166,7 +166,7 @@ ${JSON.stringify(contrato, null, 2)}`;
       contrato_id: contract_id,
       source: "executive_summary",
       status: "success",
-      extraction_data: summaryData as any,
+      extraction_data: summaryData,
       job_started_at: new Date().toISOString(),
       job_completed_at: new Date().toISOString(),
     }, { onConflict: "contrato_id,source" });
@@ -175,10 +175,11 @@ ${JSON.stringify(contrato, null, 2)}`;
       JSON.stringify({ success: true, data: summaryData, cached: false }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("[executive-summary] Error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }

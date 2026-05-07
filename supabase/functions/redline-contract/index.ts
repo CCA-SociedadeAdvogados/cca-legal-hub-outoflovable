@@ -183,7 +183,7 @@ Classificações:
       contrato_id: contract_id,
       source: "redline",
       status: "success",
-      extraction_data: redlineData as any,
+      extraction_data: redlineData,
       job_started_at: new Date().toISOString(),
       job_completed_at: new Date().toISOString(),
     }, { onConflict: "contrato_id,source" });
@@ -192,10 +192,10 @@ Classificações:
       JSON.stringify({ success: true, data: redlineData, cached: false }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("[redline-contract] Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }

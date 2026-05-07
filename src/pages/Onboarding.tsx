@@ -6,9 +6,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Shield, Building2, User, CreditCard, Check, ArrowRight, ArrowLeft, Loader2, Sparkles, AlertCircle, RefreshCw, LogOut } from 'lucide-react';
+import {
+  Shield,
+  Building2,
+  User,
+  CreditCard,
+  Check,
+  ArrowRight,
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+  AlertCircle,
+  RefreshCw,
+  LogOut,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -82,19 +101,32 @@ export default function Onboarding() {
     setIsLoading(true);
     try {
       // Use upsert to handle case where profile might not exist
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
+      const { error } = await supabase.from('profiles').upsert(
+        {
           id: user?.id,
           email: user?.email,
           nome_completo: profileData.nome_completo,
-          departamento: profileData.departamento as "comercial" | "financeiro" | "it" | "juridico" | "marketing" | "operacoes" | "outro" | "rh" | null || null,
-        }, { onConflict: 'id' });
+          departamento:
+            (profileData.departamento as
+              | 'comercial'
+              | 'financeiro'
+              | 'it'
+              | 'juridico'
+              | 'marketing'
+              | 'operacoes'
+              | 'outro'
+              | 'rh'
+              | null) || null,
+        },
+        { onConflict: 'id' },
+      );
 
       if (error) throw error;
       setCurrentStep(1);
-    } catch (error: any) {
-      toast.error('Erro ao guardar perfil: ' + error.message);
+    } catch (error) {
+      toast.error(
+        'Erro ao guardar perfil: ' + (error instanceof Error ? error.message : String(error)),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -117,8 +149,11 @@ export default function Onboarding() {
     try {
       await switchOrganization.mutateAsync(selectedOrganizationId);
       setCurrentStep(2);
-    } catch (error: any) {
-      toast.error('Erro ao selecionar organização: ' + error.message);
+    } catch (error) {
+      toast.error(
+        'Erro ao selecionar organização: ' +
+          (error instanceof Error ? error.message : String(error)),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +179,11 @@ export default function Onboarding() {
 
         if (freshProfile?.current_organization_id) {
           try {
-            await syncDepartamento(user.id, freshProfile.current_organization_id, profileData.departamento);
+            await syncDepartamento(
+              user.id,
+              freshProfile.current_organization_id,
+              profileData.departamento,
+            );
           } catch (syncError) {
             // Non-blocking — department sync is best-effort during onboarding
             console.warn('[Onboarding] Failed to sync user_departments:', syncError);
@@ -157,8 +196,11 @@ export default function Onboarding() {
 
       toast.success('Configuração concluída com sucesso!');
       navigate('/');
-    } catch (error: any) {
-      toast.error('Erro ao finalizar configuração: ' + error.message);
+    } catch (error) {
+      toast.error(
+        'Erro ao finalizar configuração: ' +
+          (error instanceof Error ? error.message : String(error)),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -221,8 +263,8 @@ export default function Onboarding() {
                   index === currentStep
                     ? 'bg-primary text-primary-foreground'
                     : index < currentStep
-                    ? 'bg-primary/20 text-primary'
-                    : 'bg-muted text-muted-foreground'
+                      ? 'bg-primary/20 text-primary'
+                      : 'bg-muted text-muted-foreground'
                 }`}
               >
                 {index < currentStep ? (
@@ -234,9 +276,7 @@ export default function Onboarding() {
               </div>
               {index < STEPS.length - 1 && (
                 <div
-                  className={`w-8 h-0.5 mx-2 ${
-                    index < currentStep ? 'bg-primary' : 'bg-muted'
-                  }`}
+                  className={`w-8 h-0.5 mx-2 ${index < currentStep ? 'bg-primary' : 'bg-muted'}`}
                 />
               )}
             </div>
@@ -267,7 +307,9 @@ export default function Onboarding() {
                   <Input
                     id="nome"
                     value={profileData.nome_completo}
-                    onChange={(e) => setProfileData({ ...profileData, nome_completo: e.target.value })}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, nome_completo: e.target.value })
+                    }
                     placeholder="O seu nome completo"
                   />
                 </div>
@@ -275,13 +317,24 @@ export default function Onboarding() {
                   <Label htmlFor="departamento">Departamento *</Label>
                   <Select
                     value={profileData.departamento}
-                    onValueChange={(value) => setProfileData({ ...profileData, departamento: value })}
+                    onValueChange={(value) =>
+                      setProfileData({ ...profileData, departamento: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o departamento" />
                     </SelectTrigger>
                     <SelectContent>
-                      {['juridico', 'comercial', 'financeiro', 'rh', 'it', 'operacoes', 'marketing', 'outro'].map((dept) => (
+                      {[
+                        'juridico',
+                        'comercial',
+                        'financeiro',
+                        'rh',
+                        'it',
+                        'operacoes',
+                        'marketing',
+                        'outro',
+                      ].map((dept) => (
                         <SelectItem key={dept} value={dept}>
                           {t(`departments.${dept}`)}
                         </SelectItem>
@@ -308,7 +361,8 @@ export default function Onboarding() {
                         <span className="font-medium">Organização Atribuída</span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Você foi adicionado à organização pelo administrador. Clique em continuar para prosseguir.
+                        Você foi adicionado à organização pelo administrador. Clique em continuar
+                        para prosseguir.
                       </p>
                     </div>
                     {userMemberships && userMemberships.length > 0 && (
@@ -316,7 +370,9 @@ export default function Onboarding() {
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-primary" />
                           <span className="font-medium">
-                            {userMemberships.find(m => m.organization_id === profile.current_organization_id)?.organizations.name || 'Organização'}
+                            {userMemberships.find(
+                              (m) => m.organization_id === profile.current_organization_id,
+                            )?.organizations.name || 'Organização'}
                           </span>
                         </div>
                       </div>
@@ -335,7 +391,10 @@ export default function Onboarding() {
                         </SelectTrigger>
                         <SelectContent>
                           {userMemberships?.map((membership) => (
-                            <SelectItem key={membership.organization_id} value={membership.organization_id}>
+                            <SelectItem
+                              key={membership.organization_id}
+                              value={membership.organization_id}
+                            >
                               <div className="flex items-center gap-2">
                                 <Building2 className="h-4 w-4" />
                                 {membership.organizations.name}
@@ -350,7 +409,12 @@ export default function Onboarding() {
                         <div className="flex items-center gap-2 text-primary">
                           <Check className="h-5 w-5" />
                           <span className="font-medium">
-                            Organização selecionada: {userMemberships?.find(m => m.organization_id === selectedOrganizationId)?.organizations.name}
+                            Organização selecionada:{' '}
+                            {
+                              userMemberships?.find(
+                                (m) => m.organization_id === selectedOrganizationId,
+                              )?.organizations.name
+                            }
                           </span>
                         </div>
                       </div>
@@ -361,7 +425,8 @@ export default function Onboarding() {
                     <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="font-semibold mb-2">Sem Organização Atribuída</h3>
                     <p className="text-muted-foreground mb-6">
-                      Ainda não foi adicionado a nenhuma organização. Por favor contacte o administrador para receber acesso.
+                      Ainda não foi adicionado a nenhuma organização. Por favor contacte o
+                      administrador para receber acesso.
                     </p>
                     <div className="flex items-center justify-center gap-3">
                       <Button variant="outline" onClick={handleRefreshMemberships}>
@@ -423,7 +488,9 @@ export default function Onboarding() {
                               ) : (
                                 <>
                                   €{plan.price_monthly}
-                                  <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                                  <span className="text-sm font-normal text-muted-foreground">
+                                    /mês
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -451,7 +518,8 @@ export default function Onboarding() {
                       <span className="font-medium">Planos não disponíveis de momento</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Pode continuar sem selecionar um plano. Poderá escolher um plano mais tarde nas definições.
+                      Pode continuar sem selecionar um plano. Poderá escolher um plano mais tarde
+                      nas definições.
                     </p>
                   </div>
                 )}
@@ -469,11 +537,21 @@ export default function Onboarding() {
                 Voltar
               </Button>
               {/* Only show continue button if user has memberships or pre-assigned org in step 1, or in other steps */}
-              {(currentStep !== 1 || hasMemberships || isSSOUser || profile?.current_organization_id) && (
-                <Button onClick={handleNext} disabled={isLoading || (currentStep === 1 && !selectedOrganizationId && !isSSOUser && !profile?.current_organization_id)}>
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
+              {(currentStep !== 1 ||
+                hasMemberships ||
+                isSSOUser ||
+                profile?.current_organization_id) && (
+                <Button
+                  onClick={handleNext}
+                  disabled={
+                    isLoading ||
+                    (currentStep === 1 &&
+                      !selectedOrganizationId &&
+                      !isSSOUser &&
+                      !profile?.current_organization_id)
+                  }
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   {currentStep === STEPS.length - 1 ? 'Concluir' : 'Continuar'}
                   {!isLoading && <ArrowRight className="h-4 w-4 ml-2" />}
                 </Button>

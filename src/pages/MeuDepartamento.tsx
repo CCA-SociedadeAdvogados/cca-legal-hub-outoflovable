@@ -18,35 +18,47 @@ export default function MeuDepartamento() {
   const { legalHubProfile, isLoading: profileLoading } = useLegalHubProfile();
   const { userDepartments, isLoading: deptLoading } = useUserDepartments(
     user?.id ?? null,
-    currentOrganization?.id ?? null
+    currentOrganization?.id ?? null,
   );
   const { departments: allDepts } = useDepartments(currentOrganization?.id ?? null);
 
   // Get members of user's departments
   const deptIds = userDepartments?.map((ud) => ud.department_id) ?? [];
 
+  type DeptMemberProfile = {
+    id: string;
+    nome_completo: string | null;
+    email: string | null;
+    avatar_url: string | null;
+  };
+  type DeptMemberRow = {
+    user_id: string;
+    department_id: string;
+    profile?: DeptMemberProfile;
+  };
+
   const { data: deptMembers, isLoading: membersLoading } = useQuery({
     queryKey: ['dept-members', deptIds],
     staleTime: 30 * 1000,
-    queryFn: async () => {
+    queryFn: async (): Promise<DeptMemberRow[]> => {
       if (!currentOrganization?.id || deptIds.length === 0) return [];
-      const { data: ud, error } = await (supabase as any)
+      const { data: ud, error } = await supabase
         .from('user_departments')
         .select('user_id, department_id')
         .in('department_id', deptIds);
       if (error) throw error;
 
-      const userIds = [...new Set((ud || []).map((r: any) => r.user_id))];
+      const userIds = [...new Set((ud || []).map((r) => r.user_id))];
       if (userIds.length === 0) return [];
 
-      const { data: profiles } = await (supabase as any)
+      const { data: profiles } = (await supabase
         .from('profiles_safe')
         .select('id, nome_completo, email, avatar_url')
-        .in('id', userIds);
+        .in('id', userIds)) as { data: DeptMemberProfile[] | null };
 
-      return (ud || []).map((r: any) => ({
+      return (ud || []).map((r) => ({
         ...r,
-        profile: (profiles || []).find((p: any) => p.id === r.user_id),
+        profile: (profiles || []).find((p) => p.id === r.user_id),
       }));
     },
     enabled: deptIds.length > 0 && !!currentOrganization?.id,
@@ -77,7 +89,8 @@ export default function MeuDepartamento() {
         <div>
           <h1 className="text-3xl font-bold font-serif">O Meu Departamento</h1>
           <p className="text-muted-foreground mt-1">
-            Conteúdo e membros do{myDepts.length > 1 ? 's' : ''} seu{myDepts.length > 1 ? 's' : ''} departamento{myDepts.length > 1 ? 's' : ''}.
+            Conteúdo e membros do{myDepts.length > 1 ? 's' : ''} seu{myDepts.length > 1 ? 's' : ''}{' '}
+            departamento{myDepts.length > 1 ? 's' : ''}.
           </p>
         </div>
 
@@ -101,7 +114,7 @@ export default function MeuDepartamento() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {myDepts.map((dept) => {
                 const membersInDept = (deptMembers || []).filter(
-                  (m: any) => m.department_id === dept.id
+                  (m) => m.department_id === dept.id,
                 );
                 return (
                   <Card key={dept.id}>
@@ -111,7 +124,9 @@ export default function MeuDepartamento() {
                         {dept.name}
                       </CardTitle>
                       {dept.is_system && (
-                        <Badge variant="secondary" className="w-fit text-xs">Sistema</Badge>
+                        <Badge variant="secondary" className="w-fit text-xs">
+                          Sistema
+                        </Badge>
                       )}
                     </CardHeader>
                     <CardContent>
@@ -131,9 +146,7 @@ export default function MeuDepartamento() {
                   <Users className="h-5 w-5" />
                   Membros
                 </CardTitle>
-                <CardDescription>
-                  Utilizadores nos seus departamentos
-                </CardDescription>
+                <CardDescription>Utilizadores nos seus departamentos</CardDescription>
               </CardHeader>
               <CardContent>
                 {(deptMembers || []).length === 0 ? (
@@ -142,16 +155,15 @@ export default function MeuDepartamento() {
                   <div className="space-y-3">
                     {/* Deduplicate by user_id */}
                     {[
-                      ...new Map(
-                        (deptMembers || []).map((m: any) => [m.user_id, m])
-                      ).values(),
-                    ].map((m: any) => (
-                      <div key={m.user_id} className="flex items-center gap-3 p-3 border rounded-lg">
+                      ...new Map((deptMembers || []).map((m) => [m.user_id, m] as const)).values(),
+                    ].map((m) => (
+                      <div
+                        key={m.user_id}
+                        className="flex items-center gap-3 p-3 border rounded-lg"
+                      >
                         <Avatar>
                           <AvatarImage src={m.profile?.avatar_url} />
-                          <AvatarFallback>
-                            {m.profile?.nome_completo?.[0] || '?'}
-                          </AvatarFallback>
+                          <AvatarFallback>{m.profile?.nome_completo?.[0] || '?'}</AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium text-sm">

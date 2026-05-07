@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
           const client = Deno.createHttpClient({
             caCerts: [], // Accept any certificate
           });
-          (fetchOptions as any).client = client;
+          (fetchOptions as RequestInit & { client?: unknown }).client = client;
         }
         
         const response = await fetch(item.url, fetchOptions);

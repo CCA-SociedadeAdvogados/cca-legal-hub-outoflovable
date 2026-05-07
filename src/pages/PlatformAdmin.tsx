@@ -1205,11 +1205,9 @@ export default function PlatformAdmin() {
                         size="sm"
                         disabled={provisionSharePoint.isPending}
                         onClick={() => {
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                          const org = allOrganizations?.find((o: any) => o.id === editingOrg.id);
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          const org = allOrganizations?.find((o) => o.id === editingOrg.id);
                           const clientCode =
-                            (org as any)?.client_code ?? editingOrg.id.slice(0, 8).toUpperCase();
+                            org?.client_code ?? editingOrg.id.slice(0, 8).toUpperCase();
                           provisionSharePoint.mutate({
                             organizationId: editingOrg.id,
                             clientCode,

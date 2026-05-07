@@ -232,10 +232,11 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("[provision-sharepoint] Error:", error);
+    const msg = error instanceof Error ? error.message : "Erro ao provisionar SharePoint";
     return new Response(
-      JSON.stringify({ error: error.message || "Erro ao provisionar SharePoint" }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }

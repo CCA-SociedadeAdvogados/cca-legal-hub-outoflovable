@@ -3,6 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 import { corsHeaders as _baseCorsHeaders } from "../_shared/cors.ts";
 
+type SupabaseAdmin = ReturnType<typeof createClient>;
+
 function getCorsHeaders(req: Request): Record<string, string> {
   return {
     ..._baseCorsHeaders(req),
@@ -174,7 +176,7 @@ async function findJvrisFileDownloadUrl(graphToken: string): Promise<string | nu
  * Env var adicional: CCA_JVRIS_ORGS_FILE (default: "Jvris_Clientes")
  */
 // deno-lint-ignore no-explicit-any
-async function syncOrgsJvrisIdFromSharePoint(supabase: any): Promise<void> {
+async function syncOrgsJvrisIdFromSharePoint(supabase: SupabaseAdmin): Promise<void> {
   try {
     const orgsFileName = Deno.env.get("CCA_JVRIS_ORGS_FILE") || "Jvris_Clientes";
 
@@ -452,7 +454,7 @@ function decodeIdToken(idToken: string): Record<string, unknown> | null {
 
 // Generate and store state in database for persistence across instances
 // deno-lint-ignore no-explicit-any
-async function generateAndStoreState(supabase: any): Promise<{ state: string; nonce: string }> {
+async function generateAndStoreState(supabase: SupabaseAdmin): Promise<{ state: string; nonce: string }> {
   const state = crypto.randomUUID();
   const nonce = crypto.randomUUID();
   
@@ -472,7 +474,7 @@ async function generateAndStoreState(supabase: any): Promise<{ state: string; no
 // Validate and consume state (one-time use) - prevents replay attacks
 // Returns the stored nonce so the caller can validate it against the ID token claim
 // deno-lint-ignore no-explicit-any
-async function validateAndConsumeState(supabase: any, state: string): Promise<{ valid: boolean; nonce?: string; error?: string }> {
+async function validateAndConsumeState(supabase: SupabaseAdmin, state: string): Promise<{ valid: boolean; nonce?: string; error?: string }> {
   // Delete and return the state atomically - ensures one-time use
   const { data, error } = await supabase
     .from("sso_states")

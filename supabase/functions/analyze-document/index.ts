@@ -6,29 +6,40 @@ const AI_MODELS = [
   { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
 ];
 
+type ContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+type ChatMessage = { role: string; content: string | ContentPart[] };
+type AnthropicBlock =
+  | { type: "text"; text: string }
+  | {
+      type: "document";
+      source: { type: "base64"; media_type: string; data: string };
+    };
+
 async function callAIWithFallback(
   apiKey: string,
-  messages: Array<{ role: string; content: any }>,
+  messages: ChatMessage[],
   functionName: string
 ): Promise<{ content: string; model: string }> {
   let lastError: Error | null = null;
 
   // Separate system message from user messages
-  const systemMsg = messages.find((m: any) => m.role === "system");
-  const userMsgs = messages.filter((m: any) => m.role !== "system");
+  const systemMsg = messages.find((m) => m.role === "system");
+  const userMsgs = messages.filter((m) => m.role !== "system");
 
   for (const { model, name } of AI_MODELS) {
     try {
       console.log(`[${functionName}] Trying ${name} (${model})...`);
 
       // Convert messages to Anthropic format
-      const anthropicMessages = userMsgs.map((m: any) => {
+      const anthropicMessages = userMsgs.map((m) => {
         if (typeof m.content === "string") {
           return { role: "user" as const, content: m.content };
         }
         // Handle multimodal content (PDF as base64)
         if (Array.isArray(m.content)) {
-          const blocks: any[] = [];
+          const blocks: AnthropicBlock[] = [];
           for (const part of m.content) {
             if (part.type === "text") {
               blocks.push({ type: "text", text: part.text });
@@ -97,9 +108,10 @@ async function callAIWithFallback(
 
       console.log(`[${functionName}] Success with ${name}`);
       return { content, model: name };
-    } catch (error: any) {
-      console.warn(`[${functionName}] ${name} exception:`, error.message);
-      lastError = error;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.warn(`[${functionName}] ${name} exception:`, msg);
+      lastError = error instanceof Error ? error : new Error(msg);
       continue;
     }
   }
@@ -133,7 +145,7 @@ serve(async (req) => {
     }
 
     const systemPrompt = getSystemPrompt(type, language);
-    const messages: any[] = [{ role: "system", content: systemPrompt }];
+    const messages: ChatMessage[] = [{ role: "system", content: systemPrompt }];
     let textContent = data.textContent || "";
 
     // If file content is provided, handle based on type
@@ -268,10 +280,11 @@ serve(async (req) => {
       JSON.stringify({ success: true, data: parsedData, extractedText: textContent || extractedTextMsg }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in analyze-document function:", error);
+    const msg = error instanceof Error ? error.message : "Erro ao processar análise";
     return new Response(
-      JSON.stringify({ error: error.message || "Erro ao processar análise" }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }

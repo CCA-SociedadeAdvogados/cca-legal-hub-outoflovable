@@ -114,7 +114,11 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
-    const { contract_id, extraction_draft } = await req.json();
+    const body = (await req.json()) as {
+      contract_id?: string;
+      extraction_draft?: Record<string, unknown>;
+    };
+    const { contract_id, extraction_draft } = body;
 
     if (!contract_id || !extraction_draft) {
       return new Response(
@@ -189,26 +193,38 @@ Por favor valide a consistência e corrija quaisquer erros nos campos críticos.
 
     console.log(`[validate-contract] Calling Claude Sonnet for validation...`);
 
-    let canonicalResult: any;
+    type CanonicalResult = {
+      extraction_canonical?: Record<string, unknown>;
+      status?: string;
+      confidence?: number | null;
+      review_notes?: string | null;
+      evidence?: unknown[];
+      classificacao_juridica?: unknown;
+    };
+
+    let canonicalResult: CanonicalResult;
     try {
       const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 2048);
-      canonicalResult = parseJSONResponse(content) as any;
-    } catch (claudeErr: any) {
-      console.error(`[validate-contract] Claude validation failed:`, claudeErr.message);
+      canonicalResult = parseJSONResponse(content) as CanonicalResult;
+    } catch (claudeErr) {
+      const claudeMsg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr);
+      console.error(`[validate-contract] Claude validation failed:`, claudeMsg);
 
       // Em caso de falha, usar o draft como canonical (melhor que bloquear)
       canonicalResult = {
         extraction_canonical: extraction_draft,
         status: "draft_only",
         confidence: 70,
-        review_notes: `Validação automática falhou: ${claudeErr.message}. A usar extracção inicial.`,
+        review_notes: `Validação automática falhou: ${claudeMsg}. A usar extracção inicial.`,
         evidence: [],
       };
     }
 
     // === CALCULAR DIFF ===
-    const canonicalData = canonicalResult.extraction_canonical || extraction_draft;
-    const diff: Record<string, any> = {};
+    const canonicalData = (canonicalResult.extraction_canonical ||
+      extraction_draft) as Record<string, unknown>;
+    type DiffEntry = { draft: unknown; canonical: unknown };
+    const diff: Record<string, DiffEntry> = {};
 
     for (const field of CRITICAL_FIELDS) {
       const d = JSON.stringify(extraction_draft?.[field]);
@@ -263,11 +279,11 @@ Por favor valide a consistência e corrija quaisquer erros nos campos críticos.
         user_id: "00000000-0000-0000-0000-000000000000",
         old_data: {
           source: "ai_extraction",
-          fields: Object.fromEntries(Object.entries(diff).map(([k, v]: [string, any]) => [k, v.draft])),
+          fields: Object.fromEntries(Object.entries(diff).map(([k, v]) => [k, v.draft])),
         },
         new_data: {
           source: "claude_validation",
-          fields: Object.fromEntries(Object.entries(diff).map(([k, v]: [string, any]) => [k, v.canonical])),
+          fields: Object.fromEntries(Object.entries(diff).map(([k, v]) => [k, v.canonical])),
         },
         metadata: { diff_count: Object.keys(diff).length, critical_fields: Object.keys(diff) },
       }).catch((e) => console.warn("[validate-contract] Audit log insert failed:", e));
@@ -285,10 +301,10 @@ Por favor valide a consistência e corrija quaisquer erros nos campos críticos.
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("[validate-contract] Unhandled error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }

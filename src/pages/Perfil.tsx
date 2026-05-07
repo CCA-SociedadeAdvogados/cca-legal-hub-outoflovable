@@ -22,7 +22,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 
-type Departamento = 'comercial' | 'operacoes' | 'it' | 'rh' | 'financeiro' | 'juridico' | 'marketing' | 'outro';
+type Departamento =
+  | 'comercial'
+  | 'operacoes'
+  | 'it'
+  | 'rh'
+  | 'financeiro'
+  | 'juridico'
+  | 'marketing'
+  | 'outro';
 
 export default function Perfil() {
   const { t, i18n } = useTranslation();
@@ -47,7 +55,7 @@ export default function Perfil() {
   });
 
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Password change state
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -60,7 +68,9 @@ export default function Perfil() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  const getPasswordStrength = (password: string): { level: 'weak' | 'medium' | 'strong'; score: number } => {
+  const getPasswordStrength = (
+    password: string,
+  ): { level: 'weak' | 'medium' | 'strong'; score: number } => {
     let score = 0;
     if (password.length >= 8) score += 25;
     if (password.length >= 12) score += 15;
@@ -68,7 +78,7 @@ export default function Perfil() {
     if (/[A-Z]/.test(password)) score += 15;
     if (/[0-9]/.test(password)) score += 15;
     if (/[^a-zA-Z0-9]/.test(password)) score += 15;
-    
+
     if (score < 40) return { level: 'weak', score };
     if (score < 70) return { level: 'medium', score };
     return { level: 'strong', score };
@@ -126,10 +136,10 @@ export default function Perfil() {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t('settings.saveError'),
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     } finally {
@@ -150,10 +160,10 @@ export default function Perfil() {
       toast({
         title: t('profile.resetPasswordSent'),
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: t('settings.saveError'),
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: 'destructive',
       });
     }
@@ -172,12 +182,12 @@ export default function Perfil() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     await updateProfile.mutateAsync({
       nome_completo: formData.nome_completo || null,
       departamento: formData.departamento || null,
     });
-    
+
     setIsEditing(false);
   };
 
@@ -196,7 +206,7 @@ export default function Perfil() {
     if (profile?.nome_completo) {
       return profile.nome_completo
         .split(' ')
-        .map(n => n[0])
+        .map((n) => n[0])
         .join('')
         .toUpperCase()
         .slice(0, 2);
@@ -222,9 +232,7 @@ export default function Perfil() {
         {/* Page Header */}
         <div>
           <h1 className="text-3xl font-bold font-serif">{t('profile.title')}</h1>
-          <p className="text-muted-foreground mt-1">
-            {t('profile.subtitle')}
-          </p>
+          <p className="text-muted-foreground mt-1">{t('profile.subtitle')}</p>
         </div>
 
         {/* Avatar Section */}
@@ -278,9 +286,7 @@ export default function Perfil() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>{t('profile.personalInfo')}</CardTitle>
-                <CardDescription>
-                  {t('profile.updateInfo')}
-                </CardDescription>
+                <CardDescription>{t('profile.updateInfo')}</CardDescription>
               </div>
               {!isEditing && (
                 <Button variant="outline" onClick={() => setIsEditing(true)}>
@@ -301,12 +307,12 @@ export default function Perfil() {
                     placeholder={t('profile.fullNamePlaceholder')}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="departamento">{t('profile.department')}</Label>
                   <Select
                     value={formData.departamento}
-                    onValueChange={(value: Departamento) => 
+                    onValueChange={(value: Departamento) =>
                       setFormData({ ...formData, departamento: value })
                     }
                   >
@@ -315,22 +321,22 @@ export default function Perfil() {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(DEPARTAMENTO_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button type="submit" disabled={updateProfile.isPending}>
-                    {updateProfile.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
+                    {updateProfile.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t('common.save')}
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => {
                       setIsEditing(false);
                       if (profile) {
@@ -356,7 +362,7 @@ export default function Perfil() {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Mail className="h-5 w-5 text-muted-foreground" />
                   <div>
@@ -364,26 +370,28 @@ export default function Perfil() {
                     <p className="font-medium">{profile?.email || user?.email}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Building2 className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">{t('profile.department')}</p>
                     <p className="font-medium">
-                      {profile?.departamento 
-                        ? DEPARTAMENTO_LABELS[profile.departamento] 
+                      {profile?.departamento
+                        ? DEPARTAMENTO_LABELS[profile.departamento]
                         : t('profile.notDefined')}
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <Calendar className="h-5 w-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm text-muted-foreground">{t('profile.memberSince')}</p>
                     <p className="font-medium">
-                      {profile?.created_at 
-                        ? format(new Date(profile.created_at), "d MMMM yyyy", { locale: dateLocale })
+                      {profile?.created_at
+                        ? format(new Date(profile.created_at), 'd MMMM yyyy', {
+                            locale: dateLocale,
+                          })
                         : t('profile.notAvailable')}
                     </p>
                   </div>
@@ -400,9 +408,7 @@ export default function Perfil() {
               <Lock className="h-5 w-5 text-muted-foreground" />
               <div>
                 <CardTitle>{t('profile.security')}</CardTitle>
-                <CardDescription>
-                  {t('profile.securityDescription')}
-                </CardDescription>
+                <CardDescription>{t('profile.securityDescription')}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -416,7 +422,9 @@ export default function Perfil() {
                     id="currentPassword"
                     type={showCurrentPassword ? 'text' : 'password'}
                     value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, currentPassword: e.target.value })
+                    }
                     placeholder="••••••••"
                     className="pr-10"
                   />
@@ -425,7 +433,11 @@ export default function Perfil() {
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showCurrentPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -438,7 +450,9 @@ export default function Perfil() {
                     id="newPassword"
                     type={showNewPassword ? 'text' : 'password'}
                     value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, newPassword: e.target.value })
+                    }
                     placeholder="••••••••"
                     className="pr-10"
                   />
@@ -457,12 +471,14 @@ export default function Perfil() {
                         {t(`profile.passwordStrength.${passwordStrength.level}`)}
                       </span>
                     </div>
-                    <Progress 
-                      value={passwordStrength.score} 
+                    <Progress
+                      value={passwordStrength.score}
                       className={`h-1 ${
-                        passwordStrength.level === 'weak' ? '[&>div]:bg-destructive' : 
-                        passwordStrength.level === 'medium' ? '[&>div]:bg-yellow-500' : 
-                        '[&>div]:bg-green-500'
+                        passwordStrength.level === 'weak'
+                          ? '[&>div]:bg-destructive'
+                          : passwordStrength.level === 'medium'
+                            ? '[&>div]:bg-yellow-500'
+                            : '[&>div]:bg-green-500'
                       }`}
                     />
                   </div>
@@ -477,7 +493,9 @@ export default function Perfil() {
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                    onChange={(e) =>
+                      setPasswordData({ ...passwordData, confirmPassword: e.target.value })
+                    }
                     placeholder="••••••••"
                     className="pr-10"
                   />
@@ -486,14 +504,16 @@ export default function Perfil() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
-              {passwordError && (
-                <p className="text-sm text-destructive">{passwordError}</p>
-              )}
+              {passwordError && <p className="text-sm text-destructive">{passwordError}</p>}
 
               <div className="flex items-center justify-between pt-2">
                 <Button
@@ -505,9 +525,7 @@ export default function Perfil() {
                   {t('profile.forgotPasswordLink')}
                 </Button>
                 <Button type="submit" disabled={isChangingPassword}>
-                  {isChangingPassword && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
+                  {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {t('profile.changePassword')}
                 </Button>
               </div>

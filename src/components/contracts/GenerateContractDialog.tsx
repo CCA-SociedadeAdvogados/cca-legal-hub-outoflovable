@@ -1,57 +1,69 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { useGenerateContract } from "@/hooks/useGenerateContract";
-import { Wand2, Copy, Check, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { useGenerateContract, type GenerateContractFields } from '@/hooks/useGenerateContract';
+import { Wand2, Copy, Check, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const TEMPLATES = [
-  { value: "nda", label: "NDA — Acordo de Confidencialidade" },
-  { value: "prestacao_servicos", label: "Prestação de Serviços" },
-  { value: "saas", label: "SaaS" },
-  { value: "fornecimento", label: "Fornecimento de Bens" },
-  { value: "trabalho", label: "Contrato de Trabalho" },
-  { value: "consultoria", label: "Consultoria" },
-  { value: "parceria", label: "Parceria Comercial" },
-  { value: "arrendamento", label: "Arrendamento (NRAU)" },
-  { value: "licenciamento", label: "Licenciamento de PI" },
+  { value: 'nda', label: 'NDA — Acordo de Confidencialidade' },
+  { value: 'prestacao_servicos', label: 'Prestação de Serviços' },
+  { value: 'saas', label: 'SaaS' },
+  { value: 'fornecimento', label: 'Fornecimento de Bens' },
+  { value: 'trabalho', label: 'Contrato de Trabalho' },
+  { value: 'consultoria', label: 'Consultoria' },
+  { value: 'parceria', label: 'Parceria Comercial' },
+  { value: 'arrendamento', label: 'Arrendamento (NRAU)' },
+  { value: 'licenciamento', label: 'Licenciamento de PI' },
 ];
 
 const EMPTY_FIELDS = {
-  parte_a_nome: "",
-  parte_a_nif: "",
-  parte_b_nome: "",
-  parte_b_nif: "",
-  objeto: "",
-  valor: "",
-  moeda: "EUR",
-  data_inicio: "",
-  duracao_meses: "",
-  notas_adicionais: "",
+  parte_a_nome: '',
+  parte_a_nif: '',
+  parte_b_nome: '',
+  parte_b_nif: '',
+  objeto: '',
+  valor: '',
+  moeda: 'EUR',
+  data_inicio: '',
+  duracao_meses: '',
+  notas_adicionais: '',
 };
 
 export function GenerateContractDialog() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [templateType, setTemplateType] = useState("");
+  const [templateType, setTemplateType] = useState('');
   const [fields, setFields] = useState(EMPTY_FIELDS);
   const [copied, setCopied] = useState(false);
   const { generate } = useGenerateContract();
 
   const reset = () => {
     setStep(1);
-    setTemplateType("");
+    setTemplateType('');
     setFields(EMPTY_FIELDS);
     setCopied(false);
   };
 
   const handleGenerate = () => {
-    const payload: Record<string, unknown> = {
+    const payload: GenerateContractFields = {
       parte_a_nome: fields.parte_a_nome,
       parte_b_nome: fields.parte_b_nome,
       objeto: fields.objeto,
@@ -64,10 +76,7 @@ export function GenerateContractDialog() {
     if (fields.duracao_meses) payload.duracao_meses = Number(fields.duracao_meses);
     if (fields.notas_adicionais) payload.notas_adicionais = fields.notas_adicionais;
 
-    generate.mutate(
-      { templateType, fields: payload as any },
-      { onSuccess: () => setStep(3) }
-    );
+    generate.mutate({ templateType, fields: payload }, { onSuccess: () => setStep(3) });
   };
 
   const handleCopy = () => {
@@ -79,10 +88,17 @@ export function GenerateContractDialog() {
   };
 
   const canProceedStep1 = !!templateType;
-  const canProceedStep2 = fields.parte_a_nome.trim() && fields.parte_b_nome.trim() && fields.objeto.trim();
+  const canProceedStep2 =
+    fields.parte_a_nome.trim() && fields.parte_b_nome.trim() && fields.objeto.trim();
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v);
+        if (!v) reset();
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline">
           <Wand2 className="mr-2 h-4 w-4" />
@@ -95,26 +111,38 @@ export function GenerateContractDialog() {
           <DialogTitle className="flex items-center gap-2">
             <Wand2 className="h-5 w-5 text-primary" />
             Gerar Rascunho de Contrato
-            <Badge variant="outline" className="text-xs font-normal">Claude Sonnet</Badge>
+            <Badge variant="outline" className="text-xs font-normal">
+              Claude Sonnet
+            </Badge>
           </DialogTitle>
         </DialogHeader>
 
         {/* Step indicator */}
         <div className="flex items-center gap-2 text-sm">
           {[
-            { n: 1, label: "Tipo" },
-            { n: 2, label: "Partes & Dados" },
-            { n: 3, label: "Rascunho" },
+            { n: 1, label: 'Tipo' },
+            { n: 2, label: 'Partes & Dados' },
+            { n: 3, label: 'Rascunho' },
           ].map(({ n, label }) => (
             <div key={n} className="flex items-center gap-2">
-              <div className={cn(
-                "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                step === n ? "bg-primary text-primary-foreground" :
-                step > n ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-              )}>
+              <div
+                className={cn(
+                  'flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium',
+                  step === n
+                    ? 'bg-primary text-primary-foreground'
+                    : step > n
+                      ? 'bg-primary/20 text-primary'
+                      : 'bg-muted text-muted-foreground',
+                )}
+              >
                 {n}
               </div>
-              <span className={cn("text-xs", step === n ? "text-foreground font-medium" : "text-muted-foreground")}>
+              <span
+                className={cn(
+                  'text-xs',
+                  step === n ? 'text-foreground font-medium' : 'text-muted-foreground',
+                )}
+              >
                 {label}
               </span>
               {n < 3 && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
@@ -126,7 +154,8 @@ export function GenerateContractDialog() {
         {step === 1 && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Seleccione o tipo de contrato. O Claude irá gerar um rascunho completo em português jurídico.
+              Seleccione o tipo de contrato. O Claude irá gerar um rascunho completo em português
+              jurídico.
             </p>
             <div className="grid gap-2">
               {TEMPLATES.map((t) => (
@@ -134,16 +163,20 @@ export function GenerateContractDialog() {
                   key={t.value}
                   onClick={() => setTemplateType(t.value)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-left transition-colors",
+                    'flex items-center gap-3 rounded-lg border px-4 py-3 text-sm text-left transition-colors',
                     templateType === t.value
-                      ? "border-primary bg-primary/5 font-medium"
-                      : "hover:bg-muted"
+                      ? 'border-primary bg-primary/5 font-medium'
+                      : 'hover:bg-muted',
                   )}
                 >
-                  <div className={cn(
-                    "h-3 w-3 rounded-full border-2",
-                    templateType === t.value ? "border-primary bg-primary" : "border-muted-foreground"
-                  )} />
+                  <div
+                    className={cn(
+                      'h-3 w-3 rounded-full border-2',
+                      templateType === t.value
+                        ? 'border-primary bg-primary'
+                        : 'border-muted-foreground',
+                    )}
+                  />
                   {t.label}
                 </button>
               ))}
@@ -165,7 +198,9 @@ export function GenerateContractDialog() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Parte A — Nome Legal <span className="text-destructive">*</span></Label>
+                <Label>
+                  Parte A — Nome Legal <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   value={fields.parte_a_nome}
                   onChange={(e) => setFields((f) => ({ ...f, parte_a_nome: e.target.value }))}
@@ -181,7 +216,9 @@ export function GenerateContractDialog() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Parte B — Nome Legal <span className="text-destructive">*</span></Label>
+                <Label>
+                  Parte B — Nome Legal <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   value={fields.parte_b_nome}
                   onChange={(e) => setFields((f) => ({ ...f, parte_b_nome: e.target.value }))}
@@ -199,7 +236,9 @@ export function GenerateContractDialog() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Objecto do Contrato <span className="text-destructive">*</span></Label>
+              <Label>
+                Objecto do Contrato <span className="text-destructive">*</span>
+              </Label>
               <Textarea
                 value={fields.objeto}
                 onChange={(e) => setFields((f) => ({ ...f, objeto: e.target.value }))}
@@ -220,8 +259,13 @@ export function GenerateContractDialog() {
               </div>
               <div className="space-y-1.5">
                 <Label>Moeda</Label>
-                <Select value={fields.moeda} onValueChange={(v) => setFields((f) => ({ ...f, moeda: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select
+                  value={fields.moeda}
+                  onValueChange={(v) => setFields((f) => ({ ...f, moeda: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="EUR">EUR</SelectItem>
                     <SelectItem value="USD">USD</SelectItem>
@@ -265,14 +309,17 @@ export function GenerateContractDialog() {
               <Button variant="outline" onClick={() => setStep(1)}>
                 <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
               </Button>
-              <Button
-                onClick={handleGenerate}
-                disabled={!canProceedStep2 || generate.isPending}
-              >
-                {generate.isPending
-                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />A gerar...</>
-                  : <><Wand2 className="mr-2 h-4 w-4" />Gerar Rascunho</>
-                }
+              <Button onClick={handleGenerate} disabled={!canProceedStep2 || generate.isPending}>
+                {generate.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />A gerar...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="mr-2 h-4 w-4" />
+                    Gerar Rascunho
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -286,10 +333,17 @@ export function GenerateContractDialog() {
                 Rascunho gerado. Reveja, copie e use como base — não substitui revisão jurídica.
               </p>
               <Button variant="outline" size="sm" onClick={handleCopy}>
-                {copied
-                  ? <><Check className="mr-2 h-4 w-4 text-green-600" />Copiado</>
-                  : <><Copy className="mr-2 h-4 w-4" />Copiar</>
-                }
+                {copied ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4 text-green-600" />
+                    Copiado
+                  </>
+                ) : (
+                  <>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copiar
+                  </>
+                )}
               </Button>
             </div>
             <Textarea
@@ -301,7 +355,13 @@ export function GenerateContractDialog() {
               <Button variant="outline" onClick={() => setStep(2)}>
                 <ChevronLeft className="mr-1 h-4 w-4" /> Ajustar dados
               </Button>
-              <Button variant="outline" onClick={() => { reset(); setOpen(false); }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  reset();
+                  setOpen(false);
+                }}
+              >
                 Fechar
               </Button>
             </div>

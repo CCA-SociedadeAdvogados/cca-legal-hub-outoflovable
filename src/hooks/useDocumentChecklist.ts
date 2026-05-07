@@ -38,14 +38,15 @@ export function useDocumentChecklist() {
   const queryClient = useQueryClient();
   const { viewingOrganizationId } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
-  const organizationId = viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
+  const organizationId =
+    viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
   // Fetch document types
   const { data: types, isLoading: isLoadingTypes } = useQuery({
     queryKey: ['document-checklist-types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('document_checklist_types' as any)
+        .from('document_checklist_types')
         .select('*')
         .order('sort_order');
       if (error) {
@@ -53,7 +54,7 @@ export function useDocumentChecklist() {
         console.warn('[DocumentChecklist] Types table not available:', error.message);
         return [] as ChecklistType[];
       }
-      return (data ?? []) as unknown as ChecklistType[];
+      return (data ?? []) as ChecklistType[];
     },
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
@@ -65,23 +66,23 @@ export function useDocumentChecklist() {
     queryFn: async () => {
       if (!organizationId) return [] as ChecklistEntry[];
       const { data, error } = await supabase
-        .from('organization_document_checklist' as any)
+        .from('organization_document_checklist')
         .select('*')
         .eq('organization_id', organizationId);
       if (error) {
         console.warn('[DocumentChecklist] Entries table not available:', error.message);
         return [] as ChecklistEntry[];
       }
-      return (data ?? []) as unknown as ChecklistEntry[];
+      return (data ?? []) as ChecklistEntry[];
     },
     enabled: !!user && !!organizationId,
     staleTime: 30 * 1000,
   });
 
   // Combine types with entries
-  const items: ChecklistItemWithType[] = (types ?? []).map(type => ({
+  const items: ChecklistItemWithType[] = (types ?? []).map((type) => ({
     ...type,
-    entry: (entries ?? []).find(e => e.checklist_type_id === type.id) ?? null,
+    entry: (entries ?? []).find((e) => e.checklist_type_id === type.id) ?? null,
   }));
 
   // Upsert entry
@@ -98,19 +99,22 @@ export function useDocumentChecklist() {
       if (!organizationId || !user) throw new Error('Sem organização');
 
       const { data, error } = await supabase
-        .from('organization_document_checklist' as any)
-        .upsert({
-          organization_id: organizationId,
-          checklist_type_id: payload.checklist_type_id,
-          status: payload.status,
-          validity_date: payload.validity_date ?? null,
-          confirmed_by_user: payload.confirmed_by_user ?? false,
-          ai_suggested_date: payload.ai_suggested_date ?? null,
-          file_reference: payload.file_reference ?? null,
-          notes: payload.notes ?? null,
-          updated_by_id: user.id,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'organization_id,checklist_type_id' })
+        .from('organization_document_checklist')
+        .upsert(
+          {
+            organization_id: organizationId,
+            checklist_type_id: payload.checklist_type_id,
+            status: payload.status,
+            validity_date: payload.validity_date ?? null,
+            confirmed_by_user: payload.confirmed_by_user ?? false,
+            ai_suggested_date: payload.ai_suggested_date ?? null,
+            file_reference: payload.file_reference ?? null,
+            notes: payload.notes ?? null,
+            updated_by_id: user.id,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'organization_id,checklist_type_id' },
+        )
         .select()
         .single();
 
@@ -122,7 +126,11 @@ export function useDocumentChecklist() {
       toast({ title: 'Documento atualizado' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar documento', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao atualizar documento',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 

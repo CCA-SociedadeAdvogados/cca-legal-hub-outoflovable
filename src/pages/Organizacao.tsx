@@ -12,10 +12,10 @@ import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { Navigate } from 'react-router-dom';
 import { generateSlug } from '@/lib/utils';
-import { 
-  Building2, 
-  Plus, 
-  Users, 
+import {
+  Building2,
+  Plus,
+  Users,
   Loader2,
   UserPlus,
   Crown,
@@ -59,15 +59,25 @@ const roleIcons = {
 
 export default function Organizacao() {
   const { t } = useTranslation();
-  const { organizations, currentOrganization, userMemberships, isLoading, membershipsLoading, createOrganization, switchOrganization } = useOrganizations();
-  const { members, inviteMember, updateMemberRole, removeMember } = useOrganizationMembers(currentOrganization?.id);
+  const {
+    organizations,
+    currentOrganization,
+    userMemberships,
+    isLoading,
+    membershipsLoading,
+    createOrganization,
+    switchOrganization,
+  } = useOrganizations();
+  const { members, inviteMember, updateMemberRole, removeMember } = useOrganizationMembers(
+    currentOrganization?.id,
+  );
   const { isPlatformAdmin } = usePlatformAdmin();
   const { legalHubProfile, isLoading: profileLoading } = useLegalHubProfile();
-  
+
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
-  
+
   const [newOrgName, setNewOrgName] = useState('');
   const [newOrgSlug, setNewOrgSlug] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
@@ -75,7 +85,7 @@ export default function Organizacao() {
 
   // Check if current user is the owner of the current organization
   const currentUserMembership = userMemberships?.find(
-    m => m.organization_id === currentOrganization?.id
+    (m) => m.organization_id === currentOrganization?.id,
   );
   const isOwner = currentUserMembership?.role === 'owner';
 
@@ -133,9 +143,14 @@ export default function Organizacao() {
             <Card>
               <CardHeader className="text-center">
                 <Building2 className="h-12 w-12 mx-auto text-primary mb-4" />
-                <CardTitle>{t('organization.selectOrganization', 'Selecione a sua Organização')}</CardTitle>
+                <CardTitle>
+                  {t('organization.selectOrganization', 'Selecione a sua Organização')}
+                </CardTitle>
                 <CardDescription>
-                  {t('organization.selectOrganizationDescription', 'Pertence às seguintes organizações. Selecione uma para continuar.')}
+                  {t(
+                    'organization.selectOrganizationDescription',
+                    'Pertence às seguintes organizações. Selecione uma para continuar.',
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -187,12 +202,18 @@ export default function Organizacao() {
               <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <CardTitle>{t('organization.noOrganization', 'Sem Organização')}</CardTitle>
               <CardDescription>
-                {t('organization.noOrganizationDescription', 'Ainda não pertence a nenhuma organização.')}
+                {t(
+                  'organization.noOrganizationDescription',
+                  'Ainda não pertence a nenhuma organização.',
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-muted-foreground mb-4">
-                {t('organization.contactAdmin', 'Por favor contacte o administrador para ser adicionado a uma organização.')}
+                {t(
+                  'organization.contactAdmin',
+                  'Por favor contacte o administrador para ser adicionado a uma organização.',
+                )}
               </p>
             </CardContent>
           </Card>
@@ -208,11 +229,9 @@ export default function Organizacao() {
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-3xl font-bold font-serif">{t('organization.title')}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t('organization.subtitle')}
-            </p>
+            <p className="text-muted-foreground mt-1">{t('organization.subtitle')}</p>
           </div>
-          
+
           {/* Organization Switcher */}
           {organizations && organizations.length > 1 && (
             <Select
@@ -246,7 +265,6 @@ export default function Organizacao() {
           </CardHeader>
         </Card>
 
-
         {/* Team Members */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -255,9 +273,7 @@ export default function Organizacao() {
                 <Users className="h-5 w-5" />
                 {t('organization.team')}
               </CardTitle>
-              <CardDescription>
-                {t('organization.teamDescription')}
-              </CardDescription>
+              <CardDescription>{t('organization.teamDescription')}</CardDescription>
             </div>
             {isOwner && (
               <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
@@ -285,7 +301,10 @@ export default function Organizacao() {
                     </div>
                     <div>
                       <Label htmlFor="role">{t('organization.permission')}</Label>
-                      <Select value={inviteRole} onValueChange={(v: any) => setInviteRole(v)}>
+                      <Select
+                        value={inviteRole}
+                        onValueChange={(v) => setInviteRole(v as 'admin' | 'editor' | 'viewer')}
+                      >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -310,7 +329,10 @@ export default function Organizacao() {
               {members?.map((member) => {
                 const RoleIcon = roleIcons[member.role];
                 return (
-                  <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={member.profiles?.avatar_url || undefined} />
@@ -319,7 +341,9 @@ export default function Organizacao() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{member.profiles?.nome_completo || t('organization.user')}</p>
+                        <p className="font-medium">
+                          {member.profiles?.nome_completo || t('organization.user')}
+                        </p>
                         <p className="text-sm text-muted-foreground">{member.profiles?.email}</p>
                       </div>
                     </div>
@@ -332,15 +356,24 @@ export default function Organizacao() {
                         <>
                           <Select
                             value={member.role}
-                            onValueChange={(v: any) => updateMemberRole.mutate({ memberId: member.id, role: v })}
+                            onValueChange={(v) =>
+                              updateMemberRole.mutate({
+                                memberId: member.id,
+                                role: v as 'admin' | 'editor' | 'viewer',
+                              })
+                            }
                           >
                             <SelectTrigger className="w-[130px]">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="admin">{t('organization.roles.admin')}</SelectItem>
-                              <SelectItem value="editor">{t('organization.roles.editor')}</SelectItem>
-                              <SelectItem value="viewer">{t('organization.roles.viewer')}</SelectItem>
+                              <SelectItem value="editor">
+                                {t('organization.roles.editor')}
+                              </SelectItem>
+                              <SelectItem value="viewer">
+                                {t('organization.roles.viewer')}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                           <Button
@@ -365,9 +398,7 @@ export default function Organizacao() {
           <Card>
             <CardHeader>
               <CardTitle>{t('organization.createNew')}</CardTitle>
-              <CardDescription>
-                {t('organization.createNewDescription')}
-              </CardDescription>
+              <CardDescription>{t('organization.createNewDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
@@ -395,7 +426,9 @@ export default function Organizacao() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="newOrgSlug">{t('organization.identifier', 'Identificador único')}</Label>
+                      <Label htmlFor="newOrgSlug">
+                        {t('organization.identifier', 'Identificador único')}
+                      </Label>
                       <Input
                         id="newOrgSlug"
                         value={newOrgSlug}
@@ -406,8 +439,14 @@ export default function Organizacao() {
                         Gerado automaticamente a partir do nome
                       </p>
                     </div>
-                    <Button type="submit" className="w-full" disabled={createOrganization.isPending}>
-                      {createOrganization.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={createOrganization.isPending}
+                    >
+                      {createOrganization.isPending && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
                       {t('common.create')}
                     </Button>
                   </form>
@@ -429,12 +468,14 @@ export default function Organizacao() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (memberToRemove) {
-                removeMember.mutate(memberToRemove);
-                setMemberToRemove(null);
-              }
-            }}>
+            <AlertDialogAction
+              onClick={() => {
+                if (memberToRemove) {
+                  removeMember.mutate(memberToRemove);
+                  setMemberToRemove(null);
+                }
+              }}
+            >
               {t('organization.remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
