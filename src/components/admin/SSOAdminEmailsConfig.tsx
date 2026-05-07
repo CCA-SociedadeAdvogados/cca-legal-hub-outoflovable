@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,33 +31,33 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { KeyRound, Plus, Trash2, Shield, Pencil } from "lucide-react";
-import { toast } from "sonner";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
+} from '@/components/ui/alert-dialog';
+import { KeyRound, Plus, Trash2, Shield, Pencil } from 'lucide-react';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
 type SSOAdminEmail = {
   id: string;
   email: string;
-  role: "admin" | "editor";
+  role: 'admin' | 'editor';
   notes: string | null;
   created_at: string;
 };
 
 export function SSOAdminEmailsConfig() {
   const queryClient = useQueryClient();
-  const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState<"admin" | "editor">("admin");
-  const [newNotes, setNewNotes] = useState("");
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState<'admin' | 'editor'>('admin');
+  const [newNotes, setNewNotes] = useState('');
 
   const { data: entries = [], isLoading } = useQuery({
-    queryKey: ["sso-admin-emails"],
+    queryKey: ['sso-admin-emails'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("sso_admin_emails")
-        .select("id, email, role, notes, created_at")
-        .order("created_at", { ascending: false });
+        .from('sso_admin_emails')
+        .select('id, email, role, notes, created_at')
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as SSOAdminEmail[];
     },
@@ -66,44 +66,47 @@ export function SSOAdminEmailsConfig() {
   const addEntry = useMutation({
     mutationFn: async () => {
       const trimmed = newEmail.trim().toLowerCase();
-      if (!trimmed) throw new Error("Email obrigatório");
+      if (!trimmed) throw new Error('Email obrigatório');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-        throw new Error("Email inválido");
+        throw new Error('Email inválido');
       }
-      const { error } = await supabase
-        .from("sso_admin_emails")
-        .insert({ email: trimmed, role: newRole, notes: newNotes.trim() || null });
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const { error } = await supabase.from('sso_admin_emails').insert({
+        email: trimmed,
+        role: newRole,
+        notes: newNotes.trim() || null,
+        added_by: user?.id ?? null,
+      });
       if (error) {
-        if (error.code === "23505") throw new Error("Este email já existe na lista");
+        if (error.code === '23505') throw new Error('Este email já existe na lista');
         throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sso-admin-emails"] });
-      setNewEmail("");
-      setNewNotes("");
-      setNewRole("admin");
-      toast.success("Email SSO adicionado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ['sso-admin-emails'] });
+      setNewEmail('');
+      setNewNotes('');
+      setNewRole('admin');
+      toast.success('Email SSO adicionado com sucesso');
     },
     onError: (err: Error) => {
-      toast.error(err.message || "Erro ao adicionar email");
+      toast.error(err.message || 'Erro ao adicionar email');
     },
   });
 
   const removeEntry = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("sso_admin_emails")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from('sso_admin_emails').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sso-admin-emails"] });
-      toast.success("Email removido");
+      queryClient.invalidateQueries({ queryKey: ['sso-admin-emails'] });
+      toast.success('Email removido');
     },
     onError: () => {
-      toast.error("Erro ao remover email");
+      toast.error('Erro ao remover email');
     },
   });
 
@@ -115,8 +118,8 @@ export function SSOAdminEmailsConfig() {
           <div>
             <CardTitle className="text-base">Administradores SSO CCA</CardTitle>
             <CardDescription className="mt-1">
-              Emails com acesso de administrador ou editor ao fazer login por SSO.
-              Esta lista tem prioridade sobre os grupos do Azure AD.
+              Emails com acesso de administrador ou editor ao fazer login por SSO. Esta lista tem
+              prioridade sobre os grupos do Azure AD.
             </CardDescription>
           </div>
         </div>
@@ -132,12 +135,12 @@ export function SSOAdminEmailsConfig() {
               placeholder="utilizador@cca.pt"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addEntry.mutate()}
+              onKeyDown={(e) => e.key === 'Enter' && addEntry.mutate()}
             />
           </div>
           <div className="w-36 space-y-1">
             <Label>Função</Label>
-            <Select value={newRole} onValueChange={(v) => setNewRole(v as "admin" | "editor")}>
+            <Select value={newRole} onValueChange={(v) => setNewRole(v as 'admin' | 'editor')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -189,24 +192,24 @@ export function SSOAdminEmailsConfig() {
                     <Badge
                       variant="secondary"
                       className={
-                        entry.role === "admin"
-                          ? "bg-primary/20 text-primary"
-                          : "bg-muted text-muted-foreground"
+                        entry.role === 'admin'
+                          ? 'bg-primary/20 text-primary'
+                          : 'bg-muted text-muted-foreground'
                       }
                     >
-                      {entry.role === "admin" ? (
+                      {entry.role === 'admin' ? (
                         <Shield className="h-3 w-3 mr-1" />
                       ) : (
                         <Pencil className="h-3 w-3 mr-1" />
                       )}
-                      {entry.role === "admin" ? "Admin" : "Editor"}
+                      {entry.role === 'admin' ? 'Admin' : 'Editor'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {entry.notes || "—"}
+                    {entry.notes || '—'}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(entry.created_at), "dd MMM yyyy", { locale: pt })}
+                    {format(new Date(entry.created_at), 'dd MMM yyyy', { locale: pt })}
                   </TableCell>
                   <TableCell>
                     <AlertDialog>
@@ -219,8 +222,9 @@ export function SSOAdminEmailsConfig() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Remover email SSO</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Tem a certeza que deseja remover <strong>{entry.email}</strong> da lista de admins SSO?
-                            O utilizador passará a ter o papel atribuído pelos grupos do Azure AD (ou editor por defeito).
+                            Tem a certeza que deseja remover <strong>{entry.email}</strong> da lista
+                            de admins SSO? O utilizador passará a ter o papel atribuído pelos grupos
+                            do Azure AD (ou editor por defeito).
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -240,7 +244,8 @@ export function SSOAdminEmailsConfig() {
               {entries.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    Nenhum email SSO configurado. Adicione emails acima para atribuir papéis específicos no login SSO.
+                    Nenhum email SSO configurado. Adicione emails acima para atribuir papéis
+                    específicos no login SSO.
                   </TableCell>
                 </TableRow>
               )}

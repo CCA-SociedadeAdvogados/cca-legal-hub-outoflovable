@@ -34,13 +34,19 @@ export interface ExtractionData {
   clausulas_importantes?: string[];
   riscos_identificados?: string[];
   confianca?: number;
-  prazos_extraidos?: any;
+  prazos_extraidos?: unknown;
   e_contrato_trabalho?: boolean;
   subtipo_contrato_trabalho?: string;
-  [key: string]: any; // extensível
+  [key: string]: unknown;
 }
 
-export type ValidationStatus = 'none' | 'draft_only' | 'validating' | 'validated' | 'needs_review' | 'failed';
+export type ValidationStatus =
+  | 'none'
+  | 'draft_only'
+  | 'validating'
+  | 'validated'
+  | 'needs_review'
+  | 'failed';
 
 export interface ContractExtraction {
   id: string;
@@ -49,15 +55,15 @@ export interface ContractExtraction {
   status: 'provisional' | 'validated' | 'needs_review' | 'failed';
   extraction_data: ExtractionData;
   confidence: number | null;
-  evidence: any[];
+  evidence: unknown[];
   review_notes: string | null;
-  diff_from_draft: Record<string, { draft: any; canonical: any }> | null;
-  classificacao_juridica: any;
-  prazos: any;
-  denuncia_rescisao: any;
+  diff_from_draft: Record<string, { draft: unknown; canonical: unknown }> | null;
+  classificacao_juridica: unknown;
+  prazos: unknown;
+  denuncia_rescisao: unknown;
   lei_aplicavel: string | null;
   foro_arbitragem: string | null;
-  rgpd_summary: any;
+  rgpd_summary: unknown;
   error_message: string | null;
   created_at: string;
   updated_at: string;
@@ -83,28 +89,38 @@ export function useContractExtractions(contratoId?: string) {
     enabled: !!user && !!contratoId,
   });
 
-  const draft = extractions?.find(e => e.source === 'ai_extraction') || null;
-  const canonical = extractions?.find(e => e.source === 'cca_agent') || null;
-  const activeExtraction = (canonical && canonical.status !== 'failed') ? canonical : draft;
+  const draft = extractions?.find((e) => e.source === 'ai_extraction') || null;
+  const canonical = extractions?.find((e) => e.source === 'cca_agent') || null;
+  const activeExtraction = canonical && canonical.status !== 'failed' ? canonical : draft;
 
   const validationStatus: ValidationStatus =
-    !draft && !canonical ? 'none' :
-    canonical?.status === 'validated' ? 'validated' :
-    canonical?.status === 'needs_review' ? 'needs_review' :
-    canonical?.status === 'failed' ? 'failed' :
-    canonical?.status === 'provisional' ? 'validating' :
-    draft && !canonical ? 'draft_only' :
-    'none';
+    !draft && !canonical
+      ? 'none'
+      : canonical?.status === 'validated'
+        ? 'validated'
+        : canonical?.status === 'needs_review'
+          ? 'needs_review'
+          : canonical?.status === 'failed'
+            ? 'failed'
+            : canonical?.status === 'provisional'
+              ? 'validating'
+              : draft && !canonical
+                ? 'draft_only'
+                : 'none';
 
   const saveDraft = useMutation({
-    mutationFn: async (params: { extractionData: ExtractionData; confidence?: number; evidence?: any[] }) => {
-      const payload: any = {
-        contrato_id: contratoId,
-        source: 'ai_extraction',
-        status: 'provisional',
-        extraction_data: params.extractionData,
+    mutationFn: async (params: {
+      extractionData: ExtractionData;
+      confidence?: number;
+      evidence?: unknown[];
+    }) => {
+      const payload = {
+        contrato_id: contratoId!,
+        source: 'ai_extraction' as const,
+        status: 'provisional' as const,
+        extraction_data: params.extractionData as unknown as Record<string, unknown>,
         confidence: params.confidence ?? null,
-        evidence: params.evidence ?? [],
+        evidence: (params.evidence ?? []) as unknown as Record<string, unknown>[],
         created_by_id: user?.id,
       };
       const { data, error } = await supabase
@@ -113,7 +129,10 @@ export function useContractExtractions(contratoId?: string) {
         .select()
         .single();
       if (error) throw error;
-      await supabase.from('contratos').update({ validation_status: 'draft_only' } as any).eq('id', contratoId!);
+      await supabase
+        .from('contratos')
+        .update({ validation_status: 'draft_only', updated_by_id: user?.id })
+        .eq('id', contratoId!);
       return data;
     },
     onSuccess: () => {
@@ -123,11 +142,15 @@ export function useContractExtractions(contratoId?: string) {
 
   const triggerCCAValidation = useMutation({
     mutationFn: async (params?: { reuseExistingDraft?: boolean }) => {
-      const draftData = params?.reuseExistingDraft && draft
-        ? draft.extraction_data
-        : activeExtraction?.extraction_data || {};
+      const draftData =
+        params?.reuseExistingDraft && draft
+          ? draft.extraction_data
+          : activeExtraction?.extraction_data || {};
 
-      await supabase.from('contratos').update({ validation_status: 'validating' } as any).eq('id', contratoId!);
+      await supabase
+        .from('contratos')
+        .update({ validation_status: 'validating', updated_by_id: user?.id })
+        .eq('id', contratoId!);
 
       const { data, error } = await supabase.functions.invoke('validate-contract', {
         body: {
@@ -146,7 +169,10 @@ export function useContractExtractions(contratoId?: string) {
       queryClient.invalidateQueries({ queryKey: ['contratos'] });
     },
     onError: async () => {
-      await supabase.from('contratos').update({ validation_status: 'failed' } as any).eq('id', contratoId!);
+      await supabase
+        .from('contratos')
+        .update({ validation_status: 'failed', updated_by_id: user?.id })
+        .eq('id', contratoId!);
       queryClient.invalidateQueries({ queryKey: ['contract-extractions', contratoId] });
     },
   });

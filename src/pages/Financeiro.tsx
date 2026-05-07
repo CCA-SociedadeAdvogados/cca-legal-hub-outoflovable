@@ -512,7 +512,7 @@ export default function Financeiro() {
               {orgCliente.logo_url ? (
                 <img
                   src={orgCliente.logo_url}
-                  alt=""
+                  alt={orgCliente.name}
                   className="h-16 w-16 shrink-0 rounded-lg object-cover"
                 />
               ) : (

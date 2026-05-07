@@ -63,6 +63,10 @@
     "success": "Sucesso",
     "user": "Utilizador"
   },
+  "notFound": {
+    "message": "Ups! Página não encontrada",
+    "returnHome": "Voltar ao Início"
+  },
   "department": {
     "label": "Departamento",
     "placeholder": "Selecione o departamento",

@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Tags, Save, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import { Tags, Save, AlertTriangle } from 'lucide-react';
 
 interface ContractClassificationProps {
   contratoId: string;
@@ -16,29 +17,53 @@ interface ContractClassificationProps {
 }
 
 const AREAS_DIREITO = [
-  { value: "laboral", label: "Laboral", description: "Código do Trabalho, contratos de trabalho, relações laborais" },
-  { value: "fiscal", label: "Fiscal", description: "Impostos, tributação, obrigações fiscais" },
-  { value: "comercial", label: "Comercial", description: "Código Comercial, transações comerciais" },
-  { value: "protecao_dados", label: "Proteção de Dados", description: "RGPD, privacidade, tratamento de dados pessoais" },
-  { value: "ambiente", label: "Ambiente", description: "Legislação ambiental, sustentabilidade" },
-  { value: "seguranca_trabalho", label: "Segurança no Trabalho", description: "SST, saúde ocupacional" },
-  { value: "societario", label: "Societário", description: "Direito das sociedades, governança corporativa" },
-  { value: "ciberseguranca", label: "Cibersegurança", description: "NIS2, segurança informática, infraestruturas críticas" },
-  { value: "outro", label: "Outro", description: "Outras áreas de direito aplicáveis" },
+  {
+    value: 'laboral',
+    label: 'Laboral',
+    description: 'Código do Trabalho, contratos de trabalho, relações laborais',
+  },
+  { value: 'fiscal', label: 'Fiscal', description: 'Impostos, tributação, obrigações fiscais' },
+  {
+    value: 'comercial',
+    label: 'Comercial',
+    description: 'Código Comercial, transações comerciais',
+  },
+  {
+    value: 'protecao_dados',
+    label: 'Proteção de Dados',
+    description: 'RGPD, privacidade, tratamento de dados pessoais',
+  },
+  { value: 'ambiente', label: 'Ambiente', description: 'Legislação ambiental, sustentabilidade' },
+  {
+    value: 'seguranca_trabalho',
+    label: 'Segurança no Trabalho',
+    description: 'SST, saúde ocupacional',
+  },
+  {
+    value: 'societario',
+    label: 'Societário',
+    description: 'Direito das sociedades, governança corporativa',
+  },
+  {
+    value: 'ciberseguranca',
+    label: 'Cibersegurança',
+    description: 'NIS2, segurança informática, infraestruturas críticas',
+  },
+  { value: 'outro', label: 'Outro', description: 'Outras áreas de direito aplicáveis' },
 ];
 
 // Sugestões automáticas baseadas no tipo de contrato
 const SUGESTOES_POR_TIPO: Record<string, string[]> = {
-  trabalho: ["laboral", "protecao_dados", "seguranca_trabalho"],
-  saas: ["protecao_dados", "ciberseguranca", "comercial"],
-  prestacao_servicos: ["comercial", "protecao_dados", "fiscal"],
-  fornecimento: ["comercial", "fiscal"],
-  nda: ["protecao_dados", "comercial"],
-  arrendamento: ["comercial", "fiscal"],
-  licenciamento: ["comercial", "protecao_dados"],
-  parceria: ["comercial", "societario"],
-  consultoria: ["comercial", "protecao_dados", "fiscal"],
-  outro: ["comercial"],
+  trabalho: ['laboral', 'protecao_dados', 'seguranca_trabalho'],
+  saas: ['protecao_dados', 'ciberseguranca', 'comercial'],
+  prestacao_servicos: ['comercial', 'protecao_dados', 'fiscal'],
+  fornecimento: ['comercial', 'fiscal'],
+  nda: ['protecao_dados', 'comercial'],
+  arrendamento: ['comercial', 'fiscal'],
+  licenciamento: ['comercial', 'protecao_dados'],
+  parceria: ['comercial', 'societario'],
+  consultoria: ['comercial', 'protecao_dados', 'fiscal'],
+  outro: ['comercial'],
 };
 
 export function ContractClassification({
@@ -47,6 +72,7 @@ export function ContractClassification({
   tipoContrato,
   onClassificationChange,
 }: ContractClassificationProps) {
+  const { user } = useAuth();
   const [selectedAreas, setSelectedAreas] = useState<string[]>(currentAreas || []);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -56,7 +82,8 @@ export function ContractClassification({
   }, [currentAreas]);
 
   useEffect(() => {
-    const areasChanged = JSON.stringify(selectedAreas.sort()) !== JSON.stringify((currentAreas || []).sort());
+    const areasChanged =
+      JSON.stringify(selectedAreas.sort()) !== JSON.stringify((currentAreas || []).sort());
     setHasChanges(areasChanged);
   }, [selectedAreas, currentAreas]);
 
@@ -79,17 +106,18 @@ export function ContractClassification({
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from("contratos")
-        .update({ areas_direito_aplicaveis: selectedAreas })
-        .eq("id", contratoId);
+        .from('contratos')
+        .update({ areas_direito_aplicaveis: selectedAreas, updated_by_id: user?.id })
+        .eq('id', contratoId);
 
       if (error) throw error;
 
-      toast.success("Classificação guardada com sucesso");
+      toast.success('Classificação guardada com sucesso');
       onClassificationChange?.(selectedAreas);
-    } catch (error: any) {
-      console.error("Error saving classification:", error);
-      toast.error(error.message || "Erro ao guardar classificação");
+    } catch (error) {
+      console.error('Error saving classification:', error);
+      const message = error instanceof Error ? error.message : 'Erro ao guardar classificação';
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -105,7 +133,7 @@ export function ContractClassification({
           Classificação Jurídica
         </CardTitle>
         <CardDescription>
-          Selecione as áreas de direito aplicáveis a este contrato. Esta classificação determina 
+          Selecione as áreas de direito aplicáveis a este contrato. Esta classificação determina
           quais eventos legislativos serão utilizados na análise de conformidade.
         </CardDescription>
       </CardHeader>
@@ -143,8 +171,8 @@ export function ContractClassification({
                 key={area.value}
                 className={`flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
                   selectedAreas.includes(area.value)
-                    ? "bg-primary/5 border-primary/30"
-                    : "bg-background hover:bg-muted/50"
+                    ? 'bg-primary/5 border-primary/30'
+                    : 'bg-background hover:bg-muted/50'
                 }`}
               >
                 <Checkbox
@@ -187,7 +215,7 @@ export function ContractClassification({
         <div className="flex justify-end">
           <Button type="button" onClick={handleSave} disabled={isSaving || !hasChanges}>
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "A guardar..." : "Guardar Classificação"}
+            {isSaving ? 'A guardar...' : 'Guardar Classificação'}
           </Button>
         </div>
       </CardContent>

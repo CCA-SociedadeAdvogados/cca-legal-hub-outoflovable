@@ -9,6 +9,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -67,6 +77,10 @@ export default function NovidadesCCA() {
   const [translatedContent, setTranslatedContent] = useState<
     Record<string, { titulo: string; resumo: string; conteudo: string }>
   >({});
+  const [pendingAction, setPendingAction] = useState<{
+    type: 'delete' | 'publish' | 'archive';
+    id: string;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     titulo: '',
@@ -191,20 +205,27 @@ export default function NovidadesCCA() {
     resetForm();
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('ccaNews.confirmDelete'))) return;
-    await deleteNews.mutateAsync(id);
+  const handleDelete = (id: string) => setPendingAction({ type: 'delete', id });
+  const handlePublish = (id: string) => setPendingAction({ type: 'publish', id });
+  const handleArchive = (id: string) => setPendingAction({ type: 'archive', id });
+
+  const confirmPendingAction = async () => {
+    if (!pendingAction) return;
+    if (pendingAction.type === 'delete') await deleteNews.mutateAsync(pendingAction.id);
+    if (pendingAction.type === 'publish') await publishNews.mutateAsync(pendingAction.id);
+    if (pendingAction.type === 'archive') await archiveNews.mutateAsync(pendingAction.id);
+    setPendingAction(null);
   };
 
-  const handlePublish = async (id: string) => {
-    if (!confirm(t('ccaNews.confirmPublish'))) return;
-    await publishNews.mutateAsync(id);
-  };
+  const pendingMessage = pendingAction
+    ? pendingAction.type === 'delete'
+      ? t('ccaNews.confirmDelete')
+      : pendingAction.type === 'publish'
+        ? t('ccaNews.confirmPublish')
+        : t('ccaNews.confirmArchive')
+    : '';
 
-  const handleArchive = async (id: string) => {
-    if (!confirm(t('ccaNews.confirmArchive'))) return;
-    await archiveNews.mutateAsync(id);
-  };
+  const isMutationPending = deleteNews.isPending || publishNews.isPending || archiveNews.isPending;
 
   const filteredNews = news.filter((n) => {
     const matchesSearch =
@@ -532,6 +553,34 @@ export default function NovidadesCCA() {
             ))}
           </div>
         )}
+
+        <AlertDialog
+          open={!!pendingAction}
+          onOpenChange={(open) => !open && setPendingAction(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{t('common.confirm')}</AlertDialogTitle>
+              <AlertDialogDescription>{pendingMessage}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isMutationPending}>
+                {t('common.cancel')}
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmPendingAction}
+                disabled={isMutationPending}
+                className={
+                  pendingAction?.type === 'delete'
+                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                    : undefined
+                }
+              >
+                {t('common.confirm')}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );

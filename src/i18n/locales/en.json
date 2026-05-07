@@ -63,6 +63,10 @@
     "success": "Success",
     "user": "User"
   },
+  "notFound": {
+    "message": "Oops! Page not found",
+    "returnHome": "Return to Home"
+  },
   "department": {
     "label": "Department",
     "placeholder": "Select department",
