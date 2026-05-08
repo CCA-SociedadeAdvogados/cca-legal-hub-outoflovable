@@ -1,164 +1,65 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  ArrowLeft,
-  Save,
-  Loader2,
-  CalendarIcon,
-  Upload,
-  FileText,
-  Paperclip,
-  Tags,
-} from 'lucide-react';
+import { Form } from '@/components/ui/form';
+import { ArrowLeft, Save, Loader2, FileText, Paperclip, Tags } from 'lucide-react';
 import { ContractAttachments } from '@/components/contracts/ContractAttachments';
 import { ContractComplianceAnalyzer } from '@/components/contracts/ContractComplianceAnalyzer';
 import { ContractClassification } from '@/components/contracts/ContractClassification';
-import { ContractMainUpload } from '@/components/contracts/ContractMainUpload';
 import { ContractInitialUpload } from '@/components/contracts/ContractInitialUpload';
-// TriageAuditBadge removed — analysis done by external CCA agent
-import { cn } from '@/lib/utils';
 import { useContratos, useContrato, type ContratoInsert } from '@/hooks/useContratos';
-import {
-  TIPO_CONTRATO_LABELS,
-  DEPARTAMENTO_LABELS,
-  TIPO_DURACAO_LABELS,
-  TIPO_RENOVACAO_LABELS,
-  PAPEL_ENTIDADE_LABELS,
-  TIPO_GARANTIA_LABELS,
-} from '@/types/contracts';
+import type { Database } from '@/integrations/supabase/types';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
-import { CheckCircle2, XCircle, Globe } from 'lucide-react';
 
-const formSchema = z.object({
-  // Identificação
-  titulo_contrato: z.string().min(1, 'Título é obrigatório'),
-  tipo_contrato: z.string().min(1, 'Tipo é obrigatório'),
-  tipo_contrato_personalizado: z.string().optional(),
-  departamento_responsavel: z.string().min(1, 'Departamento é obrigatório'),
-  objeto_resumido: z.string().optional(),
+type EstadoContrato = Database['public']['Enums']['estado_contrato'];
+type TipoContrato = Database['public']['Enums']['tipo_contrato'];
+type Departamento = Database['public']['Enums']['departamento'];
+type TipoDuracao = Database['public']['Enums']['tipo_duracao'];
+type TipoRenovacao = Database['public']['Enums']['tipo_renovacao'];
+type TipoGarantia = Database['public']['Enums']['tipo_garantia'];
+type PapelEntidade = Database['public']['Enums']['papel_entidade'];
 
-  // Partes
-  parte_a_nome_legal: z.string().min(1, 'Nome legal da Parte A é obrigatório'),
-  parte_a_nif: z.string().optional(),
-  parte_a_morada: z.string().optional(),
-  parte_a_pais: z.string().default('Portugal'),
-  parte_b_nome_legal: z.string().min(1, 'Nome legal da Parte B é obrigatório'),
-  parte_b_nif: z.string().optional(),
-  parte_b_morada: z.string().optional(),
-  parte_b_pais: z.string().default('Portugal'),
-  parte_b_grupo_economico: z.string().optional(),
-
-  // Datas
-  data_assinatura_parte_a: z.date().optional().nullable(),
-  data_assinatura_parte_b: z.date().optional().nullable(),
-  data_inicio_vigencia: z.date().optional().nullable(),
-  data_termo: z.date().optional().nullable(),
-  tipo_duracao: z.string().default('prazo_determinado'),
-  tipo_renovacao: z.string().default('sem_renovacao_automatica'),
-  renovacao_periodo_meses: z.number().optional().nullable(),
-  aviso_previo_nao_renovacao_dias: z.number().default(30),
-
-  // Obrigações e Riscos
-  obrigacoes_parte_a: z.string().optional(),
-  obrigacoes_parte_b: z.string().optional(),
-  sla_kpi_resumo: z.string().optional(),
-  limite_responsabilidade: z.string().optional(),
-  clausula_indemnizacao: z.boolean().default(false),
-  clausula_indemnizacao_resumo: z.string().optional(),
-  flag_confidencialidade: z.boolean().default(false),
-  flag_nao_concorrencia: z.boolean().default(false),
-  flag_exclusividade: z.boolean().default(false),
-  flag_direito_subcontratar: z.boolean().default(false),
-
-  // Garantias
-  garantia_existente: z.boolean().default(false),
-  garantia_tipo: z.string().optional(),
-  garantia_valor: z.number().optional().nullable(),
-  garantia_data_validade: z.date().optional().nullable(),
-
-  // RGPD
-  tratamento_dados_pessoais: z.boolean().default(false),
-  papel_entidade: z.string().optional(),
-  categorias_dados_pessoais: z.string().optional(),
-  categorias_titulares: z.string().optional(),
-  transferencia_internacional: z.boolean().default(false),
-  paises_transferencia: z.string().optional(),
-  base_legal_transferencia: z.string().optional(),
-  existe_dpa_anexo_rgpd: z.boolean().default(false),
-  referencia_dpa: z.string().optional(),
-  dpia_realizada: z.boolean().default(false),
-  referencia_dpia: z.string().optional(),
-});
-
-type FormValues = z.infer<typeof formSchema>;
-
-function DatePickerField({
-  value,
-  onChange,
-  placeholder = 'Selecione uma data',
-}: {
-  value?: Date | null;
-  onChange: (date: Date | undefined) => void;
-  placeholder?: string;
-}) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            'w-full justify-start text-left font-normal',
-            !value && 'text-muted-foreground',
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4" />
-          {value ? format(value, "d 'de' MMMM 'de' yyyy", { locale: pt }) : placeholder}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={value || undefined}
-          onSelect={onChange}
-          initialFocus
-          className="p-3 pointer-events-auto"
-        />
-      </PopoverContent>
-    </Popover>
-  );
+interface ExtractedContractData {
+  titulo_contrato?: string;
+  tipo_contrato?: string;
+  objeto_resumido?: string;
+  parte_a_nome_legal?: string;
+  parte_a_nif?: string;
+  parte_a_morada?: string;
+  parte_b_nome_legal?: string;
+  parte_b_nif?: string;
+  parte_b_morada?: string;
+  data_assinatura?: string;
+  data_inicio_vigencia?: string;
+  data_termo?: string;
+  tipo_duracao?: string;
+  tipo_renovacao?: string;
+  renovacao_periodo_meses?: number;
+  aviso_denuncia_dias?: number;
+  obrigacoes_parte_a?: string;
+  obrigacoes_parte_b?: string;
+  sla_indicadores?: string;
+  clausulas_especiais?: {
+    confidencialidade?: boolean;
+    nao_concorrencia?: boolean;
+    exclusividade?: boolean;
+    subcontratacao?: boolean;
+    protecao_dados?: boolean;
+  };
 }
+import { contratoFormSchema, type ContratoFormValues } from '@/components/contracts/form/schema';
+import { IdentificacaoTab } from '@/components/contracts/form/IdentificacaoTab';
+import { PartesTab } from '@/components/contracts/form/PartesTab';
+import { DatasTab } from '@/components/contracts/form/DatasTab';
+import { ObrigacoesTab } from '@/components/contracts/form/ObrigacoesTab';
+import { RgpdTab } from '@/components/contracts/form/RgpdTab';
 
 export default function ContratoForm() {
   const navigate = useNavigate();
@@ -190,8 +91,8 @@ export default function ContratoForm() {
     return `CTR-${year}-${random}`;
   };
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<ContratoFormValues>({
+    resolver: zodResolver(contratoFormSchema),
     defaultValues: existingContrato
       ? {
           titulo_contrato: existingContrato.titulo_contrato,
@@ -331,7 +232,7 @@ export default function ContratoForm() {
 
   // Handle data extracted from AI
 
-  const handleDataExtracted = (data: any, file: File, extractedText: string) => {
+  const handleDataExtracted = (data: ExtractedContractData, file: File, extractedText: string) => {
     setUploadedFile(file);
     setExtractedContractText(extractedText);
 
@@ -390,17 +291,17 @@ export default function ContratoForm() {
   const handleSkipUpload = () => {
     setShowUploadStep(false);
   };
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (data: ContratoFormValues) => {
     const contratoData: ContratoInsert = {
       id_interno: isEditing
         ? (existingContrato?.id_interno ?? generateInternalId())
         : generateInternalId(),
       titulo_contrato: data.titulo_contrato,
-      tipo_contrato: data.tipo_contrato as any,
+      tipo_contrato: data.tipo_contrato as TipoContrato,
       tipo_contrato_personalizado:
         data.tipo_contrato === 'outro' ? data.tipo_contrato_personalizado || null : null,
-      estado_contrato: 'activo' as any,
-      departamento_responsavel: data.departamento_responsavel as any,
+      estado_contrato: 'activo' as EstadoContrato,
+      departamento_responsavel: data.departamento_responsavel as Departamento,
       objeto_resumido: data.objeto_resumido || null,
       parte_a_nome_legal: data.parte_a_nome_legal,
       parte_a_nif: data.parte_a_nif || null,
@@ -415,8 +316,8 @@ export default function ContratoForm() {
       data_assinatura_parte_b: data.data_assinatura_parte_b?.toISOString().split('T')[0] || null,
       data_inicio_vigencia: data.data_inicio_vigencia?.toISOString().split('T')[0] || null,
       data_termo: data.data_termo?.toISOString().split('T')[0] || null,
-      tipo_duracao: data.tipo_duracao as any,
-      tipo_renovacao: data.tipo_renovacao as any,
+      tipo_duracao: data.tipo_duracao as TipoDuracao,
+      tipo_renovacao: data.tipo_renovacao as TipoRenovacao,
       renovacao_periodo_meses: data.renovacao_periodo_meses || null,
       aviso_previo_nao_renovacao_dias: data.aviso_previo_nao_renovacao_dias,
       obrigacoes_parte_a: data.obrigacoes_parte_a || null,
@@ -430,11 +331,11 @@ export default function ContratoForm() {
       flag_exclusividade: data.flag_exclusividade,
       flag_direito_subcontratar: data.flag_direito_subcontratar,
       garantia_existente: data.garantia_existente,
-      garantia_tipo: (data.garantia_tipo as any) || null,
+      garantia_tipo: (data.garantia_tipo as TipoGarantia) || null,
       garantia_valor: data.garantia_valor || null,
       garantia_data_validade: data.garantia_data_validade?.toISOString().split('T')[0] || null,
       tratamento_dados_pessoais: data.tratamento_dados_pessoais,
-      papel_entidade: (data.papel_entidade as any) || null,
+      papel_entidade: (data.papel_entidade as PapelEntidade) || null,
       categorias_dados_pessoais: data.categorias_dados_pessoais || null,
       categorias_titulares: data.categorias_titulares || null,
       transferencia_internacional: data.transferencia_internacional,
@@ -453,17 +354,17 @@ export default function ContratoForm() {
       const savedId = id;
       if (extractedContractText && savedId) {
         try {
-          const draftPayload: any = {
+          const draftPayload = {
             contrato_id: savedId,
-            source: 'ai_extraction',
-            status: 'provisional',
+            source: 'ai_extraction' as const,
+            status: 'provisional' as const,
             extraction_data: {
               ...data,
               data_inicio_vigencia: data.data_inicio_vigencia?.toISOString().split('T')[0] || null,
               data_termo: data.data_termo?.toISOString().split('T')[0] || null,
-            },
+            } as unknown as Record<string, unknown>,
             confidence: null,
-            evidence: [],
+            evidence: [] as unknown as Record<string, unknown>[],
             created_by_id: user?.id || null,
           };
           await supabase
@@ -476,7 +377,7 @@ export default function ContratoForm() {
             .catch((err) => console.warn('[CCA Pipeline] Non-blocking error:', err));
           await supabase
             .from('contratos')
-            .update({ validation_status: 'draft_only' } as any)
+            .update({ validation_status: 'draft_only' })
             .eq('id', savedId);
           try {
             const { callCCAAgent } = await import('@/lib/ccaAgent');
@@ -500,17 +401,17 @@ export default function ContratoForm() {
       // === PIPELINE IA: Gravar draft e enviar ao CCA (criação) ===
       if (extractedContractText && savedId) {
         try {
-          const draftPayload: any = {
+          const draftPayload = {
             contrato_id: savedId,
-            source: 'ai_extraction',
-            status: 'provisional',
+            source: 'ai_extraction' as const,
+            status: 'provisional' as const,
             extraction_data: {
               ...data,
               data_inicio_vigencia: data.data_inicio_vigencia?.toISOString().split('T')[0] || null,
               data_termo: data.data_termo?.toISOString().split('T')[0] || null,
-            },
+            } as unknown as Record<string, unknown>,
             confidence: null,
-            evidence: [],
+            evidence: [] as unknown as Record<string, unknown>[],
             created_by_id: user?.id || null,
           };
           await supabase
@@ -523,7 +424,7 @@ export default function ContratoForm() {
             .catch((err) => console.warn('[CCA Pipeline] Non-blocking error:', err));
           await supabase
             .from('contratos')
-            .update({ validation_status: 'draft_only' } as any)
+            .update({ validation_status: 'draft_only' })
             .eq('id', savedId);
           try {
             const { callCCAAgent } = await import('@/lib/ccaAgent');
@@ -659,873 +560,28 @@ export default function ContratoForm() {
               </TabsList>
 
               {/* Tab 1: Contrato */}
-              <TabsContent value="identificacao" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Identificação do Contrato</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-6 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="tipo_contrato"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de Contrato *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(TIPO_CONTRATO_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    {form.watch('tipo_contrato') === 'outro' && (
-                      <FormField
-                        control={form.control}
-                        name="tipo_contrato_personalizado"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo Personalizado</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Ex: Shareholder Agreement, Joint Venture..."
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    <FormField
-                      control={form.control}
-                      name="titulo_contrato"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Título do Contrato *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Título descritivo do contrato" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="departamento_responsavel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Departamento Responsável *</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(DEPARTAMENTO_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="objeto_resumido"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2">
-                          <FormLabel>Objecto (Resumo)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Descrição resumida do objecto do contrato"
-                              rows={3}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Upload do Contrato - só disponível após guardar */}
-                {isEditing && id && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Upload className="h-5 w-5" />
-                        Upload do Contrato
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ContractMainUpload contratoId={id} />
-                    </CardContent>
-                  </Card>
-                )}
-
-                {!isEditing && (
-                  <Card className="border-dashed border-muted-foreground/50">
-                    <CardContent className="py-8 text-center text-muted-foreground">
-                      <Upload className="h-8 w-8 mx-auto mb-3 opacity-50" />
-                      <p>Guarde o contrato primeiro para poder fazer upload do ficheiro.</p>
-                    </CardContent>
-                  </Card>
-                )}
+              <TabsContent value="identificacao">
+                <IdentificacaoTab form={form} isEditing={isEditing} contratoId={id} />
               </TabsContent>
 
               {/* Tab 2: Partes + Contactos */}
-              <TabsContent value="partes" className="space-y-6 mt-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Parte A (A sua Organização)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="parte_a_nome_legal"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome Legal *</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_a_nif"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>NIF</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_a_morada"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Morada</FormLabel>
-                            <FormControl>
-                              <Textarea rows={2} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_a_pais"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>País</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Parte B (Contraparte)</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="parte_b_nome_legal"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nome Legal *</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_b_nif"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>NIF</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_b_grupo_economico"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Grupo Económico</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_b_morada"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Morada</FormLabel>
-                            <FormControl>
-                              <Textarea rows={2} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="parte_b_pais"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>País</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
+              <TabsContent value="partes">
+                <PartesTab form={form} />
               </TabsContent>
 
               {/* Tab 3: Prazos */}
-              <TabsContent value="datas" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Datas e Duração</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-6 md:grid-cols-2">
-                    {!isLocal && (
-                      <FormField
-                        control={form.control}
-                        name="data_assinatura_parte_a"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Data Assinatura Parte A</FormLabel>
-                            <DatePickerField value={field.value} onChange={field.onChange} />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    {!isLocal && (
-                      <FormField
-                        control={form.control}
-                        name="data_assinatura_parte_b"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Data Assinatura Parte B</FormLabel>
-                            <DatePickerField value={field.value} onChange={field.onChange} />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                    <FormField
-                      control={form.control}
-                      name="data_inicio_vigencia"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Início de Vigência</FormLabel>
-                          <DatePickerField value={field.value} onChange={field.onChange} />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="data_termo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Data de Termo</FormLabel>
-                          <DatePickerField value={field.value} onChange={field.onChange} />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="tipo_duracao"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de Duração</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(TIPO_DURACAO_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="tipo_renovacao"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tipo de Renovação</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(TIPO_RENOVACAO_LABELS).map(([value, label]) => (
-                                <SelectItem key={value} value={value}>
-                                  {label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="renovacao_periodo_meses"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Período de Renovação (meses)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(e.target.value ? Number(e.target.value) : null)
-                              }
-                              value={field.value ?? ''}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="aviso_previo_nao_renovacao_dias"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Aviso Prévio (dias)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Alertas */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configuração de Alertas</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">
-                      Os alertas são configurados automaticamente com base nas datas definidas.
-                      Receberá notificações 90, 60 e 30 dias antes da expiração do contrato.
-                    </p>
-                  </CardContent>
-                </Card>
+              <TabsContent value="datas">
+                <DatasTab form={form} isLocal={isLocal} />
               </TabsContent>
 
               {/* Tab 4: Obrigações + Garantias */}
-              <TabsContent value="obrigacoes" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Obrigações e Cláusulas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid gap-6 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="obrigacoes_parte_a"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Obrigações Parte A</FormLabel>
-                            <FormControl>
-                              <Textarea rows={4} {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="obrigacoes_parte_b"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Obrigações Parte B</FormLabel>
-                            <FormControl>
-                              <Textarea rows={4} {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <FormField
-                      control={form.control}
-                      name="sla_kpi_resumo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>SLA/KPI (Resumo)</FormLabel>
-                          <FormControl>
-                            <Textarea rows={2} {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="limite_responsabilidade"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Limite de Responsabilidade</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="flag_confidencialidade"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                            <FormLabel>Cláusula de Confidencialidade</FormLabel>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="flag_nao_concorrencia"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                            <FormLabel>Não Concorrência</FormLabel>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="flag_exclusividade"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                            <FormLabel>Exclusividade</FormLabel>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="flag_direito_subcontratar"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                            <FormLabel>Direito a Subcontratar</FormLabel>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="clausula_indemnizacao"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                            <FormLabel>Cláusula de Indemnização</FormLabel>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    {form.watch('clausula_indemnizacao') && (
-                      <FormField
-                        control={form.control}
-                        name="clausula_indemnizacao_resumo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Resumo Cláusula Indemnização</FormLabel>
-                            <FormControl>
-                              <Textarea rows={2} {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Garantias */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Garantias</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="garantia_existente"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                          <FormLabel>Existe Garantia</FormLabel>
-                          <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    {form.watch('garantia_existente') && (
-                      <div className="grid gap-6 md:grid-cols-2">
-                        <FormField
-                          control={form.control}
-                          name="garantia_tipo"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Tipo de Garantia</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {Object.entries(TIPO_GARANTIA_LABELS).map(([value, label]) => (
-                                    <SelectItem key={value} value={value}>
-                                      {label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="garantia_valor"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Valor da Garantia</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  {...field}
-                                  onChange={(e) =>
-                                    field.onChange(e.target.value ? Number(e.target.value) : null)
-                                  }
-                                  value={field.value ?? ''}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="garantia_data_validade"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Data Validade Garantia</FormLabel>
-                              <DatePickerField value={field.value} onChange={field.onChange} />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+              <TabsContent value="obrigacoes">
+                <ObrigacoesTab form={form} />
               </TabsContent>
 
               {/* Tab 6: RGPD */}
-              <TabsContent value="rgpd" className="space-y-6 mt-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>RGPD e Protecção de Dados</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {isLocal ? (
-                      /* Utilizadores cliente: apenas 3 indicadores de leitura preenchidos pelo Agente CCA */
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Indicadores detectados automaticamente pelo Agente CCA após análise do
-                          documento.
-                        </p>
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="flex items-center gap-3 rounded-lg border p-4">
-                            {form.watch('tratamento_dados_pessoais') ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">Dados pessoais detectados</p>
-                              <p className="text-xs text-muted-foreground">
-                                {form.watch('tratamento_dados_pessoais') ? 'Sim' : 'Não'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 rounded-lg border p-4">
-                            {form.watch('existe_dpa_anexo_rgpd') ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">DPA detectado</p>
-                              <p className="text-xs text-muted-foreground">
-                                {form.watch('existe_dpa_anexo_rgpd') ? 'Sim' : 'Não'}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 rounded-lg border p-4">
-                            {form.watch('transferencia_internacional') ? (
-                              <Globe className="h-5 w-5 text-amber-500 shrink-0" />
-                            ) : (
-                              <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
-                            )}
-                            <div>
-                              <p className="font-medium text-sm">
-                                Transferência internacional detectada
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {form.watch('transferencia_internacional') ? 'Sim' : 'Não'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Utilizadores internos: formulário completo */
-                      <>
-                        <FormField
-                          control={form.control}
-                          name="tratamento_dados_pessoais"
-                          render={({ field }) => (
-                            <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                              <FormLabel>Envolve Tratamento de Dados Pessoais</FormLabel>
-                              <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                        {form.watch('tratamento_dados_pessoais') && (
-                          <>
-                            <div className="grid gap-6 md:grid-cols-2">
-                              <FormField
-                                control={form.control}
-                                name="papel_entidade"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Papel da Entidade</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue placeholder="Selecione" />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {Object.entries(PAPEL_ENTIDADE_LABELS).map(
-                                          ([value, label]) => (
-                                            <SelectItem key={value} value={value}>
-                                              {label}
-                                            </SelectItem>
-                                          ),
-                                        )}
-                                      </SelectContent>
-                                    </Select>
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="categorias_dados_pessoais"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Categorias de Dados</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="Ex: Nome, email, morada" />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="categorias_titulares"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Categorias de Titulares</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} placeholder="Ex: Clientes, colaboradores" />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            <FormField
-                              control={form.control}
-                              name="transferencia_internacional"
-                              render={({ field }) => (
-                                <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                                  <FormLabel>Transferência Internacional</FormLabel>
-                                  <FormControl>
-                                    <Switch
-                                      checked={field.value}
-                                      onCheckedChange={field.onChange}
-                                    />
-                                  </FormControl>
-                                </FormItem>
-                              )}
-                            />
-                            {form.watch('transferencia_internacional') && (
-                              <div className="grid gap-6 md:grid-cols-2">
-                                <FormField
-                                  control={form.control}
-                                  name="paises_transferencia"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Países de Transferência</FormLabel>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={form.control}
-                                  name="base_legal_transferencia"
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Base Legal</FormLabel>
-                                      <FormControl>
-                                        <Input {...field} />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                            )}
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <FormField
-                                control={form.control}
-                                name="existe_dpa_anexo_rgpd"
-                                render={({ field }) => (
-                                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                                    <FormLabel>Existe DPA/Anexo RGPD</FormLabel>
-                                    <FormControl>
-                                      <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                              <FormField
-                                control={form.control}
-                                name="dpia_realizada"
-                                render={({ field }) => (
-                                  <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                                    <FormLabel>DPIA Realizada</FormLabel>
-                                    <FormControl>
-                                      <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            {form.watch('existe_dpa_anexo_rgpd') && (
-                              <FormField
-                                control={form.control}
-                                name="referencia_dpa"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Referência DPA</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            )}
-                            {form.watch('dpia_realizada') && (
-                              <FormField
-                                control={form.control}
-                                name="referencia_dpia"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Referência DPIA</FormLabel>
-                                    <FormControl>
-                                      <Input {...field} />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            )}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </CardContent>
-                </Card>
+              <TabsContent value="rgpd">
+                <RgpdTab form={form} isLocal={isLocal} />
               </TabsContent>
               <TabsContent value="classificacao" className="space-y-6 mt-6">
                 {isEditing && id ? (
