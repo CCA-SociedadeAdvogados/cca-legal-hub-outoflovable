@@ -1,10 +1,11 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building2, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useLawyerProfile } from '@/hooks/useLawyerProfile';
+import { CCACardHeader, Eyebrow } from '@/components/cca';
 
 interface OrganizationCardProps {
   title: string;
@@ -23,15 +24,8 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
     if (!organization) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{t('home.organizationNotFound')}</p>
-          </CardContent>
+          <CCACardHeader eyebrow="Organização" title={title} />
+          <p className="px-5 py-5 text-[13px] text-ink-mute">{t('home.organizationNotFound')}</p>
         </Card>
       );
     }
@@ -51,45 +45,51 @@ const OrganizationCard = forwardRef<HTMLDivElement, OrganizationCardProps>(
           .toUpperCase()
       : null;
 
+    const orgInitials = organization.name.substring(0, 2).toUpperCase();
+
     return (
       <Card ref={ref}>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CCACardHeader eyebrow="Organização" title={title} />
+        <div className="space-y-5 px-5 py-5">
           <div className="flex items-center gap-4">
             {showLogo && (
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={organization.logo_url || undefined} alt={organization.name} />
-                <AvatarFallback className="text-lg">
-                  {organization.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-control border border-line bg-bg-alt">
+                {organization.logo_url ? (
+                  <img
+                    src={organization.logo_url}
+                    alt={organization.name}
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <span className="font-display text-[16px] font-medium text-ink">
+                    {orgInitials}
+                  </span>
+                )}
+              </div>
             )}
-            <div>
-              <h3 className="font-semibold text-lg">{organization.name}</h3>
-              <p className="text-sm text-muted-foreground">{t('home.organization')}</p>
+            <div className="min-w-0">
+              <h3 className="truncate font-display text-[18px] font-medium leading-tight tracking-[-0.005em] text-ink">
+                {organization.name}
+              </h3>
+              <p className="mt-0.5 text-[11.5px] text-ink-mute">{t('home.organization')}</p>
             </div>
           </div>
 
           {showLawyer && lawyerName && (
-            <div className="flex items-center gap-3 pt-2 border-t">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={lawyerPhoto || undefined} alt={lawyerName} />
-                <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                  {displayInitials || <User className="h-5 w-5" />}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-xs text-muted-foreground">{t('home.responsibleLawyer')}</p>
-                <p className="text-sm font-medium">{lawyerName}</p>
+            <div className="space-y-2 border-t border-line-soft pt-4">
+              <Eyebrow>{t('home.responsibleLawyer')}</Eyebrow>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={lawyerPhoto || undefined} alt={lawyerName} />
+                  <AvatarFallback className="bg-brand/10 text-[11px] font-medium text-brand">
+                    {displayInitials || <User className="h-4 w-4" />}
+                  </AvatarFallback>
+                </Avatar>
+                <p className="text-[13px] font-medium text-ink">{lawyerName}</p>
               </div>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
     );
   },

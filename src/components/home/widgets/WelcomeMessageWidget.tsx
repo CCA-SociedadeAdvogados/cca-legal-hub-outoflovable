@@ -1,13 +1,40 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { useContentBlock } from '@/hooks/useContentBlocks';
+import { Eyebrow } from '@/components/cca';
 
 interface WelcomeMessageWidgetProps {
   title: string;
   config: Record<string, unknown>;
   organizationId: string | null;
+}
+
+/** Concentric SVG ornament with "CCA" centred — opacity 0.08 over the hero. */
+function CCAOrnament() {
+  return (
+    <svg
+      viewBox="0 0 220 220"
+      aria-hidden
+      className="pointer-events-none absolute right-6 top-1/2 hidden h-[200px] w-[200px] -translate-y-1/2 select-none text-ink opacity-[0.08] md:block"
+    >
+      <circle cx="110" cy="110" r="100" fill="none" stroke="currentColor" strokeWidth="1" />
+      <circle cx="110" cy="110" r="76" fill="none" stroke="currentColor" strokeWidth="1" />
+      <circle cx="110" cy="110" r="52" fill="none" stroke="currentColor" strokeWidth="1" />
+      <text
+        x="110"
+        y="118"
+        textAnchor="middle"
+        fontFamily="Fraunces, Georgia, serif"
+        fontSize="28"
+        fontWeight="500"
+        letterSpacing="0.06em"
+        fill="currentColor"
+      >
+        CCA
+      </text>
+    </svg>
+  );
 }
 
 const WelcomeMessageWidget = forwardRef<HTMLDivElement, WelcomeMessageWidgetProps>(
@@ -16,45 +43,38 @@ const WelcomeMessageWidget = forwardRef<HTMLDivElement, WelcomeMessageWidgetProp
     const contentKey = (config.contentBlockKey as string) || 'welcome_message';
     const { block, isLoading } = useContentBlock(organizationId, contentKey);
 
-    if (isLoading) {
-      return (
-        <Card ref={ref} className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="animate-pulse space-y-2">
-              <div className="h-4 bg-muted rounded w-3/4" />
-              <div className="h-4 bg-muted rounded w-1/2" />
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    // Default welcome message if no custom block exists
     const displayTitle = block?.title || t('home.welcomeTitle');
     const displayContent = block?.content || t('home.welcomeDescription');
 
     return (
-      <Card ref={ref} className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-primary">
-            <Sparkles className="h-5 w-5" />
-            {displayTitle}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            {displayContent}
-          </p>
-        </CardContent>
+      <Card
+        ref={ref}
+        className="relative overflow-hidden border-line bg-gradient-hero md:col-span-2 lg:col-span-3"
+      >
+        <CCAOrnament />
+        <div className="relative grid gap-6 px-7 py-8 md:grid-cols-[1fr_auto] md:items-center md:px-9 md:py-10">
+          <div className="min-w-0 space-y-3">
+            <Eyebrow>✦ {title}</Eyebrow>
+            {isLoading ? (
+              <div className="space-y-2">
+                <div className="h-7 w-3/4 animate-pulse rounded bg-bg-alt" />
+                <div className="h-5 w-1/2 animate-pulse rounded bg-bg-alt" />
+              </div>
+            ) : (
+              <>
+                <h2 className="font-display text-[26px] font-medium leading-[1.15] tracking-[-0.005em] text-ink md:text-[28px]">
+                  {displayTitle}
+                </h2>
+                <p className="max-w-prose text-[13.5px] leading-[1.65] text-ink-soft">
+                  {displayContent}
+                </p>
+              </>
+            )}
+          </div>
+        </div>
       </Card>
     );
-  }
+  },
 );
 
 export default WelcomeMessageWidget;
