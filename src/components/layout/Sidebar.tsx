@@ -1,60 +1,60 @@
-import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
-import { useSidebar } from "@/contexts/SidebarContext";
-import { useSidebarBadges } from "@/hooks/useSidebarBadges";
-import { useUserTheme } from "@/hooks/useUserTheme";
-import { usePermissions } from "@/hooks/usePermissions";
-import ccaLogo from "@/assets/cca-logo.png";
+import { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import { cn } from '@/lib/utils';
+import { useSidebar } from '@/contexts/SidebarContext';
+import { useSidebarBadges } from '@/hooks/useSidebarBadges';
+import { useUserTheme } from '@/hooks/useUserTheme';
+import { usePermissions } from '@/hooks/usePermissions';
+import ccaLogo from '@/assets/cca-logo.png';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  LayoutDashboard,
-  FileCheck,
-  AlertTriangle,
-  Settings,
-  LogOut,
-  BookOpen,
-  FolderOpen,
-  Building2,
-  Library,
-  Crown,
-  ChevronDown,
-  ChevronRight,
-  Upload,
-  List,
-  Newspaper,
-  Receipt,
   Home,
-  ChevronsLeft,
+  Bell,
+  Wallet,
+  BarChart3,
+  FileText,
+  FolderOpen,
+  Newspaper,
+  Shield,
+  Coins,
+  BookOpen,
+  Users,
+  Building2,
   Moon,
   Sun,
-  Bell,
-  Briefcase,
-  UserCog,
-  BarChart3,
+  Settings,
+  LogOut,
+  Crown,
+  ChevronsLeft,
+  ChevronDown,
+  ChevronRight,
   Lock,
-} from "lucide-react";
+  LayoutDashboard,
+  List,
+  Upload,
+} from 'lucide-react';
 
 interface SidebarProps {
   clientName?: string;
 }
 
 interface NavItemProps {
-  to: string;
+  to?: string;
   icon: React.ElementType;
   label: string;
-  isActive: boolean;
+  isActive?: boolean;
   isCollapsed: boolean;
   badge?: number;
   isSubmenu?: boolean;
+  locked?: boolean;
+  onClick?: () => void;
+  trailing?: React.ReactNode;
+  variant?: 'primary' | 'secondary';
 }
 
+/** Single sidebar nav row — handles primary, submenu and secondary variants. */
 function NavItem({
   to,
   icon: Icon,
@@ -63,35 +63,67 @@ function NavItem({
   isCollapsed,
   badge,
   isSubmenu = false,
+  locked = false,
+  onClick,
+  trailing,
+  variant = 'primary',
 }: NavItemProps) {
-  const content = (
-    <Link
-      to={to}
-      className={cn(
-        "relative flex min-w-0 items-center gap-3 rounded-lg transition-all duration-200",
-        isSubmenu ? "px-3 py-2 text-sm" : "px-3 py-2.5 text-sm font-medium",
-        isActive
-          ? isSubmenu
-            ? "bg-sidebar-accent/70 text-sidebar-accent-foreground"
-            : "bg-sidebar-accent text-sidebar-accent-foreground"
-          : isSubmenu
-            ? "text-sidebar-foreground/70 hover:bg-sidebar-accent/30 hover:text-sidebar-foreground"
-            : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-        isCollapsed && "justify-center px-2"
-      )}
-    >
+  const sizeClass = isSubmenu ? 'h-8 text-[12.5px]' : 'h-[34px] text-[13px]';
+  const padClass = isCollapsed ? 'justify-center px-0' : isSubmenu ? 'pl-3 pr-3' : 'pl-3.5 pr-3.5';
+
+  const stateClass = isActive
+    ? 'bg-sidebar-active text-sidebar-active-ink font-medium'
+    : locked
+      ? 'text-sidebar-ink/40 cursor-not-allowed'
+      : variant === 'secondary'
+        ? 'text-sidebar-ink/70 hover:bg-sidebar-ink/10 hover:text-sidebar-ink'
+        : 'text-sidebar-ink/85 hover:bg-sidebar-ink/[0.08] hover:text-sidebar-ink';
+
+  const iconSize = isSubmenu ? 'h-3.5 w-3.5' : 'h-[15px] w-[15px]';
+
+  const inner = (
+    <>
       <div className="relative shrink-0">
-        <Icon className={cn(isSubmenu ? "h-4 w-4" : "h-5 w-5")} />
+        <Icon className={iconSize} strokeWidth={1.5} />
         {badge !== undefined && badge > 0 && (
-          <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
-            {badge > 9 ? "9+" : badge}
+          <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-semibold leading-none text-white">
+            {badge > 9 ? '9+' : badge}
           </span>
         )}
       </div>
-
-      {!isCollapsed && <span className="truncate">{label}</span>}
-    </Link>
+      {!isCollapsed && (
+        <>
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {locked && <Lock className="h-3 w-3 shrink-0 opacity-60" strokeWidth={1.5} />}
+          {trailing}
+        </>
+      )}
+    </>
   );
+
+  const className = cn(
+    'flex w-full min-w-0 items-center gap-3 rounded-control transition-colors duration-150',
+    sizeClass,
+    padClass,
+    stateClass,
+  );
+
+  const content =
+    locked || !to ? (
+      <button
+        type="button"
+        disabled={locked}
+        onClick={onClick}
+        aria-disabled={locked || undefined}
+        className={className}
+      >
+        {inner}
+      </button>
+    ) : (
+      <Link to={to} className={className} onClick={onClick}>
+        {inner}
+      </Link>
+    );
 
   if (isCollapsed) {
     return (
@@ -100,15 +132,14 @@ function NavItem({
         <TooltipContent side="right" className="flex items-center gap-2">
           <span>{label}</span>
           {badge !== undefined && badge > 0 && (
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-              {badge > 9 ? "9+" : badge}
+            <span className="flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[10px] font-medium text-white">
+              {badge > 9 ? '9+' : badge}
             </span>
           )}
         </TooltipContent>
       </Tooltip>
     );
   }
-
   return content;
 }
 
@@ -122,374 +153,262 @@ export function Sidebar({ clientName }: SidebarProps) {
   const badges = useSidebarBadges();
   const { can, isAppAdmin, isCCAUser, isOrgManager, isOrgUser } = usePermissions();
 
-  const [contractsExpanded, setContractsExpanded] = useState(
-    location.pathname.startsWith("/contratos") || location.pathname === "/"
-  );
+  const isContractsRoute = location.pathname.startsWith('/contratos') || location.pathname === '/';
+  const [contractsExpanded, setContractsExpanded] = useState(isContractsRoute);
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/login");
+    navigate('/login');
   };
-
-  const isContractsActive =
-    location.pathname.startsWith("/contratos") || location.pathname === "/";
 
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-foreground transition-all duration-300",
-        isCollapsed ? "w-16" : "w-64"
+        'fixed left-0 top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-ink transition-[width] duration-[220ms]',
+        isCollapsed ? 'w-16' : 'w-[244px]',
       )}
-      style={{ background: "var(--gradient-sidebar)" }}
     >
+      {/* Brand block */}
       <Link
         to="/home"
         className={cn(
-          "flex h-16 items-center gap-3 border-b border-sidebar-border transition-colors duration-200 hover:bg-sidebar-accent/30",
-          isCollapsed ? "justify-center px-2" : "px-6"
+          'flex h-[60px] items-center gap-3 transition-colors duration-150 hover:bg-sidebar-ink/5',
+          isCollapsed ? 'justify-center px-0' : 'px-4',
         )}
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
-          <img src={ccaLogo} alt="CCA" className="h-7 w-7 object-contain" />
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-control border border-sidebar-active bg-sidebar-active-ink">
+          <img src={ccaLogo} alt="CCA" className="h-6 w-6 object-contain" />
         </div>
-
         {!isCollapsed && (
-          <span className="truncate font-sans text-lg font-semibold">
-            Legal Hub
-          </span>
+          <div className="min-w-0 leading-tight">
+            <div className="font-display text-[15px] font-medium tracking-[-0.005em] text-sidebar-ink">
+              Legal Hub
+            </div>
+            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-sidebar-ink-mute">
+              by CCA
+            </div>
+          </div>
         )}
       </Link>
 
-      {clientName && !isCollapsed && (
-        <div className="border-b border-sidebar-border px-6 py-3">
-          <p className="text-xs text-sidebar-foreground/60">
-            {t("common.reservedArea")}
-          </p>
-          <p className="truncate text-sm font-medium">{clientName}</p>
+      {/* Reserved area block */}
+      {!isCollapsed && (
+        <div className="border-y border-sidebar-ink/10 px-4 py-3">
+          <div className="text-[9.5px] font-medium uppercase tracking-[0.22em] text-sidebar-ink-mute">
+            {t('common.reservedArea')}
+          </div>
+          <div className="mt-1 truncate text-[12px] text-sidebar-ink">
+            {clientName ?? 'CCA · Sociedade de Advogados'}
+          </div>
         </div>
       )}
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4 scrollbar-hide">
+      {/* Primary nav */}
+      <nav
+        className={cn(
+          'flex-1 space-y-0.5 overflow-y-auto py-3 scrollbar-hide',
+          isCollapsed ? 'px-2' : 'px-2.5',
+        )}
+      >
         <NavItem
           to="/home"
           icon={Home}
-          label={t("nav.home")}
-          isActive={location.pathname === "/home"}
+          label={t('nav.home')}
+          isActive={location.pathname === '/home'}
           isCollapsed={isCollapsed}
         />
-
         <NavItem
           to="/notificacoes"
           icon={Bell}
-          label={t("common.notifications")}
-          isActive={location.pathname === "/notificacoes"}
+          label={t('common.notifications')}
+          isActive={location.pathname === '/notificacoes'}
           isCollapsed={isCollapsed}
           badge={badges.notifications}
         />
-
         <NavItem
           to="/financeiro"
-          icon={Receipt}
-          label={t("nav.financial")}
-          isActive={location.pathname === "/financeiro"}
+          icon={Wallet}
+          label={t('nav.financial')}
+          isActive={location.pathname === '/financeiro'}
           isCollapsed={isCollapsed}
         />
-
         <NavItem
           to="/legalbi"
           icon={BarChart3}
-          label={t("nav.legalbi")}
-          isActive={location.pathname === "/legalbi"}
+          label={t('nav.legalbi')}
+          isActive={location.pathname === '/legalbi'}
           isCollapsed={isCollapsed}
         />
 
-        <div>
-          {isCollapsed ? (
-            <NavItem
-              to="/contratos"
-              icon={FileCheck}
-              label={t("nav.contracts")}
-              isActive={isContractsActive}
-              isCollapsed={isCollapsed}
-              badge={badges.contracts}
-            />
-          ) : (
-            <>
-              <button
-                onClick={() => setContractsExpanded(!contractsExpanded)}
-                className={cn(
-                  "flex w-full min-w-0 items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                  isContractsActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                )}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative shrink-0">
-                    <FileCheck className="h-5 w-5" />
-                    {badges.contracts > 0 && (
-                      <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-medium text-primary">
-                        {badges.contracts > 9 ? "9+" : badges.contracts}
-                      </span>
-                    )}
-                  </div>
-                  <span className="truncate">{t("nav.contracts")}</span>
-                </div>
-
-                {contractsExpanded ? (
-                  <ChevronDown className="h-4 w-4 shrink-0" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 shrink-0" />
-                )}
-              </button>
-
-              {contractsExpanded && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-3">
-                  <NavItem
-                    to="/contratos/visao-geral"
-                    icon={LayoutDashboard}
-                    label={t("nav.contractsOverview")}
-                    isActive={
-                      location.pathname === "/" ||
-                      location.pathname === "/contratos/visao-geral"
-                    }
-                    isCollapsed={false}
-                    isSubmenu
-                  />
-                  <NavItem
-                    to="/contratos"
-                    icon={List}
-                    label={t("nav.contractsList")}
-                    isActive={location.pathname === "/contratos"}
-                    isCollapsed={false}
-                    isSubmenu
-                  />
-                  {can("contracts:bulk_upload") && (
-                    <NavItem
-                      to="/contratos/upload-massa"
-                      icon={Upload}
-                      label={t("nav.contractsUpload")}
-                      isActive={location.pathname === "/contratos/upload-massa"}
-                      isCollapsed={false}
-                      isSubmenu
-                    />
-                  )}
-                </div>
+        {/* Contratos — submenu when expanded */}
+        {isCollapsed ? (
+          <NavItem
+            to="/contratos"
+            icon={FileText}
+            label={t('nav.contracts')}
+            isActive={isContractsRoute}
+            isCollapsed
+            badge={badges.contracts}
+          />
+        ) : (
+          <div>
+            <button
+              type="button"
+              onClick={() => setContractsExpanded((v) => !v)}
+              className={cn(
+                'flex h-[34px] w-full min-w-0 items-center gap-3 rounded-control pl-3.5 pr-3.5 text-[13px] transition-colors duration-150',
+                isContractsRoute
+                  ? 'bg-sidebar-active text-sidebar-active-ink font-medium'
+                  : 'text-sidebar-ink/85 hover:bg-sidebar-ink/[0.08] hover:text-sidebar-ink',
               )}
-            </>
-          )}
-        </div>
+            >
+              <div className="relative shrink-0">
+                <FileText className="h-[15px] w-[15px]" strokeWidth={1.5} />
+                {badges.contracts > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-semibold leading-none text-white">
+                    {badges.contracts > 9 ? '9+' : badges.contracts}
+                  </span>
+                )}
+              </div>
+              <span className="min-w-0 flex-1 truncate text-left">{t('nav.contracts')}</span>
+              {contractsExpanded ? (
+                <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={1.5} />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 opacity-70" strokeWidth={1.5} />
+              )}
+            </button>
+            {contractsExpanded && (
+              <div className="ml-3.5 mt-0.5 space-y-0.5 border-l border-sidebar-ink/10 pl-2">
+                <NavItem
+                  to="/contratos/visao-geral"
+                  icon={LayoutDashboard}
+                  label={t('nav.contractsOverview')}
+                  isActive={
+                    location.pathname === '/' || location.pathname === '/contratos/visao-geral'
+                  }
+                  isCollapsed={false}
+                  isSubmenu
+                />
+                <NavItem
+                  to="/contratos"
+                  icon={List}
+                  label={t('nav.contractsList')}
+                  isActive={location.pathname === '/contratos'}
+                  isCollapsed={false}
+                  isSubmenu
+                />
+                {can('contracts:bulk_upload') && (
+                  <NavItem
+                    to="/contratos/upload-massa"
+                    icon={Upload}
+                    label={t('nav.contractsUpload')}
+                    isActive={location.pathname === '/contratos/upload-massa'}
+                    isCollapsed={false}
+                    isSubmenu
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <NavItem
           to="/documentos"
           icon={FolderOpen}
-          label={t("nav.documents")}
-          isActive={location.pathname === "/documentos" || location.pathname.startsWith("/documentos/")}
+          label={t('nav.documents')}
+          isActive={
+            location.pathname === '/documentos' || location.pathname.startsWith('/documentos/')
+          }
           isCollapsed={isCollapsed}
         />
 
-        <div className="my-2 border-t border-sidebar-border" />
-
-        <NavItem
-          to="/eventos"
-          icon={Building2}
-          label={t("nav.events")}
-          isActive={location.pathname === "/eventos"}
-          isCollapsed={isCollapsed}
-        />
+        {/* Subtle divider between contract-flow and informational items */}
+        <div className="my-2 border-t border-sidebar-ink/10" />
 
         <NavItem
           to="/novidades-cca"
           icon={Newspaper}
-          label={t("nav.ccaNews")}
-          isActive={location.pathname === "/novidades-cca"}
+          label={t('nav.ccaNews')}
+          isActive={location.pathname === '/novidades-cca'}
           isCollapsed={isCollapsed}
           badge={badges.news}
         />
-
         <NavItem
           to="/politicas"
-          icon={BookOpen}
-          label={t("nav.policies")}
-          isActive={location.pathname === "/politicas"}
+          icon={Shield}
+          label={t('nav.policies')}
+          isActive={location.pathname === '/politicas'}
           isCollapsed={isCollapsed}
         />
 
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 opacity-60 pointer-events-none",
-            isCollapsed && "justify-center px-2"
-          )}
-        >
-          <AlertTriangle className="h-5 w-5 shrink-0" />
-          {!isCollapsed && (
-            <>
-              <span className="flex-1 truncate">{t("nav.impacts")}</span>
-              <Lock className="h-4 w-4 shrink-0" />
-            </>
-          )}
-        </div>
+        {/* Locked tiers — Impostos / Legislação */}
+        <NavItem icon={Coins} label={t('nav.impacts')} isCollapsed={isCollapsed} locked />
+        <NavItem icon={BookOpen} label={t('nav.normativos')} isCollapsed={isCollapsed} locked />
 
-        <div
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 opacity-60 pointer-events-none",
-            isCollapsed && "justify-center px-2"
-          )}
-        >
-          <Library className="h-5 w-5 shrink-0" />
-          {!isCollapsed && (
-            <>
-              <span className="flex-1 truncate">{t("nav.normativos")}</span>
-              <Lock className="h-4 w-4 shrink-0" />
-            </>
-          )}
-        </div>
-
-        {(isCCAUser || isOrgManager) && (
+        {/* Org-scoped items */}
+        {can('users:view_own_org') && (
           <NavItem
-            to="/meu-departamento"
-            icon={Briefcase}
-            label="O Meu Departamento"
-            isActive={location.pathname === "/meu-departamento"}
+            to="/utilizadores-org"
+            icon={Users}
+            label="Utilizadores"
+            isActive={location.pathname === '/utilizadores-org'}
             isCollapsed={isCollapsed}
           />
         )}
-
         {(isCCAUser || isOrgManager || isOrgUser) && (
           <NavItem
             to="/minha-organizacao"
             icon={Building2}
-            label="A Minha Organização"
-            isActive={location.pathname === "/minha-organizacao"}
-            isCollapsed={isCollapsed}
-          />
-        )}
-
-        {can("users:view_own_org") && (
-          <NavItem
-            to="/utilizadores-org"
-            icon={UserCog}
-            label="Utilizadores"
-            isActive={location.pathname === "/utilizadores-org"}
-            isCollapsed={isCollapsed}
-          />
-        )}
-
-        {(isAppAdmin || can("org:view_all")) && (
-          <NavItem
-            to="/organizacao"
-            icon={Building2}
-            label={t("nav.organization")}
-            isActive={location.pathname === "/organizacao"}
+            label={t('nav.organization')}
+            isActive={
+              location.pathname === '/minha-organizacao' || location.pathname === '/organizacao'
+            }
             isCollapsed={isCollapsed}
           />
         )}
       </nav>
 
-      <div className="space-y-1 border-t border-sidebar-border p-3">
-        {isCollapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={toggleTheme}
-                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              >
-                {resolvedTheme === "dark" ? (
-                  <Sun className="h-5 w-5" />
-                ) : (
-                  <Moon className="h-5 w-5" />
-                )}
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {resolvedTheme === "dark"
-                ? t("common.lightMode")
-                : t("common.darkMode")}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={toggleTheme}
-            className="flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            {resolvedTheme === "dark" ? (
-              <Sun className="h-5 w-5 shrink-0" />
-            ) : (
-              <Moon className="h-5 w-5 shrink-0" />
-            )}
-            <span className="truncate">
-              {resolvedTheme === "dark"
-                ? t("common.lightMode")
-                : t("common.darkMode")}
-            </span>
-          </button>
-        )}
-
+      {/* Secondary block */}
+      <div className="space-y-0.5 border-t border-sidebar-ink/10 px-2.5 py-3">
+        <NavItem
+          icon={resolvedTheme === 'dark' ? Sun : Moon}
+          label={resolvedTheme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
+          isCollapsed={isCollapsed}
+          onClick={toggleTheme}
+          variant="secondary"
+        />
         {isAppAdmin && (
           <NavItem
             to="/admin"
             icon={Crown}
-            label={t("nav.admin")}
-            isActive={location.pathname === "/admin"}
+            label={t('nav.admin')}
+            isActive={location.pathname === '/admin'}
             isCollapsed={isCollapsed}
+            variant="secondary"
           />
         )}
-
         <NavItem
           to="/definicoes"
           icon={Settings}
-          label={t("nav.settings")}
-          isActive={location.pathname === "/definicoes"}
+          label={t('nav.settings')}
+          isActive={location.pathname === '/definicoes'}
           isCollapsed={isCollapsed}
+          variant="secondary"
         />
-
-        {isCollapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={handleSignOut}
-                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              >
-                <LogOut className="h-5 w-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {t("common.logout")}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={handleSignOut}
-            className="flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            <LogOut className="h-5 w-5 shrink-0" />
-            <span className="truncate">{t("common.logout")}</span>
-          </button>
-        )}
-
-        {isCollapsed ? (
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <button
-                onClick={toggle}
-                className="flex w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              >
-                <ChevronsLeft className="h-5 w-5 rotate-180 transition-transform" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {t("common.expand")}
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <button
-            onClick={toggle}
-            className="flex w-full min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground/80 transition-all duration-200 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-          >
-            <ChevronsLeft className="h-5 w-5 shrink-0 transition-transform" />
-            <span className="truncate">{t("common.collapse")}</span>
-          </button>
-        )}
+        <NavItem
+          icon={LogOut}
+          label={t('common.logout')}
+          isCollapsed={isCollapsed}
+          onClick={handleSignOut}
+          variant="secondary"
+        />
+        <NavItem
+          icon={ChevronsLeft}
+          label={isCollapsed ? t('common.expand') : t('common.collapse')}
+          isCollapsed={isCollapsed}
+          onClick={toggle}
+          variant="secondary"
+        />
       </div>
     </aside>
   );
