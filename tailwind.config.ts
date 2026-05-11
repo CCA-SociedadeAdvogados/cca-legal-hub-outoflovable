@@ -14,10 +14,34 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Playfair Display', 'Georgia', 'serif'],
+        sans: ['var(--font-sans)', 'Inter Tight', 'Inter', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Fraunces', 'Georgia', 'serif'],
+        display: ['var(--font-display)', 'Fraunces', 'Georgia', 'serif'],
+        mono: ['var(--font-mono)', 'JetBrains Mono', 'ui-monospace', 'monospace'],
+      },
+      fontSize: {
+        // Eyebrow / micro
+        'eyebrow': ['10.5px', { lineHeight: '1', letterSpacing: '0.22em', fontWeight: '500' }],
+        // Body 13px
+        'body': ['13px', { lineHeight: '1.55' }],
+        // Label
+        'label': ['12px', { lineHeight: '1.4', fontWeight: '500' }],
+        // Mono
+        'mono-sm': ['11px', { lineHeight: '1.3' }],
+        'mono-base': ['12px', { lineHeight: '1.3' }],
+        // Display
+        'display-kpi': ['40px', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '400' }],
+        'display-h1': ['40px', { lineHeight: '1.05', letterSpacing: '-0.02em', fontWeight: '400' }],
+        'display-h2': ['26px', { lineHeight: '1.15', letterSpacing: '-0.005em', fontWeight: '500' }],
+        'display-h3': ['19px', { lineHeight: '1.25', letterSpacing: '-0.005em', fontWeight: '500' }],
+      },
+      letterSpacing: {
+        'eyebrow': '0.22em',
+        'eyebrow-tight': '0.18em',
+        'eyebrow-wide': '0.24em',
       },
       colors: {
+        // shadcn aliases
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -60,6 +84,10 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+          ink: "hsl(var(--sidebar-ink))",
+          "ink-mute": "hsl(var(--sidebar-ink-mute))",
+          active: "hsl(var(--sidebar-active))",
+          "active-ink": "hsl(var(--sidebar-active-ink))",
         },
         risk: {
           high: "hsl(var(--risk-high))",
@@ -75,15 +103,44 @@ export default {
           completed: "hsl(var(--status-completed))",
           expired: "hsl(var(--status-expired))",
         },
+
+        // === CCA Legal Hub — design tokens nomeados ===
+        bg: "hsl(var(--bg))",
+        "bg-alt": "hsl(var(--bg-alt))",
+        surface: "hsl(var(--surface))",
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          soft: "hsl(var(--ink-soft))",
+          mute: "hsl(var(--ink-mute))",
+        },
+        line: {
+          DEFAULT: "hsl(var(--line))",
+          soft: "hsl(var(--line-soft))",
+        },
+        brand: {
+          DEFAULT: "hsl(var(--accent-brand))",
+          soft: "hsl(var(--accent-brand-soft))",
+          strong: "hsl(var(--accent-brand-strong))",
+        },
+        positive: "hsl(var(--positive))",
+        warn: "hsl(var(--warn))",
+        danger: "hsl(var(--danger))",
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "var(--radius-control)",
+        sm: "calc(var(--radius-control) - 1px)",
+        card: "var(--radius-card)",
+        control: "var(--radius-control)",
       },
       boxShadow: {
         'card': 'var(--shadow-card)',
         'elevated': 'var(--shadow-elevated)',
+      },
+      backgroundImage: {
+        'gradient-hero': 'var(--gradient-hero)',
+        'gradient-card': 'var(--gradient-card)',
+        'gradient-sidebar': 'var(--gradient-sidebar)',
       },
       keyframes: {
         "accordion-down": {

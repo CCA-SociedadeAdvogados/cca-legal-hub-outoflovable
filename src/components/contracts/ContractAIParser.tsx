@@ -1,14 +1,15 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, FileText, Sparkles, AlertTriangle, CheckCircle } from "lucide-react";
-import { useComplianceAI, ParsedContractData } from "@/hooks/useComplianceAI";
-import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { useCCAStatus } from "@/hooks/useCCAStatus";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, FileText, Sparkles, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useComplianceAI, ParsedContractData } from '@/hooks/useComplianceAI';
+import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
+import { useCCAStatus } from '@/hooks/useCCAStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ContractAIParserProps {
   onDataExtracted?: (data: ParsedContractData) => void;
@@ -17,21 +18,25 @@ interface ContractAIParserProps {
 }
 
 const tipoContratoLabels: Record<string, string> = {
-  nda: "NDA",
-  prestacao_servicos: "Prestação de Serviços",
-  fornecimento: "Fornecimento",
-  saas: "SaaS",
-  arrendamento: "Arrendamento",
-  trabalho: "Trabalho",
-  licenciamento: "Licenciamento",
-  parceria: "Parceria",
-  consultoria: "Consultoria",
-  outro: "Outro",
+  nda: 'NDA',
+  prestacao_servicos: 'Prestação de Serviços',
+  fornecimento: 'Fornecimento',
+  saas: 'SaaS',
+  arrendamento: 'Arrendamento',
+  trabalho: 'Trabalho',
+  licenciamento: 'Licenciamento',
+  parceria: 'Parceria',
+  consultoria: 'Consultoria',
+  outro: 'Outro',
 };
 
-export function ContractAIParser({ onDataExtracted, contractId, contractStoragePath }: ContractAIParserProps) {
+export function ContractAIParser({
+  onDataExtracted,
+  contractId,
+  contractStoragePath,
+}: ContractAIParserProps) {
   const { settings } = useOrganizationSettings();
-  const [textContent, setTextContent] = useState("");
+  const [textContent, setTextContent] = useState('');
   const { isLoading, parseContract } = useComplianceAI(settings?.ai_model);
   const [parsedData, setParsedData] = useState<ParsedContractData | null>(null);
 
@@ -40,14 +45,14 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
 
   const handleParse = async () => {
     if (!textContent.trim()) {
-      toast.error("Cole o texto do contrato antes de analisar");
+      toast.error('Cole o texto do contrato antes de analisar');
       return;
     }
 
     const result = await parseContract(textContent.trim());
     if (result) {
       setParsedData(result);
-      toast.success("Contrato analisado com sucesso!");
+      toast.success('Contrato analisado com sucesso!');
       if (onDataExtracted) {
         onDataExtracted(result);
       }
@@ -59,35 +64,37 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
           .update({ validation_status: 'validating' } as any)
           .eq('id', contractId)
           .then(({ error }) => {
-            if (error) console.warn('[ContractAIParser] Failed to update validation_status:', error);
+            if (error)
+              console.warn('[ContractAIParser] Failed to update validation_status:', error);
           });
 
         // 2. Chamar o Agente CCA em background (fire and forget)
-        import('@/lib/ccaAgent').then(({ callCCAAgent }) => {
-          callCCAAgent({
-            contractId,
-            documentPath: contractStoragePath ?? '',
-            extractionDraft: result as unknown as Record<string, unknown>,
+        import('@/lib/ccaAgent')
+          .then(({ callCCAAgent }) => {
+            callCCAAgent({
+              contractId,
+              documentPath: contractStoragePath ?? '',
+              extractionDraft: result as unknown as Record<string, unknown>,
+            });
+          })
+          .catch(() => {
+            // Silencioso — não bloquear o utilizador se o CCA falhar
           });
-        }).catch(() => {
-          // Silencioso — não bloquear o utilizador se o CCA falhar
-        });
       }
     }
   };
 
-
-  const formatCurrency = (value: number | undefined, currency = "EUR") => {
-    if (value === undefined || value === null) return "N/A";
-    return new Intl.NumberFormat("pt-PT", {
-      style: "currency",
+  const formatCurrency = (value: number | undefined, currency = 'EUR') => {
+    if (value === undefined || value === null) return 'N/A';
+    return new Intl.NumberFormat('pt-PT', {
+      style: 'currency',
       currency,
     }).format(value);
   };
 
   const formatDate = (dateStr: string | undefined) => {
-    if (!dateStr) return "N/A";
-    return new Date(dateStr).toLocaleDateString("pt-PT");
+    if (!dateStr) return 'N/A';
+    return new Date(dateStr).toLocaleDateString('pt-PT');
   };
 
   return (
@@ -116,8 +123,7 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
           <Button onClick={handleParse} disabled={isLoading || !textContent.trim()}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                A analisar...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />A analisar...
               </>
             ) : (
               <>
@@ -134,11 +140,11 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-500" />
+                <CheckCircle className="h-5 w-5 text-positive" />
                 Dados Extraídos
               </span>
               {parsedData.confianca && (
-                <Badge variant={parsedData.confianca >= 70 ? "default" : "secondary"}>
+                <Badge variant={parsedData.confianca >= 70 ? 'default' : 'secondary'}>
                   Confiança: {parsedData.confianca}%
                 </Badge>
               )}
@@ -153,19 +159,19 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
                 <div className="space-y-2">
                   <div>
                     <span className="text-sm text-muted-foreground">Título:</span>
-                    <p className="font-medium">{parsedData.titulo_contrato || "N/A"}</p>
+                    <p className="font-medium">{parsedData.titulo_contrato || 'N/A'}</p>
                   </div>
                   <div>
                     <span className="text-sm text-muted-foreground">Tipo:</span>
                     <p className="font-medium">
                       {parsedData.tipo_contrato
                         ? tipoContratoLabels[parsedData.tipo_contrato] || parsedData.tipo_contrato
-                        : "N/A"}
+                        : 'N/A'}
                     </p>
                   </div>
                   <div>
                     <span className="text-sm text-muted-foreground">Objeto:</span>
-                    <p className="text-sm">{parsedData.objeto_resumido || "N/A"}</p>
+                    <p className="text-sm">{parsedData.objeto_resumido || 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -177,14 +183,14 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
                 <div className="space-y-4">
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <span className="text-xs text-muted-foreground">Parte A</span>
-                    <p className="font-medium">{parsedData.parte_a_nome_legal || "N/A"}</p>
+                    <p className="font-medium">{parsedData.parte_a_nome_legal || 'N/A'}</p>
                     {parsedData.parte_a_nif && (
                       <p className="text-sm text-muted-foreground">NIF: {parsedData.parte_a_nif}</p>
                     )}
                   </div>
                   <div className="p-3 bg-muted/50 rounded-lg">
                     <span className="text-xs text-muted-foreground">Parte B</span>
-                    <p className="font-medium">{parsedData.parte_b_nome_legal || "N/A"}</p>
+                    <p className="font-medium">{parsedData.parte_b_nome_legal || 'N/A'}</p>
                     {parsedData.parte_b_nif && (
                       <p className="text-sm text-muted-foreground">NIF: {parsedData.parte_b_nif}</p>
                     )}
@@ -203,7 +209,9 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">Início</span>
-                    <p className="font-medium text-sm">{formatDate(parsedData.data_inicio_vigencia)}</p>
+                    <p className="font-medium text-sm">
+                      {formatDate(parsedData.data_inicio_vigencia)}
+                    </p>
                   </div>
                   <div>
                     <span className="text-xs text-muted-foreground">Termo</span>
@@ -219,9 +227,7 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
                 <div className="space-y-2">
                   <div>
                     <span className="text-sm text-muted-foreground">Valor Total:</span>
-                    <p className="font-medium">
-                      {formatCurrency(parsedData.valor_total_estimado)}
-                    </p>
+                    <p className="font-medium">{formatCurrency(parsedData.valor_total_estimado)}</p>
                   </div>
                 </div>
               </div>
@@ -233,7 +239,9 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
                   </h4>
                   <ul className="list-disc list-inside space-y-1">
                     {parsedData.clausulas_importantes.map((clausula, index) => (
-                      <li key={index} className="text-sm">{clausula}</li>
+                      <li key={index} className="text-sm">
+                        {clausula}
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -242,14 +250,14 @@ export function ContractAIParser({ onDataExtracted, contractId, contractStorageP
               {parsedData.riscos_identificados && parsedData.riscos_identificados.length > 0 && (
                 <div className="md:col-span-2 space-y-3">
                   <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                    <AlertTriangle className="h-4 w-4 text-warn" />
                     Riscos Identificados
                   </h4>
                   <ul className="space-y-2">
                     {parsedData.riscos_identificados.map((risco, index) => (
                       <li
                         key={index}
-                        className="text-sm p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded"
+                        className="text-sm p-2 bg-warn/10 border border-warn/30 rounded"
                       >
                         {risco}
                       </li>

@@ -3,12 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
-import { ArrowRight, Lightbulb, Scale } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowRight, Scale } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { CCACardHeader, Pill } from '@/components/cca';
 
 interface LegalInsightsWidgetProps {
   title: string;
@@ -25,21 +23,14 @@ interface LegalInsight {
   descricao_resumo: string | null;
 }
 
-const areaOfLawColors: Record<string, string> = {
-  laboral: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  fiscal: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  comercial: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  protecao_dados: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-  ambiente: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-  seguranca_trabalho: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  societario: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-  outro: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-};
-
-export default function LegalInsightsWidget({ title, config, organizationId }: LegalInsightsWidgetProps) {
+export default function LegalInsightsWidget({
+  title,
+  config,
+  organizationId,
+}: LegalInsightsWidgetProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'pt' ? pt : enUS;
-  
+
   const limit = (config.limit as number) || 5;
   const showDate = (config.showDate as boolean) ?? true;
   const filterArea = config.filterArea as string | undefined;
@@ -65,93 +56,82 @@ export default function LegalInsightsWidget({ title, config, organizationId }: L
     enabled: true,
   });
 
-  const getAreaLabel = (area: string) => {
-    return t(`areaOfLaw.${area.replace('_', '')}`, area);
-  };
+  const getAreaLabel = (area: string) => t(`areaOfLaw.${area.replace('_', '')}`, area);
+
+  const viewAll = (
+    <Link
+      to="/eventos"
+      className="inline-flex items-center gap-1 text-[11.5px] font-medium tracking-[0.01em] text-brand hover:text-brand-strong"
+    >
+      {t('dashboard.viewAll', 'Ver todos')}
+      <ArrowRight className="h-3 w-3" />
+    </Link>
+  );
 
   if (isLoading) {
     return (
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-amber-500" />
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
+        <CCACardHeader eyebrow="Legal Insights" title={title} />
+        <div className="space-y-3 px-5 py-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse space-y-1.5">
+              <div className="h-4 w-3/4 rounded bg-bg-alt" />
+              <div className="h-3 w-1/2 rounded bg-bg-alt" />
             </div>
           ))}
-        </CardContent>
+        </div>
+      </Card>
+    );
+  }
+
+  if (insights.length === 0) {
+    return (
+      <Card>
+        <CCACardHeader eyebrow="Legal Insights" title={title} />
+        <div className="flex flex-col items-center justify-center px-5 py-8 text-center">
+          <Scale className="mb-2 h-8 w-8 text-ink-mute opacity-60" strokeWidth={1.5} />
+          <p className="text-[13px] text-ink-mute">
+            {t('home.noLegalInsights', 'Sem novidades em Legal Insights')}
+          </p>
+        </div>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium flex items-center gap-2">
-          <Lightbulb className="h-4 w-4 text-amber-500" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {insights.length === 0 ? (
-          <div className="text-center py-6 text-muted-foreground">
-            <Scale className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">{t('home.noLegalInsights', 'Sem novidades em Legal Insights')}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {insights.map((insight) => (
-              <Link
-                key={insight.id}
-                to={`/eventos`}
-                className="block p-3 -mx-3 rounded-lg hover:bg-muted/50 transition-colors group"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                      {insight.titulo}
-                    </p>
-                    {insight.descricao_resumo && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                        {insight.descricao_resumo}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge 
-                        variant="secondary" 
-                        className={`text-xs ${areaOfLawColors[insight.area_direito] || areaOfLawColors.outro}`}
-                      >
-                        {getAreaLabel(insight.area_direito)}
-                      </Badge>
-                      {showDate && insight.data_publicacao && (
-                        <span className="text-xs text-muted-foreground">
-                          {format(new Date(insight.data_publicacao), 'dd MMM yyyy', { locale })}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-1" />
-                </div>
-              </Link>
-            ))}
-
-            <div className="pt-2 border-t">
-              <Button variant="ghost" size="sm" asChild className="w-full">
-                <Link to="/eventos">
-                  {t('dashboard.viewAll', 'Ver todos')}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
+      <CCACardHeader eyebrow="Legal Insights" title={title} action={viewAll} />
+      <ul className="divide-y divide-line-soft">
+        {insights.map((insight) => (
+          <li key={insight.id}>
+            <Link
+              to="/eventos"
+              className="group flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-bg-alt"
+            >
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <Pill tone="active">{getAreaLabel(insight.area_direito)}</Pill>
+                <p className="line-clamp-2 font-display text-[14.5px] font-medium leading-tight text-ink transition-colors group-hover:text-brand">
+                  {insight.titulo}
+                </p>
+                {insight.descricao_resumo && (
+                  <p className="line-clamp-1 text-[12px] leading-[1.5] text-ink-soft">
+                    {insight.descricao_resumo}
+                  </p>
+                )}
+                {showDate && insight.data_publicacao && (
+                  <p className="font-mono text-[11px] text-ink-mute">
+                    {format(new Date(insight.data_publicacao), 'dd MMM yyyy', { locale })}
+                  </p>
+                )}
+              </div>
+              <ArrowRight
+                className="mt-1 h-4 w-4 shrink-0 text-ink-mute opacity-0 transition-opacity group-hover:opacity-100"
+                strokeWidth={1.5}
+              />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </Card>
   );
 }

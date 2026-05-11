@@ -32,7 +32,9 @@ import {
   CheckCircle,
   Loader2,
   Lock,
+  Palette,
 } from 'lucide-react';
+import { Eyebrow, VisualThemeSwitcher } from '@/components/cca';
 
 interface SignatureProvider {
   id: string;
@@ -191,12 +193,17 @@ export default function Definicoes() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-7">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-foreground">{t('settings.title')}</h1>
-          <p className="text-muted-foreground mt-1">{t('settings.subtitle')}</p>
-        </div>
+        <header className="space-y-3">
+          <Eyebrow>{t('nav.settings')}</Eyebrow>
+          <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+            {t('settings.title')}
+          </h1>
+          <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+            {t('settings.subtitle')}
+          </p>
+        </header>
 
         {/* Tabs */}
         <Tabs defaultValue="general" className="space-y-6">
@@ -231,6 +238,25 @@ export default function Definicoes() {
 
           {/* General Settings */}
           <TabsContent value="general" className="space-y-6">
+            {/* Aspecto visual — Âmbar / Terracota / Cobre */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="h-5 w-5" />
+                  {t('settings.appearance.title', 'Aspecto visual')}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'settings.appearance.description',
+                    'Escolha a direção visual aplicada ao Legal Hub. A preferência é guardada neste navegador.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <VisualThemeSwitcher />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -372,7 +398,7 @@ export default function Definicoes() {
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium">{provider.name}</h4>
                             {provider.status === 'configured' && (
-                              <Badge variant="default" className="bg-green-600">
+                              <Badge variant="default" className="bg-positive">
                                 <CheckCircle className="mr-1 h-3 w-3" />
                                 {t('settings.signatures.active')}
                               </Badge>

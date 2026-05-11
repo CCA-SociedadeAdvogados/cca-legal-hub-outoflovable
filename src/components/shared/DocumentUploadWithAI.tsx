@@ -304,10 +304,10 @@ export function DocumentUploadWithAI({
               <span
                 className={`ml-auto text-xs px-2 py-0.5 rounded-full ${
                   analysisResult.confianca >= 80
-                    ? 'bg-green-100 text-green-700'
+                    ? 'bg-positive/10 text-positive'
                     : analysisResult.confianca >= 60
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-orange-100 text-orange-700'
+                      ? 'bg-warn/10 text-warn'
+                      : 'bg-warn/10 text-warn'
                 }`}
               >
                 {analysisResult.confianca}% {t('upload.confidence')}
@@ -356,7 +356,7 @@ export function DocumentUploadWithAI({
                   </p>
                   <ul className="text-sm space-y-1">
                     {analysisResult.riscos_identificados.map((risco, i) => (
-                      <li key={i} className="text-orange-600 flex items-start gap-2">
+                      <li key={i} className="text-warn flex items-start gap-2">
                         <AlertCircle className="h-3 w-3 mt-1 flex-shrink-0" />
                         <span>{risco}</span>
                       </li>
@@ -449,9 +449,9 @@ export function DocumentUploadWithAI({
             </div>
           ) : selectedFile && analysisResult ? (
             <div className="space-y-3">
-              <CheckCircle className="h-10 w-10 mx-auto text-green-600" />
+              <CheckCircle className="h-10 w-10 mx-auto text-positive" />
               <div>
-                <p className="font-medium text-green-600">{t('upload.analysisComplete')}</p>
+                <p className="font-medium text-positive">{t('upload.analysisComplete')}</p>
                 <p className="text-sm text-muted-foreground mt-1">{selectedFile.name}</p>
               </div>
               <Button
@@ -531,10 +531,10 @@ export function DocumentUploadWithAI({
                 <span
                   className={`font-medium ${
                     analysisResult.confianca >= 80
-                      ? 'text-green-600'
+                      ? 'text-positive'
                       : analysisResult.confianca >= 60
-                        ? 'text-yellow-600'
-                        : 'text-orange-600'
+                        ? 'text-warn'
+                        : 'text-warn'
                   }`}
                 >
                   {analysisResult.confianca}%

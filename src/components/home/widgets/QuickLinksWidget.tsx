@@ -1,21 +1,22 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  LinkIcon, 
-  FileText, 
-  Folder, 
-  Calendar, 
-  Scale, 
-  Shield, 
-  Users, 
+import { Card } from '@/components/ui/card';
+import {
+  Link as LinkIcon,
+  FileText,
+  Folder,
+  Calendar,
+  Scale,
+  Shield,
+  Users,
   Settings,
   BarChart3,
   Newspaper,
-  DollarSign
+  DollarSign,
+  ArrowUpRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { CCACardHeader } from '@/components/cca';
 
 interface QuickLinksWidgetProps {
   title: string;
@@ -28,7 +29,7 @@ interface QuickLink {
   icon?: string;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+const iconMap: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   FileText,
   Folder,
   Calendar,
@@ -69,53 +70,41 @@ const QuickLinksWidget = forwardRef<HTMLDivElement, QuickLinksWidgetProps>(
     if (!links.length) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <LinkIcon className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t('home.quickLinks.noLinksConfigured')}
-            </p>
-          </CardContent>
+          <CCACardHeader eyebrow="Atalhos" title={title} />
+          <p className="px-5 py-5 text-[13px] text-ink-mute">
+            {t('home.quickLinks.noLinksConfigured')}
+          </p>
         </Card>
       );
     }
 
     return (
       <Card ref={ref}>
-        <CardHeader>
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <LinkIcon className="h-4 w-4" />
-            {title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-2">
-            {links.map((link, index) => {
-              const Icon = iconMap[link.icon || 'Link'] || LinkIcon;
-              return (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="justify-start gap-2"
-                >
-                  <Link to={link.path}>
-                    <Icon className="h-4 w-4" />
-                    {getTranslatedLabel(link)}
-                  </Link>
-                </Button>
-              );
-            })}
-          </div>
-        </CardContent>
+        <CCACardHeader eyebrow="Atalhos" title={title} />
+        <div className="grid grid-cols-2 gap-2 px-5 py-5">
+          {links.map((link, index) => {
+            const Icon = iconMap[link.icon || 'Link'] || LinkIcon;
+            return (
+              <Link
+                key={index}
+                to={link.path}
+                className="group flex items-center justify-between gap-2 rounded-control border border-line bg-surface px-3 py-2.5 text-[12.5px] font-medium text-ink transition-colors hover:border-brand hover:bg-bg-alt"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <Icon className="h-4 w-4 shrink-0 text-brand" strokeWidth={1.5} />
+                  <span className="truncate">{getTranslatedLabel(link)}</span>
+                </span>
+                <ArrowUpRight
+                  className="h-3.5 w-3.5 shrink-0 text-ink-mute opacity-0 transition-opacity group-hover:opacity-100"
+                  strokeWidth={1.5}
+                />
+              </Link>
+            );
+          })}
+        </div>
       </Card>
     );
-  }
+  },
 );
 
 export default QuickLinksWidget;

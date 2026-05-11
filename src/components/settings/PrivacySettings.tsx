@@ -86,27 +86,27 @@ export function PrivacySettings() {
     switch (status) {
       case 'pending':
         return (
-          <Badge variant="outline" className="border-yellow-500 text-yellow-600">
+          <Badge variant="outline" className="border-warn/30 text-warn">
             <Clock className="mr-1 h-3 w-3" />
             Pendente
           </Badge>
         );
       case 'processing':
         return (
-          <Badge variant="outline" className="border-blue-500 text-blue-600">
+          <Badge variant="outline" className="border-brand/30 text-brand">
             <Loader2 className="mr-1 h-3 w-3 animate-spin" />A processar
           </Badge>
         );
       case 'completed':
         return (
-          <Badge variant="outline" className="border-green-500 text-green-600">
+          <Badge variant="outline" className="border-positive/30 text-positive">
             <CheckCircle className="mr-1 h-3 w-3" />
             Concluído
           </Badge>
         );
       case 'failed':
         return (
-          <Badge variant="outline" className="border-red-500 text-red-600">
+          <Badge variant="outline" className="border-danger/30 text-danger">
             <XCircle className="mr-1 h-3 w-3" />
             Falhado
           </Badge>
@@ -256,14 +256,14 @@ export function PrivacySettings() {
         </CardHeader>
         <CardContent className="space-y-4">
           {hasPendingDeletion && pendingDeletionRequest ? (
-            <div className="rounded-lg border border-yellow-500/50 bg-yellow-50 dark:bg-yellow-950/20 p-4 space-y-3">
+            <div className="rounded-lg border border-warn/30 bg-warn/10 p-4 space-y-3">
               <div className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                <span className="font-medium text-yellow-800 dark:text-yellow-200">
+                <AlertTriangle className="h-5 w-5 text-warn" />
+                <span className="font-medium text-warn">
                   {t('privacy.deletion.pending', 'Pedido de eliminação pendente')}
                 </span>
               </div>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              <p className="text-sm text-warn">
                 {t('privacy.deletion.scheduledFor', 'A sua conta será eliminada em: ')}
                 <strong>
                   {pendingDeletionRequest.scheduled_execution_at

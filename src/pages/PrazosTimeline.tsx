@@ -239,19 +239,19 @@ export default function PrazosTimeline() {
               <p className="text-sm text-muted-foreground">
                 {t('prazos.next30', 'Próximos 30 dias')}
               </p>
-              <p className="text-2xl font-bold text-red-500">{next30}</p>
+              <p className="text-2xl font-bold text-danger">{next30}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">{t('prazos.critical', 'Críticos')}</p>
-              <p className="text-2xl font-bold text-red-500">{criticalCount}</p>
+              <p className="text-2xl font-bold text-danger">{criticalCount}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">{t('prazos.warnings', 'Atenção')}</p>
-              <p className="text-2xl font-bold text-amber-500">{warningCount}</p>
+              <p className="text-2xl font-bold text-warn">{warningCount}</p>
             </CardContent>
           </Card>
         </div>
@@ -273,7 +273,7 @@ export default function PrazosTimeline() {
         {filteredEvents.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <CalendarClock className="h-12 w-12 text-emerald-500 mb-4" />
+              <CalendarClock className="h-12 w-12 text-positive mb-4" />
               <p className="text-lg font-medium">{t('prazos.noDates', 'Sem datas pendentes')}</p>
               <p className="text-sm text-muted-foreground">
                 {t('prazos.noEventsDesc', 'Não existem prazos relevantes no período')}
@@ -287,8 +287,8 @@ export default function PrazosTimeline() {
                 key={event.id}
                 className={cn(
                   'transition-colors',
-                  event.urgency === 'critical' && 'border-red-300 dark:border-red-800',
-                  event.urgency === 'warning' && 'border-amber-300 dark:border-amber-800',
+                  event.urgency === 'critical' && 'border-danger/30',
+                  event.urgency === 'warning' && 'border-warn/30',
                 )}
               >
                 <CardContent className="flex items-center gap-4 py-3">
@@ -296,9 +296,9 @@ export default function PrazosTimeline() {
                     className={cn(
                       'flex items-center justify-center w-10 h-10 rounded-full shrink-0',
                       event.urgency === 'critical'
-                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30'
+                        ? 'bg-danger/10 text-danger'
                         : event.urgency === 'warning'
-                          ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30'
+                          ? 'bg-warn/10 text-warn'
                           : 'bg-muted text-muted-foreground',
                     )}
                   >

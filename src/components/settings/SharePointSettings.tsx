@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 import {
   useSharePointConfig,
   useSaveSharePointConfig,
   useSyncSharePoint,
   useSharePointSyncLogs,
   useDeleteSharePointConfig,
-} from "@/hooks/useSharePoint";
+} from '@/hooks/useSharePoint';
 import {
   Cloud,
   RefreshCw,
@@ -27,9 +27,9 @@ import {
   Info,
   FolderSync,
   AlertCircle,
-} from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { pt } from "date-fns/locale";
+} from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { pt } from 'date-fns/locale';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 export function SharePointSettings() {
   const { t } = useTranslation();
@@ -50,10 +50,10 @@ export function SharePointSettings() {
   const syncSharePoint = useSyncSharePoint();
   const deleteConfig = useDeleteSharePointConfig();
 
-  const [siteId, setSiteId] = useState(config?.site_id || "");
+  const [siteId, setSiteId] = useState(config?.site_id || '');
   const [syncEnabled, setSyncEnabled] = useState(config?.sync_enabled ?? true);
   const [syncInterval, setSyncInterval] = useState(config?.sync_interval_minutes ?? 5);
-  const [rootFolderPath, setRootFolderPath] = useState(config?.root_folder_path || "/");
+  const [rootFolderPath, setRootFolderPath] = useState(config?.root_folder_path || '/');
 
   // Update local state when config loads
   useState(() => {
@@ -61,7 +61,7 @@ export function SharePointSettings() {
       setSiteId(config.site_id);
       setSyncEnabled(config.sync_enabled);
       setSyncInterval(config.sync_interval_minutes);
-      setRootFolderPath(config.root_folder_path || "/");
+      setRootFolderPath(config.root_folder_path || '/');
     }
   });
 
@@ -73,7 +73,7 @@ export function SharePointSettings() {
       site_id: siteId.trim(),
       sync_enabled: syncEnabled,
       sync_interval_minutes: syncInterval,
-      root_folder_path: rootFolderPath.trim() || "/",
+      root_folder_path: rootFolderPath.trim() || '/',
     });
   };
 
@@ -83,32 +83,32 @@ export function SharePointSettings() {
 
   const getStatusBadge = (status: string | null) => {
     switch (status) {
-      case "success":
+      case 'success':
         return (
-          <Badge variant="default" className="bg-green-600">
+          <Badge variant="default" className="bg-positive">
             <CheckCircle className="mr-1 h-3 w-3" />
-            {t("sharepoint.status.success", "Sincronizado")}
+            {t('sharepoint.status.success', 'Sincronizado')}
           </Badge>
         );
-      case "error":
+      case 'error':
         return (
           <Badge variant="destructive">
             <XCircle className="mr-1 h-3 w-3" />
-            {t("sharepoint.status.error", "Erro")}
+            {t('sharepoint.status.error', 'Erro')}
           </Badge>
         );
-      case "in_progress":
+      case 'in_progress':
         return (
           <Badge variant="secondary">
             <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-            {t("sharepoint.status.syncing", "A sincronizar...")}
+            {t('sharepoint.status.syncing', 'A sincronizar...')}
           </Badge>
         );
       default:
         return (
           <Badge variant="outline">
             <Clock className="mr-1 h-3 w-3" />
-            {t("sharepoint.status.pending", "Pendente")}
+            {t('sharepoint.status.pending', 'Pendente')}
           </Badge>
         );
     }
@@ -129,15 +129,15 @@ export function SharePointSettings() {
       {/* Info Card */}
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>{t("sharepoint.info.title", "Integração SharePoint")}</AlertTitle>
+        <AlertTitle>{t('sharepoint.info.title', 'Integração SharePoint')}</AlertTitle>
         <AlertDescription>
           {t(
-            "sharepoint.info.description",
-            "Sincronize documentos do SharePoint automaticamente com a plataforma. Consulte o guia de configuração para instruções detalhadas."
+            'sharepoint.info.description',
+            'Sincronize documentos do SharePoint automaticamente com a plataforma. Consulte o guia de configuração para instruções detalhadas.',
           )}
           <Button variant="link" className="h-auto p-0 ml-1" asChild>
             <a href="/docs/SHAREPOINT_SETUP_GUIDE.md" target="_blank">
-              {t("sharepoint.info.viewGuide", "Ver guia")}
+              {t('sharepoint.info.viewGuide', 'Ver guia')}
               <ExternalLink className="ml-1 h-3 w-3" />
             </a>
           </Button>
@@ -149,16 +149,16 @@ export function SharePointSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Cloud className="h-5 w-5" />
-            {t("sharepoint.config.title", "Configuração SharePoint")}
+            {t('sharepoint.config.title', 'Configuração SharePoint')}
           </CardTitle>
           <CardDescription>
-            {t("sharepoint.config.description", "Configure a ligação ao seu site SharePoint.")}
+            {t('sharepoint.config.description', 'Configure a ligação ao seu site SharePoint.')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Site ID Input */}
           <div className="space-y-2">
-            <Label htmlFor="siteId">{t("sharepoint.config.siteId", "Site ID")}</Label>
+            <Label htmlFor="siteId">{t('sharepoint.config.siteId', 'Site ID')}</Label>
             <Input
               id="siteId"
               value={siteId}
@@ -168,8 +168,8 @@ export function SharePointSettings() {
             />
             <p className="text-xs text-muted-foreground">
               {t(
-                "sharepoint.config.siteIdHelp",
-                "Obtenha o Site ID através do Microsoft Graph Explorer. Formato: hostname,site-guid,web-guid"
+                'sharepoint.config.siteIdHelp',
+                'Obtenha o Site ID através do Microsoft Graph Explorer. Formato: hostname,site-guid,web-guid',
               )}
             </p>
           </div>
@@ -177,7 +177,7 @@ export function SharePointSettings() {
           {/* Root Folder Path */}
           <div className="space-y-2">
             <Label htmlFor="rootFolderPath">
-              {t("sharepoint.config.rootFolderPath", "Pasta Raiz")}
+              {t('sharepoint.config.rootFolderPath', 'Pasta Raiz')}
             </Label>
             <Input
               id="rootFolderPath"
@@ -188,8 +188,8 @@ export function SharePointSettings() {
             />
             <p className="text-xs text-muted-foreground">
               {t(
-                "sharepoint.config.rootFolderPathHelp",
-                "Caminho da pasta no SharePoint que esta organização pode ver. Ex: /Clientes/Cliente_A. Deixe / para ver tudo."
+                'sharepoint.config.rootFolderPathHelp',
+                'Caminho da pasta no SharePoint que esta organização pode ver. Ex: /Clientes/Cliente_A. Deixe / para ver tudo.',
               )}
             </p>
           </div>
@@ -198,8 +198,8 @@ export function SharePointSettings() {
           {config?.site_name && (
             <div className="rounded-lg border bg-muted/50 p-4">
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span className="font-medium">{t("sharepoint.config.connected", "Ligado a:")}</span>
+                <CheckCircle className="h-4 w-4 text-positive" />
+                <span className="font-medium">{t('sharepoint.config.connected', 'Ligado a:')}</span>
                 <span>{config.site_name}</span>
               </div>
               {config.site_url && (
@@ -220,13 +220,13 @@ export function SharePointSettings() {
 
           {/* Sync Settings */}
           <div className="space-y-4">
-            <h4 className="font-medium">{t("sharepoint.sync.title", "Sincronização")}</h4>
+            <h4 className="font-medium">{t('sharepoint.sync.title', 'Sincronização')}</h4>
 
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <Label>{t("sharepoint.sync.enabled", "Sincronização automática")}</Label>
+                <Label>{t('sharepoint.sync.enabled', 'Sincronização automática')}</Label>
                 <p className="text-sm text-muted-foreground">
-                  {t("sharepoint.sync.enabledDesc", "Verificar novos documentos periodicamente")}
+                  {t('sharepoint.sync.enabledDesc', 'Verificar novos documentos periodicamente')}
                 </p>
               </div>
               <Switch checked={syncEnabled} onCheckedChange={setSyncEnabled} />
@@ -234,7 +234,7 @@ export function SharePointSettings() {
 
             <div className="space-y-2">
               <Label htmlFor="syncInterval">
-                {t("sharepoint.sync.interval", "Intervalo de sincronização")}
+                {t('sharepoint.sync.interval', 'Intervalo de sincronização')}
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -247,7 +247,7 @@ export function SharePointSettings() {
                   className="w-24"
                 />
                 <span className="text-sm text-muted-foreground">
-                  {t("sharepoint.sync.minutes", "minutos")}
+                  {t('sharepoint.sync.minutes', 'minutos')}
                 </span>
               </div>
             </div>
@@ -256,7 +256,7 @@ export function SharePointSettings() {
           {/* Save Button */}
           <Button onClick={handleSave} disabled={saveConfig.isPending || !siteId.trim()}>
             {saveConfig.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("sharepoint.config.save", "Guardar Configuração")}
+            {t('sharepoint.config.save', 'Guardar Configuração')}
           </Button>
         </CardContent>
       </Card>
@@ -267,7 +267,7 @@ export function SharePointSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FolderSync className="h-5 w-5" />
-              {t("sharepoint.syncStatus.title", "Estado da Sincronização")}
+              {t('sharepoint.syncStatus.title', 'Estado da Sincronização')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -275,12 +275,14 @@ export function SharePointSettings() {
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{t("sharepoint.syncStatus.status", "Estado:")}</span>
+                  <span className="font-medium">
+                    {t('sharepoint.syncStatus.status', 'Estado:')}
+                  </span>
                   {getStatusBadge(config.last_sync_status)}
                 </div>
                 {config.last_sync_at && (
                   <p className="text-sm text-muted-foreground">
-                    {t("sharepoint.syncStatus.lastSync", "Última sincronização:")}{" "}
+                    {t('sharepoint.syncStatus.lastSync', 'Última sincronização:')}{' '}
                     {formatDistanceToNow(new Date(config.last_sync_at), {
                       addSuffix: true,
                       locale: pt,
@@ -306,7 +308,7 @@ export function SharePointSettings() {
                   ) : (
                     <RefreshCw className="mr-2 h-4 w-4" />
                   )}
-                  {t("sharepoint.syncStatus.syncNow", "Sincronizar")}
+                  {t('sharepoint.syncStatus.syncNow', 'Sincronizar')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -314,7 +316,7 @@ export function SharePointSettings() {
                   onClick={() => handleSync(true)}
                   disabled={syncSharePoint.isPending}
                 >
-                  {t("sharepoint.syncStatus.fullSync", "Sincronização completa")}
+                  {t('sharepoint.syncStatus.fullSync', 'Sincronização completa')}
                 </Button>
               </div>
             </div>
@@ -323,7 +325,7 @@ export function SharePointSettings() {
             {syncLogs && syncLogs.length > 0 && (
               <div className="space-y-2">
                 <h5 className="text-sm font-medium">
-                  {t("sharepoint.syncStatus.recentLogs", "Histórico recente")}
+                  {t('sharepoint.syncStatus.recentLogs', 'Histórico recente')}
                 </h5>
                 <div className="space-y-2">
                   {syncLogs.map((log) => (
@@ -332,9 +334,9 @@ export function SharePointSettings() {
                       className="flex items-center justify-between rounded border p-3 text-sm"
                     >
                       <div className="flex items-center gap-2">
-                        {log.status === "success" ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : log.status === "error" ? (
+                        {log.status === 'success' ? (
+                          <CheckCircle className="h-4 w-4 text-positive" />
+                        ) : log.status === 'error' ? (
                           <XCircle className="h-4 w-4 text-destructive" />
                         ) : (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -346,12 +348,12 @@ export function SharePointSettings() {
                           })}
                         </span>
                       </div>
-                      {log.status === "success" && (
+                      {log.status === 'success' && (
                         <span className="text-muted-foreground">
                           +{log.items_added} / ~{log.items_updated} / -{log.items_deleted}
                         </span>
                       )}
-                      {log.status === "error" && log.error_message && (
+                      {log.status === 'error' && log.error_message && (
                         <span className="text-destructive text-xs truncate max-w-[200px]">
                           {log.error_message}
                         </span>
@@ -371,19 +373,19 @@ export function SharePointSettings() {
           <CardHeader>
             <CardTitle className="text-destructive flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
-              {t("sharepoint.danger.title", "Zona de Perigo")}
+              {t('sharepoint.danger.title', 'Zona de Perigo')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">
-                  {t("sharepoint.danger.remove", "Remover integração SharePoint")}
+                  {t('sharepoint.danger.remove', 'Remover integração SharePoint')}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {t(
-                    "sharepoint.danger.removeDesc",
-                    "Remove a configuração e todos os documentos sincronizados da base de dados."
+                    'sharepoint.danger.removeDesc',
+                    'Remove a configuração e todos os documentos sincronizados da base de dados.',
                   )}
                 </p>
               </div>
@@ -391,28 +393,28 @@ export function SharePointSettings() {
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    {t("sharepoint.danger.removeButton", "Remover")}
+                    {t('sharepoint.danger.removeButton', 'Remover')}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {t("sharepoint.danger.confirmTitle", "Tem a certeza?")}
+                      {t('sharepoint.danger.confirmTitle', 'Tem a certeza?')}
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                       {t(
-                        "sharepoint.danger.confirmDesc",
-                        "Esta ação irá remover a configuração do SharePoint e todos os documentos sincronizados. Os ficheiros no SharePoint não serão afetados."
+                        'sharepoint.danger.confirmDesc',
+                        'Esta ação irá remover a configuração do SharePoint e todos os documentos sincronizados. Os ficheiros no SharePoint não serão afetados.',
                       )}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>{t("common.cancel", "Cancelar")}</AlertDialogCancel>
+                    <AlertDialogCancel>{t('common.cancel', 'Cancelar')}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => deleteConfig.mutate()}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
-                      {t("sharepoint.danger.confirmButton", "Sim, remover")}
+                      {t('sharepoint.danger.confirmButton', 'Sim, remover')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useTranslation } from 'react-i18next';
@@ -30,8 +31,8 @@ import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
 
 const estadoColors: Record<string, string> = {
   rascunho: 'bg-muted text-muted-foreground',
-  em_revisao: 'bg-yellow-500/20 text-yellow-700',
-  aprovada: 'bg-green-500/20 text-green-700',
+  em_revisao: 'bg-warn/20 text-warn',
+  aprovada: 'bg-positive/20 text-positive',
   arquivada: 'bg-destructive/20 text-destructive',
 };
 
@@ -273,7 +274,6 @@ export default function Politicas() {
                         <Label htmlFor="estado">{t('common.status')}</Label>
                         <Select
                           value={formData.estado}
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           onValueChange={(value) =>
                             setFormData({ ...formData, estado: value as any })
                           }

@@ -39,12 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,15 +57,36 @@ import { cn } from '@/lib/utils';
 // ─── Mappings ─────────────────────────────────────────────────────────────────
 
 const FASE_MAP: Record<string, { label: string; className: string }> = {
-  rascunho:              { label: 'Em negociação',     className: 'border-muted-foreground/40 text-muted-foreground bg-muted/40' },
-  em_revisao:            { label: 'Em validação',      className: 'border-amber-400/60 text-amber-700 bg-amber-50' },
-  em_aprovacao:          { label: 'Em validação',      className: 'border-amber-400/60 text-amber-700 bg-amber-50' },
-  enviado_para_assinatura: { label: 'Em validação',   className: 'border-amber-400/60 text-amber-700 bg-amber-50' },
-  activo:                { label: 'Activo',            className: 'border-green-500/60 text-green-700 bg-green-50' },
-  expirado:              { label: 'Terminado',         className: 'border-destructive/40 text-destructive bg-destructive/10' },
-  denunciado:            { label: 'Terminado',         className: 'border-destructive/40 text-destructive bg-destructive/10' },
-  rescindido:            { label: 'Terminado',         className: 'border-destructive/40 text-destructive bg-destructive/10' },
-  arquivado:             { label: 'Arquivado',         className: 'border-muted text-muted-foreground bg-muted/20' },
+  rascunho: {
+    label: 'Em negociação',
+    className: 'border-line bg-bg-alt text-ink-soft',
+  },
+  em_revisao: {
+    label: 'Em validação',
+    className: 'border-warn/40 bg-warn/10 text-warn',
+  },
+  em_aprovacao: {
+    label: 'Em validação',
+    className: 'border-warn/40 bg-warn/10 text-warn',
+  },
+  enviado_para_assinatura: {
+    label: 'Em validação',
+    className: 'border-warn/40 bg-warn/10 text-warn',
+  },
+  activo: { label: 'Activo', className: 'border-positive/40 bg-positive/10 text-positive' },
+  expirado: {
+    label: 'Terminado',
+    className: 'border-danger/40 bg-danger/10 text-danger',
+  },
+  denunciado: {
+    label: 'Terminado',
+    className: 'border-danger/40 bg-danger/10 text-danger',
+  },
+  rescindido: {
+    label: 'Terminado',
+    className: 'border-danger/40 bg-danger/10 text-danger',
+  },
+  arquivado: { label: 'Arquivado', className: 'border-line bg-bg-alt text-ink-mute' },
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -105,7 +121,10 @@ interface ContractsTableProps {
 function getNextDeadline(c: Contrato): { label: string; date: Date | null; days: number | null } {
   const candidates: Array<{ date: Date; label: string }> = [];
   if (c.data_limite_decisao_renovacao) {
-    candidates.push({ date: new Date(c.data_limite_decisao_renovacao), label: 'Decisão renovação' });
+    candidates.push({
+      date: new Date(c.data_limite_decisao_renovacao),
+      label: 'Decisão renovação',
+    });
   }
   if (c.data_termo) {
     candidates.push({ date: new Date(c.data_termo), label: 'Termo' });
@@ -143,7 +162,12 @@ function DeadlineCell({ c }: { c: Contrato }) {
   const notice = getNoticeInfo(c);
 
   if (days === null) return <span className="text-muted-foreground text-xs">{label}</span>;
-  const colorClass = days <= 30 ? 'text-destructive font-semibold' : days <= 60 ? 'text-orange-600 font-medium' : 'text-foreground';
+  const colorClass =
+    days <= 30
+      ? 'text-danger font-semibold'
+      : days <= 60
+        ? 'text-warn font-medium'
+        : 'text-foreground';
 
   let noticeLine: React.ReactNode = null;
   if (notice) {
@@ -151,12 +175,16 @@ function DeadlineCell({ c }: { c: Contrato }) {
       noticeLine = <span className="text-destructive text-[11px]">Janela de aviso encerrada</span>;
     } else if (notice.status === 'urgent') {
       noticeLine = (
-        <span className="text-amber-600 text-[11px]">
+        <span className="text-warn text-[11px]">
           Aviso: acção necessária até {format(notice.noticeDate, 'dd/MM/yyyy', { locale: pt })}
         </span>
       );
     } else {
-      noticeLine = <span className="text-muted-foreground text-[11px]">Aviso prévio: {notice.noticeDays} dias</span>;
+      noticeLine = (
+        <span className="text-muted-foreground text-[11px]">
+          Aviso prévio: {notice.noticeDays} dias
+        </span>
+      );
     }
   }
 
@@ -168,16 +196,28 @@ function DeadlineCell({ c }: { c: Contrato }) {
   );
 }
 
-function FaseBadge({ estado, validationStatus }: { estado: string; validationStatus: string | null }) {
+function FaseBadge({
+  estado,
+  validationStatus,
+}: {
+  estado: string;
+  validationStatus: string | null;
+}) {
   if (validationStatus === 'validating') {
     return (
-      <Badge variant="outline" className="border-blue-400/60 text-blue-700 bg-blue-50 gap-1.5 text-xs">
+      <Badge
+        variant="outline"
+        className="border-brand/40 text-brand bg-brand/[0.08] gap-1.5 text-xs"
+      >
         <Loader2 className="h-3 w-3 animate-spin" />
         Em validação CCA
       </Badge>
     );
   }
-  const cfg = FASE_MAP[estado] || { label: estado, className: 'border-muted-foreground/40 text-muted-foreground' };
+  const cfg = FASE_MAP[estado] || {
+    label: estado,
+    className: 'border-muted-foreground/40 text-muted-foreground',
+  };
   return (
     <Badge variant="outline" className={cn('text-xs', cfg.className)}>
       {cfg.label}
@@ -187,7 +227,11 @@ function FaseBadge({ estado, validationStatus }: { estado: string; validationSta
 
 function formatCurrency(value: number | null) {
   if (value === null) return '—';
-  return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+  return new Intl.NumberFormat('pt-PT', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(value);
 }
 
 // ─── Contract Drawer ──────────────────────────────────────────────────────────
@@ -204,7 +248,9 @@ function RgpdIndicator({ value, label }: { value: boolean | null; label: string 
       ) : (
         <XCircle className="h-4 w-4 text-muted-foreground" />
       )}
-      <span className={cn('text-muted-foreground', is && 'text-foreground font-medium')}>{label}</span>
+      <span className={cn('text-muted-foreground', is && 'text-foreground font-medium')}>
+        {label}
+      </span>
       <span className="ml-auto text-xs font-medium">{unknown ? '—' : is ? 'Sim' : 'Não'}</span>
     </div>
   );
@@ -218,8 +264,15 @@ interface ContractDrawerProps {
 }
 
 function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerProps) {
-  const { label: deadlineLabel, days } = contrato ? getNextDeadline(contrato) : { label: '', days: null };
-  const deadlineColor = days !== null && days <= 30 ? 'text-destructive' : days !== null && days <= 60 ? 'text-orange-600' : 'text-foreground';
+  const { label: deadlineLabel, days } = contrato
+    ? getNextDeadline(contrato)
+    : { label: '', days: null };
+  const deadlineColor =
+    days !== null && days <= 30
+      ? 'text-danger'
+      : days !== null && days <= 60
+        ? 'text-warn'
+        : 'text-foreground';
 
   if (!contrato) return null;
 
@@ -232,13 +285,20 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
           <div className="flex items-start gap-2">
             <FileText className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
             <div>
-              <SheetTitle className="text-base font-semibold leading-snug">{contrato.titulo_contrato}</SheetTitle>
+              <SheetTitle className="text-base font-semibold leading-snug">
+                {contrato.titulo_contrato}
+              </SheetTitle>
               <p className="text-sm text-muted-foreground mt-0.5">{contrato.parte_b_nome_legal}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap mt-2">
-            <Badge variant="outline" className="text-xs">{tipoLabel}</Badge>
-            <FaseBadge estado={contrato.estado_contrato} validationStatus={contrato.validation_status} />
+            <Badge variant="outline" className="text-xs">
+              {tipoLabel}
+            </Badge>
+            <FaseBadge
+              estado={contrato.estado_contrato}
+              validationStatus={contrato.validation_status}
+            />
           </div>
         </SheetHeader>
 
@@ -246,39 +306,58 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
           {/* Object */}
           {contrato.objeto_resumido && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Resumo</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                Resumo
+              </p>
               <p className="text-sm">{contrato.objeto_resumido}</p>
             </div>
           )}
 
           {/* Next deadline */}
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Próximo prazo</p>
-            <p className={cn('text-sm font-medium', deadlineColor)}>{deadlineLabel || 'Sem prazo identificado'}</p>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+              Próximo prazo
+            </p>
+            <p className={cn('text-sm font-medium', deadlineColor)}>
+              {deadlineLabel || 'Sem prazo identificado'}
+            </p>
           </div>
 
           {/* CCA validation */}
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Validação CCA</p>
-            <ValidationBadge status={(contrato.validation_status as ValidationStatusType) || 'none'} />
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+              Validação CCA
+            </p>
+            <ValidationBadge
+              status={(contrato.validation_status as ValidationStatusType) || 'none'}
+            />
           </div>
 
           {/* RGPD */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              <Shield className="h-3.5 w-3.5 inline mr-1" />RGPD
+              <Shield className="h-3.5 w-3.5 inline mr-1" />
+              RGPD
             </p>
             <div className="space-y-2 rounded-md border p-3 bg-muted/20">
-              <RgpdIndicator value={contrato.tratamento_dados_pessoais} label="Dados pessoais detectados" />
+              <RgpdIndicator
+                value={contrato.tratamento_dados_pessoais}
+                label="Dados pessoais detectados"
+              />
               <RgpdIndicator value={contrato.existe_dpa_anexo_rgpd} label="DPA detectado" />
-              <RgpdIndicator value={contrato.transferencia_internacional} label="Transferência internacional" />
+              <RgpdIndicator
+                value={contrato.transferencia_internacional}
+                label="Transferência internacional"
+              />
             </div>
           </div>
 
           {/* Document link */}
           {contrato.arquivo_storage_path && (
             <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Documento</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                Documento
+              </p>
               <Button variant="outline" size="sm" className="gap-2 w-full" asChild>
                 <a href={contrato.arquivo_storage_path} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" />
@@ -291,7 +370,9 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
           {/* Internal-only actions */}
           {isInternal && (
             <div className="pt-2 border-t space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Acções internas</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Acções internas
+              </p>
               <Button variant="outline" size="sm" className="gap-2 w-full">
                 <RefreshCw className="h-4 w-4" />
                 Reprocessar CCA
@@ -318,17 +399,17 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
 // ─── Top Bar ──────────────────────────────────────────────────────────────────
 
 const QUICK_FILTERS: Array<{ key: QuickFilter; label: string }> = [
-  { key: 'all',         label: 'Todos' },
-  { key: 'active',      label: 'Activos' },
-  { key: 'expiring30',  label: 'A expirar ≤30 dias' },
-  { key: 'expiring60',  label: 'A expirar ≤60 dias' },
-  { key: 'validating',  label: 'Em validação CCA' },
-  { key: 'needs_review',label: 'Needs review' },
+  { key: 'all', label: 'Todos' },
+  { key: 'active', label: 'Activos' },
+  { key: 'expiring30', label: 'A expirar ≤30 dias' },
+  { key: 'expiring60', label: 'A expirar ≤60 dias' },
+  { key: 'validating', label: 'Em validação CCA' },
+  { key: 'needs_review', label: 'Needs review' },
 ];
 
 const SORT_OPTIONS: Array<{ key: SortField; label: string }> = [
-  { key: 'next_deadline',      label: 'Próximo prazo' },
-  { key: 'updated_at',         label: 'Última actualização' },
+  { key: 'next_deadline', label: 'Próximo prazo' },
+  { key: 'updated_at', label: 'Última actualização' },
   { key: 'parte_b_nome_legal', label: 'Contraparte' },
 ];
 
@@ -374,7 +455,7 @@ export function ContractsTable({
         (c) =>
           c.titulo_contrato.toLowerCase().includes(q) ||
           c.parte_b_nome_legal.toLowerCase().includes(q) ||
-          c.id_interno.toLowerCase().includes(q)
+          c.id_interno.toLowerCase().includes(q),
       );
     }
 
@@ -452,7 +533,7 @@ export function ContractsTable({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
-                Ordenar: {SORT_OPTIONS.find(o => o.key === sortField)?.label}
+                Ordenar: {SORT_OPTIONS.find((o) => o.key === sortField)?.label}
                 <ChevronDown className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
@@ -468,22 +549,23 @@ export function ContractsTable({
         </div>
 
         {/* Quick filter chips */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2">
           {QUICK_FILTERS.map((f) => (
-            <Button
+            <button
               key={f.key}
-              variant={quickFilter === f.key ? 'default' : 'outline'}
-              size="sm"
-              className={cn(
-                'h-7 text-xs rounded-full px-3',
-                quickFilter !== f.key && 'text-muted-foreground'
-              )}
+              type="button"
               onClick={() => setQuickFilter(f.key)}
+              className={cn(
+                'inline-flex h-7 items-center rounded-control border px-3 text-[11.5px] font-medium transition-colors',
+                quickFilter === f.key
+                  ? 'border-brand bg-brand/[0.08] text-brand'
+                  : 'border-line bg-surface text-ink-mute hover:border-ink hover:bg-bg-alt hover:text-ink',
+              )}
             >
               {f.label}
-            </Button>
+            </button>
           ))}
-          <span className="text-xs text-muted-foreground ml-auto">
+          <span className="ml-auto font-mono text-[11px] text-ink-mute">
             {filtered.length} contrato{filtered.length !== 1 ? 's' : ''}
           </span>
         </div>
@@ -524,7 +606,8 @@ export function ContractsTable({
                 const tipoLabel = TIPO_LABELS[c.tipo_contrato] || c.tipo_contrato;
                 const validationStatus = (c.validation_status as ValidationStatusType) || 'none';
                 // Hide 'failed' badge from viewers
-                const effectiveStatus: ValidationStatusType = isViewer && validationStatus === 'failed' ? 'none' : validationStatus;
+                const effectiveStatus: ValidationStatusType =
+                  isViewer && validationStatus === 'failed' ? 'none' : validationStatus;
 
                 return (
                   <TableRow
@@ -556,7 +639,10 @@ export function ContractsTable({
 
                     {/* Col 2 – Fase */}
                     <TableCell className="py-3">
-                      <FaseBadge estado={c.estado_contrato} validationStatus={c.validation_status} />
+                      <FaseBadge
+                        estado={c.estado_contrato}
+                        validationStatus={c.validation_status}
+                      />
                     </TableCell>
 
                     {/* Col 3 – Validação CCA */}
@@ -604,7 +690,7 @@ export function ContractsTable({
                           ) : (
                             <DropdownMenuItem
                               onClick={() => onArchive?.(c.id)}
-                              className="text-amber-600"
+                              className="text-warn"
                             >
                               <Archive className="mr-2 h-4 w-4" />
                               Arquivar

@@ -1,13 +1,12 @@
 import { forwardRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Clock, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ArrowRight, AlertTriangle } from 'lucide-react';
 import { useContratos } from '@/hooks/useContratos';
 import { Link } from 'react-router-dom';
 import { differenceInDays, format } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
+import { CCACardHeader, Pill } from '@/components/cca';
 
 interface ExpiringContractsWidgetProps {
   title: string;
@@ -22,10 +21,9 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
 
     const daysAhead = (config.daysAhead as number) || 30;
     const dateLocale = i18n.language === 'pt' ? pt : enUS;
+    const today = new Date();
+    const todayStr = today.toDateString();
 
-    const todayStr = new Date().toDateString();
-
-    // Filter contracts expiring within the specified days
     const expiringContracts = useMemo(
       () => {
         const now = new Date();
@@ -44,25 +42,28 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
       [contratos, todayStr, daysAhead],
     );
 
+    const viewAll = (
+      <Link
+        to="/contratos"
+        className="inline-flex items-center gap-1 text-[11.5px] font-medium tracking-[0.01em] text-brand hover:text-brand-strong"
+      >
+        {t('home.viewAll')}
+        <ArrowRight className="h-3 w-3" />
+      </Link>
+    );
+
     if (isLoading) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="animate-pulse flex justify-between items-center">
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                  <div className="h-5 bg-muted rounded w-16" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
+          <CCACardHeader eyebrow="Renovações" title={title} />
+          <div className="space-y-3 px-5 py-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex animate-pulse items-center justify-between">
+                <div className="h-4 w-2/3 rounded bg-bg-alt" />
+                <div className="h-5 w-16 rounded bg-bg-alt" />
+              </div>
+            ))}
+          </div>
         </Card>
       );
     }
@@ -70,70 +71,55 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
     if (!expiringContracts?.length) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              {t('home.noExpiringContracts', { days: daysAhead })}
-            </p>
-          </CardContent>
+          <CCACardHeader eyebrow="Renovações" title={title} />
+          <p className="px-5 py-5 text-[13px] text-ink-mute">
+            {t('home.noExpiringContracts', { days: daysAhead })}
+          </p>
         </Card>
       );
     }
 
     return (
       <Card ref={ref}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Clock className="h-4 w-4" />
-            {title}
-            <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-              {expiringContracts.length}
-            </Badge>
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/contratos" className="gap-1">
-              {t('home.viewAll')}
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {expiringContracts.map((contract) => {
-              const daysUntilExpiry = differenceInDays(new Date(contract.data_termo!), today);
-              const isUrgent = daysUntilExpiry <= 7;
-
-              return (
+        <CCACardHeader
+          eyebrow="Renovações"
+          title={
+            <span className="inline-flex items-center gap-2.5">
+              {title}
+              <Pill tone="warn">{expiringContracts.length}</Pill>
+            </span>
+          }
+          action={viewAll}
+        />
+        <ul className="divide-y divide-line-soft">
+          {expiringContracts.map((contract) => {
+            const daysUntilExpiry = differenceInDays(new Date(contract.data_termo!), today);
+            const isUrgent = daysUntilExpiry <= 7;
+            return (
+              <li key={contract.id}>
                 <Link
-                  key={contract.id}
                   to={`/contratos/${contract.id}`}
-                  className="flex justify-between items-center py-1.5 hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
+                  className="flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-bg-alt"
                 >
-                  <div className="min-w-0 flex-1 mr-2">
-                    <p className="text-sm font-medium truncate">{contract.titulo_contrato}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
+                      {contract.titulo_contrato}
+                    </p>
+                    <p className="mt-0.5 font-mono text-[11px] text-ink-mute">
                       {format(new Date(contract.data_termo!), "d 'de' MMMM", {
                         locale: dateLocale,
                       })}
                     </p>
                   </div>
-                  <Badge
-                    variant="secondary"
-                    className={isUrgent ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}
-                  >
-                    {isUrgent && <AlertTriangle className="h-3 w-3 mr-1" />}
+                  <Pill tone={isUrgent ? 'danger' : 'warn'} className="shrink-0">
+                    {isUrgent && <AlertTriangle className="h-3 w-3" />}
                     {daysUntilExpiry} {t('home.days')}
-                  </Badge>
+                  </Pill>
                 </Link>
-              );
-            })}
-          </div>
-        </CardContent>
+              </li>
+            );
+          })}
+        </ul>
       </Card>
     );
   },

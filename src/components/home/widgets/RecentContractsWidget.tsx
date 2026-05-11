@@ -1,17 +1,30 @@
 import { forwardRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { FileText, ArrowRight } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { ArrowRight } from 'lucide-react';
 import { useContratos } from '@/hooks/useContratos';
 import { Link } from 'react-router-dom';
+import { CCACardHeader, Pill } from '@/components/cca';
 
 interface RecentContractsWidgetProps {
   title: string;
   config: Record<string, unknown>;
   organizationId: string | null;
 }
+
+const STATUS_TONE: Record<
+  string,
+  'default' | 'active' | 'accent' | 'warn' | 'positive' | 'danger'
+> = {
+  rascunho: 'default',
+  em_revisao: 'default',
+  em_aprovacao: 'warn',
+  enviado_para_assinatura: 'accent',
+  activo: 'positive',
+  expirado: 'danger',
+  denunciado: 'warn',
+  rescindido: 'danger',
+};
 
 const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetProps>(
   function RecentContractsWidget({ title, config }, ref) {
@@ -21,7 +34,6 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
     const limit = (config.limit as number) || 5;
     const showStatus = config.showStatus !== false;
 
-    // Status labels using i18n
     const statusLabels: Record<string, string> = {
       rascunho: t('status.draft'),
       em_revisao: t('status.inReview'),
@@ -33,18 +45,6 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
       rescindido: t('status.rescinded'),
     };
 
-    const statusColors: Record<string, string> = {
-      rascunho: 'bg-muted text-muted-foreground',
-      em_revisao: 'bg-blue-100 text-blue-700',
-      em_aprovacao: 'bg-yellow-100 text-yellow-700',
-      enviado_para_assinatura: 'bg-purple-100 text-purple-700',
-      activo: 'bg-green-100 text-green-700',
-      expirado: 'bg-red-100 text-red-700',
-      denunciado: 'bg-orange-100 text-orange-700',
-      rescindido: 'bg-red-100 text-red-700',
-    };
-
-    // Sort by created_at and limit
     const recentContracts = useMemo(
       () =>
         (contratos ?? [])
@@ -54,25 +54,28 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
       [contratos, limit],
     );
 
+    const viewAll = (
+      <Link
+        to="/contratos"
+        className="inline-flex items-center gap-1 text-[11.5px] font-medium tracking-[0.01em] text-brand hover:text-brand-strong"
+      >
+        {t('home.viewAll')}
+        <ArrowRight className="h-3 w-3" />
+      </Link>
+    );
+
     if (isLoading) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {[1, 2, 3].slice(0, limit).map((i) => (
-                <div key={i} className="animate-pulse flex justify-between items-center">
-                  <div className="h-4 bg-muted rounded w-2/3" />
-                  <div className="h-5 bg-muted rounded w-16" />
-                </div>
-              ))}
-            </div>
-          </CardContent>
+          <CCACardHeader eyebrow="Contratos" title={title} />
+          <div className="space-y-3 px-5 py-4">
+            {Array.from({ length: Math.min(limit, 3) }).map((_, i) => (
+              <div key={i} className="flex animate-pulse items-center justify-between">
+                <div className="h-4 w-2/3 rounded bg-bg-alt" />
+                <div className="h-5 w-16 rounded bg-bg-alt" />
+              </div>
+            ))}
+          </div>
         </Card>
       );
     }
@@ -80,62 +83,51 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
     if (!recentContracts?.length) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              {title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{t('home.noContracts')}</p>
-            <Button variant="outline" size="sm" asChild className="mt-2">
-              <Link to="/contratos/novo">{t('home.createContract')}</Link>
-            </Button>
-          </CardContent>
+          <CCACardHeader eyebrow="Contratos" title={title} />
+          <div className="space-y-3 px-5 py-5">
+            <p className="text-[13px] text-ink-mute">{t('home.noContracts')}</p>
+            <Link
+              to="/contratos/novo"
+              className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:text-brand-strong"
+            >
+              {t('home.createContract')}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </Card>
       );
     }
 
     return (
       <Card ref={ref}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            {title}
-          </CardTitle>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/contratos" className="gap-1">
-              {t('home.viewAll')}
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {recentContracts.map((contract) => (
+        <CCACardHeader eyebrow="Contratos" title={title} action={viewAll} />
+        <ul className="divide-y divide-line-soft">
+          {recentContracts.map((contract) => (
+            <li key={contract.id}>
               <Link
-                key={contract.id}
                 to={`/contratos/${contract.id}`}
-                className="flex justify-between items-center py-1.5 hover:bg-muted/50 rounded px-1 -mx-1 transition-colors"
+                className="flex items-center justify-between gap-3 px-5 py-3 transition-colors hover:bg-bg-alt"
               >
-                <div className="min-w-0 flex-1 mr-2">
-                  <p className="text-sm font-medium truncate">{contract.titulo_contrato}</p>
-                  <p className="text-xs text-muted-foreground truncate">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
+                    {contract.titulo_contrato}
+                  </p>
+                  <p className="mt-0.5 truncate font-mono text-[11px] text-ink-mute">
                     {contract.parte_b_nome_legal}
                   </p>
                 </div>
                 {showStatus && (
-                  <Badge
-                    variant="secondary"
-                    className={statusColors[contract.estado_contrato] || ''}
+                  <Pill
+                    tone={STATUS_TONE[contract.estado_contrato] ?? 'default'}
+                    className="shrink-0"
                   >
                     {statusLabels[contract.estado_contrato] || contract.estado_contrato}
-                  </Badge>
+                  </Pill>
                 )}
               </Link>
-            ))}
-          </div>
-        </CardContent>
+            </li>
+          ))}
+        </ul>
       </Card>
     );
   },

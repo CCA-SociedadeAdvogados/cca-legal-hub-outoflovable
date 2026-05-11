@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, AlertTriangle, CheckCircle, Clock, FileText } from "lucide-react";
-import { useComplianceAI, EventImpactAnalysis, ContractImpact } from "@/hooks/useComplianceAI";
-import { useOrganizationSettings } from "@/hooks/useOrganizationSettings";
-import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Sparkles, AlertTriangle, CheckCircle, Clock, FileText } from 'lucide-react';
+import { useComplianceAI, EventImpactAnalysis, ContractImpact } from '@/hooks/useComplianceAI';
+import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
+import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 interface EventImpactAnalyzerProps {
   eventoId: string;
@@ -14,18 +14,21 @@ interface EventImpactAnalyzerProps {
 }
 
 const riskColors = {
-  baixo: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  medio: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
-  alto: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+  baixo: 'bg-positive/10 text-positive',
+  medio: 'bg-warn/10 text-warn',
+  alto: 'bg-danger/10 text-danger',
 };
 
 const riskLabels = {
-  baixo: "Baixo",
-  medio: "Médio",
-  alto: "Alto",
+  baixo: 'Baixo',
+  medio: 'Médio',
+  alto: 'Alto',
 };
 
-export function EventImpactAnalyzer({ eventoId, eventoTitulo: _eventoTitulo }: EventImpactAnalyzerProps) {
+export function EventImpactAnalyzer({
+  eventoId,
+  eventoTitulo: _eventoTitulo,
+}: EventImpactAnalyzerProps) {
   const { settings } = useOrganizationSettings();
   const { isLoading, analyzeEventImpact } = useComplianceAI(settings?.ai_model);
   const [analysis, setAnalysis] = useState<EventImpactAnalysis | null>(null);
@@ -34,7 +37,7 @@ export function EventImpactAnalyzer({ eventoId, eventoTitulo: _eventoTitulo }: E
     const result = await analyzeEventImpact(eventoId);
     if (result) {
       setAnalysis(result);
-      toast.success("Análise de impacto concluída!");
+      toast.success('Análise de impacto concluída!');
     }
   };
 
@@ -54,8 +57,7 @@ export function EventImpactAnalyzer({ eventoId, eventoTitulo: _eventoTitulo }: E
           <Button onClick={handleAnalyze} disabled={isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                A analisar contratos...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />A analisar contratos...
               </>
             ) : (
               <>
@@ -107,7 +109,7 @@ export function EventImpactAnalyzer({ eventoId, eventoTitulo: _eventoTitulo }: E
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  <AlertTriangle className="h-5 w-5 text-warn" />
                   Contratos Impactados ({analysis.contratos_impactados.length})
                 </CardTitle>
               </CardHeader>
@@ -126,7 +128,7 @@ export function EventImpactAnalyzer({ eventoId, eventoTitulo: _eventoTitulo }: E
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <CheckCircle className="h-5 w-5 text-positive" />
                   Contratos Não Impactados ({analysis.contratos_nao_impactados.length})
                 </CardTitle>
               </CardHeader>

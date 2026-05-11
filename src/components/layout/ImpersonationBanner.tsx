@@ -21,9 +21,9 @@ export function ImpersonationBanner() {
   const isUserImpersonation = impersonationType === 'user';
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] bg-amber-500 text-amber-950 py-2.5 px-4 flex items-center justify-between shadow-md">
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-warn text-white py-2.5 px-4 flex items-center justify-between shadow-md">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-600/20">
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
           {isUserImpersonation ? (
             <User className="h-5 w-5" />
           ) : (
@@ -38,15 +38,12 @@ export function ImpersonationBanner() {
                 : 'Modo Impersonation — Organização'}
             </span>
             {!isUserImpersonation && primarySector && (
-              <Badge
-                variant="outline"
-                className="text-xs bg-amber-100/50 border-amber-700 text-amber-900"
-              >
+              <Badge variant="outline" className="text-xs bg-white/15 border-white/40 text-white">
                 {getSectorLabel(primarySector)}
               </Badge>
             )}
           </div>
-          <span className="text-xs opacity-80">
+          <span className="text-xs opacity-90">
             {isUserImpersonation ? (
               <>
                 Está a impersonar: <strong>{impersonatedUserName}</strong>
@@ -65,7 +62,7 @@ export function ImpersonationBanner() {
         variant="outline"
         size="sm"
         onClick={stopImpersonation}
-        className="bg-amber-100 border-amber-600 text-amber-900 hover:bg-amber-200 hover:text-amber-950"
+        className="bg-white/10 border-white/40 text-white hover:bg-white/20 hover:text-white"
       >
         <X className="h-4 w-4 mr-1" />
         Sair da impersonação

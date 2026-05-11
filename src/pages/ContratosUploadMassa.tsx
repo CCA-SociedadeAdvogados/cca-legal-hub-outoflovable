@@ -506,7 +506,7 @@ export default function ContratosUploadMassa() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   {it.status === 'completed' ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                    <CheckCircle2 className="h-5 w-5 text-positive mt-0.5 shrink-0" />
                   ) : it.status === 'error' ? (
                     <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
                   ) : (

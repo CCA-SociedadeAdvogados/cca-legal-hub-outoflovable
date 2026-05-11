@@ -1,7 +1,16 @@
-import { Bell, Search, User, LogOut, Check, Newspaper, FileText, ExternalLink } from 'lucide-react';
+import {
+  Bell,
+  Search,
+  User,
+  LogOut,
+  Check,
+  Newspaper,
+  FileText,
+  ExternalLink,
+  Sparkles,
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,23 +47,31 @@ function formatTimeAgo(
 
 function getNotificationIcon(type: string) {
   if (type.startsWith('contract_expiry')) {
-    return <FileText className="h-4 w-4 text-orange-500" />;
+    return <FileText className="h-4 w-4 text-warn" />;
   }
-
   switch (type) {
     case 'news_published':
-      return <Newspaper className="h-4 w-4 text-primary" />;
+      return <Newspaper className="h-4 w-4 text-brand" />;
     default:
-      return <Bell className="h-4 w-4 text-muted-foreground" />;
+      return <Bell className="h-4 w-4 text-ink-mute" />;
   }
 }
 
+function getInitial(name: string) {
+  return name.trim().charAt(0).toUpperCase() || 'U';
+}
+
+/**
+ * Topbar — 60px sticky header.
+ * Left: search w/ ⌘K. Centre/right: client tab, language, notifications, avatar.
+ */
 export function Header() {
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/login');
@@ -69,7 +86,6 @@ export function Header() {
     if (!notification.read) {
       markAsRead.mutate(notification.id);
     }
-
     if (notification.reference_type === 'cca_news') {
       navigate('/novidades-cca');
     } else if (notification.reference_type === 'contratos' && notification.reference_id) {
@@ -79,17 +95,22 @@ export function Header() {
 
   const userEmail = profile?.email || user?.email || 'User';
   const userName = profile?.nome_completo || userEmail.split('@')[0];
+  const initial = getInitial(userName);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 min-w-0 items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex min-w-0 flex-1 items-center gap-4 max-w-md">
-        <div className="relative w-full min-w-0">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+    <header className="sticky top-0 z-30 flex h-[60px] min-w-0 items-center gap-4 border-b border-line bg-bg/95 px-7 backdrop-blur supports-[backdrop-filter]:bg-bg/85">
+      {/* Search */}
+      <div className="flex min-w-0 flex-1 items-center">
+        <div className="group relative w-full max-w-[440px] min-w-0">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-mute" />
+          <input
             type="search"
             placeholder={t('common.search')}
-            className="w-full min-w-0 border-0 bg-muted/50 pl-9 focus-visible:ring-1"
+            className="h-9 w-full min-w-0 rounded-control border border-line bg-surface pl-9 pr-12 text-[12.5px] text-ink placeholder:text-ink-mute focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/40"
           />
+          <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 select-none items-center gap-0.5 rounded-control border border-line bg-bg-alt px-1.5 py-0.5 font-mono text-[10px] font-medium text-ink-mute md:inline-flex">
+            ⌘K
+          </kbd>
         </div>
       </div>
 
@@ -102,119 +123,137 @@ export function Header() {
           <LanguageSelector />
         </div>
 
-        <div className="shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative shrink-0" aria-label={t('common.notifications')}>
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
+        {/* AI sparkle button (placeholder shortcut to insights) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 rounded-control text-ink-mute hover:text-brand"
+          aria-label="AI"
+          onClick={() => navigate('/legalbi')}
+        >
+          <Sparkles className="h-[18px] w-[18px]" strokeWidth={1.6} />
+        </Button>
 
-            <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)] bg-popover">
-              <div className="flex items-center justify-between px-2">
-                <DropdownMenuLabel>{t('common.notifications')}</DropdownMenuLabel>
-                {unreadCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => markAllAsRead.mutate()}
-                  >
-                    <Check className="mr-1 h-3 w-3" />
-                    {t('common.markAllRead')}
-                  </Button>
-                )}
-              </div>
-
-              <DropdownMenuSeparator />
-
-              {notifications.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  {t('common.noNotifications')}
-                </div>
-              ) : (
-                <ScrollArea className="max-h-[300px]">
-                  {notifications.map((notification) => (
-                    <DropdownMenuItem
-                      key={notification.id}
-                      className={cn(
-                        'flex cursor-pointer items-start gap-3 p-3',
-                        !notification.read && 'bg-muted/50',
-                      )}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className="mt-0.5 shrink-0">{getNotificationIcon(notification.type)}</div>
-
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <p className={cn('text-sm leading-tight', !notification.read && 'font-medium')}>
-                          {notification.title}
-                        </p>
-                        <p className="line-clamp-2 text-xs text-muted-foreground">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatTimeAgo(notification.created_at, t)}
-                        </p>
-                      </div>
-
-                      {!notification.read && (
-                        <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </ScrollArea>
+        {/* Notifications */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative shrink-0 rounded-control text-ink-mute hover:text-ink"
+              aria-label={t('common.notifications')}
+            >
+              <Bell className="h-[18px] w-[18px]" strokeWidth={1.6} />
+              {unreadCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-brand px-1 text-[9px] font-semibold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
               )}
+            </Button>
+          </DropdownMenuTrigger>
 
-              <DropdownMenuSeparator />
+          <DropdownMenuContent
+            align="end"
+            className="w-80 max-w-[calc(100vw-2rem)] border-line bg-popover"
+          >
+            <div className="flex items-center justify-between px-2">
+              <DropdownMenuLabel className="font-display text-[14px] font-medium">
+                {t('common.notifications')}
+              </DropdownMenuLabel>
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-2 py-1 text-xs text-ink-mute hover:text-ink"
+                  onClick={() => markAllAsRead.mutate()}
+                >
+                  <Check className="mr-1 h-3 w-3" />
+                  {t('common.markAllRead')}
+                </Button>
+              )}
+            </div>
 
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/notificacoes" className="flex w-full items-center justify-between">
-                  <span>{t('notifications.viewAll')}</span>
-                  <ExternalLink className="ml-2 h-3 w-3" />
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+            <DropdownMenuSeparator />
 
-        <div className="shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex shrink-0 items-center gap-3 px-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                  <User className="h-4 w-4" />
-                </div>
+            {notifications.length === 0 ? (
+              <div className="py-6 text-center text-sm text-ink-mute">
+                {t('common.noNotifications')}
+              </div>
+            ) : (
+              <ScrollArea className="max-h-[300px]">
+                {notifications.map((notification) => (
+                  <DropdownMenuItem
+                    key={notification.id}
+                    className={cn(
+                      'flex cursor-pointer items-start gap-3 p-3',
+                      !notification.read && 'bg-bg-alt/60',
+                    )}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <div className="mt-0.5 shrink-0">{getNotificationIcon(notification.type)}</div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <p
+                        className={cn('text-sm leading-tight', !notification.read && 'font-medium')}
+                      >
+                        {notification.title}
+                      </p>
+                      <p className="line-clamp-2 text-xs text-ink-mute">{notification.message}</p>
+                      <p className="font-mono text-[10px] text-ink-mute">
+                        {formatTimeAgo(notification.created_at, t)}
+                      </p>
+                    </div>
+                    {!notification.read && (
+                      <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </ScrollArea>
+            )}
 
-                <div className="hidden min-w-0 flex-col items-start md:flex">
-                  <span className="truncate text-sm font-medium">{userName}</span>
-                  <span className="truncate text-xs text-muted-foreground">{userEmail}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
+            <DropdownMenuSeparator />
 
-            <DropdownMenuContent align="end" className="w-56 bg-popover">
-              <DropdownMenuLabel>{t('common.myAccount')}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/notificacoes" className="flex w-full items-center justify-between">
+                <span>{t('notifications.viewAll')}</span>
+                <ExternalLink className="ml-2 h-3 w-3" />
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-              <DropdownMenuItem onClick={() => navigate('/perfil')}>
-                <User className="mr-2 h-4 w-4" />
-                {t('common.profile')}
-              </DropdownMenuItem>
+        {/* Avatar / user menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="flex shrink-0 items-center gap-3 rounded-control px-2 py-1 hover:bg-bg-alt"
+            >
+              <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-brand font-display text-[14px] font-medium leading-none text-white">
+                {initial}
+              </div>
+              <div className="hidden min-w-0 flex-col items-start leading-tight md:flex">
+                <span className="truncate text-[12.5px] font-medium text-ink">{userName}</span>
+                <span className="truncate text-[10.5px] text-ink-mute">{userEmail}</span>
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
 
-              <DropdownMenuSeparator />
-
-              <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                {t('common.logout')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+          <DropdownMenuContent align="end" className="w-56 border-line bg-popover">
+            <DropdownMenuLabel className="font-display text-[14px] font-medium">
+              {t('common.myAccount')}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/perfil')}>
+              <User className="mr-2 h-4 w-4" />
+              {t('common.profile')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-danger">
+              <LogOut className="mr-2 h-4 w-4" />
+              {t('common.logout')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

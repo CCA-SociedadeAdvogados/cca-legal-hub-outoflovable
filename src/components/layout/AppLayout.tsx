@@ -23,15 +23,13 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       <div
         className={cn(
-          'min-h-screen w-full min-w-0 transition-all duration-300',
-          isCollapsed ? 'pl-16' : 'pl-64',
+          'min-h-screen w-full min-w-0 transition-[padding] duration-[220ms]',
+          isCollapsed ? 'pl-16' : 'pl-[244px]',
           isImpersonating && 'pt-12',
         )}
       >
         <Header />
-        <main className="w-full min-w-0 overflow-x-hidden p-6">
-          {children}
-        </main>
+        <main className="w-full min-w-0 overflow-x-hidden px-8 pb-16 pt-7">{children}</main>
       </div>
     </div>
   );

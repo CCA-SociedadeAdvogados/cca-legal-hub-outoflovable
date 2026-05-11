@@ -1,6 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertTriangle } from 'lucide-react';
 import type { WidgetConfig, WidgetType } from '@/lib/defaultHomeLayout';
@@ -25,57 +25,56 @@ interface WidgetRendererProps {
 function WidgetSkeleton() {
   return (
     <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-32" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-24 w-full" />
-      </CardContent>
+      <div className="border-b border-line px-5 py-4">
+        <Skeleton className="mb-1.5 h-2.5 w-16" />
+        <Skeleton className="h-5 w-40" />
+      </div>
+      <div className="space-y-3 px-5 py-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
     </Card>
   );
 }
 
 function WidgetError({ title, errorMessage }: { title: string; errorMessage: string }) {
   return (
-    <Card className="border-destructive/50">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center gap-2 text-destructive">
-          <AlertTriangle className="h-4 w-4" />
+    <Card className="border-danger/40">
+      <div className="border-b border-danger/30 px-5 py-4">
+        <h3 className="flex items-center gap-2 font-display text-[15px] font-medium text-danger">
+          <AlertTriangle className="h-4 w-4" strokeWidth={1.6} />
           {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          {errorMessage}
-        </p>
-      </CardContent>
+        </h3>
+      </div>
+      <p className="px-5 py-4 text-[13px] text-ink-mute">{errorMessage}</p>
     </Card>
   );
 }
 
 const widgetTitleKeyMap: Record<WidgetType, string> = {
-  'WELCOME_MESSAGE': 'home.widgetTitles.welcome',
-  'ORGANIZATION_CARD': 'home.widgetTitles.organization',
-  'LAWYER_CARD': 'home.widgetTitles.lawyer',
-  'CCA_NEWS': 'home.widgetTitles.news',
-  'RECENT_CONTRACTS': 'home.widgetTitles.recentContracts',
-  'RECENT_DOCUMENTS': 'home.widgetTitles.recentDocuments',
-  'EXPIRING_CONTRACTS': 'home.widgetTitles.expiringContracts',
-  'QUICK_LINKS': 'home.widgetTitles.quickLinks',
-  'LEGAL_INSIGHTS': 'home.widgetTitles.legalInsights',
-  'MONTHLY_SUMMARY': 'home.widgetTitles.monthlySummary',
+  WELCOME_MESSAGE: 'home.widgetTitles.welcome',
+  ORGANIZATION_CARD: 'home.widgetTitles.organization',
+  LAWYER_CARD: 'home.widgetTitles.lawyer',
+  CCA_NEWS: 'home.widgetTitles.news',
+  RECENT_CONTRACTS: 'home.widgetTitles.recentContracts',
+  RECENT_DOCUMENTS: 'home.widgetTitles.recentDocuments',
+  EXPIRING_CONTRACTS: 'home.widgetTitles.expiringContracts',
+  QUICK_LINKS: 'home.widgetTitles.quickLinks',
+  LEGAL_INSIGHTS: 'home.widgetTitles.legalInsights',
+  MONTHLY_SUMMARY: 'home.widgetTitles.monthlySummary',
 };
 
 export function WidgetRenderer({ widget, organizationId }: WidgetRendererProps) {
   const { t } = useTranslation();
-  
+
   const getTranslatedTitle = () => {
     const titleKey = widgetTitleKeyMap[widget.type];
     return titleKey ? t(titleKey) : widget.title;
   };
-  
+
   const translatedTitle = getTranslatedTitle();
-  
+
   const renderWidget = () => {
     switch (widget.type) {
       case 'ORGANIZATION_CARD':
@@ -127,12 +126,7 @@ export function WidgetRenderer({ widget, organizationId }: WidgetRendererProps) 
           />
         );
       case 'QUICK_LINKS':
-        return (
-          <QuickLinksWidget
-            title={translatedTitle}
-            config={widget.config}
-          />
-        );
+        return <QuickLinksWidget title={translatedTitle} config={widget.config} />;
       case 'WELCOME_MESSAGE':
         return (
           <WelcomeMessageWidget
@@ -163,9 +157,5 @@ export function WidgetRenderer({ widget, organizationId }: WidgetRendererProps) 
     }
   };
 
-  return (
-    <Suspense fallback={<WidgetSkeleton />}>
-      {renderWidget()}
-    </Suspense>
-  );
+  return <Suspense fallback={<WidgetSkeleton />}>{renderWidget()}</Suspense>;
 }

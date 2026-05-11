@@ -484,6 +484,10 @@
       "privacy": "Privacy",
       "security": "Security"
     },
+    "appearance": {
+      "title": "Visual direction",
+      "description": "Pick the visual direction applied across Legal Hub. The preference is stored in this browser."
+    },
     "general": {
       "title": "General Settings",
       "description": "Basic platform settings",

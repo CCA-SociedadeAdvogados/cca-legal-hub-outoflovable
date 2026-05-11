@@ -484,6 +484,10 @@
       "privacy": "Privacidade",
       "security": "Segurança"
     },
+    "appearance": {
+      "title": "Aspecto visual",
+      "description": "Escolha a direção visual aplicada ao Legal Hub. A preferência é guardada neste navegador."
+    },
     "general": {
       "title": "Configurações Gerais",
       "description": "Configurações básicas da plataforma",

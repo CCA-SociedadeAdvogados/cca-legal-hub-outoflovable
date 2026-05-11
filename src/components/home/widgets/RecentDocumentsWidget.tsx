@@ -1,13 +1,12 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/card';
 import { FileText, Folder, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDocumentosGerados } from '@/hooks/useDocumentosGerados';
 import { format } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
+import { CCACardHeader } from '@/components/cca';
 
 interface RecentDocumentsWidgetProps {
   title: string;
@@ -19,32 +18,42 @@ const RecentDocumentsWidget = forwardRef<HTMLDivElement, RecentDocumentsWidgetPr
   function RecentDocumentsWidget({ title, config }, ref) {
     const { t, i18n } = useTranslation();
     const { documentos, isLoading } = useDocumentosGerados();
-    
+
     const limit = (config.limit as number) || 5;
     const showDate = config.showDate !== false;
     const dateLocale = i18n.language === 'pt' ? pt : enUS;
 
-    const recentDocuments = documentos
-      ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, limit) || [];
+    const recentDocuments =
+      documentos
+        ?.slice()
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, limit) || [];
+
+    const viewAll = (
+      <Link
+        to="/documentos"
+        className="inline-flex items-center gap-1 text-[11.5px] font-medium tracking-[0.01em] text-brand hover:text-brand-strong"
+      >
+        {t('home.viewAll')}
+        <ArrowRight className="h-3 w-3" />
+      </Link>
+    );
 
     if (isLoading) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <Skeleton className="h-5 w-40" />
-          </CardHeader>
-          <CardContent className="space-y-3">
+          <CCACardHeader eyebrow="Documentos" title={title} />
+          <div className="space-y-3 px-5 py-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-8 w-8 rounded" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/4" />
+              <div key={i} className="flex animate-pulse items-center gap-3">
+                <div className="h-8 w-8 rounded bg-bg-alt" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-4 w-3/4 rounded bg-bg-alt" />
+                  <div className="h-3 w-1/4 rounded bg-bg-alt" />
                 </div>
               </div>
             ))}
-          </CardContent>
+          </div>
         </Card>
       );
     }
@@ -52,62 +61,51 @@ const RecentDocumentsWidget = forwardRef<HTMLDivElement, RecentDocumentsWidgetPr
     if (recentDocuments.length === 0) {
       return (
         <Card ref={ref}>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold font-serif">{title}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-6 text-center">
-              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
-                <Folder className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                {t('home.noDocuments')}
-              </p>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/documentos">{t('home.viewDocuments')}</Link>
-              </Button>
+          <CCACardHeader eyebrow="Documentos" title={title} />
+          <div className="flex flex-col items-center justify-center px-5 py-8 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-bg-alt">
+              <Folder className="h-5 w-5 text-ink-mute" strokeWidth={1.5} />
             </div>
-          </CardContent>
+            <p className="mb-3 text-[13px] text-ink-mute">{t('home.noDocuments')}</p>
+            <Link
+              to="/documentos"
+              className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:text-brand-strong"
+            >
+              {t('home.viewDocuments')}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
         </Card>
       );
     }
 
     return (
       <Card ref={ref}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg font-semibold font-serif">{title}</CardTitle>
-          <Button variant="ghost" size="sm" className="gap-1" asChild>
-            <Link to="/documentos">
-              {t('home.viewAll')}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {recentDocuments.map((doc) => (
-              <div
-                key={doc.id}
-                className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
-              >
-                <div className="h-8 w-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <FileText className="h-4 w-4 text-primary" />
+        <CCACardHeader eyebrow="Documentos" title={title} action={viewAll} />
+        <ul className="divide-y divide-line-soft">
+          {recentDocuments.map((doc) => (
+            <li key={doc.id}>
+              <div className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-bg-alt">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-line bg-bg-alt">
+                  <FileText className="h-4 w-4 text-brand" strokeWidth={1.5} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{doc.nome}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
+                    {doc.nome}
+                  </p>
                   {showDate && (
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(doc.created_at), "d 'de' MMM", { locale: dateLocale })}
+                    <p className="mt-0.5 font-mono text-[11px] text-ink-mute">
+                      {format(new Date(doc.created_at), "d 'de' MMM yyyy", { locale: dateLocale })}
                     </p>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
+            </li>
+          ))}
+        </ul>
       </Card>
     );
-  }
+  },
 );
 
 export default RecentDocumentsWidget;

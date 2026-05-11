@@ -8,6 +8,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
 import { Loader2 } from 'lucide-react';
+import { Eyebrow } from '@/components/cca';
 
 export default function DocumentosGlobal() {
   const { t } = useTranslation();
@@ -84,11 +85,16 @@ export default function DocumentosGlobal() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">{t('documentsGlobal.title')}</h1>
-          <p className="text-muted-foreground">{t('documentsGlobal.subtitle')}</p>
-        </div>
+      <div className="space-y-7">
+        <header className="space-y-3">
+          <Eyebrow>{t('nav.documents')}</Eyebrow>
+          <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+            {t('documentsGlobal.title')}
+          </h1>
+          <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+            {t('documentsGlobal.subtitle')}
+          </p>
+        </header>
 
         {/* Document Checklist — upload uses configOrgId (has SharePoint) + correct folder */}
         <DocumentChecklistPanel

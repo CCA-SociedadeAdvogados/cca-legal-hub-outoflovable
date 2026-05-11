@@ -595,13 +595,13 @@ export default function ContratoForm() {
   const _getRiskColor = (level: string) => {
     switch (level?.toLowerCase()) {
       case 'crítico':
-        return 'bg-red-600 text-white';
+        return 'bg-danger text-white';
       case 'alto':
-        return 'bg-orange-500 text-white';
+        return 'bg-warn text-white';
       case 'médio':
-        return 'bg-yellow-500 text-black';
+        return 'bg-warn text-black';
       case 'baixo':
-        return 'bg-green-500 text-white';
+        return 'bg-positive text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -1308,7 +1308,7 @@ export default function ContratoForm() {
                         <div className="grid gap-4 md:grid-cols-3">
                           <div className="flex items-center gap-3 rounded-lg border p-4">
                             {form.watch('tratamento_dados_pessoais') ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                              <CheckCircle2 className="h-5 w-5 text-positive shrink-0" />
                             ) : (
                               <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
                             )}
@@ -1321,7 +1321,7 @@ export default function ContratoForm() {
                           </div>
                           <div className="flex items-center gap-3 rounded-lg border p-4">
                             {form.watch('existe_dpa_anexo_rgpd') ? (
-                              <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                              <CheckCircle2 className="h-5 w-5 text-positive shrink-0" />
                             ) : (
                               <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
                             )}
@@ -1334,7 +1334,7 @@ export default function ContratoForm() {
                           </div>
                           <div className="flex items-center gap-3 rounded-lg border p-4">
                             {form.watch('transferencia_internacional') ? (
-                              <Globe className="h-5 w-5 text-amber-500 shrink-0" />
+                              <Globe className="h-5 w-5 text-warn shrink-0" />
                             ) : (
                               <XCircle className="h-5 w-5 text-muted-foreground shrink-0" />
                             )}

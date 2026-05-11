@@ -48,6 +48,7 @@ import {
 import { EventImpactAnalyzer } from '@/components/compliance/EventImpactAnalyzer';
 import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Eyebrow, GoldButton } from '@/components/cca';
 
 export default function Eventos() {
   const { t, i18n } = useTranslation();
@@ -202,18 +203,23 @@ export default function Eventos() {
 
   return (
     <AppLayout>
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-serif">{t('events.title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('events.subtitle')}</p>
-          </div>
+      <div className="animate-fade-in space-y-7">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.events', 'Legal Insights')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              Análises &amp; <span className="italic text-brand">jurisprudência</span>
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('events.subtitle')}
+            </p>
+          </header>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleOpenCreate}>
-                <Plus className="mr-2 h-4 w-4" />
+              <GoldButton onClick={handleOpenCreate}>
+                <Plus className="h-4 w-4" />
                 {t('events.newEvent')}
-              </Button>
+              </GoldButton>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>

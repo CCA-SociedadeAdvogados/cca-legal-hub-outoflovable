@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { format, differenceInDays } from 'date-fns';
@@ -37,11 +38,11 @@ import { cn } from '@/lib/utils';
 function statusIcon(status: string) {
   switch (status) {
     case 'uploaded':
-      return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+      return <CheckCircle2 className="h-5 w-5 text-positive" />;
     case 'expired':
-      return <XCircle className="h-5 w-5 text-red-500" />;
+      return <XCircle className="h-5 w-5 text-danger" />;
     case 'expiring_soon':
-      return <AlertTriangle className="h-5 w-5 text-amber-500" />;
+      return <AlertTriangle className="h-5 w-5 text-warn" />;
     default:
       return <XCircle className="h-5 w-5 text-muted-foreground" />;
   }
@@ -353,11 +354,7 @@ export function DocumentChecklistPanel({
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                percentage === 100
-                  ? 'bg-emerald-500'
-                  : percentage >= 50
-                    ? 'bg-amber-500'
-                    : 'bg-red-500',
+                percentage === 100 ? 'bg-positive' : percentage >= 50 ? 'bg-warn' : 'bg-danger',
               )}
               style={{ width: `${percentage}%` }}
             />
@@ -392,7 +389,7 @@ export function DocumentChecklistPanel({
                       </Badge>
                     )}
                     {item.entry?.confirmed_by_user && (
-                      <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                      <CheckCircle2 className="h-3 w-3 text-positive" />
                     )}
                   </div>
                 </div>
@@ -485,8 +482,8 @@ export function DocumentChecklistPanel({
             )}
 
             {editItem?.entry?.ai_suggested_date && !editItem.entry.confirmed_by_user && (
-              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-800 p-3">
-                <CalendarClock className="h-4 w-4 text-blue-500 shrink-0" />
+              <div className="flex items-center gap-2 rounded-lg border border-brand/30 bg-brand/10 p-3">
+                <CalendarClock className="h-4 w-4 text-brand shrink-0" />
                 <div className="text-sm">
                   <p className="font-medium">{t('docChecklist.aiSuggestion', 'Sugestão IA')}</p>
                   <p className="text-muted-foreground">
@@ -512,7 +509,7 @@ export function DocumentChecklistPanel({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs gap-1 text-blue-600 hover:text-blue-700"
+                  className="h-7 text-xs gap-1 text-brand hover:text-brand"
                   onClick={handleSuggestDate}
                   disabled={isSuggestingDate}
                 >

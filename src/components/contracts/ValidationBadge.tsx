@@ -1,7 +1,14 @@
+import type { LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { ShieldCheck, Clock, AlertTriangle, XCircle, Loader2, HelpCircle } from 'lucide-react';
 
-export type ValidationStatusType = 'none' | 'draft_only' | 'validating' | 'validated' | 'needs_review' | 'failed';
+export type ValidationStatusType =
+  | 'none'
+  | 'draft_only'
+  | 'validating'
+  | 'validated'
+  | 'needs_review'
+  | 'failed';
 
 interface ValidationBadgeProps {
   status: ValidationStatusType;
@@ -9,13 +16,16 @@ interface ValidationBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<ValidationStatusType, {
-  icon: any;
-  label: string;
-  compactLabel: string;
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
-  className: string;
-}> = {
+const statusConfig: Record<
+  ValidationStatusType,
+  {
+    icon: LucideIcon;
+    label: string;
+    compactLabel: string;
+    variant: 'default' | 'secondary' | 'destructive' | 'outline';
+    className: string;
+  }
+> = {
   none: {
     icon: HelpCircle,
     label: 'Sem extracção',
@@ -28,28 +38,28 @@ const statusConfig: Record<ValidationStatusType, {
     label: 'Provisório (em validação pelo CCA)',
     compactLabel: 'Provisório',
     variant: 'outline',
-    className: 'border-amber-400 text-amber-700 bg-amber-50',
+    className: 'border-warn/40 text-warn bg-warn/10',
   },
   validating: {
     icon: Loader2,
     label: 'A validar pelo CCA...',
     compactLabel: 'Validando...',
     variant: 'outline',
-    className: 'border-blue-400 text-blue-700 bg-blue-50',
+    className: 'border-brand/40 text-brand bg-brand/[0.08]',
   },
   validated: {
     icon: ShieldCheck,
     label: 'Validado pelo CCA',
     compactLabel: 'Validado',
     variant: 'default',
-    className: 'bg-green-600 hover:bg-green-700 text-white border-green-600',
+    className: 'bg-positive hover:bg-positive/90 text-white border-positive',
   },
   needs_review: {
     icon: AlertTriangle,
     label: 'Requer validação interna',
     compactLabel: 'Revisão',
     variant: 'outline',
-    className: 'border-orange-400 text-orange-700 bg-orange-50',
+    className: 'border-warn/40 text-warn bg-warn/10',
   },
   failed: {
     icon: XCircle,

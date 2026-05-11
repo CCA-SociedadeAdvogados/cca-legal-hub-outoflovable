@@ -1,7 +1,16 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useExecutiveSummary } from "@/hooks/useExecutiveSummary";
-import { Sparkles, Loader2, RefreshCw, AlertTriangle, CheckCircle2, Calendar, Euro, ArrowRight } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useExecutiveSummary } from '@/hooks/useExecutiveSummary';
+import {
+  Sparkles,
+  Loader2,
+  RefreshCw,
+  AlertTriangle,
+  CheckCircle2,
+  Calendar,
+  Euro,
+  ArrowRight,
+} from 'lucide-react';
 
 interface ExecutiveSummaryProps {
   contractId: string;
@@ -31,17 +40,20 @@ export function ExecutiveSummary({ contractId }: ExecutiveSummaryProps) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            Gere um resumo em linguagem simples, ideal para partilhar com gestores e clientes não jurídicos.
+            Gere um resumo em linguagem simples, ideal para partilhar com gestores e clientes não
+            jurídicos.
           </p>
-          <Button
-            size="sm"
-            onClick={() => generate.mutate(false)}
-            disabled={generate.isPending}
-          >
-            {generate.isPending
-              ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />A gerar...</>
-              : <><Sparkles className="mr-2 h-4 w-4" />Gerar Resumo</>
-            }
+          <Button size="sm" onClick={() => generate.mutate(false)} disabled={generate.isPending}>
+            {generate.isPending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />A gerar...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Gerar Resumo
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -62,7 +74,7 @@ export function ExecutiveSummary({ contractId }: ExecutiveSummaryProps) {
             onClick={() => generate.mutate(true)}
             disabled={generate.isPending}
           >
-            <RefreshCw className={`h-4 w-4 ${generate.isPending ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${generate.isPending ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </CardHeader>
@@ -86,7 +98,7 @@ export function ExecutiveSummary({ contractId }: ExecutiveSummaryProps) {
             <ul className="space-y-1">
               {summary.o_que_importa.map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="h-4 w-4 text-positive shrink-0 mt-0.5" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -101,7 +113,7 @@ export function ExecutiveSummary({ contractId }: ExecutiveSummaryProps) {
             <ul className="space-y-1">
               {summary.datas_importantes.map((d, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+                  <Calendar className="h-4 w-4 text-brand shrink-0 mt-0.5" />
                   <span>{d}</span>
                 </li>
               ))}
@@ -137,7 +149,7 @@ export function ExecutiveSummary({ contractId }: ExecutiveSummaryProps) {
             <ul className="space-y-1">
               {summary.alertas.map((a, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-4 w-4 text-warn shrink-0 mt-0.5" />
                   <span>{a}</span>
                 </li>
               ))}

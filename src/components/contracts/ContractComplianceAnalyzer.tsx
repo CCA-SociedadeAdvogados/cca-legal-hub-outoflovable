@@ -69,24 +69,24 @@ const statusConfig: Record<
 > = {
   conforme: {
     icon: CheckCircle2,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
+    color: 'text-positive',
+    bg: 'bg-positive/10',
     label: 'Conforme',
-    badge: 'bg-green-100 text-green-800',
+    badge: 'bg-positive/10 text-positive',
   },
   parcialmente_conforme: {
     icon: AlertTriangle,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
+    color: 'text-warn',
+    bg: 'bg-warn/10',
     label: 'Parcialmente Conforme',
-    badge: 'bg-yellow-100 text-yellow-800',
+    badge: 'bg-warn/10 text-warn',
   },
   nao_conforme: {
     icon: XCircle,
-    color: 'text-red-500',
-    bg: 'bg-red-500/10',
+    color: 'text-danger',
+    bg: 'bg-danger/10',
     label: 'Não Conforme',
-    badge: 'bg-red-100 text-red-800',
+    badge: 'bg-danger/10 text-danger',
   },
   nao_aplicavel: {
     icon: FileText,
@@ -100,9 +100,9 @@ const statusConfig: Record<
 const defaultStatus = statusConfig.nao_aplicavel;
 
 const prioridadeConfig: Record<string, { color: string; bg: string }> = {
-  alta: { color: 'text-red-500', bg: 'bg-red-100 text-red-800' },
-  media: { color: 'text-yellow-500', bg: 'bg-yellow-100 text-yellow-800' },
-  baixa: { color: 'text-blue-500', bg: 'bg-blue-100 text-blue-800' },
+  alta: { color: 'text-danger', bg: 'bg-danger/10 text-danger' },
+  media: { color: 'text-warn', bg: 'bg-warn/10 text-warn' },
+  baixa: { color: 'text-brand', bg: 'bg-brand/10 text-brand' },
 };
 
 const defaultPrioridade = prioridadeConfig.media;
@@ -398,20 +398,20 @@ export function ContractComplianceAnalyzer({
                   <p className="text-2xl font-bold">{analysisResult.sumario_geral.total_eventos}</p>
                   <p className="text-sm text-muted-foreground">Total Verificados</p>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-green-500/10">
-                  <p className="text-2xl font-bold text-green-600">
+                <div className="text-center p-4 rounded-lg bg-positive/10">
+                  <p className="text-2xl font-bold text-positive">
                     {analysisResult.sumario_geral.conformes}
                   </p>
                   <p className="text-sm text-muted-foreground">Conformes</p>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-yellow-500/10">
-                  <p className="text-2xl font-bold text-yellow-600">
+                <div className="text-center p-4 rounded-lg bg-warn/10">
+                  <p className="text-2xl font-bold text-warn">
                     {analysisResult.sumario_geral.parcialmente_conformes}
                   </p>
                   <p className="text-sm text-muted-foreground">Parcialmente</p>
                 </div>
-                <div className="text-center p-4 rounded-lg bg-red-500/10">
-                  <p className="text-2xl font-bold text-red-600">
+                <div className="text-center p-4 rounded-lg bg-danger/10">
+                  <p className="text-2xl font-bold text-danger">
                     {analysisResult.sumario_geral.nao_conformes}
                   </p>
                   <p className="text-sm text-muted-foreground">Não Conformes</p>
@@ -495,7 +495,7 @@ export function ContractComplianceAnalyzer({
 
                           {evento.gaps_identificados.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-sm font-medium text-red-600 mb-1">
+                              <p className="text-sm font-medium text-danger mb-1">
                                 Gaps Identificados:
                               </p>
                               <ul className="list-disc list-inside text-sm space-y-1">
@@ -510,9 +510,7 @@ export function ContractComplianceAnalyzer({
 
                           {evento.recomendacoes.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-sm font-medium text-blue-600 mb-1">
-                                Recomendações:
-                              </p>
+                              <p className="text-sm font-medium text-brand mb-1">Recomendações:</p>
                               <ul className="list-disc list-inside text-sm space-y-1">
                                 {evento.recomendacoes.map((rec, i) => (
                                   <li key={i} className="text-muted-foreground">
