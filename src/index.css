@@ -269,6 +269,17 @@
     font-weight: 500;
     letter-spacing: -0.01em;
   }
+
+  /* Defeat browser autofill blue on form inputs */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-text-fill-color: hsl(var(--ink));
+    -webkit-box-shadow: 0 0 0 100px hsl(var(--surface)) inset;
+    caret-color: hsl(var(--ink));
+    transition: background-color 5000s ease-in-out 0s;
+  }
 }
 
 @layer components {
