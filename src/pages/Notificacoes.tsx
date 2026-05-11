@@ -1,17 +1,21 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Bell, Check, FileText, Newspaper, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
-import { useNotifications, Notification } from "@/hooks/useNotifications";
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { Bell, Check, FileText, Newspaper, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
+import { useNotifications, Notification } from '@/hooks/useNotifications';
 
 const ITEMS_PER_PAGE = 10;
 
-function formatTimeAgo(dateString: string, t: (key: string, options?: Record<string, unknown>) => string): string {
+function formatTimeAgo(
+  dateString: string,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
   const date = new Date(dateString);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
@@ -27,7 +31,7 @@ function formatTimeAgo(dateString: string, t: (key: string, options?: Record<str
 
 function getNotificationIcon(type: string) {
   if (type.startsWith('contract_expiry')) {
-    return <FileText className="h-5 w-5 text-orange-500" />;
+    return <FileText className="h-5 w-5 text-warn" />;
   }
   switch (type) {
     case 'news_published':
@@ -40,8 +44,9 @@ function getNotificationIcon(type: string) {
 export default function Notificacoes() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
-  
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } =
+    useNotifications();
+
   const [filter, setFilter] = useState<'all' | 'unread' | 'contracts' | 'news'>('all');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -61,14 +66,14 @@ export default function Notificacoes() {
   const totalPages = Math.ceil(filteredNotifications.length / ITEMS_PER_PAGE);
   const paginatedNotifications = filteredNotifications.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
+    currentPage * ITEMS_PER_PAGE,
   );
 
   const handleNotificationClick = (notification: Notification) => {
     if (!notification.read) {
       markAsRead.mutate(notification.id);
     }
-    
+
     if (notification.reference_type === 'cca_news') {
       navigate('/novidades-cca');
     } else if (notification.reference_type === 'contratos' && notification.reference_id) {
@@ -93,14 +98,14 @@ export default function Notificacoes() {
           <div>
             <h1 className="text-2xl font-semibold">{t('notifications.title')}</h1>
             <p className="text-muted-foreground">
-              {unreadCount > 0 
+              {unreadCount > 0
                 ? t('notifications.unreadCount', { count: unreadCount })
                 : t('notifications.subtitle')}
             </p>
           </div>
           {unreadCount > 0 && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => markAllAsRead.mutate()}
               disabled={markAllAsRead.isPending}
             >
@@ -110,7 +115,13 @@ export default function Notificacoes() {
           )}
         </div>
 
-        <Tabs value={filter} onValueChange={(v) => { setFilter(v as typeof filter); setCurrentPage(1); }}>
+        <Tabs
+          value={filter}
+          onValueChange={(v) => {
+            setFilter(v as typeof filter);
+            setCurrentPage(1);
+          }}
+        >
           <TabsList>
             <TabsTrigger value="all">{t('notifications.all')}</TabsTrigger>
             <TabsTrigger value="unread">
@@ -151,20 +162,15 @@ export default function Notificacoes() {
                   <div
                     key={notification.id}
                     className={cn(
-                      "flex items-start gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50",
-                      !notification.read && "bg-muted/30"
+                      'flex items-start gap-4 p-4 cursor-pointer transition-colors hover:bg-muted/50',
+                      !notification.read && 'bg-muted/30',
                     )}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="mt-0.5">
-                      {getNotificationIcon(notification.type)}
-                    </div>
+                    <div className="mt-0.5">{getNotificationIcon(notification.type)}</div>
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={cn(
-                          "text-sm",
-                          !notification.read && "font-medium"
-                        )}>
+                        <p className={cn('text-sm', !notification.read && 'font-medium')}>
                           {notification.title}
                         </p>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -174,11 +180,14 @@ export default function Notificacoes() {
                       <p className="text-sm text-muted-foreground line-clamp-2">
                         {notification.message}
                       </p>
-                      {notification.type.startsWith('contract_expiry') && notification.metadata?.days_to_expiry && (
-                        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-                          {t('notifications.expiresIn', { days: notification.metadata.days_to_expiry })}
-                        </span>
-                      )}
+                      {notification.type.startsWith('contract_expiry') &&
+                        notification.metadata?.days_to_expiry && (
+                          <span className="inline-flex items-center rounded-full bg-warn/10 px-2 py-0.5 text-xs font-medium text-warn">
+                            {t('notifications.expiresIn', {
+                              days: notification.metadata.days_to_expiry,
+                            })}
+                          </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-1">
                       {!notification.read && (

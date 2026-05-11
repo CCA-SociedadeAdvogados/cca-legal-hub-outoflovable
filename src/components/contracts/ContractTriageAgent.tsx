@@ -1,6 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, FileText, Download, ChevronDown, ChevronRight, AlertTriangle, Lightbulb, Target, RefreshCw, MessageSquare } from 'lucide-react';
+import {
+  Loader2,
+  FileText,
+  Download,
+  ChevronDown,
+  ChevronRight,
+  AlertTriangle,
+  Lightbulb,
+  Target,
+  RefreshCw,
+  MessageSquare,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,26 +63,23 @@ interface ClauseCardProps {
 // Risk Badge Component
 const RiskBadge: React.FC<RiskBadgeProps> = ({ level }) => {
   const variantMap: Record<string, 'destructive' | 'secondary' | 'default' | 'outline'> = {
-    'crítico': 'destructive',
-    'alto': 'destructive',
-    'médio': 'secondary',
-    'baixo': 'outline',
-    'conforme': 'default'
+    crítico: 'destructive',
+    alto: 'destructive',
+    médio: 'secondary',
+    baixo: 'outline',
+    conforme: 'default',
   };
 
   const colorClasses: Record<string, string> = {
-    'crítico': 'bg-red-600 hover:bg-red-600',
-    'alto': 'bg-orange-500 hover:bg-orange-500',
-    'médio': 'bg-yellow-500 hover:bg-yellow-500 text-black',
-    'baixo': 'bg-blue-500 hover:bg-blue-500',
-    'conforme': 'bg-green-500 hover:bg-green-500'
+    crítico: 'bg-danger hover:bg-danger',
+    alto: 'bg-warn hover:bg-warn',
+    médio: 'bg-warn hover:bg-warn text-black',
+    baixo: 'bg-brand hover:bg-brand',
+    conforme: 'bg-positive hover:bg-positive',
   };
 
   return (
-    <Badge 
-      variant={variantMap[level] || 'secondary'}
-      className={colorClasses[level] || ''}
-    >
+    <Badge variant={variantMap[level] || 'secondary'} className={colorClasses[level] || ''}>
       {level?.toUpperCase()}
     </Badge>
   );
@@ -102,7 +110,7 @@ const ClauseCard: React.FC<ClauseCardProps> = ({ clause, isExpanded, onToggle })
             </div>
           </CardHeader>
         </CollapsibleTrigger>
-        
+
         <CollapsibleContent>
           <CardContent className="pt-0 space-y-4">
             {clause.red_flags_encontrados?.length > 0 && (
@@ -118,21 +126,21 @@ const ClauseCard: React.FC<ClauseCardProps> = ({ clause, isExpanded, onToggle })
                 </ul>
               </div>
             )}
-            
+
             {clause.desvios_posicao_bae?.length > 0 && (
               <div>
-                <h4 className="font-semibold text-orange-600 mb-2 flex items-center gap-2">
+                <h4 className="font-semibold text-warn mb-2 flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   Desvios da Posição BAE
                 </h4>
-                <ul className="list-disc list-inside text-sm text-orange-700 space-y-1">
+                <ul className="list-disc list-inside text-sm text-warn space-y-1">
                   {clause.desvios_posicao_bae.map((d, i) => (
                     <li key={i}>{d}</li>
                   ))}
                 </ul>
               </div>
             )}
-            
+
             {clause.recomendacoes?.length > 0 && (
               <div>
                 <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
@@ -146,26 +154,26 @@ const ClauseCard: React.FC<ClauseCardProps> = ({ clause, isExpanded, onToggle })
                 </ul>
               </div>
             )}
-            
+
             {clause.fallback_sugerido && (
               <div>
-                <h4 className="font-semibold text-green-600 mb-2 flex items-center gap-2">
+                <h4 className="font-semibold text-positive mb-2 flex items-center gap-2">
                   <RefreshCw className="h-4 w-4" />
                   Fall-back Sugerido
                 </h4>
-                <p className="text-sm text-muted-foreground bg-green-50 dark:bg-green-950/30 p-3 rounded">
+                <p className="text-sm text-muted-foreground bg-positive/10 p-3 rounded">
                   {clause.fallback_sugerido.substring(0, 500)}...
                 </p>
               </div>
             )}
-            
+
             {clause.pontos_negociacao?.length > 0 && (
               <div>
-                <h4 className="font-semibold text-purple-600 mb-2 flex items-center gap-2">
+                <h4 className="font-semibold text-brand mb-2 flex items-center gap-2">
                   <Target className="h-4 w-4" />
                   Pontos de Negociação
                 </h4>
-                <ul className="list-disc list-inside text-sm text-purple-700 space-y-1">
+                <ul className="list-disc list-inside text-sm text-brand space-y-1">
                   {clause.pontos_negociacao.slice(0, 5).map((p, i) => (
                     <li key={i}>{p}</li>
                   ))}
@@ -209,7 +217,7 @@ export default function ContractTriageAgent() {
         body: JSON.stringify({
           contract_text: contractText,
           contract_name: contractName || 'Contrato',
-          save_to_db: true
+          save_to_db: true,
         }),
       });
 
@@ -221,7 +229,9 @@ export default function ContractTriageAgent() {
       setAnalysisResult(result.data);
       setActiveTab('results');
     } catch (err) {
-      setError(`Erro ao analisar contrato: ${err instanceof Error ? err.message : 'Erro desconhecido'}`);
+      setError(
+        `Erro ao analisar contrato: ${err instanceof Error ? err.message : 'Erro desconhecido'}`,
+      );
     } finally {
       setIsAnalyzing(false);
     }
@@ -229,9 +239,9 @@ export default function ContractTriageAgent() {
 
   // Toggle clause expansion
   const toggleClause = (index: number) => {
-    setExpandedClauses(prev => ({
+    setExpandedClauses((prev) => ({
       ...prev,
-      [index]: !prev[index]
+      [index]: !prev[index],
     }));
   };
 
@@ -267,7 +277,10 @@ export default function ContractTriageAgent() {
             {t('contracts.triage.title', 'Contract Triage Agent')}
           </CardTitle>
           <CardDescription>
-            {t('contracts.triage.description', 'Análise automática de contratos baseada no Playbook Contratual BAE')}
+            {t(
+              'contracts.triage.description',
+              'Análise automática de contratos baseada no Playbook Contratual BAE',
+            )}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -296,7 +309,10 @@ export default function ContractTriageAgent() {
                   {t('contracts.triage.contractName', 'Nome do Contrato (opcional)')}
                 </label>
                 <Input
-                  placeholder={t('contracts.triage.contractNamePlaceholder', 'Ex: Contrato SaaS com Fornecedor X')}
+                  placeholder={t(
+                    'contracts.triage.contractNamePlaceholder',
+                    'Ex: Contrato SaaS com Fornecedor X',
+                  )}
                   value={contractName}
                   onChange={(e) => setContractName(e.target.value)}
                 />
@@ -308,7 +324,10 @@ export default function ContractTriageAgent() {
                 </label>
                 <Textarea
                   className="min-h-[400px] font-mono text-sm"
-                  placeholder={t('contracts.triage.contractTextPlaceholder', 'Cole aqui o texto completo do contrato para análise...')}
+                  placeholder={t(
+                    'contracts.triage.contractTextPlaceholder',
+                    'Cole aqui o texto completo do contrato para análise...',
+                  )}
                   value={contractText}
                   onChange={(e) => setContractText(e.target.value)}
                 />
@@ -321,12 +340,7 @@ export default function ContractTriageAgent() {
                 </Alert>
               )}
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={analyzeContract}
-                disabled={isAnalyzing}
-              >
+              <Button className="w-full" size="lg" onClick={analyzeContract} disabled={isAnalyzing}>
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -350,25 +364,33 @@ export default function ContractTriageAgent() {
                     <Card className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                       <CardContent className="pt-4">
                         <div className="text-sm opacity-80">Score Global</div>
-                        <div className="text-3xl font-bold">{analysisResult.score_global?.toFixed(0)}%</div>
+                        <div className="text-3xl font-bold">
+                          {analysisResult.score_global?.toFixed(0)}%
+                        </div>
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-br from-slate-700 to-slate-800 text-white">
                       <CardContent className="pt-4">
                         <div className="text-sm opacity-80">Nível de Risco</div>
-                        <div className="text-xl font-bold uppercase">{analysisResult.nivel_risco_global}</div>
+                        <div className="text-xl font-bold uppercase">
+                          {analysisResult.nivel_risco_global}
+                        </div>
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-br from-destructive to-destructive/80 text-destructive-foreground">
                       <CardContent className="pt-4">
                         <div className="text-sm opacity-80">Cláusulas Críticas</div>
-                        <div className="text-3xl font-bold">{analysisResult.clausulas_criticas}</div>
+                        <div className="text-3xl font-bold">
+                          {analysisResult.clausulas_criticas}
+                        </div>
                       </CardContent>
                     </Card>
                     <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
                       <CardContent className="pt-4">
                         <div className="text-sm opacity-80">Cláusulas Conformes</div>
-                        <div className="text-3xl font-bold">{analysisResult.clausulas_conformes}</div>
+                        <div className="text-3xl font-bold">
+                          {analysisResult.clausulas_conformes}
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
@@ -377,7 +399,9 @@ export default function ContractTriageAgent() {
                   <Alert className="border-primary/50 bg-primary/5">
                     <FileText className="h-4 w-4" />
                     <AlertDescription>
-                      <strong className="block mb-1">{t('contracts.triage.executiveSummary', 'Resumo Executivo')}</strong>
+                      <strong className="block mb-1">
+                        {t('contracts.triage.executiveSummary', 'Resumo Executivo')}
+                      </strong>
                       {analysisResult.resumo_executivo}
                     </AlertDescription>
                   </Alert>
@@ -387,7 +411,9 @@ export default function ContractTriageAgent() {
                     <Alert variant="destructive">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertDescription>
-                        <strong className="block mb-2">{t('contracts.triage.priorityRedFlags', 'Red Flags Prioritários')}</strong>
+                        <strong className="block mb-2">
+                          {t('contracts.triage.priorityRedFlags', 'Red Flags Prioritários')}
+                        </strong>
                         <ul className="list-disc list-inside space-y-1">
                           {analysisResult.red_flags_prioritarios.slice(0, 5).map((rf, i) => (
                             <li key={i}>{rf}</li>
@@ -398,13 +424,13 @@ export default function ContractTriageAgent() {
                   )}
 
                   {/* Recommendations */}
-                  <Alert className="border-green-500/50 bg-green-50 dark:bg-green-950/30">
-                    <Lightbulb className="h-4 w-4 text-green-600" />
+                  <Alert className="border-positive/30 bg-positive/10">
+                    <Lightbulb className="h-4 w-4 text-positive" />
                     <AlertDescription>
-                      <strong className="block mb-2 text-green-800 dark:text-green-400">
+                      <strong className="block mb-2 text-positive">
                         {t('contracts.triage.recommendations', 'Recomendações')}
                       </strong>
-                      <ul className="list-disc list-inside space-y-1 text-green-700 dark:text-green-300">
+                      <ul className="list-disc list-inside space-y-1 text-positive">
                         {analysisResult.recomendacoes_globais?.map((rec, i) => (
                           <li key={i}>{rec}</li>
                         ))}
@@ -413,13 +439,13 @@ export default function ContractTriageAgent() {
                   </Alert>
 
                   {/* Next Steps */}
-                  <Alert className="border-purple-500/50 bg-purple-50 dark:bg-purple-950/30">
-                    <Target className="h-4 w-4 text-purple-600" />
+                  <Alert className="border-brand/30 bg-brand/10">
+                    <Target className="h-4 w-4 text-brand" />
                     <AlertDescription>
-                      <strong className="block mb-2 text-purple-800 dark:text-purple-400">
+                      <strong className="block mb-2 text-brand">
                         {t('contracts.triage.nextSteps', 'Próximos Passos')}
                       </strong>
-                      <ol className="list-decimal list-inside space-y-1 text-purple-700 dark:text-purple-300">
+                      <ol className="list-decimal list-inside space-y-1 text-brand">
                         {analysisResult.proximos_passos?.map((step, i) => (
                           <li key={i}>{step}</li>
                         ))}
@@ -431,21 +457,14 @@ export default function ContractTriageAgent() {
                   <div>
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xl font-semibold">
-                        {t('contracts.triage.clauseAnalysis', 'Análise por Cláusula')} ({analysisResult.total_clausulas_analisadas})
+                        {t('contracts.triage.clauseAnalysis', 'Análise por Cláusula')} (
+                        {analysisResult.total_clausulas_analisadas})
                       </h3>
                       <div className="space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleAll(true)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => toggleAll(true)}>
                           {t('contracts.triage.expandAll', 'Expandir Todas')}
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleAll(false)}
-                        >
+                        <Button variant="outline" size="sm" onClick={() => toggleAll(false)}>
                           {t('contracts.triage.collapseAll', 'Colapsar Todas')}
                         </Button>
                       </div>
@@ -462,12 +481,7 @@ export default function ContractTriageAgent() {
                   </div>
 
                   {/* Export Button */}
-                  <Button
-                    className="w-full"
-                    variant="secondary"
-                    size="lg"
-                    onClick={exportResults}
-                  >
+                  <Button className="w-full" variant="secondary" size="lg" onClick={exportResults}>
                     <Download className="mr-2 h-4 w-4" />
                     {t('contracts.triage.exportReport', 'Exportar Relatório (JSON)')}
                   </Button>

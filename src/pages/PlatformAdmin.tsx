@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -820,8 +821,8 @@ export default function PlatformAdmin() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {isImpersonating && (
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                      <p className="text-sm text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                    <div className="p-3 bg-warn/10 border border-warn/30 rounded-lg">
+                      <p className="text-sm text-warn flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4" />
                         Já está em modo impersonation. Saia primeiro para selecionar outra
                         organização.
@@ -918,9 +919,7 @@ export default function PlatformAdmin() {
                                     : 'secondary'
                               }
                               className={
-                                session.status === 'expired'
-                                  ? 'border-yellow-500 text-yellow-600'
-                                  : ''
+                                session.status === 'expired' ? 'border-warn/30 text-warn' : ''
                               }
                             >
                               {session.status === 'active'
@@ -1205,9 +1204,8 @@ export default function PlatformAdmin() {
                         size="sm"
                         disabled={provisionSharePoint.isPending}
                         onClick={() => {
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
                           const org = allOrganizations?.find((o: any) => o.id === editingOrg.id);
-                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
                           const clientCode =
                             (org as any)?.client_code ?? editingOrg.id.slice(0, 8).toUpperCase();
                           provisionSharePoint.mutate({
@@ -1533,7 +1531,7 @@ export default function PlatformAdmin() {
                                     {authMethod === 'sso_cca' ? (
                                       <Badge
                                         variant="secondary"
-                                        className="text-xs bg-green-500/20 text-green-700"
+                                        className="text-xs bg-positive/20 text-positive"
                                       >
                                         <KeyRound className="h-3 w-3 mr-1" />
                                         SSO
@@ -1541,7 +1539,7 @@ export default function PlatformAdmin() {
                                     ) : (
                                       <Badge
                                         variant="secondary"
-                                        className="text-xs bg-blue-500/20 text-blue-700"
+                                        className="text-xs bg-brand/20 text-brand"
                                       >
                                         <Lock className="h-3 w-3 mr-1" />
                                         Email
@@ -1713,8 +1711,8 @@ export default function PlatformAdmin() {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                <p className="text-sm text-amber-700 dark:text-amber-400">
+              <div className="p-3 bg-warn/10 border border-warn/30 rounded-lg">
+                <p className="text-sm text-warn">
                   ⚠️ Esta ação será registada para auditoria. Verá a plataforma exatamente como um
                   utilizador desta organização.
                 </p>
@@ -1863,7 +1861,7 @@ export default function PlatformAdmin() {
         <Dialog open={isCredentialsDialogOpen} onOpenChange={setIsCredentialsDialogOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-green-600">
+              <DialogTitle className="flex items-center gap-2 text-positive">
                 <Check className="h-5 w-5" />
                 Utilizador Criado com Sucesso!
               </DialogTitle>
@@ -1874,7 +1872,7 @@ export default function PlatformAdmin() {
             </DialogHeader>
             {createdUserCredentials && createdUserCredentials.credentials && (
               <div className="space-y-4 py-4">
-                <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg space-y-3">
+                <div className="p-4 bg-positive/10 border border-positive/30 rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
@@ -1890,7 +1888,7 @@ export default function PlatformAdmin() {
                       }
                     >
                       {copiedField === 'email' ? (
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-positive" />
                       ) : (
                         <Copy className="h-4 w-4" />
                       )}
@@ -1914,15 +1912,15 @@ export default function PlatformAdmin() {
                       }
                     >
                       {copiedField === 'password' ? (
-                        <Check className="h-4 w-4 text-green-600" />
+                        <Check className="h-4 w-4 text-positive" />
                       ) : (
                         <Copy className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
                 </div>
-                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                <div className="p-3 bg-warn/10 border border-warn/30 rounded-lg">
+                  <p className="text-sm text-warn">
                     ⚠️ Guarde estas credenciais agora. A palavra-passe não será mostrada novamente.
                   </p>
                 </div>
@@ -2000,7 +1998,7 @@ export default function PlatformAdmin() {
                         )}
                       </li>
                       {userToDelete?.profiles?.auth_method === 'sso_cca' && (
-                        <li className="text-amber-600 dark:text-amber-400">
+                        <li className="text-warn">
                           {t(
                             'admin.deleteUserSsoWarning',
                             'Utilizadores SSO podem criar nova conta através do SSO CCA',

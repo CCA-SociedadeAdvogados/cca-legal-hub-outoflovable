@@ -5,9 +5,9 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  CheckCircle2, 
-  AlertTriangle, 
+import {
+  CheckCircle2,
+  AlertTriangle,
   XCircle,
   FileText,
   Scale,
@@ -16,7 +16,7 @@ import {
   Clock,
   Lightbulb,
   ArrowRight,
-  Loader2
+  Loader2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -28,40 +28,40 @@ interface ContractComplianceResultsProps {
 }
 
 const statusConfig = {
-  conforme: { 
-    icon: CheckCircle2, 
-    color: 'text-green-500', 
-    bg: 'bg-green-500/10', 
+  conforme: {
+    icon: CheckCircle2,
+    color: 'text-positive',
+    bg: 'bg-positive/10',
     label: 'Conforme',
-    badge: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+    badge: 'bg-positive/15 text-positive border-positive/30',
   },
-  parcialmente_conforme: { 
-    icon: AlertTriangle, 
-    color: 'text-yellow-500', 
-    bg: 'bg-yellow-500/10', 
+  parcialmente_conforme: {
+    icon: AlertTriangle,
+    color: 'text-warn',
+    bg: 'bg-warn/10',
     label: 'Parcialmente Conforme',
-    badge: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+    badge: 'bg-warn/15 text-warn border-warn/30',
   },
-  nao_conforme: { 
-    icon: XCircle, 
-    color: 'text-red-500', 
-    bg: 'bg-red-500/10', 
+  nao_conforme: {
+    icon: XCircle,
+    color: 'text-danger',
+    bg: 'bg-danger/10',
     label: 'Não Conforme',
-    badge: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+    badge: 'bg-danger/15 text-danger border-danger/30',
   },
-  nao_aplicavel: { 
-    icon: FileText, 
-    color: 'text-muted-foreground', 
-    bg: 'bg-muted', 
+  nao_aplicavel: {
+    icon: FileText,
+    color: 'text-muted-foreground',
+    bg: 'bg-muted',
     label: 'Não Aplicável',
-    badge: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+    badge: 'bg-bg-alt text-ink-mute border-line',
   },
 };
 
 const prioridadeConfig = {
-  alta: { bg: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
-  media: { bg: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' },
-  baixa: { bg: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
+  alta: { bg: 'bg-danger/15 text-danger border border-danger/30' },
+  media: { bg: 'bg-warn/15 text-warn border border-warn/30' },
+  baixa: { bg: 'bg-brand/[0.08] text-brand border border-brand/30' },
 };
 
 export function ContractComplianceResults({ contratoId }: ContractComplianceResultsProps) {
@@ -72,8 +72,7 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            A carregar análise...
+            <Loader2 className="h-5 w-5 animate-spin" />A carregar análise...
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -99,7 +98,8 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
             <AlertTitle>Sem análise disponível</AlertTitle>
             <AlertDescription className="mt-2">
               <p className="mb-3">
-                Este contrato ainda não foi analisado pela IA. Execute uma análise de conformidade para verificar automaticamente a conformidade com a legislação aplicável.
+                Este contrato ainda não foi analisado pela IA. Execute uma análise de conformidade
+                para verificar automaticamente a conformidade com a legislação aplicável.
               </p>
               <Button asChild size="sm">
                 <Link to={`/contratos/${contratoId}/editar`}>
@@ -114,14 +114,15 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
     );
   }
 
-  const globalStatusConfig = analysis.status_global 
-    ? statusConfig[analysis.status_global] 
+  const globalStatusConfig = analysis.status_global
+    ? statusConfig[analysis.status_global]
     : statusConfig.nao_aplicavel;
   const GlobalStatusIcon = globalStatusConfig.icon;
 
   // Get non-conforming and partially conforming events for quick view
   const issuesEvents = analysis.eventos_verificados.filter(
-    e => e.status_conformidade === 'nao_conforme' || e.status_conformidade === 'parcialmente_conforme'
+    (e) =>
+      e.status_conformidade === 'nao_conforme' || e.status_conformidade === 'parcialmente_conforme',
   );
 
   return (
@@ -136,7 +137,9 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
             </CardTitle>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              {format(new Date(analysis.created_at), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: pt })}
+              {format(new Date(analysis.created_at), "d 'de' MMMM 'de' yyyy 'às' HH:mm", {
+                locale: pt,
+              })}
             </div>
           </div>
         </CardHeader>
@@ -145,9 +148,7 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
           <Alert className={globalStatusConfig.bg}>
             <GlobalStatusIcon className={`h-5 w-5 ${globalStatusConfig.color}`} />
             <AlertTitle className="text-lg">{globalStatusConfig.label}</AlertTitle>
-            <AlertDescription className="mt-2">
-              {analysis.resumo_contrato}
-            </AlertDescription>
+            <AlertDescription className="mt-2">{analysis.resumo_contrato}</AlertDescription>
           </Alert>
 
           {/* Statistics Grid */}
@@ -156,20 +157,26 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
               <p className="text-2xl font-bold">{analysis.sumario_geral.total_eventos}</p>
               <p className="text-sm text-muted-foreground">Total Verificados</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-green-500/10">
-              <p className="text-2xl font-bold text-green-600">{analysis.sumario_geral.conformes}</p>
+            <div className="text-center p-4 rounded-lg bg-positive/10">
+              <p className="text-2xl font-bold text-positive">{analysis.sumario_geral.conformes}</p>
               <p className="text-sm text-muted-foreground">Conformes</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-yellow-500/10">
-              <p className="text-2xl font-bold text-yellow-600">{analysis.sumario_geral.parcialmente_conformes}</p>
+            <div className="text-center p-4 rounded-lg bg-warn/10">
+              <p className="text-2xl font-bold text-warn">
+                {analysis.sumario_geral.parcialmente_conformes}
+              </p>
               <p className="text-sm text-muted-foreground">Parcialmente</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-red-500/10">
-              <p className="text-2xl font-bold text-red-600">{analysis.sumario_geral.nao_conformes}</p>
+            <div className="text-center p-4 rounded-lg bg-danger/10">
+              <p className="text-2xl font-bold text-danger">
+                {analysis.sumario_geral.nao_conformes}
+              </p>
               <p className="text-sm text-muted-foreground">Não Conformes</p>
             </div>
             <div className="text-center p-4 rounded-lg bg-muted">
-              <p className="text-2xl font-bold text-muted-foreground">{analysis.sumario_geral.nao_aplicaveis}</p>
+              <p className="text-2xl font-bold text-muted-foreground">
+                {analysis.sumario_geral.nao_aplicaveis}
+              </p>
               <p className="text-sm text-muted-foreground">N/A</p>
             </div>
           </div>
@@ -188,7 +195,7 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              <AlertTriangle className="h-5 w-5 text-warn" />
               Pontos de Atenção ({issuesEvents.length})
             </CardTitle>
           </CardHeader>
@@ -196,13 +203,14 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
             <ScrollArea className="max-h-[300px]">
               <div className="space-y-3">
                 {issuesEvents.map((evento, index) => {
-                  const config = statusConfig[evento.status_conformidade] || statusConfig.nao_aplicavel;
+                  const config =
+                    statusConfig[evento.status_conformidade] || statusConfig.nao_aplicavel;
                   const StatusIcon = config.icon;
                   const prioridade = prioridadeConfig[evento.prioridade] || prioridadeConfig.media;
 
                   return (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`p-3 rounded-lg border-l-4 ${config.bg}`}
                       style={{ borderLeftColor: 'currentColor' }}
                     >
@@ -225,7 +233,9 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
                             <li key={i}>{gap}</li>
                           ))}
                           {evento.gaps_identificados.length > 2 && (
-                            <li className="text-muted-foreground">+{evento.gaps_identificados.length - 2} mais...</li>
+                            <li className="text-muted-foreground">
+                              +{evento.gaps_identificados.length - 2} mais...
+                            </li>
                           )}
                         </ul>
                       )}
@@ -243,7 +253,7 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-blue-500" />
+              <Lightbulb className="h-5 w-5 text-brand" />
               Recomendações Gerais
             </CardTitle>
           </CardHeader>
@@ -251,7 +261,7 @@ export function ContractComplianceResults({ contratoId }: ContractComplianceResu
             <ul className="space-y-2">
               {analysis.recomendacoes_gerais.map((rec, index) => (
                 <li key={index} className="flex items-start gap-2 text-sm">
-                  <ArrowRight className="h-4 w-4 mt-0.5 text-blue-500 shrink-0" />
+                  <ArrowRight className="h-4 w-4 mt-0.5 text-brand shrink-0" />
                   <span>{rec}</span>
                 </li>
               ))}

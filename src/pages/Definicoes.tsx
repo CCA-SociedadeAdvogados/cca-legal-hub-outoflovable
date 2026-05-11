@@ -398,7 +398,7 @@ export default function Definicoes() {
                           <div className="flex items-center gap-2">
                             <h4 className="font-medium">{provider.name}</h4>
                             {provider.status === 'configured' && (
-                              <Badge variant="default" className="bg-green-600">
+                              <Badge variant="default" className="bg-positive">
                                 <CheckCircle className="mr-1 h-3 w-3" />
                                 {t('settings.signatures.active')}
                               </Badge>

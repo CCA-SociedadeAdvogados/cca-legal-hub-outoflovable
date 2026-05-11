@@ -1,19 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 
-import { 
-  AlertTriangle, 
-  CheckCircle2, 
-  XCircle, 
-  RefreshCw, 
-  FileText, 
-  Clock, 
+import {
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  FileText,
+  Clock,
   Bot,
   Shield,
   Lightbulb,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -53,9 +54,9 @@ function getRiskIcon(nivel: string) {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 75) return 'text-green-600';
-  if (score >= 50) return 'text-yellow-600';
-  return 'text-red-600';
+  if (score >= 75) return 'text-positive';
+  if (score >= 50) return 'text-warn';
+  return 'text-danger';
 }
 
 export function ContractTriageResults({ contratoId }: ContractTriageResultsProps) {
@@ -95,8 +96,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
             <Button onClick={handleRunTriage} disabled={isRunning}>
               {isRunning ? (
                 <>
-                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                  A analisar...
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />A analisar...
                 </>
               ) : (
                 <>
@@ -148,16 +148,13 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
                 {analysis.score_global.toFixed(0)}
               </div>
               <p className="text-sm text-muted-foreground">Score de Conformidade</p>
-              <Progress 
-                value={analysis.score_global} 
-                className="mt-2 h-2"
-              />
+              <Progress value={analysis.score_global} className="mt-2 h-2" />
             </div>
 
             {/* Risk Level */}
             <div className="text-center">
-              <Badge 
-                variant={getRiskBadgeVariant(analysis.nivel_risco_global)} 
+              <Badge
+                variant={getRiskBadgeVariant(analysis.nivel_risco_global)}
                 className="text-lg px-4 py-1"
               >
                 {getRiskIcon(analysis.nivel_risco_global)}
@@ -226,13 +223,17 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
                 {analysis.red_flags_prioritarios.map((flag: any, index: number) => (
                   <li key={index} className="flex items-start gap-2 text-sm">
                     <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <span>{typeof flag === 'string' ? flag : flag.descricao || flag.description || JSON.stringify(flag)}</span>
+                    <span>
+                      {typeof flag === 'string'
+                        ? flag
+                        : flag.descricao || flag.description || JSON.stringify(flag)}
+                    </span>
                   </li>
                 ))}
               </ul>
             ) : (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <CheckCircle2 className="h-4 w-4 text-positive" />
                 <span>Nenhum red flag identificado</span>
               </div>
             )}
@@ -243,7 +244,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-500" />
+              <Lightbulb className="h-5 w-5 text-warn" />
               Recomendações
             </CardTitle>
           </CardHeader>
@@ -299,16 +300,16 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
               <div className="text-2xl font-bold">{analysis.total_clausulas_analisadas}</div>
               <p className="text-xs text-muted-foreground">Cláusulas Analisadas</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-green-50 dark:bg-green-950/20">
-              <div className="text-2xl font-bold text-green-600">{analysis.clausulas_conformes}</div>
+            <div className="text-center p-4 rounded-lg bg-positive/10">
+              <div className="text-2xl font-bold text-positive">{analysis.clausulas_conformes}</div>
               <p className="text-xs text-muted-foreground">Conformes</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20">
-              <div className="text-2xl font-bold text-yellow-600">{analysis.clausulas_alto_risco}</div>
+            <div className="text-center p-4 rounded-lg bg-warn/10">
+              <div className="text-2xl font-bold text-warn">{analysis.clausulas_alto_risco}</div>
               <p className="text-xs text-muted-foreground">Alto Risco</p>
             </div>
-            <div className="text-center p-4 rounded-lg bg-red-50 dark:bg-red-950/20">
-              <div className="text-2xl font-bold text-red-600">{analysis.clausulas_criticas}</div>
+            <div className="text-center p-4 rounded-lg bg-danger/10">
+              <div className="text-2xl font-bold text-danger">{analysis.clausulas_criticas}</div>
               <p className="text-xs text-muted-foreground">Críticas</p>
             </div>
           </div>
@@ -318,7 +319,9 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
       {/* Analysis Source Badge */}
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <Bot className="h-3 w-3" />
-        <span>Análise realizada por CCA AI Agent • Dados extraídos automaticamente do contrato</span>
+        <span>
+          Análise realizada por CCA AI Agent • Dados extraídos automaticamente do contrato
+        </span>
       </div>
     </div>
   );

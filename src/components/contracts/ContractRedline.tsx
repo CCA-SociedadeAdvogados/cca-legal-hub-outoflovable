@@ -30,20 +30,20 @@ const CLASSIFICATION_CONFIG: Record<
 > = {
   favoravel: {
     label: 'Favorável',
-    color: 'text-green-600 bg-green-50 border-green-200',
+    color: 'text-positive bg-positive/10 border-positive/30',
     icon: TrendingUp,
   },
-  standard: { label: 'Standard', color: 'text-blue-600 bg-blue-50 border-blue-200', icon: Minus },
+  standard: { label: 'Standard', color: 'text-brand bg-brand/[0.08] border-brand/30', icon: Minus },
   atencao: {
     label: 'Atenção',
-    color: 'text-amber-600 bg-amber-50 border-amber-200',
+    color: 'text-warn bg-warn/10 border-warn/30',
     icon: AlertTriangle,
   },
-  risco: { label: 'Risco', color: 'text-red-600 bg-red-50 border-red-200', icon: TrendingDown },
+  risco: { label: 'Risco', color: 'text-danger bg-danger/10 border-danger/30', icon: TrendingDown },
 };
 
 function ScoreRing({ score }: { score: number }) {
-  const color = score >= 75 ? 'text-green-600' : score >= 50 ? 'text-amber-600' : 'text-red-600';
+  const color = score >= 75 ? 'text-positive' : score >= 50 ? 'text-warn' : 'text-danger';
   return (
     <div className="flex items-center gap-3">
       <div className={cn('text-3xl font-bold', color)}>{score}</div>
@@ -139,12 +139,12 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
                       className={cn(
                         'text-lg font-bold',
                         c === 'favoravel'
-                          ? 'text-green-600'
+                          ? 'text-positive'
                           : c === 'standard'
-                            ? 'text-blue-600'
+                            ? 'text-brand'
                             : c === 'atencao'
-                              ? 'text-amber-600'
-                              : 'text-red-600',
+                              ? 'text-warn'
+                              : 'text-danger',
                       )}
                     >
                       {stats[c]}
@@ -200,7 +200,7 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <ThumbsUp className="h-4 w-4 text-green-600" />
+                <ThumbsUp className="h-4 w-4 text-positive" />
                 Pontos Positivos
               </CardTitle>
             </CardHeader>
@@ -208,7 +208,7 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
               <ul className="space-y-1">
                 {redline.pontos_positivos.map((p, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs">
-                    <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-3 w-3 text-positive shrink-0 mt-0.5" />
                     <span>{p}</span>
                   </li>
                 ))}
@@ -220,7 +220,7 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm flex items-center gap-2">
-                <ThumbsDown className="h-4 w-4 text-red-600" />
+                <ThumbsDown className="h-4 w-4 text-danger" />
                 Riscos Identificados
               </CardTitle>
             </CardHeader>
@@ -228,7 +228,7 @@ export function ContractRedline({ contractId }: ContractRedlineProps) {
               <ul className="space-y-1">
                 {redline.pontos_negativos.map((p, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs">
-                    <AlertTriangle className="h-3 w-3 text-red-500 shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-3 w-3 text-danger shrink-0 mt-0.5" />
                     <span>{p}</span>
                   </li>
                 ))}

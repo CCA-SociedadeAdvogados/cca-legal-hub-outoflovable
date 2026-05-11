@@ -429,7 +429,7 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <CheckCircle2 className="h-5 w-5 text-positive" />
               Utilizador criado com sucesso
             </DialogTitle>
           </DialogHeader>
@@ -636,10 +636,10 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
 
   const statusInfo: Record<BulkResult['status'], { label: string; className: string }> = {
     pending: { label: 'Pendente', className: 'bg-muted text-muted-foreground' },
-    running: { label: 'A processar...', className: 'bg-blue-100 text-blue-700' },
-    ok: { label: 'Criado', className: 'bg-green-100 text-green-700' },
-    existing: { label: 'Já existia', className: 'bg-yellow-100 text-yellow-700' },
-    error: { label: 'Erro', className: 'bg-red-100 text-red-700' },
+    running: { label: 'A processar...', className: 'bg-brand/10 text-brand' },
+    ok: { label: 'Criado', className: 'bg-positive/10 text-positive' },
+    existing: { label: 'Já existia', className: 'bg-warn/10 text-warn' },
+    error: { label: 'Erro', className: 'bg-danger/10 text-danger' },
   };
 
   const okCount = rows.filter((r) => r.status === 'ok').length;
@@ -724,9 +724,9 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
               <span className="text-sm font-medium">{rows.length} utilizadores</span>
               {done && (
                 <>
-                  <Badge className="bg-green-100 text-green-700">{okCount} criados</Badge>
+                  <Badge className="bg-positive/10 text-positive">{okCount} criados</Badge>
                   {errCount > 0 && (
-                    <Badge className="bg-red-100 text-red-700">{errCount} erros</Badge>
+                    <Badge className="bg-danger/10 text-danger">{errCount} erros</Badge>
                   )}
                 </>
               )}
@@ -763,7 +763,7 @@ function BulkOnboarding({ organizations }: { organizations: OrgOption[] }) {
                   const si = statusInfo[r.status];
                   const orgFound = orgByJvris(r.org_ref);
                   return (
-                    <TableRow key={i} className={cn(r.status === 'error' && 'bg-red-50/40')}>
+                    <TableRow key={i} className={cn(r.status === 'error' && 'bg-danger/40')}>
                       <TableCell className="text-muted-foreground text-xs">{r.linha}</TableCell>
                       <TableCell className="text-sm">{r.email}</TableCell>
                       <TableCell className="text-sm">{r.nome_completo}</TableCell>
@@ -856,7 +856,7 @@ function CredentialRow({
         onClick={() => onCopy(value, field)}
       >
         {copiedField === field ? (
-          <Check className="h-3.5 w-3.5 text-green-500" />
+          <Check className="h-3.5 w-3.5 text-positive" />
         ) : (
           <Copy className="h-3.5 w-3.5" />
         )}

@@ -42,34 +42,34 @@ const chartTooltipStyle = {
 
 const ESTADO_ICON_BG: Record<string, string> = {
   rascunho: 'bg-gray-100 dark:bg-gray-800',
-  em_revisao: 'bg-amber-100 dark:bg-amber-900/30',
-  em_aprovacao: 'bg-purple-100 dark:bg-purple-900/30',
-  enviado_para_assinatura: 'bg-blue-100 dark:bg-blue-900/30',
-  activo: 'bg-emerald-100 dark:bg-emerald-900/30',
-  expirado: 'bg-red-100 dark:bg-red-900/30',
-  denunciado: 'bg-red-100 dark:bg-red-900/30',
+  em_revisao: 'bg-warn/10',
+  em_aprovacao: 'bg-brand/10',
+  enviado_para_assinatura: 'bg-brand/10',
+  activo: 'bg-positive/10',
+  expirado: 'bg-danger/10',
+  denunciado: 'bg-danger/10',
   rescindido: 'bg-gray-100 dark:bg-gray-800',
 };
 
 const ESTADO_ICON_COLOR: Record<string, string> = {
   rascunho: 'text-gray-500',
-  em_revisao: 'text-amber-600',
-  em_aprovacao: 'text-purple-600',
-  enviado_para_assinatura: 'text-blue-600',
-  activo: 'text-emerald-600',
-  expirado: 'text-red-500',
-  denunciado: 'text-red-700',
+  em_revisao: 'text-warn',
+  em_aprovacao: 'text-brand',
+  enviado_para_assinatura: 'text-brand',
+  activo: 'text-positive',
+  expirado: 'text-danger',
+  denunciado: 'text-danger',
   rescindido: 'text-gray-400',
 };
 
 const ESTADO_BADGE_CLASS: Record<string, string> = {
   rascunho: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
-  em_revisao: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
-  em_aprovacao: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
-  enviado_para_assinatura: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  activo: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  expirado: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
-  denunciado: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  em_revisao: 'bg-warn/10 text-warn',
+  em_aprovacao: 'bg-brand/10 text-brand',
+  enviado_para_assinatura: 'bg-brand/10 text-brand',
+  activo: 'bg-positive/10 text-positive',
+  expirado: 'bg-danger/10 text-danger',
+  denunciado: 'bg-danger/10 text-danger',
   rescindido: 'bg-gray-100 text-gray-500 dark:bg-gray-800',
 };
 
@@ -152,7 +152,7 @@ export default function Dashboard() {
               className={cn(
                 'overflow-hidden relative',
                 checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                  ? 'border-red-200'
+                  ? 'border-danger/30'
                   : '',
               )}
             >
@@ -166,7 +166,7 @@ export default function Dashboard() {
                       className={cn(
                         'text-3xl font-bold font-serif tracking-tight',
                         checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                          ? 'text-red-500'
+                          ? 'text-danger'
                           : '',
                       )}
                     >
@@ -176,7 +176,7 @@ export default function Dashboard() {
                       <p
                         className={cn(
                           'text-xs',
-                          docStats.percent < 50 ? 'text-red-400' : 'text-muted-foreground',
+                          docStats.percent < 50 ? 'text-danger' : 'text-muted-foreground',
                         )}
                       >
                         {docStats.expired + docStats.missing}{' '}
@@ -188,7 +188,7 @@ export default function Dashboard() {
                     className={cn(
                       'flex h-10 w-10 items-center justify-center rounded-lg',
                       checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                        ? 'bg-red-50 text-red-500'
+                        ? 'bg-danger/10 text-danger'
                         : 'bg-primary/10 text-primary',
                     )}
                   >
@@ -202,10 +202,10 @@ export default function Dashboard() {
                     className={cn(
                       'h-full transition-all',
                       docStats.percent >= 100
-                        ? 'bg-emerald-500'
+                        ? 'bg-positive'
                         : docStats.percent >= 50
                           ? 'bg-primary'
-                          : 'bg-red-500',
+                          : 'bg-danger',
                     )}
                     style={{ width: `${docStats.percent}%` }}
                   />
@@ -354,7 +354,7 @@ export default function Dashboard() {
                     {t('legalbi.criados', 'Criados')}
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-0.5 rounded-full bg-red-400 inline-block" />
+                    <span className="w-3 h-0.5 rounded-full bg-danger inline-block" />
                     {t('legalbi.terminados', 'Terminados')}
                   </span>
                 </div>
@@ -455,7 +455,7 @@ export default function Dashboard() {
                 )}
                 {/* RGPD pills */}
                 <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-warn/10 text-warn border border-warn/30">
                     {biData.portfolio.rgpdStats.comDadosPessoais}{' '}
                     {t('legalbi.comDadosPessoais', 'com dados pessoais')}
                   </span>

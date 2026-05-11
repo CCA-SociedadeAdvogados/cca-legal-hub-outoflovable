@@ -93,17 +93,9 @@ export function ContractHealthScore({ contrato }: { contrato: Contrato }) {
 
   const variant = percentage >= 80 ? 'success' : percentage >= 50 ? 'warning' : 'danger';
   const colorClass =
-    variant === 'success'
-      ? 'text-emerald-600'
-      : variant === 'warning'
-        ? 'text-amber-500'
-        : 'text-red-500';
+    variant === 'success' ? 'text-positive' : variant === 'warning' ? 'text-warn' : 'text-danger';
   const progressColor =
-    variant === 'success'
-      ? 'bg-emerald-500'
-      : variant === 'warning'
-        ? 'bg-amber-500'
-        : 'bg-red-500';
+    variant === 'success' ? 'bg-positive' : variant === 'warning' ? 'bg-warn' : 'bg-danger';
   const label =
     variant === 'success'
       ? t('healthScore.good', 'Bom')
@@ -153,9 +145,9 @@ export function ContractHealthScore({ contrato }: { contrato: Contrato }) {
           {checks.map((check) => (
             <div key={check.key} className="flex items-center gap-2 text-sm">
               {check.passed ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-positive shrink-0" />
               ) : (
-                <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                <XCircle className="h-3.5 w-3.5 text-danger shrink-0" />
               )}
               <span className={check.passed ? 'text-muted-foreground' : 'font-medium'}>
                 {check.label}

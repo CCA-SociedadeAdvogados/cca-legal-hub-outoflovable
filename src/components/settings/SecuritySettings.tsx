@@ -180,7 +180,7 @@ export function SecuritySettings() {
                     {t('security.twoFactor.authenticatorApp', 'Aplicação Autenticadora')}
                   </h4>
                   {is2FAEnabled && (
-                    <Badge variant="default" className="bg-green-600">
+                    <Badge variant="default" className="bg-positive">
                       <CheckCircle className="mr-1 h-3 w-3" />
                       {t('security.twoFactor.active', 'Ativo')}
                     </Badge>
@@ -209,7 +209,7 @@ export function SecuritySettings() {
           {/* Security Recommendations */}
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertTriangle className="h-4 w-4 text-warn" />
               <span className="text-sm font-medium">
                 {t('security.recommendations.title', 'Recomendações de Segurança')}
               </span>
@@ -341,7 +341,7 @@ export function SecuritySettings() {
                   {navigator.userAgent.split(' ').slice(-2).join(' ')}
                 </p>
               </div>
-              <Badge variant="default" className="bg-green-600">
+              <Badge variant="default" className="bg-positive">
                 <CheckCircle className="mr-1 h-3 w-3" />
                 {t('security.sessions.active', 'Ativa')}
               </Badge>

@@ -19,11 +19,11 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
 const sourceColors: Record<string, string> = {
-  dre: 'bg-blue-500/10 text-blue-700 border-blue-200',
-  'eur-lex': 'bg-indigo-500/10 text-indigo-700 border-indigo-200',
-  bdp: 'bg-green-500/10 text-green-700 border-green-200',
-  asf: 'bg-purple-500/10 text-purple-700 border-purple-200',
-  cmvm: 'bg-orange-500/10 text-orange-700 border-orange-200',
+  dre: 'bg-brand/10 text-brand border-brand/30',
+  'eur-lex': 'bg-brand/10 text-brand border-brand/30',
+  bdp: 'bg-positive/10 text-positive border-positive/30',
+  asf: 'bg-brand/10 text-brand border-brand/30',
+  cmvm: 'bg-warn/10 text-warn border-warn/30',
 };
 
 const sourceNames: Record<string, string> = {

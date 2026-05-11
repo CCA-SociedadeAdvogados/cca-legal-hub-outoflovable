@@ -35,8 +35,8 @@ import { pt, enUS } from 'date-fns/locale';
 
 const estadoColors: Record<string, string> = {
   rascunho: 'bg-muted text-muted-foreground',
-  publicado: 'bg-green-500/20 text-green-700',
-  arquivado: 'bg-orange-500/20 text-orange-700',
+  publicado: 'bg-positive/20 text-positive',
+  arquivado: 'bg-warn/20 text-warn',
 };
 
 const estadoIcons: Record<string, React.ReactNode> = {
@@ -258,9 +258,9 @@ export default function NovidadesCCA() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">{t('ccaNews.published')}</p>
-                    <p className="text-2xl font-bold text-green-600">{stats.publicados}</p>
+                    <p className="text-2xl font-bold text-positive">{stats.publicados}</p>
                   </div>
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+                  <CheckCircle className="h-8 w-8 text-positive" />
                 </div>
               </CardContent>
             </Card>
@@ -280,9 +280,9 @@ export default function NovidadesCCA() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">{t('ccaNews.archived')}</p>
-                    <p className="text-2xl font-bold text-orange-600">{stats.arquivados}</p>
+                    <p className="text-2xl font-bold text-warn">{stats.arquivados}</p>
                   </div>
-                  <Archive className="h-8 w-8 text-orange-600" />
+                  <Archive className="h-8 w-8 text-warn" />
                 </div>
               </CardContent>
             </Card>
