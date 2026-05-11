@@ -294,7 +294,7 @@ export function SharePointDocumentsBrowser({
                 <div
                   key={doc.id}
                   className={cn(
-                    'flex min-w-0 items-center justify-between gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50',
+                    'flex min-w-0 items-center justify-between gap-3 rounded-control px-3 py-3 transition-colors hover:bg-bg-alt',
                     doc.is_folder && 'cursor-pointer',
                   )}
                   onClick={() => {
@@ -310,16 +310,20 @@ export function SharePointDocumentsBrowser({
                   <div className="flex min-w-0 items-center gap-3">
                     <div
                       className={cn(
-                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg',
-                        doc.is_folder ? 'bg-warn/10 text-warn' : 'bg-brand/10 text-brand',
+                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-control border',
+                        doc.is_folder
+                          ? 'border-warn/30 bg-warn/10 text-warn'
+                          : 'border-brand/30 bg-brand/[0.08] text-brand',
                       )}
                     >
-                      <FileIcon className="h-5 w-5" />
+                      <FileIcon className="h-5 w-5" strokeWidth={1.5} />
                     </div>
 
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{doc.name}</p>
-                      <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
+                        {doc.name}
+                      </p>
+                      <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px] text-ink-mute">
                         {!doc.is_folder && doc.size_bytes && (
                           <span className="shrink-0">{formatFileSize(doc.size_bytes)}</span>
                         )}
@@ -345,7 +349,7 @@ export function SharePointDocumentsBrowser({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        className="h-8 w-8 text-ink-mute hover:text-brand"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleOpenInSharePoint(doc.web_url!);
@@ -354,7 +358,7 @@ export function SharePointDocumentsBrowser({
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     )}
-                    {doc.is_folder && <ChevronRight className="h-5 w-5 text-muted-foreground" />}
+                    {doc.is_folder && <ChevronRight className="h-4 w-4 text-ink-mute" />}
                   </div>
                 </div>
               );
