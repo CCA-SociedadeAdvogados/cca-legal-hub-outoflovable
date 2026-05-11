@@ -59,34 +59,34 @@ import { cn } from '@/lib/utils';
 const FASE_MAP: Record<string, { label: string; className: string }> = {
   rascunho: {
     label: 'Em negociação',
-    className: 'border-muted-foreground/40 text-muted-foreground bg-muted/40',
+    className: 'border-line bg-bg-alt text-ink-soft',
   },
   em_revisao: {
     label: 'Em validação',
-    className: 'border-amber-400/60 text-amber-700 bg-amber-50',
+    className: 'border-warn/40 bg-warn/10 text-warn',
   },
   em_aprovacao: {
     label: 'Em validação',
-    className: 'border-amber-400/60 text-amber-700 bg-amber-50',
+    className: 'border-warn/40 bg-warn/10 text-warn',
   },
   enviado_para_assinatura: {
     label: 'Em validação',
-    className: 'border-amber-400/60 text-amber-700 bg-amber-50',
+    className: 'border-warn/40 bg-warn/10 text-warn',
   },
-  activo: { label: 'Activo', className: 'border-green-500/60 text-green-700 bg-green-50' },
+  activo: { label: 'Activo', className: 'border-positive/40 bg-positive/10 text-positive' },
   expirado: {
     label: 'Terminado',
-    className: 'border-destructive/40 text-destructive bg-destructive/10',
+    className: 'border-danger/40 bg-danger/10 text-danger',
   },
   denunciado: {
     label: 'Terminado',
-    className: 'border-destructive/40 text-destructive bg-destructive/10',
+    className: 'border-danger/40 bg-danger/10 text-danger',
   },
   rescindido: {
     label: 'Terminado',
-    className: 'border-destructive/40 text-destructive bg-destructive/10',
+    className: 'border-danger/40 bg-danger/10 text-danger',
   },
-  arquivado: { label: 'Arquivado', className: 'border-muted text-muted-foreground bg-muted/20' },
+  arquivado: { label: 'Arquivado', className: 'border-line bg-bg-alt text-ink-mute' },
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -164,9 +164,9 @@ function DeadlineCell({ c }: { c: Contrato }) {
   if (days === null) return <span className="text-muted-foreground text-xs">{label}</span>;
   const colorClass =
     days <= 30
-      ? 'text-destructive font-semibold'
+      ? 'text-danger font-semibold'
       : days <= 60
-        ? 'text-orange-600 font-medium'
+        ? 'text-warn font-medium'
         : 'text-foreground';
 
   let noticeLine: React.ReactNode = null;
@@ -175,7 +175,7 @@ function DeadlineCell({ c }: { c: Contrato }) {
       noticeLine = <span className="text-destructive text-[11px]">Janela de aviso encerrada</span>;
     } else if (notice.status === 'urgent') {
       noticeLine = (
-        <span className="text-amber-600 text-[11px]">
+        <span className="text-warn text-[11px]">
           Aviso: acção necessária até {format(notice.noticeDate, 'dd/MM/yyyy', { locale: pt })}
         </span>
       );
@@ -207,7 +207,7 @@ function FaseBadge({
     return (
       <Badge
         variant="outline"
-        className="border-blue-400/60 text-blue-700 bg-blue-50 gap-1.5 text-xs"
+        className="border-brand/40 text-brand bg-brand/[0.08] gap-1.5 text-xs"
       >
         <Loader2 className="h-3 w-3 animate-spin" />
         Em validação CCA
@@ -269,9 +269,9 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
     : { label: '', days: null };
   const deadlineColor =
     days !== null && days <= 30
-      ? 'text-destructive'
+      ? 'text-danger'
       : days !== null && days <= 60
-        ? 'text-orange-600'
+        ? 'text-warn'
         : 'text-foreground';
 
   if (!contrato) return null;
@@ -690,7 +690,7 @@ export function ContractsTable({
                           ) : (
                             <DropdownMenuItem
                               onClick={() => onArchive?.(c.id)}
-                              className="text-amber-600"
+                              className="text-warn"
                             >
                               <Archive className="mr-2 h-4 w-4" />
                               Arquivar

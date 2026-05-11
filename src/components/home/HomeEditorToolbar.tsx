@@ -22,33 +22,26 @@ export function HomeEditorToolbar({
   isPublishing,
 }: HomeEditorToolbarProps) {
   return (
-    <div className="sticky top-12 z-40 bg-blue-500/10 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+    <div className="sticky top-12 z-40 bg-brand/[0.08] border border-brand/30 rounded-card p-3 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600/20">
-          <Pencil className="h-4 w-4 text-blue-600" />
+        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-brand/20">
+          <Pencil className="h-4 w-4 text-brand" />
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold text-blue-800">
-            Modo de Edição
-          </span>
-          <span className="text-xs text-blue-600">
+          <span className="text-sm font-semibold text-ink">Modo de Edição</span>
+          <span className="text-xs text-ink-soft">
             Está a editar a página inicial desta organização
           </span>
         </div>
         {hasDraftChanges && (
-          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300">
+          <Badge variant="outline" className="bg-warn/10 text-warn border-warn/40">
             Alterações não publicadas
           </Badge>
         )}
       </div>
 
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onOpenEditor}
-          className="gap-1"
-        >
+        <Button variant="outline" size="sm" onClick={onOpenEditor} className="gap-1">
           <LayoutGrid className="h-4 w-4" />
           Editar Widgets
         </Button>
@@ -72,12 +65,7 @@ export function HomeEditorToolbar({
           <Save className="h-4 w-4" />
           {isSaving ? 'A guardar...' : 'Guardar Rascunho'}
         </Button>
-        <Button
-          size="sm"
-          onClick={onPublish}
-          disabled={isSaving || isPublishing}
-          className="gap-1"
-        >
+        <Button size="sm" onClick={onPublish} disabled={isSaving || isPublishing} className="gap-1">
           <Upload className="h-4 w-4" />
           {isPublishing ? 'A publicar...' : 'Publicar'}
         </Button>

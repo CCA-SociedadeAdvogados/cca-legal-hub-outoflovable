@@ -45,20 +45,21 @@ export function DocumentValidityAlerts() {
 
   const groups = useMemo(() => {
     const expired = enrichedItems.filter(
-      (e) => e.validity.status === 'expired' || (e.item.entry?.status === 'expired'),
+      (e) => e.validity.status === 'expired' || e.item.entry?.status === 'expired',
     );
     const expiringSoon = enrichedItems.filter(
-      (e) => e.validity.status === 'expiring_soon' || (e.item.entry?.status === 'expiring_soon'),
+      (e) => e.validity.status === 'expiring_soon' || e.item.entry?.status === 'expiring_soon',
     );
     const advisory = enrichedItems.filter(
-      (e) => e.validity.status === 'advisory' && e.item.entry?.status !== 'expired' && e.item.entry?.status !== 'expiring_soon',
+      (e) =>
+        e.validity.status === 'advisory' &&
+        e.item.entry?.status !== 'expired' &&
+        e.item.entry?.status !== 'expiring_soon',
     );
     const valid = enrichedItems.filter(
       (e) => e.validity.status === 'valid' && e.item.entry?.status === 'uploaded',
     );
-    const missing = enrichedItems.filter(
-      (e) => !e.item.entry || e.item.entry.status === 'missing',
-    );
+    const missing = enrichedItems.filter((e) => !e.item.entry || e.item.entry.status === 'missing');
 
     return { expired, expiringSoon, advisory, valid, missing };
   }, [enrichedItems]);
@@ -98,11 +99,7 @@ export function DocumentValidityAlerts() {
             <div
               className={cn(
                 'h-full rounded-full transition-all',
-                percent === 100
-                  ? 'bg-emerald-500'
-                  : percent >= 50
-                    ? 'bg-amber-500'
-                    : 'bg-red-500',
+                percent === 100 ? 'bg-positive' : percent >= 50 ? 'bg-warn' : 'bg-danger',
               )}
               style={{ width: `${percent}%` }}
             />
@@ -112,30 +109,36 @@ export function DocumentValidityAlerts() {
         {/* Summary counters */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <div className="flex items-center gap-2 rounded-lg border p-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+            <CheckCircle2 className="h-4 w-4 text-positive shrink-0" />
             <div>
               <p className="text-xs text-muted-foreground">{t('docValidity.valid', 'Válidos')}</p>
               <p className="font-bold text-sm">{groups.valid.length}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-lg border p-2">
-            <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-warn shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">{t('docValidity.expiringSoon', 'A expirar')}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('docValidity.expiringSoon', 'A expirar')}
+              </p>
               <p className="font-bold text-sm">{groups.expiringSoon.length}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-lg border p-2">
-            <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+            <XCircle className="h-4 w-4 text-danger shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">{t('docValidity.expired', 'Expirados')}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('docValidity.expired', 'Expirados')}
+              </p>
               <p className="font-bold text-sm">{groups.expired.length}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-lg border p-2">
-            <Info className="h-4 w-4 text-blue-500 shrink-0" />
+            <Info className="h-4 w-4 text-brand shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">{t('docValidity.advisory', 'Recomendação')}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('docValidity.advisory', 'Recomendação')}
+              </p>
               <p className="font-bold text-sm">{groups.advisory.length}</p>
             </div>
           </div>
@@ -219,10 +222,10 @@ function DocumentAlertRow({
   const { t } = useTranslation();
 
   const iconMap = {
-    expired: <XCircle className="h-4 w-4 text-red-500 shrink-0" />,
-    expiring_soon: <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />,
-    advisory: <Info className="h-4 w-4 text-blue-500 shrink-0" />,
-    valid: <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />,
+    expired: <XCircle className="h-4 w-4 text-danger shrink-0" />,
+    expiring_soon: <AlertTriangle className="h-4 w-4 text-warn shrink-0" />,
+    advisory: <Info className="h-4 w-4 text-brand shrink-0" />,
+    valid: <CheckCircle2 className="h-4 w-4 text-positive shrink-0" />,
     missing: <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />,
   };
 
@@ -259,17 +262,14 @@ function DocumentAlertRow({
         </div>
         {validity.expiryDate && (
           <p className="text-xs text-muted-foreground">
-            {t('docChecklist.validUntil')} {format(validity.expiryDate, 'dd/MM/yyyy', { locale: pt })}
+            {t('docChecklist.validUntil')}{' '}
+            {format(validity.expiryDate, 'dd/MM/yyyy', { locale: pt })}
             {validity.daysRemaining !== null && validity.daysRemaining > 0 && (
               <> ({validity.daysRemaining}d)</>
             )}
           </p>
         )}
-        {validity.advisory && (
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-            {validity.advisory}
-          </p>
-        )}
+        {validity.advisory && <p className="text-xs text-brand mt-0.5">{validity.advisory}</p>}
       </div>
     </div>
   );
