@@ -1,10 +1,10 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLawyerProfile } from '@/hooks/useLawyerProfile';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Scale, Mail } from 'lucide-react';
+import { CCACardHeader } from '@/components/cca';
 
 interface LawyerCardProps {
   title: string;
@@ -22,18 +22,14 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
   if (isLoading) {
     return (
       <Card ref={ref}>
-        <CardHeader>
-          <Skeleton className="h-5 w-32" />
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-16 w-16 rounded-full" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-3 w-24" />
-            </div>
+        <CCACardHeader eyebrow="Advogado associado" title={title} />
+        <div className="flex items-center gap-4 px-5 py-5">
+          <div className="h-14 w-14 animate-pulse rounded-full bg-bg-alt" />
+          <div className="space-y-2">
+            <div className="h-4 w-32 animate-pulse rounded bg-bg-alt" />
+            <div className="h-3 w-24 animate-pulse rounded bg-bg-alt" />
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -41,17 +37,13 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
   if (!lawyer?.nome_completo) {
     return (
       <Card ref={ref}>
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold font-serif">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mb-3">
-              <Scale className="h-8 w-8 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">{t('home.noLawyerAssociated')}</p>
+        <CCACardHeader eyebrow="Advogado associado" title={title} />
+        <div className="flex flex-col items-center justify-center px-5 py-8 text-center">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-bg-alt">
+            <Scale className="h-6 w-6 text-ink-mute" strokeWidth={1.5} />
           </div>
-        </CardContent>
+          <p className="text-[13px] text-ink-mute">{t('home.noLawyerAssociated')}</p>
+        </div>
       </Card>
     );
   }
@@ -65,29 +57,27 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
 
   return (
     <Card ref={ref}>
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold font-serif">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={lawyer.avatar_url || undefined} alt={lawyer.nome_completo} />
-            <AvatarFallback className="text-lg bg-primary/10 text-primary">
-              {displayInitials}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-medium text-foreground">{lawyer.nome_completo}</p>
-            <p className="text-sm text-muted-foreground">{t('home.responsibleLawyer')}</p>
-            {lawyer.email && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                <Mail className="h-3 w-3" />
-                {lawyer.email}
-              </p>
-            )}
-          </div>
+      <CCACardHeader eyebrow="Advogado associado" title={title} />
+      <div className="flex items-center gap-4 px-5 py-5">
+        <Avatar className="h-14 w-14">
+          <AvatarImage src={lawyer.avatar_url || undefined} alt={lawyer.nome_completo} />
+          <AvatarFallback className="bg-brand/10 font-display text-[15px] font-medium text-brand">
+            {displayInitials}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate font-display text-[15.5px] font-medium leading-tight text-ink">
+            {lawyer.nome_completo}
+          </p>
+          <p className="mt-0.5 text-[11.5px] text-ink-mute">{t('home.responsibleLawyer')}</p>
+          {lawyer.email && (
+            <p className="mt-1 flex items-center gap-1 font-mono text-[11px] text-ink-mute">
+              <Mail className="h-3 w-3" strokeWidth={1.5} />
+              {lawyer.email}
+            </p>
+          )}
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 });
