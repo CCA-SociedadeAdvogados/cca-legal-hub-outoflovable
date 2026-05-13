@@ -81,6 +81,7 @@ export const ClienteProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCliente = () => {
   const context = useContext(ClienteContext);
   if (context === undefined) {

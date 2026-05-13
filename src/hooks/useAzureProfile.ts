@@ -21,22 +21,24 @@ export function useAzureProfile() {
   const ssoExternalId = (profile as Record<string, unknown>)?.sso_external_id as string | null;
 
   // Dados básicos do utilizador (disponíveis imediatamente)
-  const nomeCompleto = profile?.nome_completo || user?.user_metadata?.nome_completo || user?.email || '';
+  const nomeCompleto =
+    profile?.nome_completo || user?.user_metadata?.nome_completo || user?.email || '';
   const email = profile?.email || user?.email || '';
   const avatarUrl = profile?.avatar_url || null;
 
   // Gerar iniciais para fallback
-  const iniciais = nomeCompleto
-    .split(' ')
-    .filter((p: string) => p.length > 0)
-    .map((p: string) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase() || '??';
+  const iniciais =
+    nomeCompleto
+      .split(' ')
+      .filter((p: string) => p.length > 0)
+      .map((p: string) => p[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase() || '??';
 
   // Obter foto do Azure AD via edge function (apenas se SSO e sem avatar)
   const { data: azurePhotoUrl, isLoading: isLoadingPhoto } = useQuery({
-    queryKey: ['azure-profile-photo', user?.id],
+    queryKey: ['azure-profile-photo', user?.id, ssoExternalId, queryClient],
     queryFn: async (): Promise<string | null> => {
       if (!ssoExternalId) return null;
 
@@ -52,10 +54,7 @@ export function useAzureProfile() {
 
         if (data?.photo_url) {
           // Guardar no perfil para cache persistente
-          await supabase
-            .from('profiles')
-            .update({ avatar_url: data.photo_url })
-            .eq('id', user!.id);
+          await supabase.from('profiles').update({ avatar_url: data.photo_url }).eq('id', user!.id);
 
           queryClient.invalidateQueries({ queryKey: ['profile', user!.id] });
           return data.photo_url as string;
@@ -84,10 +83,7 @@ export function useAzureProfile() {
       if (error) throw error;
       if (!data?.photo_url) throw new Error('Foto não disponível');
 
-      await supabase
-        .from('profiles')
-        .update({ avatar_url: data.photo_url })
-        .eq('id', user!.id);
+      await supabase.from('profiles').update({ avatar_url: data.photo_url }).eq('id', user!.id);
 
       return data.photo_url as string;
     },

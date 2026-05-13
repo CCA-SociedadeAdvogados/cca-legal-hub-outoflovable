@@ -35,7 +35,7 @@ async function callClaude(apiKey: string, system: string, user: string, maxToken
     throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as { content?: Array<{ text?: string }> };
   const text = data.content?.[0]?.text;
   if (!text) throw new Error("Claude retornou resposta vazia");
   return text;
@@ -49,10 +49,10 @@ function parseJSONResponse(content: string): unknown {
   const lb = jsonStr.lastIndexOf("}");
   if (fb !== -1 && lb > fb) jsonStr = jsonStr.slice(fb, lb + 1);
 
-  try { return JSON.parse(jsonStr); } catch (_) { /* try repairs */ }
+  try { return JSON.parse(jsonStr); } catch { /* try repairs */ }
 
   let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
-  try { return JSON.parse(repaired); } catch (_) { /* noop */ }
+  try { return JSON.parse(repaired); } catch { /* noop */ }
 
   let openBraces = 0, openBrackets = 0, inString = false, escape = false;
   for (const ch of repaired) {
@@ -166,7 +166,7 @@ ${JSON.stringify(contrato, null, 2)}`;
       contrato_id: contract_id,
       source: "executive_summary",
       status: "success",
-      extraction_data: summaryData as any,
+      extraction_data: summaryData as Record<string, unknown>,
       job_started_at: new Date().toISOString(),
       job_completed_at: new Date().toISOString(),
     }, { onConflict: "contrato_id,source" });
@@ -175,10 +175,11 @@ ${JSON.stringify(contrato, null, 2)}`;
       JSON.stringify({ success: true, data: summaryData, cached: false }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[executive-summary] Error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }

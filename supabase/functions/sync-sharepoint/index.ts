@@ -153,7 +153,7 @@ async function resolveFolderPathToId(
     return { id: data.id, name: data.name };
   }
 
-  const body2 = await response2.text();
+  await response2.text(); // drain body
   console.warn(`Retry also returned ${response2.status} – falling back to children listing`);
 
   // --- Attempt 3: fallback – resolve segment by segment via /children ---
@@ -293,9 +293,9 @@ async function ensureFolderPath(
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (listResp.ok) {
-        const listData = await listResp.json();
+        const listData = await listResp.json() as { value?: Array<{ id: string; name: string; folder?: unknown }> };
         const found = (listData.value || []).find(
-          (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined,
+          (item) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined,
         );
         if (found) {
           parentId = found.id;
@@ -413,7 +413,7 @@ async function fetchFolderChildrenRecursiveById(
   accessToken: string,
   driveId: string,
   folderId: string,
-  folderName: string
+  _folderName: string
 ): Promise<GraphDriveItem[]> {
   const allItems: GraphDriveItem[] = [];
   const children = await fetchFolderChildrenById(accessToken, driveId, folderId);
@@ -651,8 +651,8 @@ serve(async (req) => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!drivesResp.ok) throw new Error(`Drives query failed: ${drivesResp.status}`);
-      const drivesData = await drivesResp.json();
-      const drives = (drivesData.value || []).map((d: any) => ({
+      const drivesData = await drivesResp.json() as { value?: Array<{ id: string; name: string; webUrl: string; driveType: string }> };
+      const drives = (drivesData.value || []).map((d) => ({
         id: d.id,
         name: d.name,
         webUrl: d.webUrl,
@@ -700,8 +700,8 @@ serve(async (req) => {
         const errText = await browseResp.text();
         throw new Error(`Browse failed: ${browseResp.status} - ${errText}`);
       }
-      const browseData = await browseResp.json();
-      const folders = (browseData.value || []).map((item: any) => ({
+      const browseData = await browseResp.json() as { value?: Array<{ name: string; folder?: { childCount?: number }; size?: number; webUrl: string }> };
+      const folders = (browseData.value || []).map((item) => ({
         name: item.name,
         isFolder: !!item.folder,
         childCount: item.folder?.childCount ?? null,
@@ -765,9 +765,9 @@ serve(async (req) => {
         });
 
         if (existsResp.ok) {
-          const existsData = await existsResp.json();
+          const existsData = await existsResp.json() as { value?: Array<{ id: string; name: string; folder?: unknown; webUrl?: string }> };
           const existing = (existsData.value || []).find(
-            (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
+            (item) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
           );
           if (existing) {
             parentId = existing.id;
@@ -805,9 +805,9 @@ serve(async (req) => {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
             if (retryResp.ok) {
-              const retryData = await retryResp.json();
+              const retryData = await retryResp.json() as { value?: Array<{ id: string; folder?: unknown; webUrl?: string }> };
               const found = (retryData.value || []).find(
-                (item: any) => item.folder !== undefined
+                (item) => item.folder !== undefined
               );
               if (found) {
                 parentId = found.id;
@@ -917,9 +917,9 @@ serve(async (req) => {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
             if (listResp.ok) {
-              const listData = await listResp.json();
+              const listData = await listResp.json() as { value?: Array<{ id: string; name: string; folder?: unknown; webUrl?: string }> };
               const found = (listData.value || []).find(
-                (item: any) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
+                (item) => item.name.toLowerCase() === segment.toLowerCase() && item.folder !== undefined
               );
               if (found) {
                 parentId = found.id;
@@ -1452,15 +1452,16 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
-    } catch (syncError: any) {
+    } catch (syncError: unknown) {
       console.error("Sync error:", syncError);
+      const syncMsg = syncError instanceof Error ? syncError.message : String(syncError);
 
       await supabase
         .from("sharepoint_config")
         .update({
           last_sync_at: new Date().toISOString(),
           last_sync_status: "error",
-          last_sync_error: syncError.message,
+          last_sync_error: syncMsg,
         })
         .eq("id", spConfig.id);
 
@@ -1470,17 +1471,18 @@ serve(async (req) => {
           .update({
             completed_at: new Date().toISOString(),
             status: "error",
-            error_message: syncError.message,
+            error_message: syncMsg,
           })
           .eq("id", logId);
       }
 
       throw syncError;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in sync-sharepoint function:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: msg }),
       { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   }

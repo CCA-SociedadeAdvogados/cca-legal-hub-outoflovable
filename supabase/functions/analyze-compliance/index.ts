@@ -376,11 +376,11 @@ Deno.serve(async (req) => {
 
       try {
         parsedData = JSON.parse(jsonStr);
-      } catch (_) {
+      } catch {
         let repaired = jsonStr.replace(/,\s*([\]}])/g, "$1");
         try {
           parsedData = JSON.parse(repaired);
-        } catch (_) {
+        } catch {
           let openBraces = 0, openBrackets = 0, inStr = false, esc = false;
           for (const ch of repaired) {
             if (esc) { esc = false; continue; }

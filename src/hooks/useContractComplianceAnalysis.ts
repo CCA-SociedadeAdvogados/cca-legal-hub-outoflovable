@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import type { Json } from "@/integrations/supabase/types";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import type { Json } from '@/integrations/supabase/types';
 export interface ComplianceEventVerified {
   evento_id: string;
   evento_titulo: string;
@@ -47,7 +47,9 @@ export interface SavedComplianceAnalysis {
   created_by_id: string | null;
 }
 
-function calculateStatusGlobal(sumario: ComplianceSummary): 'conforme' | 'parcialmente_conforme' | 'nao_conforme' {
+function calculateStatusGlobal(
+  sumario: ComplianceSummary,
+): 'conforme' | 'parcialmente_conforme' | 'nao_conforme' {
   if (sumario.nao_conformes > 0) return 'nao_conforme';
   if (sumario.parcialmente_conformes > 0) return 'parcialmente_conforme';
   return 'conforme';
@@ -57,7 +59,11 @@ export function useContractComplianceAnalysis(contratoId?: string) {
   const queryClient = useQueryClient();
   const queryKey = ['contract-compliance-analysis', contratoId];
 
-  const { data: analysis, isLoading, error } = useQuery({
+  const {
+    data: analysis,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey,
     staleTime: 30 * 1000,
     queryFn: async (): Promise<SavedComplianceAnalysis | null> => {
@@ -87,19 +93,21 @@ export function useContractComplianceAnalysis(contratoId?: string) {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ 
-      result, 
-      organizationId, 
-      aiModel 
-    }: { 
-      result: ComplianceAnalysisResult; 
-      organizationId: string; 
+    mutationFn: async ({
+      result,
+      organizationId,
+      aiModel,
+    }: {
+      result: ComplianceAnalysisResult;
+      organizationId: string;
       aiModel?: string;
     }) => {
       if (!contratoId) throw new Error('contratoId is required');
 
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       const statusGlobal = calculateStatusGlobal(result.sumario_geral);
 
       const payload = {
@@ -150,7 +158,7 @@ export function useContractComplianceAnalysis(contratoId?: string) {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Análise de conformidade guardada');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error saving compliance analysis:', error);
       toast.error('Erro ao guardar análise de conformidade');
     },
@@ -171,7 +179,7 @@ export function useContractComplianceAnalysis(contratoId?: string) {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Análise removida');
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Error deleting compliance analysis:', error);
       toast.error('Erro ao remover análise');
     },

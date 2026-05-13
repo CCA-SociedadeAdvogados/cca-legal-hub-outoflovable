@@ -37,7 +37,7 @@ async function callClaude(
     throw new Error(`Claude API ${res.status}: ${err.slice(0, 400)}`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as { content?: Array<{ text?: string }> };
   const text = data.content?.[0]?.text;
   if (!text) throw new Error("Claude retornou resposta vazia");
   return text;
@@ -64,7 +64,7 @@ function parseJSONResponse(content: string): unknown {
   // First attempt: direct parse
   try {
     return JSON.parse(jsonStr);
-  } catch (_firstErr) {
+  } catch {
     // noop — try repairs below
   }
 
@@ -73,7 +73,7 @@ function parseJSONResponse(content: string): unknown {
 
   try {
     return JSON.parse(repaired);
-  } catch (_secondErr) {
+  } catch {
     // noop
   }
 
@@ -317,9 +317,9 @@ INSTRUÇÕES IMPORTANTES:
     let parsedData;
     try {
       parsedData = parseJSONResponse(content);
-    } catch (parseErr: any) {
+    } catch (parseErr: unknown) {
       console.error("[parse-contract] Failed to parse AI response as JSON.");
-      console.error("[parse-contract] Parse error:", parseErr.message);
+      console.error("[parse-contract] Parse error:", parseErr instanceof Error ? parseErr.message : String(parseErr));
       console.error("[parse-contract] Response length:", content.length, "chars");
       console.error("[parse-contract] Response start:", content.substring(0, 300));
       console.error("[parse-contract] Response end:", content.substring(content.length - 300));
@@ -337,10 +337,11 @@ INSTRUÇÕES IMPORTANTES:
       }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[parse-contract] Error:", error);
+    const msg = error instanceof Error ? error.message : "Erro ao processar contrato";
     return new Response(
-      JSON.stringify({ error: error.message || "Erro ao processar contrato" }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
@@ -350,11 +351,23 @@ INSTRUÇÕES IMPORTANTES:
 async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string; isScanned: boolean }> {
   console.log("[parse-contract] Extracting text from PDF, size:", fileBytes.length);
 
-  let pdfjs: any;
+  // pdfjs-dist has no Deno types — type minimally for the API we use
+  type PdfJsModule = {
+    GlobalWorkerOptions: { workerSrc: string };
+    getDocument: (opts: { data: Uint8Array }) => {
+      promise: Promise<{
+        numPages: number;
+        getPage: (n: number) => Promise<{
+          getTextContent: () => Promise<{ items: Array<{ str: string }> }>;
+        }>;
+      }>;
+    };
+  };
+  let pdfjs: PdfJsModule;
   try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas");
-  } catch (importErr: any) {
-    console.error("[parse-contract] Failed to import pdfjs-dist:", importErr.message);
+    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas") as unknown as PdfJsModule;
+  } catch (importErr: unknown) {
+    console.error("[parse-contract] Failed to import pdfjs-dist:", importErr instanceof Error ? importErr.message : String(importErr));
     throw new Error(
       "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt.",
     );
@@ -371,7 +384,7 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
     const pageText = content.items
-      .map((item: any) => item.str)
+      .map((item) => item.str)
       .join(" ");
     pages.push(pageText);
   }
@@ -405,7 +418,7 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
     const entries = await zipReader.getEntries();
 
     const documentEntry = entries.find(
-      (e: any) => e.filename === "word/document.xml" || e.filename === "word\\document.xml",
+      (e: { filename: string }) => e.filename === "word/document.xml" || e.filename === "word\\document.xml",
     );
 
     if (!documentEntry || !documentEntry.getData) {
@@ -424,7 +437,7 @@ async function extractTextFromWord(fileBytes: Uint8Array, fileName: string): Pro
 
     console.log("[parse-contract] Word text extracted, length:", text.length);
     return text;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[parse-contract] Error extracting text from Word:", error);
 
     if (fileName?.endsWith(".doc") && !fileName?.endsWith(".docx")) {

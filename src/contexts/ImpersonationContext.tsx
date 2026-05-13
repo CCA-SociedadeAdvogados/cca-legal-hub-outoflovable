@@ -107,7 +107,7 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
     return !error && !!data;
   };
 
-  const checkPlatformAdmin = async (): Promise<boolean> => {
+  const checkPlatformAdmin = useCallback(async (): Promise<boolean> => {
     if (!user) return false;
     const { data: isPlatformAdmin } = await supabase.rpc('is_platform_admin', {
       _user_id: user.id,
@@ -117,7 +117,7 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
       return false;
     }
     return true;
-  };
+  }, [user]);
 
   const startImpersonation = useCallback(
     async (orgId: string, orgName: string, reason: string): Promise<boolean> => {
@@ -177,9 +177,8 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
         toast.error('Erro ao iniciar impersonation');
         return false;
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [user, invalidateCaches],
+    [user, invalidateCaches, checkPlatformAdmin],
   );
 
   const startUserImpersonation = useCallback(
@@ -243,9 +242,8 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
         toast.error('Erro ao iniciar impersonação de utilizador');
         return false;
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [user, invalidateCaches],
+    [user, invalidateCaches, checkPlatformAdmin],
   );
 
   const stopImpersonation = useCallback(async () => {
@@ -285,6 +283,7 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useImpersonation() {
   const context = useContext(ImpersonationContext);
   if (context === undefined) {

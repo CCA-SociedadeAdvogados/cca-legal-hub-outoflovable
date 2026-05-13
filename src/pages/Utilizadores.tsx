@@ -1,14 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useTranslation } from 'react-i18next';
-import { useOrganizations, useOrganizationMembers } from '@/hooks/useOrganizations';
+import {
+  useOrganizations,
+  useOrganizationMembers,
+  type OrganizationMember,
+} from '@/hooks/useOrganizations';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,7 +33,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import {
   Plus,
   Users,
-  Edit,
   Trash2,
   Mail,
   Shield,
@@ -42,7 +44,6 @@ import {
   Lock,
   Clock,
   AlertTriangle,
-  CheckCircle2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -93,7 +94,7 @@ export default function Utilizadores() {
 
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedMember, setSelectedMember] = useState<OrganizationMember | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterAuthMethod, setFilterAuthMethod] = useState<string>('all');
@@ -135,8 +136,8 @@ export default function Utilizadores() {
     return labels[method] || method;
   };
 
-  const isUserLocked = (member: any) => {
-    const lockedUntil = (member.profiles as any)?.locked_until;
+  const isUserLocked = (member: OrganizationMember) => {
+    const lockedUntil = member.profiles?.locked_until;
     if (!lockedUntil) return false;
     return new Date(lockedUntil) > new Date();
   };
@@ -146,9 +147,8 @@ export default function Utilizadores() {
       m.profiles?.nome_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || m.role === filterRole;
-    const profileAny = m.profiles as any;
     const matchesAuthMethod =
-      filterAuthMethod === 'all' || (profileAny?.auth_method || 'local') === filterAuthMethod;
+      filterAuthMethod === 'all' || (m.profiles?.auth_method || 'local') === filterAuthMethod;
     const matchesStatus =
       filterStatus === 'all' || (filterStatus === 'locked' ? isUserLocked(m) : !isUserLocked(m));
     return matchesSearch && matchesRole && matchesAuthMethod && matchesStatus;
@@ -163,12 +163,12 @@ export default function Utilizadores() {
       });
       setIsInviteDialogOpen(false);
       setInviteData({ email: '', role: 'viewer' });
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };
 
-  const handleEditRole = (member: any) => {
+  const handleEditRole = (member: OrganizationMember) => {
     setSelectedMember(member);
     setIsEditDialogOpen(true);
   };
@@ -182,7 +182,7 @@ export default function Utilizadores() {
       });
       setIsEditDialogOpen(false);
       setSelectedMember(null);
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };
@@ -191,7 +191,7 @@ export default function Utilizadores() {
     if (!confirm(t('users.confirmRemove'))) return;
     try {
       await removeMember.mutateAsync(memberId);
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };
@@ -202,9 +202,9 @@ export default function Utilizadores() {
     admins: members.filter((m) => m.role === 'admin' || m.role === 'owner').length,
     editors: members.filter((m) => m.role === 'editor').length,
     viewers: members.filter((m) => m.role === 'viewer').length,
-    ssoUsers: members.filter((m) => (m.profiles as any)?.auth_method === 'sso_cca').length,
+    ssoUsers: members.filter((m) => m.profiles?.auth_method === 'sso_cca').length,
     localUsers: members.filter(
-      (m) => !(m.profiles as any)?.auth_method || (m.profiles as any)?.auth_method === 'local',
+      (m) => !m.profiles?.auth_method || m.profiles?.auth_method === 'local',
     ).length,
     lockedUsers: members.filter((m) => isUserLocked(m)).length,
   };
@@ -505,11 +505,11 @@ export default function Utilizadores() {
         ) : (
           <div className="grid gap-4">
             {filteredMembers.map((member) => {
-              const profileAny = member.profiles as any;
-              const authMethod = profileAny?.auth_method || 'local';
+              const memberProfile = member.profiles;
+              const authMethod = memberProfile?.auth_method || 'local';
               const isLocked = isUserLocked(member);
-              const lastLogin = profileAny?.last_login_at;
-              const loginAttempts = profileAny?.login_attempts || 0;
+              const lastLogin = memberProfile?.last_login_at;
+              const loginAttempts = memberProfile?.login_attempts || 0;
 
               return (
                 <Card key={member.id} className={isLocked ? 'border-destructive/50' : ''}>
@@ -539,7 +539,7 @@ export default function Utilizadores() {
                                   <TooltipContent>
                                     {t('users.lockedUntil', {
                                       date: format(
-                                        new Date(profileAny?.locked_until),
+                                        new Date(memberProfile?.locked_until ?? ''),
                                         'dd/MM/yyyy HH:mm',
                                         { locale: pt },
                                       ),

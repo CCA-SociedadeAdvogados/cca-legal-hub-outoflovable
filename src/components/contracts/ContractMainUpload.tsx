@@ -28,28 +28,34 @@ function formatFileSize(bytes: number | null): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-export function ContractMainUpload({ contratoId, storagePath: _storagePath }: ContractMainUploadProps) {
+export function ContractMainUpload({
+  contratoId,
+  storagePath: _storagePath,
+}: ContractMainUploadProps) {
   const { toast } = useToast();
   const { anexos, isLoading, uploadAnexo, deleteAnexo, downloadAnexo } = useAnexos(contratoId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<typeof anexos extends (infer T)[] | undefined ? T : never | null>(null);
+  const [deleteTarget, setDeleteTarget] =
+    useState<typeof anexos extends (infer T)[] | undefined ? T : never | null>(null);
 
   // Find the main PDF contract
-  const mainContract = anexos?.find(a => a.tipo_anexo === 'pdf_principal');
+  const mainContract = anexos?.find((a) => a.tipo_anexo === 'pdf_principal');
 
   const acceptedTypes = [
     'application/pdf',
     'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   ];
 
   const isValidFile = (file: File) => {
-    return acceptedTypes.includes(file.type) || 
-           file.name.endsWith('.pdf') || 
-           file.name.endsWith('.doc') || 
-           file.name.endsWith('.docx');
+    return (
+      acceptedTypes.includes(file.type) ||
+      file.name.endsWith('.pdf') ||
+      file.name.endsWith('.doc') ||
+      file.name.endsWith('.docx')
+    );
   };
 
   const handleUpload = async (file: File) => {
@@ -71,23 +77,25 @@ export function ContractMainUpload({ contratoId, storagePath: _storagePath }: Co
       });
 
       // Após upload bem-sucedido: marcar como 'validating' e invocar agente externo
-      const uploadedPath = (result as any)?.url_ficheiro ?? storagePath ?? '';
+      const uploadedPath = result?.url_ficheiro ?? _storagePath ?? '';
 
       await supabase
         .from('contratos')
-        .update({ validation_status: 'validating' } as any)
+        .update({ validation_status: 'validating' } as unknown as never)
         .eq('id', contratoId);
 
       // Fire-and-forget: chamar agente CCA externo
-      import('@/lib/ccaAgent').then(({ callCCAAgent }) => {
-        callCCAAgent({
-          contractId: contratoId,
-          documentPath: uploadedPath,
-          extractionDraft: {},
+      import('@/lib/ccaAgent')
+        .then(({ callCCAAgent }) => {
+          callCCAAgent({
+            contractId: contratoId,
+            documentPath: uploadedPath,
+            extractionDraft: {},
+          });
+        })
+        .catch(() => {
+          // Silencioso — não bloqueia o utilizador
         });
-      }).catch(() => {
-        // Silencioso — não bloqueia o utilizador
-      });
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {
@@ -119,7 +127,7 @@ export function ContractMainUpload({ contratoId, storagePath: _storagePath }: Co
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file && !isUploading) {
       handleUpload(file);
@@ -165,11 +173,7 @@ export function ContractMainUpload({ contratoId, storagePath: _storagePath }: Co
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => downloadAnexo(mainContract)}
-            >
+            <Button variant="outline" size="sm" onClick={() => downloadAnexo(mainContract)}>
               <Download className="h-4 w-4 mr-1" />
               Descarregar
             </Button>
@@ -185,13 +189,21 @@ export function ContractMainUpload({ contratoId, storagePath: _storagePath }: Co
         </div>
       ) : (
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => !isUploading && fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !isUploading) {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-            isDragging 
-              ? 'border-primary bg-primary/10' 
+            isDragging
+              ? 'border-primary bg-primary/10'
               : 'hover:border-primary/50 hover:bg-muted/30'
           }`}
         >
@@ -202,13 +214,13 @@ export function ContractMainUpload({ contratoId, storagePath: _storagePath }: Co
             </>
           ) : (
             <>
-              <Upload className={`h-10 w-10 mx-auto mb-3 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`} />
+              <Upload
+                className={`h-10 w-10 mx-auto mb-3 ${isDragging ? 'text-primary' : 'text-muted-foreground'}`}
+              />
               <p className="font-medium">
                 {isDragging ? 'Largue o ficheiro aqui' : 'Clique ou arraste o contrato'}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                PDF, DOC ou DOCX (máx. 10MB)
-              </p>
+              <p className="text-sm text-muted-foreground mt-1">PDF, DOC ou DOCX (máx. 10MB)</p>
             </>
           )}
         </div>
@@ -225,7 +237,10 @@ export function ContractMainUpload({ contratoId, storagePath: _storagePath }: Co
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>

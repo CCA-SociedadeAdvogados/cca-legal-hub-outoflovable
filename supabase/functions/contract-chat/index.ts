@@ -50,7 +50,7 @@ async function callClaude(
     throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
   }
 
-  const data = await res.json();
+  const data = await res.json() as { content?: Array<{ text?: string }> };
   const text = data.content?.[0]?.text;
   if (!text) throw new Error("Claude retornou resposta vazia");
   return text;
@@ -99,7 +99,7 @@ serve(async (req) => {
       contractInfo = contrato;
     }
 
-    const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
+    const lastUserMessage = [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")?.content || "";
     const model = routeModel(lastUserMessage);
 
     const systemPrompt = `Você é um assistente jurídico especializado a ajudar a compreender contratos portugueses.
@@ -121,10 +121,11 @@ Responda de forma concisa (máx 3 parágrafos salvo pedido explícito de detalhe
       JSON.stringify({ success: true, response, model_used: model }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[contract-chat] Error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: msg }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }

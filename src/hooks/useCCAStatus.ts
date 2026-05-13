@@ -52,7 +52,7 @@ export function useCCAStatus(contractId: string | undefined) {
     // Always sync the validation_status on the contract
     await supabase
       .from('contratos')
-      .update({ validation_status: validationStatus } as any)
+      .update({ validation_status: validationStatus } as unknown as Record<string, unknown>)
       .eq('id', contractId);
 
     // Stop polling once we reach a terminal state

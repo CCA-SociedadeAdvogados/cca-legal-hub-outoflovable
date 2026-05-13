@@ -35,7 +35,11 @@ export default function MinhaOrganizacao() {
   }
 
   // Only for local users
-  if (legalHubProfile === 'app_admin' || legalHubProfile === 'cca_manager' || legalHubProfile === 'cca_user') {
+  if (
+    legalHubProfile === 'app_admin' ||
+    legalHubProfile === 'cca_manager' ||
+    legalHubProfile === 'cca_user'
+  ) {
     return <Navigate to="/" replace />;
   }
 
@@ -72,8 +76,8 @@ export default function MinhaOrganizacao() {
       queryClient.invalidateQueries({ queryKey: ['organizations'] });
       toast.success('Organização atualizada com sucesso');
       setIsEditing(false);
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao atualizar organização');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar organização');
     } finally {
       setSaving(false);
     }
@@ -93,7 +97,9 @@ export default function MinhaOrganizacao() {
           <div>
             <h1 className="text-3xl font-bold font-serif">A Minha Organização</h1>
             <p className="text-muted-foreground mt-1">
-              {canEdit ? 'Dados editáveis da sua organização.' : 'Dados da sua organização (apenas leitura).'}
+              {canEdit
+                ? 'Dados editáveis da sua organização.'
+                : 'Dados da sua organização (apenas leitura).'}
             </p>
           </div>
           {canEdit && !isEditing && (
@@ -109,7 +115,11 @@ export default function MinhaOrganizacao() {
                 Cancelar
               </Button>
               <Button onClick={handleSave} disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                {saving ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
                 Guardar
               </Button>
             </div>
@@ -139,7 +149,9 @@ export default function MinhaOrganizacao() {
             </div>
             <div>
               <Label>Identificador</Label>
-              <p className="mt-1 text-muted-foreground font-mono text-sm">{currentOrganization.slug}</p>
+              <p className="mt-1 text-muted-foreground font-mono text-sm">
+                {currentOrganization.slug}
+              </p>
             </div>
             {!canEdit && (
               <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
@@ -157,9 +169,7 @@ export default function MinhaOrganizacao() {
               <Users className="h-5 w-5" />
               Utilizadores
             </CardTitle>
-            <CardDescription>
-              Membros da organização {currentOrganization.name}
-            </CardDescription>
+            <CardDescription>Membros da organização {currentOrganization.name}</CardDescription>
           </CardHeader>
           <CardContent>
             {membersLoading ? (
@@ -172,9 +182,7 @@ export default function MinhaOrganizacao() {
                   <div key={member.id} className="flex items-center gap-3 p-3 border rounded-lg">
                     <Avatar>
                       <AvatarImage src={member.profiles?.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {member.profiles?.nome_completo?.[0] || '?'}
-                      </AvatarFallback>
+                      <AvatarFallback>{member.profiles?.nome_completo?.[0] || '?'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">

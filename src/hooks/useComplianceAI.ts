@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface ContractImpact {
   contrato_id: string;
   contrato_titulo: string;
-  nivel_risco: "baixo" | "medio" | "alto";
+  nivel_risco: 'baixo' | 'medio' | 'alto';
   motivo_impacto: string;
   acoes_recomendadas: string[];
   prazo_sugerido: string;
@@ -23,7 +23,7 @@ export interface EventImpactAnalysis {
 
 export interface ComplianceAction {
   acao: string;
-  prioridade: "alta" | "media" | "baixa";
+  prioridade: 'alta' | 'media' | 'baixa';
   prazo: string;
   responsavel_sugerido: string;
 }
@@ -31,7 +31,7 @@ export interface ComplianceAction {
 export interface ContractComplianceDetail {
   contrato_id: string;
   contrato_titulo: string;
-  status_conformidade: "conforme" | "parcialmente_conforme" | "nao_conforme";
+  status_conformidade: 'conforme' | 'parcialmente_conforme' | 'nao_conforme';
   pontos_conformes: string[];
   pontos_nao_conformes: string[];
   acoes_corretivas: ComplianceAction[];
@@ -67,9 +67,9 @@ export function useComplianceAI(aiModel?: string) {
   const parseContract = async (textContent: string): Promise<ParsedContractData | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analyze-compliance", {
+      const { data, error } = await supabase.functions.invoke('analyze-compliance', {
         body: {
-          type: "parse_contract",
+          type: 'parse_contract',
           data: { textContent },
           model: aiModel,
         },
@@ -82,15 +82,17 @@ export function useComplianceAI(aiModel?: string) {
             const body = await error.context.json();
             if (body?.error) errorMessage = body.error;
           }
-        } catch { /* use original message */ }
+        } catch {
+          /* use original message */
+        }
         throw new Error(errorMessage);
       }
       if (data.error) throw new Error(data.error);
 
       return data.data as ParsedContractData;
-    } catch (error: any) {
-      console.error("Error parsing contract:", error);
-      toast.error(error.message || "Erro ao analisar contrato");
+    } catch (error: unknown) {
+      console.error('Error parsing contract:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao analisar contrato');
       return null;
     } finally {
       setIsLoading(false);
@@ -100,9 +102,9 @@ export function useComplianceAI(aiModel?: string) {
   const analyzeEventImpact = async (eventoId: string): Promise<EventImpactAnalysis | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analyze-compliance", {
+      const { data, error } = await supabase.functions.invoke('analyze-compliance', {
         body: {
-          type: "analyze_event_impact",
+          type: 'analyze_event_impact',
           data: { eventoId },
           model: aiModel,
         },
@@ -115,15 +117,17 @@ export function useComplianceAI(aiModel?: string) {
             const body = await error.context.json();
             if (body?.error) errorMessage = body.error;
           }
-        } catch { /* use original message */ }
+        } catch {
+          /* use original message */
+        }
         throw new Error(errorMessage);
       }
       if (data.error) throw new Error(data.error);
 
       return data.data as EventImpactAnalysis;
-    } catch (error: any) {
-      console.error("Error analyzing event impact:", error);
-      toast.error(error.message || "Erro ao analisar impacto");
+    } catch (error: unknown) {
+      console.error('Error analyzing event impact:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao analisar impacto');
       return null;
     } finally {
       setIsLoading(false);
@@ -132,13 +136,13 @@ export function useComplianceAI(aiModel?: string) {
 
   const checkCompliance = async (
     eventoId: string,
-    contratoIds: string[]
+    contratoIds: string[],
   ): Promise<ComplianceCheckResult | null> => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("analyze-compliance", {
+      const { data, error } = await supabase.functions.invoke('analyze-compliance', {
         body: {
-          type: "compliance_check",
+          type: 'compliance_check',
           data: { eventoId, contratoIds },
           model: aiModel,
         },
@@ -151,15 +155,17 @@ export function useComplianceAI(aiModel?: string) {
             const body = await error.context.json();
             if (body?.error) errorMessage = body.error;
           }
-        } catch { /* use original message */ }
+        } catch {
+          /* use original message */
+        }
         throw new Error(errorMessage);
       }
       if (data.error) throw new Error(data.error);
 
       return data.data as ComplianceCheckResult;
-    } catch (error: any) {
-      console.error("Error checking compliance:", error);
-      toast.error(error.message || "Erro ao verificar conformidade");
+    } catch (error: unknown) {
+      console.error('Error checking compliance:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao verificar conformidade');
       return null;
     } finally {
       setIsLoading(false);

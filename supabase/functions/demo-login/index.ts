@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 
 // Security: Demo login is disabled by default.
@@ -20,8 +20,8 @@ const DEMO_ORG_SLUG = "demo";
 const DEMO_ORG_NAME = "Organização Demo";
 
 async function ensureDemoTenant(
-  // Note: Edge Functions don't have DB types available here; use `any` to avoid `never` inference.
-  supabaseAdmin: any,
+  // Note: Edge Functions don't have DB types available here.
+  supabaseAdmin: SupabaseClient,
   userId: string,
   email: string | null,
 ) {
@@ -37,13 +37,14 @@ async function ensureDemoTenant(
     console.log(`[Demo-Login] Warning: Could not fetch old memberships: ${oldMembershipsError.message}`);
   } else if (oldMemberships && oldMemberships.length > 0) {
     // Remove memberships from non-demo organizations
-    const nonDemoMemberships = oldMemberships.filter(
-      (m: any) => m.organizations?.slug !== DEMO_ORG_SLUG
+    type OldMembership = { id: string; organization_id: string; organizations?: { slug?: string } };
+    const nonDemoMemberships = (oldMemberships as OldMembership[]).filter(
+      (m) => m.organizations?.slug !== DEMO_ORG_SLUG
     );
-    
+
     if (nonDemoMemberships.length > 0) {
       console.log(`[Demo-Login] Removing ${nonDemoMemberships.length} old membership(s) from non-demo orgs`);
-      const idsToRemove = nonDemoMemberships.map((m: any) => m.id);
+      const idsToRemove = nonDemoMemberships.map((m) => m.id);
       const { error: deleteError } = await supabaseAdmin
         .from("organization_members")
         .delete()
@@ -300,7 +301,7 @@ Deno.serve(async (req) => {
 
     // Demo access must be instant: ensure onboarding + organization are auto-configured
     if (data.user?.id) {
-      await ensureDemoTenant(supabaseAdmin as any, data.user.id, data.user.email ?? null);
+      await ensureDemoTenant(supabaseAdmin, data.user.id, data.user.email ?? null);
     }
 
     console.log(`[Demo-Login] Success. User: ${data.user?.id}`);

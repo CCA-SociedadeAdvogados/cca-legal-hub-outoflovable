@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Users, Search, Edit3, Save, X } from 'lucide-react';
-import { useOrganizations, useOrganizationMembers } from '@/hooks/useOrganizations';
+import {
+  useOrganizations,
+  useOrganizationMembers,
+  type OrganizationMember,
+} from '@/hooks/useOrganizations';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,7 +26,7 @@ export default function UtilizadoresOrg() {
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMember, setSelectedMember] = useState<any>(null);
+  const [selectedMember, setSelectedMember] = useState<OrganizationMember | null>(null);
   const [editName, setEditName] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -58,7 +60,7 @@ export default function UtilizadoresOrg() {
     );
   });
 
-  const handleEdit = (member: any) => {
+  const handleEdit = (member: OrganizationMember) => {
     setSelectedMember(member);
     setEditName(member.profiles?.nome_completo || '');
   };
@@ -72,11 +74,13 @@ export default function UtilizadoresOrg() {
         .update({ nome_completo: editName.trim() })
         .eq('id', selectedMember.user_id);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['organization-members', currentOrganization?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ['organization-members', currentOrganization?.id],
+      });
       toast.success('Utilizador atualizado');
       setSelectedMember(null);
-    } catch (e: any) {
-      toast.error(e.message || 'Erro ao atualizar utilizador');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar utilizador');
     } finally {
       setSaving(false);
     }
@@ -108,7 +112,9 @@ export default function UtilizadoresOrg() {
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
               Lista de Utilizadores
-              <Badge variant="secondary" className="ml-2">{filteredMembers.length}</Badge>
+              <Badge variant="secondary" className="ml-2">
+                {filteredMembers.length}
+              </Badge>
             </CardTitle>
             <CardDescription>
               Pode editar o nome dos utilizadores da sua organização.
@@ -120,16 +126,16 @@ export default function UtilizadoresOrg() {
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>
             ) : filteredMembers.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Sem utilizadores encontrados.</p>
+              <p className="text-center text-muted-foreground py-8">
+                Sem utilizadores encontrados.
+              </p>
             ) : (
               <div className="space-y-3">
                 {filteredMembers.map((member) => (
                   <div key={member.id} className="flex items-center gap-3 p-4 border rounded-lg">
                     <Avatar>
                       <AvatarImage src={member.profiles?.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {member.profiles?.nome_completo?.[0] || '?'}
-                      </AvatarFallback>
+                      <AvatarFallback>{member.profiles?.nome_completo?.[0] || '?'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm truncate">
@@ -173,7 +179,9 @@ export default function UtilizadoresOrg() {
               <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                 <Avatar>
                   <AvatarImage src={selectedMember.profiles?.avatar_url} />
-                  <AvatarFallback>{selectedMember.profiles?.nome_completo?.[0] || '?'}</AvatarFallback>
+                  <AvatarFallback>
+                    {selectedMember.profiles?.nome_completo?.[0] || '?'}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="text-sm text-muted-foreground">{selectedMember.profiles?.email}</p>
@@ -193,7 +201,11 @@ export default function UtilizadoresOrg() {
                   Cancelar
                 </Button>
                 <Button onClick={handleSave} disabled={saving || !editName.trim()}>
-                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
                   Guardar
                 </Button>
               </div>

@@ -36,20 +36,20 @@ export function IndustrySectorProvider({ children }: { children: React.ReactNode
     enabled: !!effectiveOrganizationId,
   });
 
-  const value = useMemo<IndustrySectorContextType>(() => ({
-    activeOrganizationSectors: organizationSectors || [],
-    hasSector: (sector: string) => organizationSectors?.includes(sector) ?? false,
-    getPrimarySector: () => organizationSectors?.[0] ?? null,
-    isLoading,
-  }), [organizationSectors, isLoading]);
-
-  return (
-    <IndustrySectorContext.Provider value={value}>
-      {children}
-    </IndustrySectorContext.Provider>
+  const value = useMemo<IndustrySectorContextType>(
+    () => ({
+      activeOrganizationSectors: organizationSectors || [],
+      hasSector: (sector: string) => organizationSectors?.includes(sector) ?? false,
+      getPrimarySector: () => organizationSectors?.[0] ?? null,
+      isLoading,
+    }),
+    [organizationSectors, isLoading],
   );
+
+  return <IndustrySectorContext.Provider value={value}>{children}</IndustrySectorContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useIndustrySector() {
   const context = useContext(IndustrySectorContext);
   if (context === undefined) {

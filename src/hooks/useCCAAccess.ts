@@ -25,10 +25,7 @@ export function useCCAAccess() {
   const { data: allOrganizations = [], isLoading: orgsLoading } = useQuery({
     queryKey: ['cca-all-organizations'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('organizations')
-        .select('*')
-        .order('name');
+      const { data, error } = await supabase.from('organizations').select('*').order('name');
 
       if (error) throw error;
       return data as Organization[];
@@ -39,23 +36,24 @@ export function useCCAAccess() {
 
   // Buscar organizações onde o utilizador tem departamentos atribuídos
   const { data: departmentOrganizations = [], isLoading: deptOrgsLoading } = useQuery({
-    queryKey: ['user-department-organizations', user?.id],
+    queryKey: ['user-department-organizations', user?.id, user],
     queryFn: async () => {
       if (!user) return [];
 
       // Buscar orgs onde o user tem departamentos
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: userDepts, error: deptError } = await (supabase as any)
-        .from('user_departments')
+      const { data: userDepts, error: deptError } = await supabase
+        .from('user_departments' as never)
         .select('organization_id')
         .eq('user_id', user.id);
 
       if (deptError) throw deptError;
       if (!userDepts || userDepts.length === 0) return [];
 
-      const orgIds = [...new Set(
-        (userDepts as Array<{ organization_id: string }>).map((ud) => ud.organization_id)
-      )];
+      const orgIds = [
+        ...new Set(
+          (userDepts as Array<{ organization_id: string }>).map((ud) => ud.organization_id),
+        ),
+      ];
 
       const { data: orgs, error: orgError } = await supabase
         .from('organizations')
@@ -78,9 +76,7 @@ export function useCCAAccess() {
     /** Organizações onde o utilizador tem departamentos atribuídos */
     departmentOrganizations,
     /** Lista combinada de organizações acessíveis */
-    accessibleOrganizations: hasUnrestrictedAccess
-      ? allOrganizations
-      : departmentOrganizations,
+    accessibleOrganizations: hasUnrestrictedAccess ? allOrganizations : departmentOrganizations,
     isLoading: profileLoading || orgsLoading || deptOrgsLoading,
   };
 }

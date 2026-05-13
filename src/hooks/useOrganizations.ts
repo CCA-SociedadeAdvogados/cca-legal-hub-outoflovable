@@ -7,23 +7,22 @@ import { toast } from 'sonner';
 
 // ─── helpers de mapeamento (module-level, reutilizados) ──────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapCCARow(row: any): CCAClientOption {
+function mapCCARow(row: Record<string, unknown>): CCAClientOption {
   return {
-    organization_id: row.organization_id ?? null,
-    client_code: row.client_code,
-    client_name: row.legacy_client_name,
-    group_code: row.group_code,
-    cost_center: row.cost_center,
-    responsible: row.responsible,
-    responsible_email: row.responsible_email,
+    organization_id: (row.organization_id as string | null) ?? null,
+    client_code: row.client_code as string,
+    client_name: row.legacy_client_name as string,
+    group_code: (row.group_code as string | null) ?? null,
+    cost_center: (row.cost_center as string | null) ?? null,
+    responsible: (row.responsible as string | null) ?? null,
+    responsible_email: (row.responsible_email as string | null) ?? null,
     total_documentos: Number(row.total_documentos ?? 0),
     total_pendente: Number(row.total_pendente ?? 0),
     total_vencido: Number(row.total_vencido ?? 0),
     total_a_vencer: Number(row.total_a_vencer ?? 0),
-    ultima_sincronizacao: row.ultima_sincronizacao,
-    client_status: row.client_status,
-    can_open_in_platform: row.can_open_in_platform ?? false,
+    ultima_sincronizacao: (row.ultima_sincronizacao as string | null) ?? null,
+    client_status: row.client_status as string,
+    can_open_in_platform: (row.can_open_in_platform as boolean | undefined) ?? false,
   };
 }
 
@@ -145,13 +144,41 @@ export interface CCAClientOption {
   can_open_in_platform: boolean;
 }
 
+async function buildMemberships(
+  members: { organization_id: string; role: string }[],
+): Promise<UserMembership[]> {
+  const orgIds = members.map((m) => m.organization_id);
+
+  const orgsMap: Record<string, { client_code: string | null; name: string }> = {};
+
+  const { data: orgs } = await supabase
+    .from('organizations')
+    .select('id, client_code, name')
+    .in('id', orgIds);
+
+  if (orgs && orgs.length > 0) {
+    orgs.forEach((o) => {
+      orgsMap[o.id] = { client_code: o.client_code, name: o.name };
+    });
+  }
+
+  return members.map((m) => ({
+    organization_id: m.organization_id,
+    role: m.role as UserMembership['role'],
+    organizations: orgsMap[m.organization_id] || {
+      client_code: null,
+      name: 'Organização',
+    },
+  }));
+}
+
 export function useOrganizations() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { cliente, setCliente, clearCliente } = useCliente();
 
   const { data: organizations, isLoading } = useQuery({
-    queryKey: ['organizations', user?.id],
+    queryKey: ['organizations', user?.id, user],
     queryFn: async () => {
       if (!user) return [];
 
@@ -165,7 +192,7 @@ export function useOrganizations() {
   });
 
   const { data: currentOrganization } = useQuery({
-    queryKey: ['current-organization', user?.id],
+    queryKey: ['current-organization', user?.id, user],
     queryFn: async () => {
       if (!user) return null;
 
@@ -193,7 +220,7 @@ export function useOrganizations() {
   });
 
   const { data: isCCAInternalAuthorized = false, isLoading: ccaAuthLoading } = useQuery({
-    queryKey: ['cca-internal-authorized', user?.id],
+    queryKey: ['cca-internal-authorized', user?.id, user],
     queryFn: async () => {
       if (!user) return false;
 
@@ -213,7 +240,7 @@ export function useOrganizations() {
   // Tenta RPC primeiro; se não existir, consulta a tabela directamente.
   // Fallback final: a org identitária (C.0000) para que nunca fique sem org.
   const { data: ccaDefaultClientOrg } = useQuery({
-    queryKey: ['cca-default-client-org'],
+    queryKey: ['cca-default-client-org', currentOrganization],
     queryFn: async () => {
       // 1. Tentar via RPC (existe após migration 20260406000001)
       const { data: orgId, error: rpcError } = await supabase.rpc(
@@ -254,7 +281,7 @@ export function useOrganizations() {
   });
 
   const { data: userMemberships, isLoading: membershipsLoading } = useQuery({
-    queryKey: ['user-memberships', user?.id],
+    queryKey: ['user-memberships', user?.id, user],
     queryFn: async () => {
       if (!user) return [];
 
@@ -297,34 +324,6 @@ export function useOrganizations() {
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
   });
-
-  async function buildMemberships(
-    members: { organization_id: string; role: string }[],
-  ): Promise<UserMembership[]> {
-    const orgIds = members.map((m) => m.organization_id);
-
-    const orgsMap: Record<string, { client_code: string | null; name: string }> = {};
-
-    const { data: orgs } = await supabase
-      .from('organizations')
-      .select('id, client_code, name')
-      .in('id', orgIds);
-
-    if (orgs && orgs.length > 0) {
-      orgs.forEach((o) => {
-        orgsMap[o.id] = { client_code: o.client_code, name: o.name };
-      });
-    }
-
-    return members.map((m) => ({
-      organization_id: m.organization_id,
-      role: m.role as UserMembership['role'],
-      organizations: orgsMap[m.organization_id] || {
-        client_code: null,
-        name: 'Organização',
-      },
-    }));
-  }
 
   useEffect(() => {
     if (!user) return;
@@ -549,8 +548,7 @@ export function useOrganizationMembers(organizationId: string | undefined) {
       };
 
       const { data: profilesData } = (await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('profiles_safe' as any)
+        .from('profiles_safe' as never)
         .select(
           'id, nome_completo, email, avatar_url, departamento, auth_method, sso_provider, login_attempts, locked_until, last_login_at, two_factor_enabled',
         )

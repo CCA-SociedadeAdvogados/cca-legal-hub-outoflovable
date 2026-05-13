@@ -5,17 +5,6 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
-interface ContractAlert {
-  id: string;
-  titulo_contrato: string;
-  parte_b_nome_legal: string;
-  data_termo: string;
-  tipo_renovacao: string;
-  dias_para_expirar: number;
-  responsavel_email: string | null;
-  responsavel_nome: string | null;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders(req) });
@@ -195,10 +184,11 @@ serve(async (req) => {
         headers: { "Content-Type": "application/json", ...corsHeaders(req) },
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in send-contract-alerts function:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: msg }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders(req) },
