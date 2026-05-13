@@ -25,7 +25,9 @@
       "Bash(wc *)",
       "Bash(cat *)",
       "Bash(head *)",
-      "Bash(tail *)"
+      "Bash(tail *)",
+      "Bash(find docs *)",
+      "Bash(grep *)"
     ]
   },
   "hooks": {

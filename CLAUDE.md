@@ -29,3 +29,18 @@ npm run gen:types    # regenera supabase/types.ts
 12. **Edge Functions** — CORS via `_shared/cors.ts`, nunca hardcode `"*"`
 13. **Query keys** — usar factory em `src/lib/queryKeys.ts`
 14. **Conventional Commits** — `feat|fix|refactor(scope): msg`
+
+## Claude for Legal (plugins jurídicos)
+
+Marketplace oficial da Anthropic com plugins por área de prática (commercial, corporate, litigation, employment, privacy, regulatory, ip, etc.). São ferramentas **pessoais** de cada jurista da CCA, instaladas no Claude Code CLI **local** — não afectam este repositório.
+
+Setup completo e lista de plugins recomendados para a CCA: [`docs/CLAUDE_FOR_LEGAL_PLUGINS.md`](docs/CLAUDE_FOR_LEGAL_PLUGINS.md).
+
+Resumo rápido (correr no Claude Code CLI local, **não** em sessões web):
+
+```text
+/plugin marketplace add https://github.com/anthropics/claude-for-legal
+/plugin install commercial-legal@claude-for-legal
+# … reiniciar CLI …
+/commercial-legal:cold-start-interview
+```
