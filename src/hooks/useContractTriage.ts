@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface ContractTriageAnalysis {
   id: string;
@@ -17,15 +18,15 @@ export interface ContractTriageAnalysis {
   nivel_risco_global: string;
   tipo_contrato: string | null;
   resumo_executivo: string | null;
-  analises_clausulas: any[];
-  red_flags_prioritarios: any[];
+  analises_clausulas: Json[];
+  red_flags_prioritarios: Json[];
   recomendacoes_globais: string[];
   proximos_passos: string[];
   total_clausulas_analisadas: number;
   clausulas_conformes: number;
   clausulas_alto_risco: number;
   clausulas_criticas: number;
-  raw_response: any;
+  raw_response: Json;
   ai_model_used: string | null;
   created_at: string;
   updated_at: string;
@@ -35,19 +36,24 @@ export const useContractTriage = (contratoId?: string) => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: analysis, isLoading, error, refetch } = useQuery({
+  const {
+    data: analysis,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['contract-triage', contratoId],
     queryFn: async () => {
       if (!contratoId) return null;
-      
+
       const { data, error } = await supabase
         .from('contract_triage_analyses')
         .select('*')
         .eq('contrato_id', contratoId)
         .maybeSingle();
-      
+
       if (error) throw error;
-      return data as ContractTriageAnalysis | null;
+      return data as unknown as ContractTriageAnalysis | null;
     },
     enabled: !!contratoId && !!user,
     staleTime: 0, // Always refetch to get latest data
@@ -57,12 +63,12 @@ export const useContractTriage = (contratoId?: string) => {
   const runTriage = useMutation({
     mutationFn: async (contractId: string) => {
       const { data, error } = await supabase.functions.invoke('triage-contract', {
-        body: { contractId, saveResults: true }
+        body: { contractId, saveResults: true },
       });
-      
+
       if (error) throw error;
       if (!data.success) throw new Error(data.error || 'Erro na análise de triagem');
-      
+
       return data;
     },
     onSuccess: async () => {
@@ -72,10 +78,10 @@ export const useContractTriage = (contratoId?: string) => {
       toast({ title: 'Análise de triagem concluída com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ 
-        title: 'Erro na análise de triagem', 
-        description: error.message, 
-        variant: 'destructive' 
+      toast({
+        title: 'Erro na análise de triagem',
+        description: error.message,
+        variant: 'destructive',
       });
     },
   });

@@ -36,7 +36,7 @@ export function useNotificationPreferences() {
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
-        .from('notification_preferences' as any)
+        .from('notification_preferences')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
@@ -62,12 +62,15 @@ export function useNotificationPreferences() {
       if (!user) throw new Error('Não autenticado');
 
       const { data, error } = await supabase
-        .from('notification_preferences' as any)
-        .upsert({
-          user_id: user.id,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' })
+        .from('notification_preferences')
+        .upsert(
+          {
+            user_id: user.id,
+            ...updates,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        )
         .select()
         .single();
 
@@ -79,12 +82,16 @@ export function useNotificationPreferences() {
       toast({ title: 'Preferências de notificação guardadas' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao guardar preferências', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao guardar preferências',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
   return {
-    prefs: prefs ?? { ...DEFAULT_PREFS, id: '', user_id: user?.id ?? '' } as NotificationPrefs,
+    prefs: prefs ?? ({ ...DEFAULT_PREFS, id: '', user_id: user?.id ?? '' } as NotificationPrefs),
     isLoading,
     updatePrefs,
     isTableAvailable: !!prefs && prefs.id !== '',

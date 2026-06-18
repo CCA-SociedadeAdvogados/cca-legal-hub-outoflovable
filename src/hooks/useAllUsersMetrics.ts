@@ -82,7 +82,7 @@ export function useAllUsersMetrics(isPlatformAdmin: boolean) {
       if (members.length > 0 && orgIds.length > 0) {
         const memberUserIds = [...new Set(members.map((m) => m.user_id))];
         const { data: userDeptsData } = await supabase
-          .from('user_departments' as unknown as 'profiles')
+          .from('user_departments')
           .select('user_id, organization_id, department_id, departments:department_id(id, name)')
           .in('user_id', memberUserIds)
           .in('organization_id', orgIds);

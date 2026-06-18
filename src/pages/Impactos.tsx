@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { useImpactos } from '@/hooks/useImpactos';
 import { useEventosLegislativos } from '@/hooks/useEventosLegislativos';
 import { useContratos } from '@/hooks/useContratos';
-import { 
-  AlertTriangle, 
-  Search, 
+import {
+  AlertTriangle,
+  Search,
   Plus,
   FileCheck,
   Scale,
@@ -39,7 +39,7 @@ import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
 
 export default function Impactos() {
   const { t } = useTranslation();
-  
+
   const NIVEL_RISCO_LABELS: Record<string, string> = {
     baixo: t('risk.low'),
     medio: t('risk.medium'),
@@ -59,10 +59,16 @@ export default function Impactos() {
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    evento_legislativo_id: string;
+    contrato_id: string;
+    nivel_risco: 'baixo' | 'medio' | 'alto';
+    descricao: string;
+    observacoes: string;
+  }>({
     evento_legislativo_id: '',
     contrato_id: '',
-    nivel_risco: 'medio' as const,
+    nivel_risco: 'medio',
     descricao: '',
     observacoes: '',
   });
@@ -79,12 +85,12 @@ export default function Impactos() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     await createImpacto.mutateAsync({
       ...formData,
       contrato_id: formData.contrato_id || null,
     });
-    
+
     setDialogOpen(false);
     resetForm();
   };
@@ -93,11 +99,13 @@ export default function Impactos() {
     await updateImpacto.mutateAsync({ id, estado: novoEstado });
   };
 
-  const filteredImpactos = impactos?.filter(impacto =>
-    impacto.eventos_legislativos?.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    impacto.contratos?.titulo_contrato.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    impacto.descricao?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) ?? [];
+  const filteredImpactos =
+    impactos?.filter(
+      (impacto) =>
+        impacto.eventos_legislativos?.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        impacto.contratos?.titulo_contrato.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        impacto.descricao?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) ?? [];
 
   if (isLoading) {
     return (
@@ -134,10 +142,11 @@ export default function Impactos() {
                   compact
                   onAnalysisComplete={(result) => {
                     const dados = result.dados_extraidos || {};
-                    setFormData(prev => ({
+                    setFormData((prev) => ({
                       ...prev,
                       descricao: result.resumo || prev.descricao,
-                      nivel_risco: dados.nivel_risco || prev.nivel_risco,
+                      nivel_risco:
+                        (dados.nivel_risco as 'baixo' | 'medio' | 'alto') || prev.nivel_risco,
                       observacoes: result.recomendacoes?.join('\n') || prev.observacoes,
                     }));
                   }}
@@ -146,7 +155,9 @@ export default function Impactos() {
                   <Label htmlFor="evento_legislativo_id">{t('impacts.relatedEvent')} *</Label>
                   <Select
                     value={formData.evento_legislativo_id}
-                    onValueChange={(value) => setFormData({ ...formData, evento_legislativo_id: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, evento_legislativo_id: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t('impacts.selectEvent')} />
@@ -160,7 +171,7 @@ export default function Impactos() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="contrato_id">{t('impacts.relatedContract')}</Label>
                   <Select
@@ -179,12 +190,12 @@ export default function Impactos() {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="nivel_risco">{t('impacts.riskLevel')}</Label>
                   <Select
                     value={formData.nivel_risco}
-                    onValueChange={(value: typeof formData.nivel_risco) => 
+                    onValueChange={(value: typeof formData.nivel_risco) =>
                       setFormData({ ...formData, nivel_risco: value })
                     }
                   >
@@ -193,12 +204,14 @@ export default function Impactos() {
                     </SelectTrigger>
                     <SelectContent>
                       {Object.entries(NIVEL_RISCO_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="descricao">{t('impacts.description')}</Label>
                   <Textarea
@@ -208,7 +221,7 @@ export default function Impactos() {
                     rows={3}
                   />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="observacoes">{t('impacts.observations')}</Label>
                   <Textarea
@@ -218,18 +231,16 @@ export default function Impactos() {
                     rows={2}
                   />
                 </div>
-                
+
                 <div className="flex justify-end gap-2">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                     {t('common.cancel')}
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={createImpacto.isPending || !formData.evento_legislativo_id}
                   >
-                    {createImpacto.isPending && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
+                    {createImpacto.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t('common.register')}
                   </Button>
                 </div>
@@ -292,36 +303,54 @@ export default function Impactos() {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
-                        impacto.nivel_risco === 'alto' ? 'bg-risk-high/10' :
-                        impacto.nivel_risco === 'medio' ? 'bg-risk-medium/10' : 'bg-risk-low/10'
-                      }`}>
-                        <AlertTriangle className={`h-6 w-6 ${
-                          impacto.nivel_risco === 'alto' ? 'text-risk-high' :
-                          impacto.nivel_risco === 'medio' ? 'text-risk-medium' : 'text-risk-low'
-                        }`} />
+                      <div
+                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${
+                          impacto.nivel_risco === 'alto'
+                            ? 'bg-risk-high/10'
+                            : impacto.nivel_risco === 'medio'
+                              ? 'bg-risk-medium/10'
+                              : 'bg-risk-low/10'
+                        }`}
+                      >
+                        <AlertTriangle
+                          className={`h-6 w-6 ${
+                            impacto.nivel_risco === 'alto'
+                              ? 'text-risk-high'
+                              : impacto.nivel_risco === 'medio'
+                                ? 'text-risk-medium'
+                                : 'text-risk-low'
+                          }`}
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <Badge 
+                          <Badge
                             variant={
-                              impacto.nivel_risco === 'alto' ? 'riskHigh' : 
-                              impacto.nivel_risco === 'medio' ? 'riskMedium' : 'riskLow'
+                              impacto.nivel_risco === 'alto'
+                                ? 'riskHigh'
+                                : impacto.nivel_risco === 'medio'
+                                  ? 'riskMedium'
+                                  : 'riskLow'
                             }
                           >
-                            {t('risk.' + impacto.nivel_risco)} {t('impacts.riskLevel').toLowerCase()}
+                            {t('risk.' + impacto.nivel_risco)}{' '}
+                            {t('impacts.riskLevel').toLowerCase()}
                           </Badge>
-                          <Badge 
+                          <Badge
                             variant={
-                              impacto.estado === 'pendente_analise' ? 'pending' : 
-                              impacto.estado === 'em_tratamento' ? 'subtle' : 
-                              impacto.estado === 'resolvido' ? 'active' : 'secondary'
+                              impacto.estado === 'pendente_analise'
+                                ? 'pending'
+                                : impacto.estado === 'em_tratamento'
+                                  ? 'subtle'
+                                  : impacto.estado === 'resolvido'
+                                    ? 'active'
+                                    : 'secondary'
                             }
                           >
                             {ESTADO_IMPACTO_LABELS[impacto.estado]}
                           </Badge>
                         </div>
-                        
+
                         {impacto.eventos_legislativos && (
                           <div className="flex items-center gap-2 mb-2">
                             <Scale className="h-4 w-4 text-muted-foreground" />
@@ -335,25 +364,24 @@ export default function Impactos() {
                             )}
                           </div>
                         )}
-                        
+
                         {impacto.contratos && (
                           <div className="flex items-center gap-2 mb-2">
                             <FileCheck className="h-4 w-4 text-muted-foreground" />
-                            <Link 
+                            <Link
                               to={`/contratos/${impacto.contratos.id}`}
                               className="text-sm hover:underline"
                             >
-                              {t('contracts.contract')}: {impacto.contratos.id_interno} - {impacto.contratos.titulo_contrato}
+                              {t('contracts.contract')}: {impacto.contratos.id_interno} -{' '}
+                              {impacto.contratos.titulo_contrato}
                             </Link>
                           </div>
                         )}
-                        
+
                         {impacto.descricao && (
-                          <p className="text-sm text-muted-foreground mt-2">
-                            {impacto.descricao}
-                          </p>
+                          <p className="text-sm text-muted-foreground mt-2">{impacto.descricao}</p>
                         )}
-                        
+
                         {impacto.observacoes && (
                           <p className="text-sm text-muted-foreground/70 mt-1 italic">
                             {impacto.observacoes}
@@ -363,8 +391,8 @@ export default function Impactos() {
                     </div>
                     <div className="flex items-center gap-2">
                       {impacto.estado === 'pendente_analise' && (
-                        <Button 
-                          variant="default" 
+                        <Button
+                          variant="default"
                           size="sm"
                           onClick={() => handleUpdateEstado(impacto.id, 'em_tratamento')}
                           disabled={updateImpacto.isPending}
@@ -374,8 +402,8 @@ export default function Impactos() {
                         </Button>
                       )}
                       {impacto.estado === 'em_tratamento' && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleUpdateEstado(impacto.id, 'resolvido')}
                           disabled={updateImpacto.isPending}

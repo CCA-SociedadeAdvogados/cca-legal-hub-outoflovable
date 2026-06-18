@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
+import type { VariantProps } from 'class-variance-authority';
 import { Button } from '@/components/ui/button';
 import {
   FileText,
@@ -20,9 +21,10 @@ import {
   ESTADO_CONTRATO_LABELS,
   DEPARTAMENTO_LABELS,
 } from '@/types/contracts';
-import { ValidationBadge } from './ValidationBadge';
+import { ValidationBadge, type ValidationStatusType } from './ValidationBadge';
 
 type Contrato = Tables<'contratos'>;
+type BadgeVariant = VariantProps<typeof badgeVariants>['variant'];
 
 interface ContractCardProps {
   contract: Contrato;
@@ -33,11 +35,10 @@ export function ContractCard({ contract }: ContractCardProps) {
     ? differenceInDays(new Date(contract.data_termo), new Date())
     : null;
 
-  const isExpiringSoon =
-    daysUntilExpiry !== null && daysUntilExpiry <= 90 && daysUntilExpiry > 0;
+  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 90 && daysUntilExpiry > 0;
   const isExpired = daysUntilExpiry !== null && daysUntilExpiry <= 0;
 
-  const getEstadoBadgeVariant = (estado: string) => {
+  const getEstadoBadgeVariant = (estado: string): BadgeVariant => {
     switch (estado) {
       case 'activo':
         return 'active';
@@ -66,9 +67,15 @@ export function ContractCard({ contract }: ContractCardProps) {
     }).format(value);
   };
 
-  const tipoLabel = TIPO_CONTRATO_LABELS[contract.tipo_contrato as keyof typeof TIPO_CONTRATO_LABELS] || contract.tipo_contrato;
-  const estadoLabel = ESTADO_CONTRATO_LABELS[contract.estado_contrato as keyof typeof ESTADO_CONTRATO_LABELS] || contract.estado_contrato;
-  const departamentoLabel = DEPARTAMENTO_LABELS[contract.departamento_responsavel as keyof typeof DEPARTAMENTO_LABELS] || contract.departamento_responsavel;
+  const tipoLabel =
+    TIPO_CONTRATO_LABELS[contract.tipo_contrato as keyof typeof TIPO_CONTRATO_LABELS] ||
+    contract.tipo_contrato;
+  const estadoLabel =
+    ESTADO_CONTRATO_LABELS[contract.estado_contrato as keyof typeof ESTADO_CONTRATO_LABELS] ||
+    contract.estado_contrato;
+  const departamentoLabel =
+    DEPARTAMENTO_LABELS[contract.departamento_responsavel as keyof typeof DEPARTAMENTO_LABELS] ||
+    contract.departamento_responsavel;
 
   return (
     <Card
@@ -86,15 +93,11 @@ export function ContractCard({ contract }: ContractCardProps) {
               <div className="flex-1 min-w-0">
                 {/* Badges Row */}
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
-                  <Badge variant={getEstadoBadgeVariant(contract.estado_contrato) as any}>
+                  <Badge variant={getEstadoBadgeVariant(contract.estado_contrato)}>
                     {estadoLabel}
                   </Badge>
-                  <Badge variant="outline">
-                    {tipoLabel}
-                  </Badge>
-                  <Badge variant="subtle">
-                    {departamentoLabel}
-                  </Badge>
+                  <Badge variant="outline">{tipoLabel}</Badge>
+                  <Badge variant="subtle">{departamentoLabel}</Badge>
                   {contract.tipo_renovacao === 'renovacao_automatica' && (
                     <Badge variant="subtle" className="flex items-center gap-1">
                       <RefreshCw className="h-3 w-3" />
@@ -113,7 +116,10 @@ export function ContractCard({ contract }: ContractCardProps) {
                       Expirado
                     </Badge>
                   )}
-                  <ValidationBadge status={(contract.validation_status ?? 'none') as any} compact />
+                  <ValidationBadge
+                    status={(contract.validation_status ?? 'none') as ValidationStatusType}
+                    compact
+                  />
                 </div>
 
                 {/* Title and ID */}
@@ -131,9 +137,7 @@ export function ContractCard({ contract }: ContractCardProps) {
                   <Building2 className="h-4 w-4" />
                   <span>{contract.parte_b_nome_legal}</span>
                   {contract.parte_b_grupo_economico && (
-                    <span className="text-xs">
-                      ({contract.parte_b_grupo_economico})
-                    </span>
+                    <span className="text-xs">({contract.parte_b_grupo_economico})</span>
                   )}
                 </div>
 

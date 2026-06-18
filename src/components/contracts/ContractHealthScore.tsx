@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, XCircle, Heart } from 'lucide-react';
@@ -12,68 +13,65 @@ interface HealthCheck {
   weight: number;
 }
 
-function computeHealthChecks(
-  contrato: Contrato,
-  t: (key: string, fallback?: string) => string,
-): HealthCheck[] {
+function computeHealthChecks(contrato: Contrato, t: TFunction): HealthCheck[] {
   return [
     {
       key: 'titulo',
-      label: t('healthScore.hasTitle', 'Título preenchido'),
+      label: t('healthScore.hasTitle', { defaultValue: 'Título preenchido' }),
       passed: !!contrato.titulo_contrato?.trim(),
       weight: 1,
     },
     {
       key: 'tipo',
-      label: t('healthScore.hasType', 'Tipo de contrato definido'),
+      label: t('healthScore.hasType', { defaultValue: 'Tipo de contrato definido' }),
       passed: !!contrato.tipo_contrato && contrato.tipo_contrato !== 'outro',
       weight: 1,
     },
     {
       key: 'partes',
-      label: t('healthScore.hasParties', 'Partes contratantes identificadas'),
+      label: t('healthScore.hasParties', { defaultValue: 'Partes contratantes identificadas' }),
       passed: !!contrato.parte_a_nome_legal && !!contrato.parte_b_nome_legal,
       weight: 2,
     },
     {
       key: 'datas',
-      label: t('healthScore.hasDates', 'Datas de vigência definidas'),
+      label: t('healthScore.hasDates', { defaultValue: 'Datas de vigência definidas' }),
       passed: !!contrato.data_inicio_vigencia,
       weight: 2,
     },
     {
       key: 'valor',
-      label: t('healthScore.hasValue', 'Valor definido'),
+      label: t('healthScore.hasValue', { defaultValue: 'Valor definido' }),
       passed: (contrato.valor_total_estimado ?? 0) > 0,
       weight: 1,
     },
     {
       key: 'renovacao',
-      label: t('healthScore.hasRenewal', 'Tipo de renovação configurado'),
+      label: t('healthScore.hasRenewal', { defaultValue: 'Tipo de renovação configurado' }),
       passed: !!contrato.tipo_renovacao,
       weight: 1,
     },
     {
       key: 'dpa',
-      label: t('healthScore.hasDPA', 'DPA/RGPD verificado'),
+      label: t('healthScore.hasDPA', { defaultValue: 'DPA/RGPD verificado' }),
       passed: contrato.tratamento_dados_pessoais ? contrato.existe_dpa_anexo_rgpd : true,
       weight: 2,
     },
     {
       key: 'assinatura',
-      label: t('healthScore.hasSigned', 'Assinatura registada'),
+      label: t('healthScore.hasSigned', { defaultValue: 'Assinatura registada' }),
       passed: !!contrato.data_assinatura_parte_a || !!contrato.data_assinatura_parte_b,
       weight: 1,
     },
     {
       key: 'departamento',
-      label: t('healthScore.hasDepartment', 'Departamento atribuído'),
+      label: t('healthScore.hasDepartment', { defaultValue: 'Departamento atribuído' }),
       passed: !!contrato.departamento_responsavel,
       weight: 1,
     },
     {
       key: 'objeto',
-      label: t('healthScore.hasObject', 'Objecto descrito'),
+      label: t('healthScore.hasObject', { defaultValue: 'Objecto descrito' }),
       passed: !!contrato.objeto_resumido?.trim(),
       weight: 1,
     },

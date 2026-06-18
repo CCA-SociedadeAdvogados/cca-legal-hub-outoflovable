@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { 
-  GripVertical, 
-  Trash2, 
-  Plus, 
+import {
+  GripVertical,
+  Trash2,
+  Plus,
   Settings2,
   Building2,
   Scale,
@@ -17,7 +17,8 @@ import {
   Link2,
   MessageSquare,
   Folder,
-  Lightbulb
+  Lightbulb,
+  CalendarRange,
 } from 'lucide-react';
 import { HomeLayout, WidgetConfig, WidgetType, WIDGET_TYPES } from '@/lib/defaultHomeLayout';
 import { WidgetConfigEditor } from './WidgetConfigEditor';
@@ -40,32 +41,39 @@ const widgetIcons: Record<WidgetType, React.ElementType> = {
   QUICK_LINKS: Link2,
   WELCOME_MESSAGE: MessageSquare,
   LEGAL_INSIGHTS: Lightbulb,
+  MONTHLY_SUMMARY: CalendarRange,
 };
 
-export function HomeEditor({ open, onOpenChange, layout, onLayoutChange, organizationId }: HomeEditorProps) {
+export function HomeEditor({
+  open,
+  onOpenChange,
+  layout,
+  onLayoutChange,
+  organizationId,
+}: HomeEditorProps) {
   const [editingWidget, setEditingWidget] = useState<WidgetConfig | null>(null);
 
   const activeWidgets = [...layout.widgets].sort((a, b) => a.order - b.order);
   const availableTypes = WIDGET_TYPES.filter(
-    wt => !layout.widgets.some(w => w.type === wt.type)
+    (wt) => !layout.widgets.some((w) => w.type === wt.type),
   );
 
   const handleToggleVisibility = (widgetId: string) => {
-    const updated = layout.widgets.map(w =>
-      w.id === widgetId ? { ...w, visible: !w.visible } : w
+    const updated = layout.widgets.map((w) =>
+      w.id === widgetId ? { ...w, visible: !w.visible } : w,
     );
     onLayoutChange({ ...layout, widgets: updated });
   };
 
   const handleRemoveWidget = (widgetId: string) => {
-    const updated = layout.widgets.filter(w => w.id !== widgetId);
+    const updated = layout.widgets.filter((w) => w.id !== widgetId);
     // Reorder remaining widgets
     const reordered = updated.map((w, idx) => ({ ...w, order: idx }));
     onLayoutChange({ ...layout, widgets: reordered });
   };
 
   const handleAddWidget = (type: WidgetType) => {
-    const widgetInfo = WIDGET_TYPES.find(wt => wt.type === type);
+    const widgetInfo = WIDGET_TYPES.find((wt) => wt.type === type);
     if (!widgetInfo) return;
 
     const newWidget: WidgetConfig = {
@@ -82,8 +90,8 @@ export function HomeEditor({ open, onOpenChange, layout, onLayoutChange, organiz
 
   const handleMoveWidget = (widgetId: string, direction: 'up' | 'down') => {
     const sorted = [...layout.widgets].sort((a, b) => a.order - b.order);
-    const index = sorted.findIndex(w => w.id === widgetId);
-    
+    const index = sorted.findIndex((w) => w.id === widgetId);
+
     if (direction === 'up' && index > 0) {
       [sorted[index], sorted[index - 1]] = [sorted[index - 1], sorted[index]];
     } else if (direction === 'down' && index < sorted.length - 1) {
@@ -95,9 +103,7 @@ export function HomeEditor({ open, onOpenChange, layout, onLayoutChange, organiz
   };
 
   const handleUpdateWidgetConfig = (widgetId: string, updates: Partial<WidgetConfig>) => {
-    const updated = layout.widgets.map(w =>
-      w.id === widgetId ? { ...w, ...updates } : w
-    );
+    const updated = layout.widgets.map((w) => (w.id === widgetId ? { ...w, ...updates } : w));
     onLayoutChange({ ...layout, widgets: updated });
     setEditingWidget(null);
   };
@@ -142,18 +148,20 @@ export function HomeEditor({ open, onOpenChange, layout, onLayoutChange, organiz
                           <GripVertical className="h-3 w-3 rotate-90" />
                         </Button>
                       </div>
-                      
+
                       <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      
+
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{widget.title}</p>
                         <p className="text-xs text-muted-foreground">
-                          {WIDGET_TYPES.find(wt => wt.type === widget.type)?.description}
+                          {WIDGET_TYPES.find((wt) => wt.type === widget.type)?.description}
                         </p>
                       </div>
 
                       {!widget.visible && (
-                        <Badge variant="secondary" className="text-xs">Oculto</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          Oculto
+                        </Badge>
                       )}
 
                       <Switch

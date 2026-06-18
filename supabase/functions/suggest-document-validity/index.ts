@@ -106,7 +106,7 @@ serve(async (req) => {
 
     // Fetch document type name (admin client to avoid RLS on lookup tables)
     const { data: docType, error: docTypeError } = await supabaseAdmin
-      .from("document_checklist_types" as any)
+      .from("document_checklist_types")
       .select("name, name_en")
       .eq("id", checklist_type_id)
       .maybeSingle();
@@ -125,7 +125,7 @@ serve(async (req) => {
 
     // Upsert the suggested date — use admin client so CCA users can write to client orgs
     const { error: upsertError } = await supabaseAdmin
-      .from("organization_document_checklist" as any)
+      .from("organization_document_checklist")
       .upsert(
         {
           organization_id,

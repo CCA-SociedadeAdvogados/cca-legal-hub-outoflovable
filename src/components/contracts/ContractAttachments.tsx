@@ -31,11 +31,15 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { useAnexos, type Anexo } from '@/hooks/useAnexos';
+import { toast } from '@/hooks/use-toast';
 
 interface ContractAttachmentsProps {
   contratoId: string;
   canEdit?: boolean;
 }
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB — limite do bucket 'contratos'
+const ACCEPTED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.png', '.jpg', '.jpeg'];
 
 const getTipoAnexoIcon = (tipo: string) => {
   switch (tipo) {
@@ -83,10 +87,32 @@ export function ContractAttachments({ contratoId, canEdit = false }: ContractAtt
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setIsUploadDialogOpen(true);
+    if (!file) return;
+
+    const lowerName = file.name.toLowerCase();
+    const hasValidExtension = ACCEPTED_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+    if (!hasValidExtension) {
+      toast({
+        title: 'Formato não suportado',
+        description: 'Tipos aceites: PDF, Word, Excel ou imagens (PNG/JPG).',
+        variant: 'destructive',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast({
+        title: 'Ficheiro demasiado grande',
+        description: 'O tamanho máximo permitido é 10 MB.',
+        variant: 'destructive',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    setSelectedFile(file);
+    setIsUploadDialogOpen(true);
   };
 
   const handleUpload = async () => {

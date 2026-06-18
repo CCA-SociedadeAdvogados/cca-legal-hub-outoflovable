@@ -177,7 +177,6 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
         toast.error('Erro ao iniciar impersonation');
         return false;
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [user, invalidateCaches],
   );
@@ -243,7 +242,6 @@ export function ImpersonationProvider({ children }: { children: React.ReactNode 
         toast.error('Erro ao iniciar impersonação de utilizador');
         return false;
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
     [user, invalidateCaches],
   );

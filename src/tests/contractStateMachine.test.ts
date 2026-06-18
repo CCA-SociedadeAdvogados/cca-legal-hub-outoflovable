@@ -7,7 +7,7 @@ import {
   VALID_EVENTS_PER_STATE,
   EVENT_STATE_CHANGES,
 } from '@/lib/contractStateMachine';
-import type { EstadoContrato, TipoEventoCicloVida } from '@/types/contracts';
+import type { EstadoContrato } from '@/types/contracts';
 
 // ---------------------------------------------------------------------------
 // canTransitionTo
@@ -92,8 +92,14 @@ describe('terminal states', () => {
 
   it('canTransitionTo returns false from denunciado to any state', () => {
     const states: EstadoContrato[] = [
-      'rascunho', 'em_revisao', 'em_aprovacao', 'enviado_para_assinatura',
-      'activo', 'expirado', 'denunciado', 'rescindido',
+      'rascunho',
+      'em_revisao',
+      'em_aprovacao',
+      'enviado_para_assinatura',
+      'activo',
+      'expirado',
+      'denunciado',
+      'rescindido',
     ];
     states.forEach((s) => {
       expect(canTransitionTo('denunciado', s)).toBe(false);
@@ -102,8 +108,14 @@ describe('terminal states', () => {
 
   it('canTransitionTo returns false from rescindido to any state', () => {
     const states: EstadoContrato[] = [
-      'rascunho', 'em_revisao', 'em_aprovacao', 'enviado_para_assinatura',
-      'activo', 'expirado', 'denunciado', 'rescindido',
+      'rascunho',
+      'em_revisao',
+      'em_aprovacao',
+      'enviado_para_assinatura',
+      'activo',
+      'expirado',
+      'denunciado',
+      'rescindido',
     ];
     states.forEach((s) => {
       expect(canTransitionTo('rescindido', s)).toBe(false);
@@ -140,8 +152,14 @@ describe('getValidEventsForState', () => {
 
   it('all states are covered in VALID_EVENTS_PER_STATE', () => {
     const allStates: EstadoContrato[] = [
-      'rascunho', 'em_revisao', 'em_aprovacao', 'enviado_para_assinatura',
-      'activo', 'expirado', 'denunciado', 'rescindido',
+      'rascunho',
+      'em_revisao',
+      'em_aprovacao',
+      'enviado_para_assinatura',
+      'activo',
+      'expirado',
+      'denunciado',
+      'rescindido',
     ];
     allStates.forEach((state) => {
       expect(VALID_EVENTS_PER_STATE[state]).toBeDefined();
@@ -187,8 +205,14 @@ describe('getStateChangeForEvent', () => {
 
   it('all events in EVENT_STATE_CHANGES map to a valid EstadoContrato', () => {
     const validStates: EstadoContrato[] = [
-      'rascunho', 'em_revisao', 'em_aprovacao', 'enviado_para_assinatura',
-      'activo', 'expirado', 'denunciado', 'rescindido',
+      'rascunho',
+      'em_revisao',
+      'em_aprovacao',
+      'enviado_para_assinatura',
+      'activo',
+      'expirado',
+      'denunciado',
+      'rescindido',
     ];
     Object.entries(EVENT_STATE_CHANGES).forEach(([, state]) => {
       expect(validStates).toContain(state);
@@ -201,8 +225,14 @@ describe('getStateChangeForEvent', () => {
 // ---------------------------------------------------------------------------
 describe('data integrity', () => {
   const allStates: EstadoContrato[] = [
-    'rascunho', 'em_revisao', 'em_aprovacao', 'enviado_para_assinatura',
-    'activo', 'expirado', 'denunciado', 'rescindido',
+    'rascunho',
+    'em_revisao',
+    'em_aprovacao',
+    'enviado_para_assinatura',
+    'activo',
+    'expirado',
+    'denunciado',
+    'rescindido',
   ];
 
   it('all transition targets are valid EstadoContrato values', () => {

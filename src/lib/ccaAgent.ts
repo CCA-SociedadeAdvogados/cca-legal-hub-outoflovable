@@ -24,8 +24,11 @@ export async function callCCAAgent({
   // usa a sessão do utilizador autenticado, não expõe chaves de serviço.
   let documentReference: string | undefined;
   if (documentPath) {
+    // Os ficheiros são carregados para o bucket 'contratos' (ver useAnexos /
+    // ContractInitialUpload). O bucket 'contracts' nunca recebe uploads, pelo
+    // que assinar a partir dele gerava um URL para um objecto inexistente.
     const { data: signedData } = await supabase.storage
-      .from('contracts')
+      .from('contratos')
       .createSignedUrl(documentPath, 3600);
     documentReference = signedData?.signedUrl;
   }
