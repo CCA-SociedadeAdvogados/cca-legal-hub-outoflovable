@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -30,7 +30,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import {
   Plus,
   Users,
-  Edit,
   Trash2,
   Mail,
   Shield,
@@ -42,7 +41,6 @@ import {
   Lock,
   Clock,
   AlertTriangle,
-  CheckCircle2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -163,7 +161,7 @@ export default function Utilizadores() {
       });
       setIsInviteDialogOpen(false);
       setInviteData({ email: '', role: 'viewer' });
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };
@@ -182,7 +180,7 @@ export default function Utilizadores() {
       });
       setIsEditDialogOpen(false);
       setSelectedMember(null);
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };
@@ -191,7 +189,7 @@ export default function Utilizadores() {
     if (!confirm(t('users.confirmRemove'))) return;
     try {
       await removeMember.mutateAsync(memberId);
-    } catch (error) {
+    } catch {
       // Error handled in hook
     }
   };

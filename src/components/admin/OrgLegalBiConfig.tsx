@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { BarChart3, CheckCircle, Loader2, Save } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { BarChart3, CheckCircle, Loader2, Save } from 'lucide-react';
 
 interface OrgLegalBiConfigProps {
   organizationId: string | null;
@@ -15,14 +15,14 @@ interface OrgLegalBiConfigProps {
 
 export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
   const queryClient = useQueryClient();
-  const [legalbiUrl, setLegalbiUrl] = useState("");
+  const [legalbiUrl, setLegalbiUrl] = useState('');
   const [currentSavedUrl, setCurrentSavedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!organizationId) {
-      setLegalbiUrl("");
+      setLegalbiUrl('');
       setCurrentSavedUrl(null);
       return;
     }
@@ -30,13 +30,13 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
     setIsLoading(true);
     (async () => {
       const { data } = await supabase
-        .from("organizations")
-        .select("legalbi_url")
-        .eq("id", organizationId)
+        .from('organizations')
+        .select('legalbi_url')
+        .eq('id', organizationId)
         .maybeSingle();
-      const url = (data as any)?.legalbi_url as string | null | undefined;
+      const url = (data as { legalbi_url?: string | null } | null)?.legalbi_url;
       setCurrentSavedUrl(url ?? null);
-      setLegalbiUrl(url ?? "");
+      setLegalbiUrl(url ?? '');
       setIsLoading(false);
     })();
   }, [organizationId]);
@@ -46,17 +46,19 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
     setIsSaving(true);
     try {
       const { error } = await supabase
-        .from("organizations")
-        .update({ legalbi_url: legalbiUrl || null } as any)
-        .eq("id", organizationId);
+        .from('organizations')
+        .update({ legalbi_url: legalbiUrl || null } as never)
+        .eq('id', organizationId);
       if (error) throw error;
       setCurrentSavedUrl(legalbiUrl || null);
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
-      queryClient.invalidateQueries({ queryKey: ["current-organization"] });
-      toast.success("URL do LegalBi guardado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['current-organization'] });
+      toast.success('URL do LegalBi guardado com sucesso');
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message;
-      toast.error(msg ? `Erro ao guardar URL do LegalBi: ${msg}` : "Erro ao guardar URL do LegalBi");
+      toast.error(
+        msg ? `Erro ao guardar URL do LegalBi: ${msg}` : 'Erro ao guardar URL do LegalBi',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -90,9 +92,7 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
       </div>
 
       {currentSavedUrl && (
-        <p className="text-xs text-muted-foreground font-mono truncate">
-          {currentSavedUrl}
-        </p>
+        <p className="text-xs text-muted-foreground font-mono truncate">{currentSavedUrl}</p>
       )}
 
       <div className="grid gap-2">
@@ -105,7 +105,8 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
           placeholder="https://app.legalbi.com/..."
         />
         <p className="text-xs text-muted-foreground">
-          URL do dashboard LegalBi desta organização. Visível para todos os utilizadores na barra lateral.
+          URL do dashboard LegalBi desta organização. Visível para todos os utilizadores na barra
+          lateral.
         </p>
       </div>
 
@@ -117,8 +118,7 @@ export function OrgLegalBiConfig({ organizationId }: OrgLegalBiConfigProps) {
       >
         {isSaving ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            A guardar...
+            <Loader2 className="h-4 w-4 animate-spin mr-2" />A guardar...
           </>
         ) : (
           <>

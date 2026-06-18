@@ -197,7 +197,15 @@ export function ContractMainUpload({ contratoId, storagePath }: ContractMainUplo
         </div>
       ) : (
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => !isUploading && fileInputRef.current?.click()}
+          onKeyDown={(e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && !isUploading) {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}

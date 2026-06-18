@@ -81,7 +81,7 @@ IMPORTANT RULES:
       // Clean up potential markdown code blocks
       const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
       translatedArray = JSON.parse(cleanContent);
-    } catch (parseError) {
+    } catch {
       console.error("Failed to parse translation response:", content);
       // Fallback: return original texts
       return new Response(JSON.stringify({ translations: texts }), {

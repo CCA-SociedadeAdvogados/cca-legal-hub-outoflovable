@@ -213,11 +213,11 @@ Deno.serve(async (req) => {
     if (sourcesError) {
       console.error('Error fetching sources:', sourcesError);
       // Fallback: use direct query
-      const { data: fallbackSources, error: fallbackError } = await supabase
+      const { data: _fallbackSources, error: fallbackError } = await supabase
         .from('legal.sources')
         .select('*')
         .eq('enabled', true);
-      
+
       if (fallbackError) throw fallbackError;
     }
 
@@ -283,7 +283,7 @@ Deno.serve(async (req) => {
           const client = Deno.createHttpClient({
             caCerts: [], // Accept any certificate
           });
-          (fetchOptions as any).client = client;
+          fetchOptions.client = client;
         }
         
         const response = await fetch(item.url, fetchOptions);

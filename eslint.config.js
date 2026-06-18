@@ -32,7 +32,7 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" }],
 
       // Accessibility (jsx-a11y)
       "jsx-a11y/alt-text": "warn",
@@ -69,6 +69,18 @@ export default tseslint.config(
         rootDir: "src",
         prefix: "@",
       }],
+    },
+  },
+  // Componentes shadcn gerados (src/components/ui) — não são editados
+  // manualmente (ver CLAUDE.md). Relaxar regras inerentes ao código gerado.
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-empty-object-type": "off",
+      "react-refresh/only-export-components": "off",
+      // shadcn expõe conteúdo via children/props — estas regras dão falsos positivos
+      "jsx-a11y/heading-has-content": "off",
+      "jsx-a11y/anchor-has-content": "off",
     },
   },
   // Prettier must be last to disable conflicting rules

@@ -99,7 +99,7 @@ serve(async (req) => {
       contractInfo = contrato;
     }
 
-    const lastUserMessage = [...messages].reverse().find((m: any) => m.role === "user")?.content || "";
+    const lastUserMessage = [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")?.content || "";
     const model = routeModel(lastUserMessage);
 
     const systemPrompt = `Você é um assistente jurídico especializado a ajudar a compreender contratos portugueses.
@@ -121,10 +121,10 @@ Responda de forma concisa (máx 3 parágrafos salvo pedido explícito de detalhe
       JSON.stringify({ success: true, response, model_used: model }),
       { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error("[contract-chat] Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
     );
   }
