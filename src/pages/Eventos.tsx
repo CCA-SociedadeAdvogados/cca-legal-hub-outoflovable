@@ -237,7 +237,14 @@ export default function Eventos() {
                     context="evento_legislativo"
                     compact
                     onAnalysisComplete={(result) => {
-                      const dados = result.dados_extraidos || {};
+                      const dados = (result.dados_extraidos || {}) as {
+                        titulo_lei?: string;
+                        referencia_legal?: string;
+                        area_direito?: AreaDireito;
+                        jurisdicao?: Jurisdicao;
+                        data_publicacao?: string;
+                        data_entrada_vigor?: string;
+                      };
                       setFormData((prev) => ({
                         ...prev,
                         titulo: dados.titulo_lei || prev.titulo,

@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -48,16 +49,16 @@ function statusIcon(status: string) {
   }
 }
 
-function statusLabel(status: string, t: (k: string, f?: string) => string) {
+function statusLabel(status: string, t: TFunction) {
   switch (status) {
     case 'uploaded':
-      return t('docChecklist.uploaded', 'Carregado');
+      return t('docChecklist.uploaded', { defaultValue: 'Carregado' });
     case 'expired':
-      return t('docChecklist.expired', 'Expirado');
+      return t('docChecklist.expired', { defaultValue: 'Expirado' });
     case 'expiring_soon':
-      return t('docChecklist.expiringSoon', 'Expira em breve');
+      return t('docChecklist.expiringSoon', { defaultValue: 'Expira em breve' });
     default:
-      return t('docChecklist.missing', 'Em falta');
+      return t('docChecklist.missing', { defaultValue: 'Em falta' });
   }
 }
 

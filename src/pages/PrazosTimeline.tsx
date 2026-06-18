@@ -135,19 +135,17 @@ export default function PrazosTimeline() {
       });
 
     // Financial due dates
-    (financialItems ?? []).forEach((item) => {
-      if (item.data_vencimento && item.estado !== 'pago') {
+    (financialItems ?? []).forEach((item, index) => {
+      if (item.data_vencimento) {
         const date = new Date(item.data_vencimento);
         const daysUntil = differenceInDays(date, now);
         if (daysUntil > -30 && daysUntil <= 180) {
           result.push({
-            id: `fin-${item.id}`,
+            id: `fin-${index}-${item.numero_documento ?? 'doc'}`,
             date,
             daysUntil,
-            title: `${t('prazos.invoiceDue', 'Fatura')}: ${item.numero_documento || item.id}`,
-            subtitle: item.valor_pendente
-              ? `€${Number(item.valor_pendente).toLocaleString('pt-PT')}`
-              : undefined,
+            title: `${t('prazos.invoiceDue', 'Fatura')}: ${item.numero_documento || item.descricao || '—'}`,
+            subtitle: `€${Number(item.valor).toLocaleString('pt-PT')}`,
             type: 'financial',
             urgency: daysUntil <= 0 ? 'critical' : daysUntil <= 15 ? 'warning' : 'normal',
           });

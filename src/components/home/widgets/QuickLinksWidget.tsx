@@ -14,6 +14,7 @@ import {
   Newspaper,
   DollarSign,
   ArrowUpRight,
+  type LucideIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CCACardHeader } from '@/components/cca';
@@ -29,7 +30,7 @@ interface QuickLink {
   icon?: string;
 }
 
-const iconMap: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+const iconMap: Record<string, LucideIcon> = {
   FileText,
   Folder,
   Calendar,
