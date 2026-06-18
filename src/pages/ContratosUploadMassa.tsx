@@ -247,7 +247,10 @@ export default function ContratosUploadMassa() {
 
   async function uploadToStorage(file: File, userId: string) {
     const safeName = safeFileName(file.name);
-    const path = `${userId}/${Date.now()}_${uid()}_${safeName}`;
+    // Prefixo 'temp/' é obrigatório: as políticas RLS do bucket 'contratos'
+    // só permitem INSERT em 'temp/%' ou '<contrato_id>/%'. Como o contrato
+    // ainda não existe nesta fase, usamos a pasta temporária.
+    const path = `temp/${userId}/${Date.now()}_${uid()}_${safeName}`;
 
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
       contentType: file.type || 'application/octet-stream',
@@ -270,7 +273,10 @@ export default function ContratosUploadMassa() {
     });
 
     if (error) throw error;
-    return data as ExtractedContractData;
+    if (data?.error) throw new Error(data.error);
+    // A edge function devolve { success, data, extractedText, isScannedPDF }.
+    // Os campos extraídos estão em `data.data`, não na raiz da resposta.
+    return (data?.data ?? data) as ExtractedContractData;
   }
 
   async function processOne(item: FileUploadItem) {

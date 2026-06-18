@@ -37,3 +37,6 @@ pnpm-lock.yaml
 supabase/.temp/
 .vercel
 .env*.local
+
+# TypeScript incremental build info
+*.tsbuildinfo
