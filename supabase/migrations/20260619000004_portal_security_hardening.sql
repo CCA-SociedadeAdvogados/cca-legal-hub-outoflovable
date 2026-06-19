@@ -2,6 +2,24 @@
 -- (cross-tenant) confirmadas pelos advisors do Supabase.
 -- Mantém o comportamento atual do cockpit e do portal (acesso scopado por org).
 
+-- ── 0. Garantir o helper is_cca_user (existe em produção mas não era criado
+--      pelo conjunto de migrações → numa build de raiz as políticas falhavam).
+CREATE OR REPLACE FUNCTION public.is_cca_user(_uid uuid DEFAULT auth.uid())
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.organization_members om
+    JOIN public.organizations o ON o.id = om.organization_id
+    WHERE om.user_id = _uid
+      AND o.org_type = 'cca_owner'
+  )
+$function$;
+
 -- ── 1. contract_extractions: substituir políticas "sempre verdadeiras" ────────
 -- Antes: SELECT/INSERT/UPDATE/DELETE com using(true) → qualquer autenticado lia
 -- e modificava extrações de TODAS as organizações. Agora scopado pela org do
@@ -56,19 +74,28 @@ USING (EXISTS (
 DROP POLICY IF EXISTS "Service role can manage nav cache" ON public.financeiro_nav_cache;
 
 -- ── 3. Tabelas sensíveis sem RLS → ativar (apenas service role lhes acede) ─────
--- email_mfa_codes: códigos MFA — nunca acedido pelo cliente.
-ALTER TABLE public.email_mfa_codes ENABLE ROW LEVEL SECURITY;
+-- Estas tabelas existem em produção mas não são criadas pelo conjunto de
+-- migrações; agir apenas se existirem (robusto também numa build de raiz).
+DO $$
+BEGIN
+  -- email_mfa_codes: códigos MFA — nunca acedido pelo cliente.
+  IF to_regclass('public.email_mfa_codes') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.email_mfa_codes ENABLE ROW LEVEL SECURITY';
+  END IF;
 
--- user_invites / users_import: dados de convite/importação — só platform admin.
-ALTER TABLE public.user_invites ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS user_invites_admin_all ON public.user_invites;
-CREATE POLICY user_invites_admin_all ON public.user_invites FOR ALL TO authenticated
-USING (is_platform_admin(auth.uid())) WITH CHECK (is_platform_admin(auth.uid()));
+  -- user_invites / users_import: convite/importação — só platform admin.
+  IF to_regclass('public.user_invites') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.user_invites ENABLE ROW LEVEL SECURITY';
+    EXECUTE 'DROP POLICY IF EXISTS user_invites_admin_all ON public.user_invites';
+    EXECUTE 'CREATE POLICY user_invites_admin_all ON public.user_invites FOR ALL TO authenticated USING (is_platform_admin(auth.uid())) WITH CHECK (is_platform_admin(auth.uid()))';
+  END IF;
 
-ALTER TABLE public.users_import ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS users_import_admin_all ON public.users_import;
-CREATE POLICY users_import_admin_all ON public.users_import FOR ALL TO authenticated
-USING (is_platform_admin(auth.uid())) WITH CHECK (is_platform_admin(auth.uid()));
+  IF to_regclass('public.users_import') IS NOT NULL THEN
+    EXECUTE 'ALTER TABLE public.users_import ENABLE ROW LEVEL SECURITY';
+    EXECUTE 'DROP POLICY IF EXISTS users_import_admin_all ON public.users_import';
+    EXECUTE 'CREATE POLICY users_import_admin_all ON public.users_import FOR ALL TO authenticated USING (is_platform_admin(auth.uid())) WITH CHECK (is_platform_admin(auth.uid()))';
+  END IF;
+END $$;
 
 -- ── 4. Views SECURITY DEFINER financeiras: tirar do acesso direto via API ──────
 -- Estas views ignoram RLS. Não são consultadas diretamente pelo cliente (só
