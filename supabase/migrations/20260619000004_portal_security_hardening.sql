@@ -1,24 +1,7 @@
 -- Endurecimento de segurança do portal — fecha fugas entre organizações
 -- (cross-tenant) confirmadas pelos advisors do Supabase.
 -- Mantém o comportamento atual do cockpit e do portal (acesso scopado por org).
-
--- ── 0. Garantir o helper is_cca_user (existe em produção mas não era criado
---      pelo conjunto de migrações → numa build de raiz as políticas falhavam).
-CREATE OR REPLACE FUNCTION public.is_cca_user(_uid uuid DEFAULT auth.uid())
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $function$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.organization_members om
-    JOIN public.organizations o ON o.id = om.organization_id
-    WHERE om.user_id = _uid
-      AND o.org_type = 'cca_owner'
-  )
-$function$;
+-- Nota: o helper is_cca_user é garantido na migração 20260619000001 (anterior).
 
 -- ── 1. contract_extractions: substituir políticas "sempre verdadeiras" ────────
 -- Antes: SELECT/INSERT/UPDATE/DELETE com using(true) → qualquer autenticado lia
