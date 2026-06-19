@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { Contrato } from '@/hooks/useContratos';
 import { ContratoStatusBadge } from './ContratoStatusBadge';
+import { ContratoResumoExecutivo } from './ContratoResumoExecutivo';
 import { formatCurrency, formatDate, getNextDeadline, tipoI18nKey } from '@/portal/lib/contrato';
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
@@ -71,6 +72,8 @@ export function ContratoDetailDrawer({ contrato, open, onClose }: ContratoDetail
         </SheetHeader>
 
         <div className="space-y-5 py-5">
+          <ContratoResumoExecutivo contratoId={contrato.id} />
+
           {contrato.objeto_resumido && (
             <Field label={t('portal.contracts.summary')} value={contrato.objeto_resumido} />
           )}

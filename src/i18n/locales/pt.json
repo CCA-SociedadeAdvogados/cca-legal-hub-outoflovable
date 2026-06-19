@@ -1795,6 +1795,21 @@
       "inForce": "em vigor",
       "unknownEvent": "Alteração legislativa"
     },
+    "summary": {
+      "heading": "Resumo executivo",
+      "ctaTitle": "Resumo executivo em 1 clique",
+      "ctaBody": "Gere um resumo claro deste contrato em linguagem simples — o essencial, datas críticas, valor e o que deve fazer a seguir.",
+      "generate": "Gerar resumo",
+      "generating": "A gerar o resumo executivo...",
+      "loading": "A carregar resumo...",
+      "keyPoints": "O que importa",
+      "keyDates": "Datas importantes",
+      "value": "Valor e pagamento",
+      "nextAction": "Próxima ação",
+      "alerts": "Alertas",
+      "disclaimer": "Resumo gerado por IA a partir dos dados do contrato. Confirme com a CCA antes de decisões importantes.",
+      "error": "Não foi possível gerar o resumo"
+    },
     "assistant": {
       "eyebrow": "Assistente",
       "title": "Pergunte sobre os seus contratos",
