@@ -8,9 +8,11 @@ import ccaLogo from '@/assets/cca-logo.png';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Home,
+  Sparkles,
   FileText,
   FolderOpen,
   CalendarClock,
+  Scale,
   Wallet,
   Newspaper,
   Moon,
@@ -149,6 +151,13 @@ export function PortalSidebar() {
           isCollapsed={isCollapsed}
         />
         <NavItem
+          to="/portal/assistente"
+          icon={Sparkles}
+          label={t('portal.nav.assistant')}
+          isActive={isActive('/portal/assistente')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
           to="/portal/contratos"
           icon={FileText}
           label={t('portal.nav.contracts')}
@@ -167,6 +176,13 @@ export function PortalSidebar() {
           icon={CalendarClock}
           label={t('portal.nav.deadlines')}
           isActive={isActive('/portal/prazos')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/radar"
+          icon={Scale}
+          label={t('portal.nav.radar')}
+          isActive={isActive('/portal/radar')}
           isCollapsed={isCollapsed}
         />
         <NavItem

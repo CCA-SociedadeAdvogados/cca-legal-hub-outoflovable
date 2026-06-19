@@ -1788,6 +1788,31 @@
     "news": {
       "empty": "No news published yet."
     },
+    "radar": {
+      "empty": "No legislative alerts. When legislation affecting your contracts arises, it will appear here.",
+      "affectsContract": "Affects contract",
+      "officialSource": "Official source",
+      "inForce": "in force",
+      "unknownEvent": "Legislative change"
+    },
+    "assistant": {
+      "eyebrow": "Assistant",
+      "title": "Ask about your contracts",
+      "introTitle": "Hi! I'm your portal assistant.",
+      "introBody": "Ask me in natural language about your contract portfolio with CCA — deadlines, renewals, risks, values or clauses.",
+      "placeholder": "Type your question...",
+      "send": "Send",
+      "thinking": "Analysing your contracts...",
+      "error": "Could not get a response",
+      "errorReply": "Sorry, an error occurred while processing your question. Please try again.",
+      "disclaimer": "AI-generated answers based on your contracts. Confirm with CCA before important decisions.",
+      "suggestions": [
+        "Which contracts expire in the next 90 days?",
+        "Which ones have an exclusivity clause?",
+        "What GDPR risks should I watch out for?",
+        "What is the total value of my portfolio?"
+      ]
+    },
     "profile": {
       "account": "Account",
       "name": "Name",
@@ -1846,9 +1871,11 @@
     },
     "nav": {
       "home": "Home",
+      "assistant": "Assistant",
       "contracts": "My contracts",
       "documents": "Documents",
       "deadlines": "Deadlines",
+      "radar": "Legislative radar",
       "financial": "Account statement",
       "news": "CCA News",
       "profile": "Profile & settings"
@@ -1881,6 +1908,11 @@
         "title": "Documents",
         "description": "Access documents shared between your organization and CCA.",
         "upcoming": ["Your organization's documents", "Preview and download", "Folder organization"]
+      },
+      "radar": {
+        "eyebrow": "Legislation",
+        "title": "Legislative radar",
+        "description": "Legislative changes affecting your contracts, with the risk level identified by CCA."
       },
       "deadlines": {
         "eyebrow": "Deadlines",

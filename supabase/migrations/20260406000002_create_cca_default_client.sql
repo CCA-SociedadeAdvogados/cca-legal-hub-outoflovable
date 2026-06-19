@@ -25,18 +25,29 @@ WHERE NOT EXISTS (
 );
 
 -- ── 2. Criar a organização-cliente ───────────────────────────────
--- A tabela organizations não tem coluna slug — apenas name, client_code, org_type
-INSERT INTO public.organizations (id, name, client_code, org_type, is_active)
-SELECT
-  gen_random_uuid(),
-  'CCA - Sociedade de Advogados',
-  'C.0001',
-  'client',
-  true
-WHERE NOT EXISTS (
-  SELECT 1 FROM public.organizations
-  WHERE client_code = 'C.0001' AND org_type = 'client'
-);
+-- Schema-agnóstico: em produção a tabela organizations não tem coluna slug,
+-- mas numa build de raiz (Supabase Preview) slug é NOT NULL. Insere slug apenas
+-- quando a coluna existe — funcionando nos dois ambientes. Idempotente.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM public.organizations
+    WHERE client_code = 'C.0001' AND org_type = 'client'
+  ) THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'organizations' AND column_name = 'slug'
+  ) THEN
+    INSERT INTO public.organizations (id, name, client_code, org_type, is_active, slug)
+    VALUES (gen_random_uuid(), 'CCA - Sociedade de Advogados', 'C.0001', 'client', true, 'cca-c0001');
+  ELSE
+    INSERT INTO public.organizations (id, name, client_code, org_type, is_active)
+    VALUES (gen_random_uuid(), 'CCA - Sociedade de Advogados', 'C.0001', 'client', true);
+  END IF;
+END $$;
 
 -- ── 3. Copiar membros da org CCA (C.0000) para C.0001 ───────────
 -- Todos os utilizadores internos CCA ficam automaticamente com acesso
