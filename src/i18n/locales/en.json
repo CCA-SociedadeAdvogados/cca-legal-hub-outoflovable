@@ -1955,9 +1955,22 @@
       "financial": "Account statement",
       "requests": "Requests to CCA",
       "news": "CCA News",
+      "policies": "Policies",
       "profile": "Profile & settings"
     },
+    "policies": {
+      "empty": "CCA hasn't published any policies yet.",
+      "version": "Version {{n}}",
+      "read": "Read",
+      "download": "Download",
+      "downloadError": "Could not download the file"
+    },
     "pages": {
+      "policies": {
+        "eyebrow": "Policies",
+        "title": "Policies",
+        "description": "Policies and normative documents made available by CCA for your organization."
+      },
       "requests": {
         "eyebrow": "Requests",
         "title": "Requests to CCA",

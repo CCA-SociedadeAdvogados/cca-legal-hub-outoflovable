@@ -1955,9 +1955,22 @@
       "financial": "Conta corrente",
       "requests": "Pedidos à CCA",
       "news": "Novidades CCA",
+      "policies": "Políticas",
       "profile": "Perfil e definições"
     },
+    "policies": {
+      "empty": "Ainda não há políticas publicadas pela CCA.",
+      "version": "Versão {{n}}",
+      "read": "Ler",
+      "download": "Descarregar",
+      "downloadError": "Não foi possível descarregar o ficheiro"
+    },
     "pages": {
+      "policies": {
+        "eyebrow": "Políticas",
+        "title": "Políticas",
+        "description": "Políticas e documentos normativos disponibilizados pela CCA para a sua organização."
+      },
       "requests": {
         "eyebrow": "Pedidos",
         "title": "Pedidos à CCA",
