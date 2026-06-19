@@ -1761,6 +1761,14 @@
         "b": "Contraparte"
       }
     },
+    "documents": {
+      "root": "Raiz",
+      "back": "Voltar",
+      "open": "Abrir no SharePoint",
+      "empty": "Nenhum documento nesta pasta.",
+      "notReady": "Os seus documentos ainda não estão disponíveis",
+      "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui."
+    },
     "nav": {
       "home": "Início",
       "contracts": "Os meus contratos",
