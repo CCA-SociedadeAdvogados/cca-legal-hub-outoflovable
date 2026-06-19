@@ -1769,6 +1769,19 @@
       "notReady": "Os seus documentos ainda não estão disponíveis",
       "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui."
     },
+    "home": {
+      "greeting": "Bem-vindo, {{name}}",
+      "greetingNoName": "Bem-vindo ao seu portal",
+      "viewAll": "Ver tudo",
+      "kpi": {
+        "activeContracts": "Contratos ativos",
+        "upcomingDeadlines": "Prazos (próximos 30 dias)"
+      },
+      "sections": {
+        "deadlines": "Próximos prazos",
+        "recentContracts": "Contratos recentes"
+      }
+    },
     "financial": {
       "documents": "Conta corrente",
       "lastSync": "Última atualização",

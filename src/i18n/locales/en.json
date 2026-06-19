@@ -1769,6 +1769,19 @@
       "notReady": "Your documents are not available yet",
       "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here."
     },
+    "home": {
+      "greeting": "Welcome, {{name}}",
+      "greetingNoName": "Welcome to your portal",
+      "viewAll": "View all",
+      "kpi": {
+        "activeContracts": "Active contracts",
+        "upcomingDeadlines": "Deadlines (next 30 days)"
+      },
+      "sections": {
+        "deadlines": "Upcoming deadlines",
+        "recentContracts": "Recent contracts"
+      }
+    },
     "financial": {
       "documents": "Account statement",
       "lastSync": "Last updated",
