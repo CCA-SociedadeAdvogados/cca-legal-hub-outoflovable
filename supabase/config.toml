@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.index-client-documents]
 verify_jwt = false
+
+[functions.classify-document]
+verify_jwt = false

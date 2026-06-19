@@ -1782,7 +1782,21 @@
       "preparing": "A preparar o seu arquivo de documentos...",
       "empty": "Nenhum documento nesta pasta.",
       "notReady": "Os seus documentos ainda não estão disponíveis",
-      "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui."
+      "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui.",
+      "newFolder": "Nova pasta",
+      "newFolderHint": "A pasta será criada em: {{path}}",
+      "folderName": "Nome da pasta",
+      "folderNamePlaceholder": "Ex.: Contratos, RGPD, Faturas",
+      "create": "Criar",
+      "actions": "Ações",
+      "move": "Mover",
+      "uploadTitle": "Carregar documento",
+      "uploadHintDialog": "Dê um nome ao documento e escolha a pasta — ou deixe a IA ler e classificar por si.",
+      "classifyAI": "Classificar com IA",
+      "classifying": "A IA está a ler e a classificar o documento...",
+      "docName": "Nome do documento",
+      "docNamePlaceholder": "Ex.: Contrato de prestação de serviços",
+      "destFolder": "Pasta de destino"
     },
     "home": {
       "greeting": "Bem-vindo, {{name}}",

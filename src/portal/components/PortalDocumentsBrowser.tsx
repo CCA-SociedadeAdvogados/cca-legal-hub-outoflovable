@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import {
   Folder,
@@ -13,14 +14,48 @@ import {
   Loader2,
   Cloud,
   Upload,
+  FolderPlus,
+  Sparkles,
+  MoreVertical,
+  FolderInput,
 } from 'lucide-react';
 import {
   useSharePointConfig,
   useSharePointDocuments,
+  useSharePointFolders,
   useUploadToSharePoint,
+  useCreateSharePointFolder,
+  useMoveSharePointItem,
+  useClassifyDocument,
+  type SharePointDocument,
 } from '@/hooks/useSharePoint';
 import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { dateFnsLocale } from '@/portal/lib/contrato';
 
@@ -36,6 +71,8 @@ const FILE_ICONS: Record<string, React.ElementType> = {
   gif: FileImage,
 };
 
+const NEW_FOLDER = '__new__';
+
 function getFileIcon(extension: string | null): React.ElementType {
   if (!extension) return File;
   return FILE_ICONS[extension.toLowerCase()] || File;
@@ -48,27 +85,62 @@ function formatFileSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Separa o nome base e a extensão (com ponto) de um nome de ficheiro. */
+function splitName(fileName: string): { base: string; ext: string } {
+  const i = fileName.lastIndexOf('.');
+  if (i <= 0) return { base: fileName, ext: '' };
+  return { base: fileName.slice(0, i), ext: fileName.slice(i) };
+}
+
 /**
  * Browser de documentos do cliente. Lê os documentos do SharePoint já
  * sincronizados (sharepoint_documents), scopados à organização via RLS.
  *
  * - Auto-provisão: se a org ainda não tiver pastas, são criadas no primeiro acesso.
- * - Upload: o cliente pode entregar documentos para a sua pasta.
+ * - Criar/nomear pastas, upload com nome + pasta (e classificação por IA) e mover.
  */
 export function PortalDocumentsBrowser() {
   const { t, i18n } = useTranslation();
+  const queryClient = useQueryClient();
   const [currentPath, setCurrentPath] = useState('/');
   const [pathHistory, setPathHistory] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { currentOrganization } = useOrganizations();
+  const orgId = currentOrganization?.id;
   const { data: config, isLoading: isLoadingConfig } = useSharePointConfig();
   const { data: documents, isLoading: isLoadingDocs } = useSharePointDocuments(currentPath);
+  const { data: folders = [] } = useSharePointFolders();
   const { provision } = useProvisionSharePoint();
   const uploadToSharePoint = useUploadToSharePoint();
+  const createFolder = useCreateSharePointFolder();
+  const moveItem = useMoveSharePointItem();
+  const classify = useClassifyDocument();
 
   const locale = dateFnsLocale(i18n.language);
   const breadcrumbParts = currentPath.split('/').filter(Boolean);
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+    queryClient.invalidateQueries({ queryKey: ['sharepoint-folders'] });
+  };
+
+  // ── Dialog: nova pasta ──────────────────────────────────────────────────────
+  const [newFolderOpen, setNewFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+
+  // ── Dialog: upload (com classificação por IA) ───────────────────────────────
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [docBase, setDocBase] = useState('');
+  const [docExt, setDocExt] = useState('');
+  const [docType, setDocType] = useState('');
+  const [destFolder, setDestFolder] = useState<string>('/');
+  const [uploadNewFolder, setUploadNewFolder] = useState('');
+
+  // ── Dialog: mover ───────────────────────────────────────────────────────────
+  const [moveDoc, setMoveDoc] = useState<SharePointDocument | null>(null);
+  const [moveDest, setMoveDest] = useState<string>('/');
 
   // ── Auto-provisão da pasta do cliente no primeiro acesso ────────────────────
   const provisionAttempted = useRef<string | null>(null);
@@ -101,13 +173,82 @@ export function PortalDocumentsBrowser() {
     setCurrentPath(previousPath);
   };
 
-  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // permitir re-selecionar o mesmo ficheiro
-    if (file) uploadToSharePoint.mutate({ file, folderPath: currentPath });
+  // ── Ações ───────────────────────────────────────────────────────────────────
+  const submitNewFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name || !orgId) return;
+    const path = currentPath === '/' ? `/${name}` : `${currentPath}/${name}`;
+    await createFolder.mutateAsync({ organization_id: orgId, folder_path: path });
+    refresh();
+    setNewFolderName('');
+    setNewFolderOpen(false);
   };
 
-  // A preparar (sem config ainda, mas a provisionar)
+  const onFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const { base, ext } = splitName(file.name);
+    setPendingFile(file);
+    setDocBase(base);
+    setDocExt(ext);
+    setDocType('');
+    setDestFolder(currentPath);
+    setUploadNewFolder('');
+    setUploadOpen(true);
+  };
+
+  const runClassification = async () => {
+    if (!pendingFile) return;
+    try {
+      const s = await classify.mutateAsync({ file: pendingFile, existingFolders: folders });
+      if (s.suggested_name) setDocBase(s.suggested_name);
+      setDocType(s.doc_type || '');
+      if (s.suggested_folder) {
+        if (!s.is_new_folder && folders.includes(s.suggested_folder)) {
+          setDestFolder(s.suggested_folder);
+        } else {
+          setDestFolder(NEW_FOLDER);
+          setUploadNewFolder(s.suggested_folder.replace(/^\/+/, ''));
+        }
+      }
+    } catch {
+      /* erro já tratado pelo hook de UI; mantém os valores atuais */
+    }
+  };
+
+  const submitUpload = async () => {
+    if (!pendingFile || !orgId) return;
+    const finalName = `${docBase.trim() || splitName(pendingFile.name).base}${docExt}`;
+
+    let folderPath = destFolder;
+    if (destFolder === NEW_FOLDER) {
+      const fname = uploadNewFolder.trim();
+      if (!fname) return;
+      folderPath = `/${fname.replace(/^\/+/, '')}`;
+      await createFolder.mutateAsync({ organization_id: orgId, folder_path: folderPath });
+    }
+
+    await uploadToSharePoint.mutateAsync({ file: pendingFile, folderPath, fileName: finalName });
+    refresh();
+    setUploadOpen(false);
+    setPendingFile(null);
+  };
+
+  const submitMove = async () => {
+    if (!moveDoc) return;
+    await moveItem.mutateAsync({
+      sharepoint_item_id: moveDoc.sharepoint_item_id,
+      destination_path: moveDest,
+    });
+    refresh();
+    setMoveDoc(null);
+  };
+
+  const folderLabel = (path: string) =>
+    path === '/' ? t('portal.documents.root') : path.replace(/^\//, '');
+
+  // ── Estados de preparação ────────────────────────────────────────────────────
   if (
     isLoadingConfig ||
     (!config && (provision.isPending || (canProvision && provisionAttempted.current)))
@@ -120,7 +261,6 @@ export function PortalDocumentsBrowser() {
     );
   }
 
-  // Sem config e não dá para provisionar (org sem client_code)
   if (!config) {
     return (
       <div className="flex flex-col items-center justify-center rounded-control border border-dashed border-line bg-surface/50 py-16 text-center">
@@ -135,7 +275,7 @@ export function PortalDocumentsBrowser() {
 
   return (
     <div className="space-y-3">
-      {/* Barra: breadcrumb + upload */}
+      {/* Barra: breadcrumb + ações */}
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1 overflow-x-auto">
           <div className="flex min-w-max items-center gap-1 text-[12.5px]">
@@ -171,20 +311,22 @@ export function PortalDocumentsBrowser() {
           </div>
         </div>
 
-        <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected} />
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploadToSharePoint.isPending}
-          className="inline-flex h-8 shrink-0 items-center gap-2 rounded-control bg-brand px-3 text-[12.5px] font-medium text-white transition-colors hover:bg-brand/90 disabled:opacity-60"
-        >
-          {uploadToSharePoint.isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
+        <input ref={fileInputRef} type="file" className="hidden" onChange={onFileSelected} />
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setNewFolderOpen(true)}
+          >
+            <FolderPlus className="h-4 w-4" />
+            {t('portal.documents.newFolder')}
+          </Button>
+          <Button size="sm" className="gap-2" onClick={() => fileInputRef.current?.click()}>
             <Upload className="h-4 w-4" />
-          )}
-          {t('portal.documents.upload')}
-        </button>
+            {t('portal.documents.upload')}
+          </Button>
+        </div>
       </div>
 
       {pathHistory.length > 0 && (
@@ -269,7 +411,7 @@ export function PortalDocumentsBrowser() {
                     </div>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-1">
                     {!doc.is_folder && doc.web_url && (
                       <a
                         href={doc.web_url}
@@ -282,6 +424,32 @@ export function PortalDocumentsBrowser() {
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
+                    {!doc.is_folder && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={t('portal.documents.actions')}
+                            className="flex h-8 w-8 items-center justify-center rounded-control text-ink-mute transition-colors hover:text-ink"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMoveDoc(doc);
+                              setMoveDest('/');
+                            }}
+                          >
+                            <FolderInput className="mr-2 h-4 w-4" />
+                            {t('portal.documents.move')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     {doc.is_folder && <ChevronRight className="h-4 w-4 text-ink-mute" />}
                   </div>
                 </div>
@@ -290,6 +458,182 @@ export function PortalDocumentsBrowser() {
           </div>
         )}
       </div>
+
+      {/* ── Dialog: nova pasta ─────────────────────────────────────────────── */}
+      <Dialog open={newFolderOpen} onOpenChange={setNewFolderOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('portal.documents.newFolder')}</DialogTitle>
+            <DialogDescription>
+              {t('portal.documents.newFolderHint', { path: folderLabel(currentPath) })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label htmlFor="folder-name">{t('portal.documents.folderName')}</Label>
+            <Input
+              id="folder-name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              placeholder={t('portal.documents.folderNamePlaceholder')}
+              onKeyDown={(e) => e.key === 'Enter' && submitNewFolder()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewFolderOpen(false)}>
+              {t('common.cancel', 'Cancelar')}
+            </Button>
+            <Button
+              onClick={submitNewFolder}
+              disabled={!newFolderName.trim() || createFolder.isPending}
+            >
+              {createFolder.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('portal.documents.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: upload ─────────────────────────────────────────────────── */}
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t('portal.documents.uploadTitle')}</DialogTitle>
+            <DialogDescription>{t('portal.documents.uploadHintDialog')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {pendingFile && (
+              <div className="flex items-center justify-between gap-2 rounded-control border border-line bg-bg-alt/50 px-3 py-2">
+                <span className="min-w-0 truncate font-mono text-[12px] text-ink-mute">
+                  {pendingFile.name}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 gap-1.5"
+                  onClick={runClassification}
+                  disabled={classify.isPending}
+                >
+                  {classify.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-3.5 w-3.5" />
+                  )}
+                  {t('portal.documents.classifyAI')}
+                </Button>
+              </div>
+            )}
+
+            {classify.isPending && (
+              <p className="text-[12px] text-ink-mute">{t('portal.documents.classifying')}</p>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="doc-name" className="flex items-center gap-2">
+                {t('portal.documents.docName')}
+                {docType && (
+                  <Badge variant="outline" className="text-[10px]">
+                    {docType}
+                  </Badge>
+                )}
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="doc-name"
+                  value={docBase}
+                  onChange={(e) => setDocBase(e.target.value)}
+                  placeholder={t('portal.documents.docNamePlaceholder')}
+                />
+                {docExt && (
+                  <span className="shrink-0 font-mono text-[12px] text-ink-mute">{docExt}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>{t('portal.documents.destFolder')}</Label>
+              <Select value={destFolder} onValueChange={setDestFolder}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="/">{t('portal.documents.root')}</SelectItem>
+                  {folders.map((f) => (
+                    <SelectItem key={f} value={f}>
+                      {folderLabel(f)}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={NEW_FOLDER}>＋ {t('portal.documents.newFolder')}</SelectItem>
+                </SelectContent>
+              </Select>
+              {destFolder === NEW_FOLDER && (
+                <Input
+                  value={uploadNewFolder}
+                  onChange={(e) => setUploadNewFolder(e.target.value)}
+                  placeholder={t('portal.documents.folderNamePlaceholder')}
+                  className="mt-1.5"
+                />
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUploadOpen(false)}>
+              {t('common.cancel', 'Cancelar')}
+            </Button>
+            <Button
+              onClick={submitUpload}
+              disabled={
+                uploadToSharePoint.isPending ||
+                createFolder.isPending ||
+                !docBase.trim() ||
+                (destFolder === NEW_FOLDER && !uploadNewFolder.trim())
+              }
+            >
+              {(uploadToSharePoint.isPending || createFolder.isPending) && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              {t('portal.documents.upload')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Dialog: mover ──────────────────────────────────────────────────── */}
+      <Dialog open={moveDoc !== null} onOpenChange={(v) => !v && setMoveDoc(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('portal.documents.move')}</DialogTitle>
+            <DialogDescription className="truncate">{moveDoc?.name}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label>{t('portal.documents.destFolder')}</Label>
+            <Select value={moveDest} onValueChange={setMoveDest}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="/">{t('portal.documents.root')}</SelectItem>
+                {folders.map((f) => (
+                  <SelectItem key={f} value={f}>
+                    {folderLabel(f)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMoveDoc(null)}>
+              {t('common.cancel', 'Cancelar')}
+            </Button>
+            <Button onClick={submitMove} disabled={moveItem.isPending}>
+              {moveItem.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('portal.documents.move')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

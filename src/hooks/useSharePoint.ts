@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/hooks/useProfile";
-import { toast } from "sonner";
-import { useTranslation } from "react-i18next";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useProfile } from '@/hooks/useProfile';
+import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 function useEffectiveOrganizationId(overrideOrgId?: string) {
   const { profile } = useProfile();
@@ -20,7 +20,7 @@ export interface SharePointConfig {
   sync_enabled: boolean;
   sync_interval_minutes: number;
   last_sync_at: string | null;
-  last_sync_status: "success" | "error" | "in_progress" | null;
+  last_sync_status: 'success' | 'error' | 'in_progress' | null;
   last_sync_error: string | null;
   created_at: string;
   updated_at: string;
@@ -49,7 +49,7 @@ export interface SharePointSyncLog {
   config_id: string;
   started_at: string;
   completed_at: string | null;
-  status: "running" | "success" | "error";
+  status: 'running' | 'success' | 'error';
   items_found: number;
   items_added: number;
   items_updated: number;
@@ -75,14 +75,15 @@ export function useSharePointConfig(overrideOrgId?: string) {
   const organizationId = useEffectiveOrganizationId(overrideOrgId);
 
   return useQuery({
-    queryKey: ["sharepoint-config", organizationId],
+    queryKey: ['sharepoint-config', organizationId],
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<SharePointConfig | null> => {
       if (!organizationId) return null;
 
       const { data, error } = await supabase
-        .from("sharepoint_config")
-        .select(`
+        .from('sharepoint_config')
+        .select(
+          `
           id,
           organization_id,
           site_id,
@@ -97,12 +98,13 @@ export function useSharePointConfig(overrideOrgId?: string) {
           last_sync_error,
           created_at,
           updated_at
-        `)
-        .eq("organization_id", organizationId)
+        `,
+        )
+        .eq('organization_id', organizationId)
         .maybeSingle();
 
       if (error) {
-        console.error("Error fetching SharePoint config:", error);
+        console.error('Error fetching SharePoint config:', error);
         return null;
       }
 
@@ -113,18 +115,19 @@ export function useSharePointConfig(overrideOrgId?: string) {
 }
 
 // Hook para obter documentos do SharePoint
-export function useSharePointDocuments(folderPath: string = "/", overrideOrgId?: string) {
+export function useSharePointDocuments(folderPath: string = '/', overrideOrgId?: string) {
   const organizationId = useEffectiveOrganizationId(overrideOrgId);
 
   return useQuery({
-    queryKey: ["sharepoint-documents", organizationId, folderPath],
+    queryKey: ['sharepoint-documents', organizationId, folderPath],
     staleTime: 30 * 1000,
     queryFn: async (): Promise<SharePointDocument[]> => {
       if (!organizationId) return [];
 
       const { data, error } = await supabase
-        .from("sharepoint_documents")
-        .select(`
+        .from('sharepoint_documents')
+        .select(
+          `
           id,
           organization_id,
           config_id,
@@ -140,15 +143,16 @@ export function useSharePointDocuments(folderPath: string = "/", overrideOrgId?:
           sharepoint_modified_by,
           synced_at,
           is_deleted
-        `)
-        .eq("organization_id", organizationId)
-        .eq("folder_path", folderPath)
-        .eq("is_deleted", false)
-        .order("is_folder", { ascending: false })
-        .order("name", { ascending: true });
+        `,
+        )
+        .eq('organization_id', organizationId)
+        .eq('folder_path', folderPath)
+        .eq('is_deleted', false)
+        .order('is_folder', { ascending: false })
+        .order('name', { ascending: true });
 
       if (error) {
-        console.error("Error fetching SharePoint documents:", error);
+        console.error('Error fetching SharePoint documents:', error);
         return [];
       }
 
@@ -163,14 +167,15 @@ export function useSharePointSyncLogs(limit: number = 10, overrideOrgId?: string
   const organizationId = useEffectiveOrganizationId(overrideOrgId);
 
   return useQuery({
-    queryKey: ["sharepoint-sync-logs", organizationId, limit],
+    queryKey: ['sharepoint-sync-logs', organizationId, limit],
     staleTime: 30 * 1000,
     queryFn: async (): Promise<SharePointSyncLog[]> => {
       if (!organizationId) return [];
 
       const { data, error } = await supabase
-        .from("sharepoint_sync_logs")
-        .select(`
+        .from('sharepoint_sync_logs')
+        .select(
+          `
           id,
           config_id,
           started_at,
@@ -181,13 +186,14 @@ export function useSharePointSyncLogs(limit: number = 10, overrideOrgId?: string
           items_updated,
           items_deleted,
           error_message
-        `)
-        .eq("organization_id", organizationId)
-        .order("started_at", { ascending: false })
+        `,
+        )
+        .eq('organization_id', organizationId)
+        .order('started_at', { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error("Error fetching SharePoint sync logs:", error);
+        console.error('Error fetching SharePoint sync logs:', error);
         return [];
       }
 
@@ -204,20 +210,25 @@ export function useSaveSharePointConfig(overrideOrgId?: string) {
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: async (config: { site_id: string; sync_enabled?: boolean; sync_interval_minutes?: number; root_folder_path?: string }) => {
+    mutationFn: async (config: {
+      site_id: string;
+      sync_enabled?: boolean;
+      sync_interval_minutes?: number;
+      root_folder_path?: string;
+    }) => {
       if (!organizationId) {
-        throw new Error("Organization not found");
+        throw new Error('Organization not found');
       }
 
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "save_config",
+          action: 'save_config',
           organization_id: organizationId,
           config: {
             site_id: config.site_id,
             sync_enabled: config.sync_enabled ?? true,
             sync_interval_minutes: config.sync_interval_minutes ?? 5,
-            root_folder_path: config.root_folder_path ?? "/",
+            root_folder_path: config.root_folder_path ?? '/',
           },
         },
       });
@@ -226,12 +237,12 @@ export function useSaveSharePointConfig(overrideOrgId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-config", organizationId] });
-      toast.success(t("sharepoint.configSaved", "Configuração SharePoint guardada"));
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config', organizationId] });
+      toast.success(t('sharepoint.configSaved', 'Configuração SharePoint guardada'));
     },
     onError: (error) => {
-      console.error("Error saving SharePoint config:", error);
-      toast.error(t("sharepoint.configError", "Erro ao guardar configuração"));
+      console.error('Error saving SharePoint config:', error);
+      toast.error(t('sharepoint.configError', 'Erro ao guardar configuração'));
     },
   });
 }
@@ -245,10 +256,10 @@ export function useSyncSharePoint(overrideOrgId?: string) {
   return useMutation({
     mutationFn: async (options?: { force_full_sync?: boolean }): Promise<SyncResult> => {
       if (!organizationId) {
-        throw new Error("Organization not found");
+        throw new Error('Organization not found');
       }
 
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
           organization_id: organizationId,
           force_full_sync: options?.force_full_sync ?? false,
@@ -262,24 +273,30 @@ export function useSyncSharePoint(overrideOrgId?: string) {
       return data as SyncResult;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents", organizationId] });
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-config", organizationId] });
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-sync-logs", organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-sync-logs', organizationId] });
 
       if (result.success && result.data) {
         const { items_added, items_updated, items_deleted } = result.data;
         toast.success(
-          t("sharepoint.syncSuccess", "Sincronização concluída: {{added}} novos, {{updated}} atualizados, {{deleted}} removidos", {
-            added: items_added,
-            updated: items_updated,
-            deleted: items_deleted,
-          })
+          t(
+            'sharepoint.syncSuccess',
+            'Sincronização concluída: {{added}} novos, {{updated}} atualizados, {{deleted}} removidos',
+            {
+              added: items_added,
+              updated: items_updated,
+              deleted: items_deleted,
+            },
+          ),
         );
       }
     },
     onError: (error: Error) => {
-      console.error("Sync error:", error);
-      toast.error(t("sharepoint.syncError", "Erro na sincronização: {{message}}", { message: error.message }));
+      console.error('Sync error:', error);
+      toast.error(
+        t('sharepoint.syncError', 'Erro na sincronização: {{message}}', { message: error.message }),
+      );
     },
   });
 }
@@ -291,46 +308,59 @@ export function useUploadToSharePoint(overrideOrgId?: string) {
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: async ({ file, folderPath }: { file: File; folderPath: string }) => {
+    mutationFn: async ({
+      file,
+      folderPath,
+      fileName,
+    }: {
+      file: File;
+      folderPath: string;
+      /** Nome final do ficheiro (com extensão). Por omissão usa file.name. */
+      fileName?: string;
+    }) => {
       const organizationId = overrideOrgId || profile?.current_organization_id;
       if (!organizationId) {
-        throw new Error("Organization not found");
+        throw new Error('Organization not found');
       }
 
       if (file.size > 4 * 1024 * 1024) {
-        throw new Error(t("sharepoint.upload.tooLarge", "Ficheiro demasiado grande. Limite: 4MB"));
+        throw new Error(t('sharepoint.upload.tooLarge', 'Ficheiro demasiado grande. Limite: 4MB'));
       }
 
       // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
-      let binary = "";
+      let binary = '';
       for (let i = 0; i < bytes.length; i++) {
         binary += String.fromCharCode(bytes[i]);
       }
       const base64 = btoa(binary);
 
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "upload_file",
+          action: 'upload_file',
           organization_id: organizationId,
           file_base64: base64,
-          file_name: file.name,
+          file_name: fileName?.trim() || file.name,
           folder_path: folderPath,
         },
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Upload failed");
+      if (!data?.success) throw new Error(data?.error || 'Upload failed');
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents"] });
-      toast.success(t("sharepoint.upload.success", "Ficheiro carregado com sucesso"));
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+      toast.success(t('sharepoint.upload.success', 'Ficheiro carregado com sucesso'));
     },
     onError: (error: Error) => {
-      console.error("Upload error:", error);
-      toast.error(t("sharepoint.upload.error", "Erro ao carregar ficheiro: {{message}}", { message: error.message }));
+      console.error('Upload error:', error);
+      toast.error(
+        t('sharepoint.upload.error', 'Erro ao carregar ficheiro: {{message}}', {
+          message: error.message,
+        }),
+      );
     },
   });
 }
@@ -344,12 +374,12 @@ export function useDeleteSharePointConfig() {
   return useMutation({
     mutationFn: async () => {
       if (!profile?.current_organization_id) {
-        throw new Error("Organization not found");
+        throw new Error('Organization not found');
       }
 
-      const { error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "delete_config",
+          action: 'delete_config',
           organization_id: profile.current_organization_id,
         },
       });
@@ -357,13 +387,13 @@ export function useDeleteSharePointConfig() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-config"] });
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents"] });
-      toast.success(t("sharepoint.configDeleted", "Configuração SharePoint removida"));
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config'] });
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+      toast.success(t('sharepoint.configDeleted', 'Configuração SharePoint removida'));
     },
     onError: (error) => {
-      console.error("Error deleting SharePoint config:", error);
-      toast.error(t("sharepoint.deleteError", "Erro ao remover configuração"));
+      console.error('Error deleting SharePoint config:', error);
+      toast.error(t('sharepoint.deleteError', 'Erro ao remover configuração'));
     },
   });
 }
@@ -374,21 +404,138 @@ export function useCreateSharePointFolder() {
 
   return useMutation({
     mutationFn: async (params: { organization_id: string; folder_path: string }) => {
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "create_folder",
+          action: 'create_folder',
           organization_id: params.organization_id,
           folder_path: params.folder_path,
         },
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to create folder");
+      if (!data?.success) throw new Error(data?.error || 'Failed to create folder');
       return data;
     },
     onError: (error: Error) => {
-      console.error("Create folder error:", error);
-      toast.error(t("sharepoint.createFolder.error", "Erro ao criar pasta: {{message}}", { message: error.message }));
+      console.error('Create folder error:', error);
+      toast.error(
+        t('sharepoint.createFolder.error', 'Erro ao criar pasta: {{message}}', {
+          message: error.message,
+        }),
+      );
+    },
+  });
+}
+
+// Lista todas as pastas (full path) da org, para escolher destino de upload/mover.
+export function useSharePointFolders(overrideOrgId?: string) {
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
+
+  return useQuery({
+    queryKey: ['sharepoint-folders', organizationId],
+    staleTime: 30 * 1000,
+    enabled: !!organizationId,
+    queryFn: async (): Promise<string[]> => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('sharepoint_documents')
+        .select('name, folder_path')
+        .eq('organization_id', organizationId)
+        .eq('is_folder', true)
+        .eq('is_deleted', false);
+      if (error) {
+        console.error('Error fetching SharePoint folders:', error);
+        return [];
+      }
+      const paths = (data ?? []).map((d) => {
+        const parent = d.folder_path === '/' ? '' : d.folder_path;
+        return `${parent}/${d.name}`;
+      });
+      return Array.from(new Set(paths)).sort((a, b) => a.localeCompare(b, 'pt'));
+    },
+  });
+}
+
+// Mover um documento (ou pasta) para outra pasta de destino.
+export function useMoveSharePointItem(overrideOrgId?: string) {
+  const queryClient = useQueryClient();
+  const { profile } = useProfile();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: async (params: {
+      sharepoint_item_id: string;
+      destination_path: string;
+      new_name?: string;
+    }) => {
+      const organizationId = overrideOrgId || profile?.current_organization_id;
+      if (!organizationId) throw new Error('Organization not found');
+
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
+        body: {
+          action: 'move_item',
+          organization_id: organizationId,
+          sharepoint_item_id: params.sharepoint_item_id,
+          destination_path: params.destination_path,
+          new_name: params.new_name,
+        },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Move failed');
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+      toast.success(t('sharepoint.move.success', 'Documento movido'));
+    },
+    onError: (error: Error) => {
+      toast.error(
+        t('sharepoint.move.error', 'Erro ao mover: {{message}}', { message: error.message }),
+      );
+    },
+  });
+}
+
+export interface DocumentClassification {
+  suggested_name: string;
+  doc_type: string;
+  suggested_folder: string;
+  is_new_folder: boolean;
+  has_text: boolean;
+}
+
+// Classifica um documento com IA (nome + tipo + pasta recomendada). Não grava nada.
+export function useClassifyDocument(overrideOrgId?: string) {
+  const { profile } = useProfile();
+
+  return useMutation({
+    mutationFn: async ({
+      file,
+      existingFolders,
+    }: {
+      file: File;
+      existingFolders: string[];
+    }): Promise<DocumentClassification> => {
+      const organizationId = overrideOrgId || profile?.current_organization_id;
+      if (!organizationId) throw new Error('Organization not found');
+
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const base64 = btoa(binary);
+
+      const { data, error } = await supabase.functions.invoke('classify-document', {
+        body: {
+          organization_id: organizationId,
+          file_base64: base64,
+          file_name: file.name,
+          existing_folders: existingFolders,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data.suggestion as DocumentClassification;
     },
   });
 }
@@ -402,9 +549,9 @@ export function useCreateContractFolders() {
       client_code?: string;
       tipo_contrato?: string;
     }) => {
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "create_contract_folders",
+          action: 'create_contract_folders',
           organization_id: params.organization_id,
           contrato_id: params.contrato_id,
           client_code: params.client_code,
@@ -417,7 +564,7 @@ export function useCreateContractFolders() {
     },
     onError: (error: Error) => {
       // Non-blocking — don't show error to user, just log
-      console.warn("SharePoint contract folder creation failed (non-blocking):", error.message);
+      console.warn('SharePoint contract folder creation failed (non-blocking):', error.message);
     },
   });
 }
@@ -431,21 +578,21 @@ export function useUploadLargeToSharePoint() {
   return useMutation({
     mutationFn: async ({ file, folderPath }: { file: File; folderPath: string }) => {
       if (!profile?.current_organization_id) {
-        throw new Error("Organization not found");
+        throw new Error('Organization not found');
       }
 
       // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
-      let binary = "";
+      let binary = '';
       for (let i = 0; i < bytes.length; i++) {
         binary += String.fromCharCode(bytes[i]);
       }
       const base64 = btoa(binary);
 
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "upload_large_file",
+          action: 'upload_large_file',
           organization_id: profile.current_organization_id,
           file_base64: base64,
           file_name: file.name,
@@ -454,16 +601,20 @@ export function useUploadLargeToSharePoint() {
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Upload failed");
+      if (!data?.success) throw new Error(data?.error || 'Upload failed');
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-documents"] });
-      toast.success(t("sharepoint.upload.success", "Ficheiro carregado com sucesso"));
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-documents'] });
+      toast.success(t('sharepoint.upload.success', 'Ficheiro carregado com sucesso'));
     },
     onError: (error: Error) => {
-      console.error("Large upload error:", error);
-      toast.error(t("sharepoint.upload.error", "Erro ao carregar ficheiro: {{message}}", { message: error.message }));
+      console.error('Large upload error:', error);
+      toast.error(
+        t('sharepoint.upload.error', 'Erro ao carregar ficheiro: {{message}}', {
+          message: error.message,
+        }),
+      );
     },
   });
 }
@@ -474,7 +625,9 @@ export function useEnsureClientFolder(dataOrgId: string | null, configOrgId?: st
   const queryClient = useQueryClient();
   const effectiveConfigOrgId = configOrgId ?? dataOrgId;
 
-  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(effectiveConfigOrgId ?? undefined);
+  const { data: config, isLoading: isLoadingConfig } = useSharePointConfig(
+    effectiveConfigOrgId ?? undefined,
+  );
 
   const { data: orgData } = useQuery({
     queryKey: ['organization-client-code', dataOrgId],
@@ -507,7 +660,10 @@ export function useEnsureClientFolder(dataOrgId: string | null, configOrgId?: st
     queryFn: async () => {
       if (!effectiveConfigOrgId || !config) return false;
       try {
-        await createFolder.mutateAsync({ organization_id: effectiveConfigOrgId, folder_path: folderPath });
+        await createFolder.mutateAsync({
+          organization_id: effectiveConfigOrgId,
+          folder_path: folderPath,
+        });
         queryClient.invalidateQueries({ queryKey: ['sharepoint-documents', effectiveConfigOrgId] });
       } catch {
         // Folder may already exist — not an error
@@ -528,14 +684,15 @@ export function useEnsureClientFolder(dataOrgId: string | null, configOrgId?: st
 // Hook para obter config SharePoint por orgId (para admins)
 export function useSharePointConfigByOrgId(orgId: string | null) {
   return useQuery({
-    queryKey: ["sharepoint-config", orgId],
+    queryKey: ['sharepoint-config', orgId],
     staleTime: 2 * 60 * 1000,
     queryFn: async (): Promise<SharePointConfig | null> => {
       if (!orgId) return null;
 
       const { data, error } = await supabase
-        .from("sharepoint_config")
-        .select(`
+        .from('sharepoint_config')
+        .select(
+          `
           id,
           organization_id,
           site_id,
@@ -550,12 +707,13 @@ export function useSharePointConfigByOrgId(orgId: string | null) {
           last_sync_error,
           created_at,
           updated_at
-        `)
-        .eq("organization_id", orgId)
+        `,
+        )
+        .eq('organization_id', orgId)
         .maybeSingle();
 
       if (error) {
-        console.error("Error fetching SharePoint config by orgId:", error);
+        console.error('Error fetching SharePoint config by orgId:', error);
         return null;
       }
 
@@ -579,16 +737,16 @@ export function useSaveSharePointConfigForOrg() {
       sync_enabled?: boolean;
       sync_interval_minutes?: number;
     }) => {
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "save_config",
+          action: 'save_config',
           organization_id: params.organization_id,
           config: {
             site_id: params.site_id,
             drive_id: params.drive_id,
             sync_enabled: params.sync_enabled ?? true,
             sync_interval_minutes: params.sync_interval_minutes ?? 5,
-            root_folder_path: params.root_folder_path ?? "/",
+            root_folder_path: params.root_folder_path ?? '/',
           },
         },
       });
@@ -597,12 +755,12 @@ export function useSaveSharePointConfigForOrg() {
       return data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["sharepoint-config", variables.organization_id] });
-      toast.success(t("sharepoint.configSaved", "Configuração SharePoint guardada"));
+      queryClient.invalidateQueries({ queryKey: ['sharepoint-config', variables.organization_id] });
+      toast.success(t('sharepoint.configSaved', 'Configuração SharePoint guardada'));
     },
     onError: (error) => {
-      console.error("Error saving SharePoint config:", error);
-      toast.error(t("sharepoint.configError", "Erro ao guardar configuração"));
+      console.error('Error saving SharePoint config:', error);
+      toast.error(t('sharepoint.configError', 'Erro ao guardar configuração'));
     },
   });
 }
@@ -617,16 +775,18 @@ export interface SharePointDrive {
 // Hook para listar drives/bibliotecas de um site SharePoint
 export function useListSharePointDrives() {
   return useMutation({
-    mutationFn: async (params: { organization_id: string }): Promise<{ drives: SharePointDrive[]; current_drive_id: string | null }> => {
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+    mutationFn: async (params: {
+      organization_id: string;
+    }): Promise<{ drives: SharePointDrive[]; current_drive_id: string | null }> => {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "list_drives",
+          action: 'list_drives',
           organization_id: params.organization_id,
         },
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to list drives");
+      if (!data?.success) throw new Error(data?.error || 'Failed to list drives');
       return { drives: data.drives || [], current_drive_id: data.current_drive_id };
     },
   });
@@ -641,18 +801,22 @@ export interface SharePointFolder {
 // Hook para navegar pastas de uma drive SharePoint
 export function useBrowseSharePointFolders() {
   return useMutation({
-    mutationFn: async (params: { organization_id: string; drive_id?: string; folder_path?: string }): Promise<SharePointFolder[]> => {
-      const { data, error } = await supabase.functions.invoke("sync-sharepoint", {
+    mutationFn: async (params: {
+      organization_id: string;
+      drive_id?: string;
+      folder_path?: string;
+    }): Promise<SharePointFolder[]> => {
+      const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
-          action: "browse_folders",
+          action: 'browse_folders',
           organization_id: params.organization_id,
           drive_id: params.drive_id,
-          folder_path: params.folder_path || "/",
+          folder_path: params.folder_path || '/',
         },
       });
 
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to browse folders");
+      if (!data?.success) throw new Error(data?.error || 'Failed to browse folders');
       return data.folders || [];
     },
   });
