@@ -8,6 +8,19 @@
 -- partes são notificadas nas transições relevantes.
 -- ============================================================
 
+-- 0. Garantir o helper set_updated_at (existe em produção mas não era criado
+--    pela cadeia de migrações → numa build de raiz o trigger abaixo falhava).
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
 -- 1. Tabela (idempotente — no-op em produção, criada numa build de raiz).
 CREATE TABLE IF NOT EXISTS public.on_demand_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
