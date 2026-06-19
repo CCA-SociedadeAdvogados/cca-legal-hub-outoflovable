@@ -238,17 +238,33 @@ export default function PlatformAdmin() {
 
       const { data, error } = await supabase
         .from('impersonation_sessions')
-        .select(
-          `
-          *,
-          organizations:impersonated_organization_id (name)
-        `,
-        )
+        .select('*')
         .order('started_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data;
+      const rows = data ?? [];
+
+      // PostgREST não resolve a relação impersonated_organization_id → organizations;
+      // enriquecer com o nome da org manualmente.
+      const orgIds = [
+        ...new Set(rows.map((s) => s.impersonated_organization_id).filter(Boolean)),
+      ] as string[];
+      const orgsMap = new Map<string, string>();
+      if (orgIds.length > 0) {
+        const { data: orgsData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
+        for (const org of orgsData || []) orgsMap.set(org.id, org.name);
+      }
+
+      return rows.map((s) => ({
+        ...s,
+        organizations: s.impersonated_organization_id
+          ? { name: orgsMap.get(s.impersonated_organization_id) ?? null }
+          : null,
+      }));
     },
   });
 
@@ -859,8 +875,7 @@ export default function PlatformAdmin() {
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium">
-                                {(session.organizations as { name: string } | null)?.name ||
-                                  'Organização removida'}
+                                {session.organizations?.name || 'Organização removida'}
                               </span>
                             </div>
                             <Badge

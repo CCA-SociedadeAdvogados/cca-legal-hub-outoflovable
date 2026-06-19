@@ -48,7 +48,6 @@ type Departamento = Database['public']['Enums']['departamento'];
 interface OrgOption {
   id: string;
   name: string;
-  slug: string;
   jvris_id?: string | null;
   client_code?: string | null;
 }

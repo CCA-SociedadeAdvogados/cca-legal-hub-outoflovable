@@ -75,7 +75,7 @@ export default function Financeiro() {
       const { data, error } = await supabase
         .from('contratos')
         .select(
-          'id, titulo_contrato, tipo_contrato, estado_contrato, data_inicio, data_termo, parte_b_nome_legal, valor_total_estimado, nivel_risco',
+          'id, titulo_contrato, tipo_contrato, estado_contrato, data_inicio_vigencia, data_termo, parte_b_nome_legal, valor_total_estimado, nivel_risco',
         )
         .eq('organization_id', organizationId!)
         .eq('arquivado', false)

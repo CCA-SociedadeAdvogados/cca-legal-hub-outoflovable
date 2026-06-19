@@ -4,10 +4,6 @@ import { toast } from 'sonner';
 
 interface UpdateLawyerData {
   lawyerUserId?: string | null;
-  /** @deprecated Usar lawyerUserId. Mantido para retrocompatibilidade. */
-  lawyerName?: string;
-  /** @deprecated Usar lawyerUserId. Mantido para retrocompatibilidade. */
-  lawyerPhotoUrl?: string;
 }
 
 interface UpdateOrganizationData {
@@ -47,8 +43,6 @@ export function useUpdateOrganization(organizationId: string | null) {
       const updateData: Record<string, string | null> = {};
 
       if (data.lawyerUserId !== undefined) updateData.lawyer_user_id = data.lawyerUserId;
-      if (data.lawyerName !== undefined) updateData.lawyer_name = data.lawyerName;
-      if (data.lawyerPhotoUrl !== undefined) updateData.lawyer_photo_url = data.lawyerPhotoUrl;
 
       const { error } = await supabase
         .from('organizations')

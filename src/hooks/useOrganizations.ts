@@ -83,8 +83,8 @@ export interface Organization {
   id: string;
   name: string;
   logo_url: string | null;
-  lawyer_name: string | null;
-  lawyer_photo_url: string | null;
+  lawyer_user_id: string | null;
+  legalbi_url: string | null;
   industry_sectors: string[] | null;
   client_code: string | null;
   group: string | null;

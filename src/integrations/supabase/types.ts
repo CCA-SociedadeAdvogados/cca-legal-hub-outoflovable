@@ -1077,6 +1077,7 @@ export type Database = {
             | null
           moeda: string | null
           motivo_ultima_alteracao: string | null
+          nivel_risco: string | null
           numero_adendas: number | null
           numero_encomenda_po: string | null
           objeto_resumido: string | null
@@ -1189,6 +1190,7 @@ export type Database = {
             | null
           moeda?: string | null
           motivo_ultima_alteracao?: string | null
+          nivel_risco?: string | null
           numero_adendas?: number | null
           numero_encomenda_po?: string | null
           objeto_resumido?: string | null
@@ -1301,6 +1303,7 @@ export type Database = {
             | null
           moeda?: string | null
           motivo_ultima_alteracao?: string | null
+          nivel_risco?: string | null
           numero_adendas?: number | null
           numero_encomenda_po?: string | null
           objeto_resumido?: string | null
@@ -2072,6 +2075,7 @@ export type Database = {
           organization_id: string | null
           resolvido_por_id: string | null
           updated_at: string
+          updated_by_id: string | null
         }
         Insert: {
           contrato_id?: string | null
@@ -2088,6 +2092,7 @@ export type Database = {
           organization_id?: string | null
           resolvido_por_id?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Update: {
           contrato_id?: string | null
@@ -2104,6 +2109,7 @@ export type Database = {
           organization_id?: string | null
           resolvido_por_id?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Relationships: [
           {
@@ -2780,9 +2786,12 @@ export type Database = {
           logo_url: string | null
           name: string
           org_type: string
+          prazo_pagamento_dias: number | null
           responsible: string | null
           responsible_email: string | null
+          tipo_cliente: string | null
           updated_at: string
+          updated_by_id: string | null
         }
         Insert: {
           client_code?: string | null
@@ -2799,9 +2808,12 @@ export type Database = {
           logo_url?: string | null
           name: string
           org_type: string
+          prazo_pagamento_dias?: number | null
           responsible?: string | null
           responsible_email?: string | null
+          tipo_cliente?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Update: {
           client_code?: string | null
@@ -2818,9 +2830,12 @@ export type Database = {
           logo_url?: string | null
           name?: string
           org_type?: string
+          prazo_pagamento_dias?: number | null
           responsible?: string | null
           responsible_email?: string | null
+          tipo_cliente?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Relationships: [
           {
@@ -4526,9 +4541,12 @@ export type Database = {
           logo_url: string | null
           name: string
           org_type: string
+          prazo_pagamento_dias: number | null
           responsible: string | null
           responsible_email: string | null
+          tipo_cliente: string | null
           updated_at: string
+          updated_by_id: string | null
         }
         SetofOptions: {
           from: "*"

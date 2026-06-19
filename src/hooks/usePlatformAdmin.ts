@@ -169,10 +169,10 @@ export function usePlatformAdmin() {
         .order('created_at', { ascending: false })
         .limit(100);
       if (error) throw error;
-      if (!data || data.length === 0) return data;
+      const rows = data ?? [];
 
       // Enrich with organization names
-      const orgIds = [...new Set(data.map((c) => c.organization_id).filter(Boolean))];
+      const orgIds = [...new Set(rows.map((c) => c.organization_id).filter(Boolean))];
       const orgsMap = new Map<string, string>();
       if (orgIds.length > 0) {
         const { data: orgsData } = await supabase
@@ -184,7 +184,7 @@ export function usePlatformAdmin() {
         }
       }
 
-      return data.map((c) => ({
+      return rows.map((c) => ({
         ...c,
         organization: c.organization_id ? { name: orgsMap.get(c.organization_id) || '-' } : null,
       }));
