@@ -1769,6 +1769,32 @@
       "notReady": "Os seus documentos ainda não estão disponíveis",
       "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui."
     },
+    "financial": {
+      "documents": "Conta corrente",
+      "lastSync": "Última atualização",
+      "empty": "Não há documentos na sua conta corrente.",
+      "status": {
+        "em_dia": "A sua conta está em dia.",
+        "em_aberto": "Tem valores em aberto dentro do prazo.",
+        "em_incumprimento": "Tem valores vencidos por regularizar."
+      },
+      "kpi": {
+        "outstanding": "Total em aberto",
+        "dueSoon": "Faturas a vencer",
+        "overdue": "Faturas vencidas"
+      },
+      "columns": {
+        "document": "Documento",
+        "description": "Descrição",
+        "dueDate": "Vencimento",
+        "status": "Estado",
+        "amount": "Valor"
+      },
+      "itemStatus": {
+        "vencido": "Vencido",
+        "a_vencer": "A vencer"
+      }
+    },
     "deadlines": {
       "empty": "Não há prazos identificados nos seus contratos.",
       "today": "Hoje",

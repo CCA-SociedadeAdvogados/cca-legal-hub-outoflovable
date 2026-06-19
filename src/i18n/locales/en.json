@@ -1769,6 +1769,32 @@
       "notReady": "Your documents are not available yet",
       "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here."
     },
+    "financial": {
+      "documents": "Account statement",
+      "lastSync": "Last updated",
+      "empty": "No documents in your account statement.",
+      "status": {
+        "em_dia": "Your account is up to date.",
+        "em_aberto": "You have open amounts within term.",
+        "em_incumprimento": "You have overdue amounts to settle."
+      },
+      "kpi": {
+        "outstanding": "Total outstanding",
+        "dueSoon": "Invoices due soon",
+        "overdue": "Overdue invoices"
+      },
+      "columns": {
+        "document": "Document",
+        "description": "Description",
+        "dueDate": "Due date",
+        "status": "Status",
+        "amount": "Amount"
+      },
+      "itemStatus": {
+        "vencido": "Overdue",
+        "a_vencer": "Due"
+      }
+    },
     "deadlines": {
       "empty": "No deadlines identified in your contracts.",
       "today": "Today",
