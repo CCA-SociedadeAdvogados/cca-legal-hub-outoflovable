@@ -1730,6 +1730,37 @@
     "placeholder": {
       "title": "Esta área está a ser construída."
     },
+    "contracts": {
+      "searchPlaceholder": "Pesquisar por título, contraparte ou referência...",
+      "count": "{{count}} contratos",
+      "empty": "Não foram encontrados contratos.",
+      "noDeadline": "Sem prazo identificado",
+      "nextDeadline": "Próximo prazo",
+      "renewalDecision": "Decisão de renovação",
+      "term": "Termo",
+      "inDays": "{{count}} dias",
+      "summary": "Resumo",
+      "startDate": "Início de vigência",
+      "endDate": "Termo",
+      "value": "Valor",
+      "reference": "Referência",
+      "filters": {
+        "all": "Todos",
+        "active": "Ativos",
+        "expiring": "A expirar (≤60 dias)",
+        "terminated": "Terminados"
+      },
+      "columns": {
+        "contract": "Contrato",
+        "status": "Estado",
+        "nextDeadline": "Próximo prazo",
+        "value": "Valor"
+      },
+      "parties": {
+        "a": "Primeira parte",
+        "b": "Contraparte"
+      }
+    },
     "nav": {
       "home": "Início",
       "contracts": "Os meus contratos",

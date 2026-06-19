@@ -1730,6 +1730,37 @@
     "placeholder": {
       "title": "This area is under construction."
     },
+    "contracts": {
+      "searchPlaceholder": "Search by title, counterparty or reference...",
+      "count": "{{count}} contracts",
+      "empty": "No contracts found.",
+      "noDeadline": "No deadline identified",
+      "nextDeadline": "Next deadline",
+      "renewalDecision": "Renewal decision",
+      "term": "Term",
+      "inDays": "{{count}} days",
+      "summary": "Summary",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "value": "Value",
+      "reference": "Reference",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "expiring": "Expiring (≤60 days)",
+        "terminated": "Terminated"
+      },
+      "columns": {
+        "contract": "Contract",
+        "status": "Status",
+        "nextDeadline": "Next deadline",
+        "value": "Value"
+      },
+      "parties": {
+        "a": "First party",
+        "b": "Counterparty"
+      }
+    },
     "nav": {
       "home": "Home",
       "contracts": "My contracts",
