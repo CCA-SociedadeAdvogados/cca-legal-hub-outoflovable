@@ -114,7 +114,18 @@ serve(async (req) => {
       [...messages].reverse().find((m: { role: string }) => m.role === "user")?.content ?? "";
     const model = routeModel(lastUserMessage);
 
-    // Recuperar excertos relevantes dos documentos do cliente (full-text search PT)
+    // Documentos disponíveis no arquivo do cliente (nomes) — para o assistente
+    // SABER o que existe e nunca negar acesso.
+    const { data: docList } = await supabase
+      .from("client_document_text")
+      .select("name, folder_path")
+      .eq("organization_id", organization_id)
+      .order("extracted_at", { ascending: false })
+      .limit(100);
+    const availableDocs = (docList ?? []) as Array<{ name: string; folder_path: string | null }>;
+
+    // Recuperar excertos relevantes: full-text search (conteúdo) + correspondência
+    // por nome de ficheiro (quando o cliente menciona/cola o nome do documento).
     let docExcerpts: Array<{ name: string; folder: string | null; excerpt: string }> = [];
     if (lastUserMessage.trim()) {
       const { data: hits } = await supabase.rpc("fn_search_client_documents", {
@@ -127,19 +138,51 @@ serve(async (req) => {
         folder: h.folder_path,
         excerpt: h.excerpt,
       }));
+
+      // Correspondência por nome: tokens alfanuméricos (≥4 chars) da mensagem.
+      const words = Array.from(
+        new Set(
+          lastUserMessage
+            .split(/[^\p{L}\p{N}]+/u)
+            .map((w: string) => w.trim())
+            .filter((w: string) => w.length >= 4),
+        ),
+      ).slice(0, 8);
+      if (words.length > 0) {
+        const orFilter = words.map((w) => `name.ilike.%${w}%`).join(",");
+        const { data: byName } = await supabase
+          .from("client_document_text")
+          .select("name, folder_path, content")
+          .eq("organization_id", organization_id)
+          .or(orFilter)
+          .limit(3);
+        for (const d of (byName ?? []) as Array<{ name: string; folder_path: string | null; content: string }>) {
+          if (!docExcerpts.some((e) => e.name === d.name)) {
+            docExcerpts.push({
+              name: d.name,
+              folder: d.folder_path,
+              excerpt: (d.content ?? "").slice(0, 3000),
+            });
+          }
+        }
+      }
     }
 
     const systemPrompt = `Você é o assistente do Portal do Cliente da CCA — Sociedade de Advogados.
-Ajuda o cliente a compreender e a gerir a SUA carteira de contratos com a CCA.
+Ajuda o cliente a compreender e a gerir a SUA carteira de contratos e os SEUS documentos com a CCA.
 Responda sempre em português europeu, de forma clara, acessível e concisa.
 
 Regras:
-- Baseie-se EXCLUSIVAMENTE nos dados fornecidos abaixo. Não invente nada.
-- Se a informação não constar dos dados, diga que não tem essa informação no portal
-  e sugira contactar a equipa da CCA.
+- TEM acesso ao conteúdo dos documentos do arquivo do cliente (ver "DOCUMENTOS DISPONÍVEIS") e à carteira de contratos. Pode ler, resumir, comparar e citar esse conteúdo.
+- NUNCA diga que não tem acesso a documentos ou ficheiros. Se o conteúdo específico de um documento não constar dos excertos abaixo, diga que o pode analisar e peça ao cliente a pergunta concreta sobre esse documento.
+- Se o cliente indicar o nome de um documento, use os excertos correspondentes; se não houver excerto, confirme que o documento está no arquivo (se constar da lista) e pergunte o que pretende saber.
+- Baseie-se nos dados fornecidos abaixo; não invente factos.
 - Ao referir contratos, identifique-os pelo título (e referência interna quando útil).
 - Destaque prazos próximos, renovações e riscos (RGPD, exclusividade, etc.) quando relevante.
 - Hoje é ${hoje}.
+
+DOCUMENTOS DISPONÍVEIS NO ARQUIVO DO CLIENTE (${availableDocs.length}):
+${availableDocs.length > 0 ? availableDocs.map((d) => `- ${d.name}${d.folder ? ` (${d.folder})` : ""}`).join("\n") : "(nenhum documento indexado ainda)"}
 
 CARTEIRA DE CONTRATOS DO CLIENTE (${carteira.length}):
 ${JSON.stringify(carteira, null, 2)}
