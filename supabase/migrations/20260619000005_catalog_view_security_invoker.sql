@@ -1,0 +1,11 @@
+-- Fecha o último erro de segurança: vw_cca_client_catalog_overview era
+-- SECURITY DEFINER e, sendo consultada via PostgREST, permitia a qualquer
+-- autenticado (incl. clientes) ler o catálogo completo de clientes da CCA.
+--
+-- Passa a security_invoker: a view respeita o RLS de quem consulta.
+--   - Cliente (org_user): não lê organizations_legacy → recebe 0 linhas.
+--   - CCA / platform admin: continuam a ver o catálogo (RLS já lhes dá acesso
+--     a organizations_legacy, organizations e financeiro_nav_items).
+-- Os contadores de membros não são usados na UI, pelo que eventuais zeros para
+-- utilizadores CCA não-admin não têm impacto visível.
+ALTER VIEW public.vw_cca_client_catalog_overview SET (security_invoker = on);
