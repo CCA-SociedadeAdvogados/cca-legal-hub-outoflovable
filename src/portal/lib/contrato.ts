@@ -82,6 +82,43 @@ export interface NextDeadline {
   days: number | null;
 }
 
+export type DeadlineKind = 'renewal' | 'term' | 'notice';
+
+export interface ContratoDeadline {
+  kind: DeadlineKind;
+  date: Date;
+  days: number;
+}
+
+/**
+ * Todos os prazos relevantes de um contrato para o cliente:
+ *  - renovação: data limite de decisão de renovação
+ *  - termo: data de termo do contrato
+ *  - aviso: data limite para aviso prévio de não renovação (termo − dias de aviso)
+ */
+export function getContratoDeadlines(c: Contrato): ContratoDeadline[] {
+  const out: ContratoDeadline[] = [];
+  const now = new Date();
+
+  if (c.data_limite_decisao_renovacao) {
+    const date = new Date(c.data_limite_decisao_renovacao);
+    out.push({ kind: 'renewal', date, days: differenceInDays(date, now) });
+  }
+  if (c.data_termo) {
+    const termDate = new Date(c.data_termo);
+    out.push({ kind: 'term', date: termDate, days: differenceInDays(termDate, now) });
+
+    if (c.aviso_previo_nao_renovacao_dias && c.aviso_previo_nao_renovacao_dias > 0) {
+      const noticeDate = new Date(
+        termDate.getTime() - c.aviso_previo_nao_renovacao_dias * 24 * 60 * 60 * 1000,
+      );
+      out.push({ kind: 'notice', date: noticeDate, days: differenceInDays(noticeDate, now) });
+    }
+  }
+
+  return out;
+}
+
 export function getNextDeadline(c: Contrato): NextDeadline {
   const candidates: Array<{ date: Date; kind: 'renewal' | 'term' }> = [];
   if (c.data_limite_decisao_renovacao) {

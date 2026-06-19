@@ -1769,6 +1769,23 @@
       "notReady": "Your documents are not available yet",
       "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here."
     },
+    "deadlines": {
+      "empty": "No deadlines identified in your contracts.",
+      "today": "Today",
+      "inDays": "In {{count}} days",
+      "overdueDays": "{{count}} days ago",
+      "kinds": {
+        "renewal": "Renewal decision",
+        "term": "Contract term",
+        "notice": "Non-renewal notice"
+      },
+      "buckets": {
+        "overdue": "Overdue",
+        "next30": "Next 30 days",
+        "next90": "31 to 90 days",
+        "later": "Later"
+      }
+    },
     "nav": {
       "home": "Home",
       "contracts": "My contracts",
