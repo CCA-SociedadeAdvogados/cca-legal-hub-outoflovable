@@ -114,6 +114,21 @@ serve(async (req) => {
       [...messages].reverse().find((m: { role: string }) => m.role === "user")?.content ?? "";
     const model = routeModel(lastUserMessage);
 
+    // Recuperar excertos relevantes dos documentos do cliente (full-text search PT)
+    let docExcerpts: Array<{ name: string; folder: string | null; excerpt: string }> = [];
+    if (lastUserMessage.trim()) {
+      const { data: hits } = await supabase.rpc("fn_search_client_documents", {
+        p_org: organization_id,
+        p_query: lastUserMessage,
+        p_limit: 5,
+      });
+      docExcerpts = (hits ?? []).map((h: { name: string; folder_path: string | null; excerpt: string }) => ({
+        name: h.name,
+        folder: h.folder_path,
+        excerpt: h.excerpt,
+      }));
+    }
+
     const systemPrompt = `Você é o assistente do Portal do Cliente da CCA — Sociedade de Advogados.
 Ajuda o cliente a compreender e a gerir a SUA carteira de contratos com a CCA.
 Responda sempre em português europeu, de forma clara, acessível e concisa.
@@ -127,7 +142,14 @@ Regras:
 - Hoje é ${hoje}.
 
 CARTEIRA DE CONTRATOS DO CLIENTE (${carteira.length}):
-${JSON.stringify(carteira, null, 2)}`;
+${JSON.stringify(carteira, null, 2)}
+${
+  docExcerpts.length > 0
+    ? `\nEXCERTOS RELEVANTES DOS DOCUMENTOS DO CLIENTE (cite o nome do documento quando os usar):\n${docExcerpts
+        .map((d, i) => `[Doc ${i + 1}] ${d.name}${d.folder ? ` (${d.folder})` : ""}:\n${d.excerpt}`)
+        .join("\n\n")}`
+    : ""
+}`;
 
     const response = await callClaude(ANTHROPIC_API_KEY, model, systemPrompt, messages, 1200);
 

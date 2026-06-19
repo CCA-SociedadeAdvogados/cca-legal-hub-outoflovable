@@ -19,10 +19,24 @@ export default function PortalAssistente() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const indexTriggered = useRef<string | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  // Aquece o índice de documentos em segundo plano (incremental/idempotente),
+  // para o assistente poder citar o conteúdo dos documentos do cliente.
+  useEffect(() => {
+    const orgId = currentOrganization?.id;
+    if (!orgId || indexTriggered.current === orgId) return;
+    indexTriggered.current = orgId;
+    supabase.functions
+      .invoke('index-client-documents', { body: { organization_id: orgId } })
+      .catch(() => {
+        /* fire-and-forget: a indexação corre em segundo plano */
+      });
+  }, [currentOrganization?.id]);
 
   const suggestions = t('portal.assistant.suggestions', { returnObjects: true }) as string[];
 
