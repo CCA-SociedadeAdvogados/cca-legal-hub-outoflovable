@@ -1723,5 +1723,84 @@
       "title": "Two-Factor Authentication (2FA)",
       "verify": "Verify and Enable"
     }
+  },
+  "portal": {
+    "brand": "Portal",
+    "searchPlaceholder": "Search my contracts and documents...",
+    "placeholder": {
+      "title": "This area is under construction."
+    },
+    "nav": {
+      "home": "Home",
+      "contracts": "My contracts",
+      "documents": "Documents",
+      "deadlines": "Deadlines",
+      "financial": "Account statement",
+      "news": "CCA News",
+      "profile": "Profile & settings"
+    },
+    "pages": {
+      "home": {
+        "eyebrow": "Overview",
+        "title": "Welcome to your portal",
+        "description": "A summary of what matters: your active contracts, upcoming deadlines, recent documents and your account statement with CCA.",
+        "upcoming": [
+          "Active contracts summary",
+          "Deadlines due in the coming days",
+          "Recently shared documents",
+          "Outstanding invoices"
+        ]
+      },
+      "contracts": {
+        "eyebrow": "Contracts",
+        "title": "My contracts",
+        "description": "Review your contracts, their status and details. Available actions depend on your organization's permissions.",
+        "upcoming": [
+          "Your organization's contract list",
+          "Detail of each contract",
+          "Status and key dates",
+          "Associated documents"
+        ]
+      },
+      "documents": {
+        "eyebrow": "Documents",
+        "title": "Documents",
+        "description": "Access documents shared between your organization and CCA.",
+        "upcoming": ["Your organization's documents", "Preview and download", "Folder organization"]
+      },
+      "deadlines": {
+        "eyebrow": "Deadlines",
+        "title": "Deadlines",
+        "description": "Track the key dates of your contracts and obligations.",
+        "upcoming": [
+          "Deadline timeline",
+          "Alerts for upcoming dates",
+          "Link to the related contract"
+        ]
+      },
+      "financial": {
+        "eyebrow": "Financial",
+        "title": "CCA account statement",
+        "description": "Review your invoicing and account statement with CCA.",
+        "upcoming": ["Invoices and payment status", "Outstanding balance", "Transaction history"]
+      },
+      "news": {
+        "eyebrow": "Communication",
+        "title": "CCA News",
+        "description": "Communications, news and content shared by CCA.",
+        "upcoming": ["CCA announcements", "News relevant to your organization"]
+      },
+      "profile": {
+        "eyebrow": "Account",
+        "title": "Profile & settings",
+        "description": "Manage your data, preferences and account security.",
+        "upcoming": [
+          "Profile data",
+          "Notification preferences",
+          "Language and theme",
+          "Account security"
+        ]
+      }
+    }
   }
 }

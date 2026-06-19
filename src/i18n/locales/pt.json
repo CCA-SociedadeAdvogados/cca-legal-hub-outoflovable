@@ -1723,5 +1723,88 @@
       "title": "Autenticação de Dois Fatores (2FA)",
       "verify": "Verificar e Ativar"
     }
+  },
+  "portal": {
+    "brand": "Portal",
+    "searchPlaceholder": "Pesquisar nos meus contratos e documentos...",
+    "placeholder": {
+      "title": "Esta área está a ser construída."
+    },
+    "nav": {
+      "home": "Início",
+      "contracts": "Os meus contratos",
+      "documents": "Documentos",
+      "deadlines": "Prazos",
+      "financial": "Conta corrente",
+      "news": "Novidades CCA",
+      "profile": "Perfil e definições"
+    },
+    "pages": {
+      "home": {
+        "eyebrow": "Visão geral",
+        "title": "Bem-vindo ao seu portal",
+        "description": "Um resumo do que importa: os seus contratos ativos, prazos próximos, documentos recentes e a sua conta corrente com a CCA.",
+        "upcoming": [
+          "Resumo de contratos ativos",
+          "Prazos a vencer nos próximos dias",
+          "Documentos partilhados recentemente",
+          "Faturação em aberto"
+        ]
+      },
+      "contracts": {
+        "eyebrow": "Contratos",
+        "title": "Os meus contratos",
+        "description": "Consulte os seus contratos, o respetivo estado e detalhe. As ações disponíveis dependem das permissões da sua organização.",
+        "upcoming": [
+          "Lista de contratos da sua organização",
+          "Detalhe de cada contrato",
+          "Estado e datas-chave",
+          "Documentos associados"
+        ]
+      },
+      "documents": {
+        "eyebrow": "Documentos",
+        "title": "Documentos",
+        "description": "Aceda aos documentos partilhados entre a sua organização e a CCA.",
+        "upcoming": [
+          "Documentos da sua organização",
+          "Pré-visualização e download",
+          "Organização por pastas"
+        ]
+      },
+      "deadlines": {
+        "eyebrow": "Prazos",
+        "title": "Prazos",
+        "description": "Acompanhe as datas-chave dos seus contratos e obrigações.",
+        "upcoming": [
+          "Linha temporal de prazos",
+          "Alertas de datas a vencer",
+          "Ligação ao contrato relacionado"
+        ]
+      },
+      "financial": {
+        "eyebrow": "Financeiro",
+        "title": "Conta corrente CCA",
+        "description": "Consulte a sua faturação e conta corrente com a CCA.",
+        "upcoming": ["Faturas e estado de pagamento", "Saldo em aberto", "Histórico de movimentos"]
+      },
+      "news": {
+        "eyebrow": "Comunicação",
+        "title": "Novidades CCA",
+        "description": "Comunicações, novidades e conteúdos partilhados pela CCA.",
+        "upcoming": ["Comunicados da CCA", "Novidades relevantes para a sua organização"]
+      },
+      "profile": {
+        "eyebrow": "Conta",
+        "title": "Perfil e definições",
+        "description": "Faça a gestão dos seus dados, preferências e segurança da conta.",
+        "upcoming": [
+          "Dados de perfil",
+          "Preferências de notificações",
+          "Idioma e tema",
+          "Segurança da conta"
+        ]
+      }
+    }
   }
 }
