@@ -12,6 +12,7 @@ import {
   FileText,
   FolderOpen,
   CalendarClock,
+  Scale,
   Wallet,
   Newspaper,
   Moon,
@@ -175,6 +176,13 @@ export function PortalSidebar() {
           icon={CalendarClock}
           label={t('portal.nav.deadlines')}
           isActive={isActive('/portal/prazos')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/radar"
+          icon={Scale}
+          label={t('portal.nav.radar')}
+          isActive={isActive('/portal/radar')}
           isCollapsed={isCollapsed}
         />
         <NavItem

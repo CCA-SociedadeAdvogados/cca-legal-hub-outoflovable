@@ -1788,6 +1788,13 @@
     "news": {
       "empty": "No news published yet."
     },
+    "radar": {
+      "empty": "No legislative alerts. When legislation affecting your contracts arises, it will appear here.",
+      "affectsContract": "Affects contract",
+      "officialSource": "Official source",
+      "inForce": "in force",
+      "unknownEvent": "Legislative change"
+    },
     "assistant": {
       "eyebrow": "Assistant",
       "title": "Ask about your contracts",
@@ -1868,6 +1875,7 @@
       "contracts": "My contracts",
       "documents": "Documents",
       "deadlines": "Deadlines",
+      "radar": "Legislative radar",
       "financial": "Account statement",
       "news": "CCA News",
       "profile": "Profile & settings"
@@ -1900,6 +1908,11 @@
         "title": "Documents",
         "description": "Access documents shared between your organization and CCA.",
         "upcoming": ["Your organization's documents", "Preview and download", "Folder organization"]
+      },
+      "radar": {
+        "eyebrow": "Legislation",
+        "title": "Legislative radar",
+        "description": "Legislative changes affecting your contracts, with the risk level identified by CCA."
       },
       "deadlines": {
         "eyebrow": "Deadlines",

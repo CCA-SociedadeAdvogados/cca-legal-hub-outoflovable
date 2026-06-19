@@ -1788,6 +1788,13 @@
     "news": {
       "empty": "Ainda não há novidades publicadas."
     },
+    "radar": {
+      "empty": "Sem alertas legislativos. Quando surgir legislação que afete os seus contratos, aparecerá aqui.",
+      "affectsContract": "Afeta o contrato",
+      "officialSource": "Fonte oficial",
+      "inForce": "em vigor",
+      "unknownEvent": "Alteração legislativa"
+    },
     "assistant": {
       "eyebrow": "Assistente",
       "title": "Pergunte sobre os seus contratos",
@@ -1868,6 +1875,7 @@
       "contracts": "Os meus contratos",
       "documents": "Documentos",
       "deadlines": "Prazos",
+      "radar": "Radar legislativo",
       "financial": "Conta corrente",
       "news": "Novidades CCA",
       "profile": "Perfil e definições"
@@ -1904,6 +1912,11 @@
           "Pré-visualização e download",
           "Organização por pastas"
         ]
+      },
+      "radar": {
+        "eyebrow": "Legislação",
+        "title": "Radar legislativo",
+        "description": "Alterações legislativas que afetam os seus contratos, com o nível de risco identificado pela CCA."
       },
       "deadlines": {
         "eyebrow": "Prazos",
