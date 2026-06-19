@@ -1782,7 +1782,21 @@
       "preparing": "Preparing your document archive...",
       "empty": "No documents in this folder.",
       "notReady": "Your documents are not available yet",
-      "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here."
+      "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here.",
+      "newFolder": "New folder",
+      "newFolderHint": "The folder will be created in: {{path}}",
+      "folderName": "Folder name",
+      "folderNamePlaceholder": "e.g. Contracts, GDPR, Invoices",
+      "create": "Create",
+      "actions": "Actions",
+      "move": "Move",
+      "uploadTitle": "Upload document",
+      "uploadHintDialog": "Name the document and choose a folder — or let AI read and classify it for you.",
+      "classifyAI": "Classify with AI",
+      "classifying": "AI is reading and classifying the document...",
+      "docName": "Document name",
+      "docNamePlaceholder": "e.g. Services agreement",
+      "destFolder": "Destination folder"
     },
     "home": {
       "greeting": "Welcome, {{name}}",

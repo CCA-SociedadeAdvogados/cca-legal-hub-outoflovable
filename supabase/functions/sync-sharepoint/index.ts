@@ -834,12 +834,115 @@ serve(async (req) => {
         console.log(`Created folder "${segment}": id=${parentId}`);
       }
 
+      // Registar a pasta em sharepoint_documents para aparecer de imediato no
+      // portal (sem esperar pela próxima sincronização). folder_path/name são
+      // relativos ao root_folder_path, tal como o sync faz.
+      const relSegments = (newFolderPath as string).split("/").filter(Boolean);
+      if (relSegments.length > 0) {
+        const folderName = relSegments[relSegments.length - 1];
+        const parentRel = relSegments.length > 1 ? `/${relSegments.slice(0, -1).join("/")}` : "/";
+        await supabase.from("sharepoint_documents").upsert(
+          {
+            organization_id: spCfg.organization_id,
+            config_id: spCfg.id,
+            sharepoint_item_id: parentId,
+            sharepoint_drive_id: driveId,
+            name: folderName,
+            file_extension: null,
+            mime_type: null,
+            size_bytes: null,
+            web_url: createdWebUrl || null,
+            folder_path: parentRel,
+            is_folder: true,
+            synced_at: new Date().toISOString(),
+            is_deleted: false,
+          },
+          { onConflict: "config_id,sharepoint_item_id" },
+        );
+      }
+
       return new Response(
         JSON.stringify({
           success: true,
           folder: { id: parentId, webUrl: createdWebUrl, path: fullPath },
         }),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============ MOVE ITEM ACTION ============
+    if (action === "move_item") {
+      const { sharepoint_item_id, destination_path, new_name } = body;
+      if (!sharepoint_item_id || typeof destination_path !== "string") {
+        throw new Error("sharepoint_item_id e destination_path são obrigatórios");
+      }
+
+      const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
+      const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
+      const tenantId = Deno.env.get("SHAREPOINT_TENANT_ID");
+      if (!clientId || !clientSecret || !tenantId) {
+        throw new Error("SharePoint credentials not configured.");
+      }
+
+      const { data: spCfg } = await supabase
+        .from("sharepoint_config")
+        .select("*")
+        .eq("organization_id", organization_id)
+        .maybeSingle();
+      if (!spCfg) throw new Error("No SharePoint config found");
+
+      const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
+      let driveId = spCfg.drive_id;
+      if (!driveId) {
+        driveId = await getDriveId(accessToken, spCfg.site_id);
+        await supabase.from("sharepoint_config").update({ drive_id: driveId }).eq("id", spCfg.id);
+      }
+
+      // Resolver a pasta de destino (full path = root + relativo) e o seu id
+      const rootPath = spCfg.root_folder_path || "/";
+      const destRel = destination_path || "/";
+      let destFullPath: string;
+      if (rootPath === "/") destFullPath = destRel;
+      else destFullPath = destRel === "/" ? rootPath : `${rootPath}${destRel}`;
+      const destParentId = await ensureFolderPath(accessToken, driveId, destFullPath);
+
+      const patchBody: Record<string, unknown> = {
+        parentReference: { id: destParentId === "root" ? undefined : destParentId },
+      };
+      if (destParentId === "root") {
+        patchBody.parentReference = { path: `/drives/${driveId}/root` };
+      }
+      if (new_name) patchBody.name = new_name;
+
+      const patchResp = await fetch(
+        `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${sharepoint_item_id}`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify(patchBody),
+        },
+      );
+      if (!patchResp.ok) {
+        const errText = await patchResp.text();
+        throw new Error(`Falha ao mover documento: ${patchResp.status} - ${errText}`);
+      }
+      const moved: GraphDriveItem = await patchResp.json();
+
+      // Atualizar o registo local
+      await supabase
+        .from("sharepoint_documents")
+        .update({
+          folder_path: destRel,
+          name: moved.name,
+          web_url: moved.webUrl || null,
+          synced_at: new Date().toISOString(),
+        })
+        .eq("organization_id", organization_id)
+        .eq("sharepoint_item_id", sharepoint_item_id);
+
+      return new Response(
+        JSON.stringify({ success: true, item: { id: moved.id, name: moved.name } }),
+        { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
 
