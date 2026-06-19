@@ -43,9 +43,31 @@ A app do Azure já usada para o SharePoint (`SHAREPOINT_*`) precisa da permissã
 | `SHAREPOINT_TENANT_ID` | já existente (reutilizado) |
 | `SHAREPOINT_CLIENT_ID` | já existente (reutilizado) |
 | `SHAREPOINT_CLIENT_SECRET` | já existente (reutilizado) |
-| `INTRANET_NEWS_SITE_ID` | **novo** — Site ID do SharePoint da intranet de notícias a clientes |
+| `INTRANET_NEWS_SOURCES` | **novo** — JSON com as fontes (site/secção) e o respetivo setor (ver abaixo) |
+| `INTRANET_NEWS_SITE_ID` | alternativa simples a `INTRANET_NEWS_SOURCES` — um único site, sem setor (geral) |
 | `INTRANET_SYNC_SECRET` | **novo** — segredo partilhado (≤128 chars). Usado como `clientState` das notificações e para autorizar o endpoint de gestão |
 | `INTRANET_NEWS_WEBHOOK_URL` | opcional — por omissão deriva de `SUPABASE_URL` (`…/functions/v1/intranet-news-webhook`) |
+
+### Setorização (`INTRANET_NEWS_SOURCES`)
+
+O setor de cada notícia é **inferido pela origem** (o site/secção SharePoint onde
+foi publicada). Configura-se um JSON com uma entrada por fonte:
+
+```json
+[
+  { "siteId": "host,col,site-energia",  "sectors": ["ambiente_energia_residuos"] },
+  { "siteId": "host,col,site-saude",    "sectors": ["saude_farmaceutica"] },
+  { "siteId": "host,col,site-geral",    "sectors": [] }
+]
+```
+
+- `sectors: []` (ou fonte sem setor) → notícia **geral**, visível a todos os clientes.
+- Caso contrário, a notícia só é vista por clientes cujo `industry_sectors` da
+  organização cruze com estes setores.
+- Os valores de setor são os de `src/lib/industrySectors.ts` (ex.:
+  `ambiente_energia_residuos` para Energia).
+
+Cria-se **uma subscrição de notificações por site** automaticamente.
 
 Como obter o **Site ID**:
 `GET https://graph.microsoft.com/v1.0/sites/{hostname}:/sites/{caminho}` →

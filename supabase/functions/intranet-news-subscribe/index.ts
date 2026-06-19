@@ -15,8 +15,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { handleCorsOptions, jsonOk, jsonError } from "../_shared/response.ts";
 import {
-  createOrRenewSubscription,
-  deleteSubscription,
+  createOrRenewSubscriptions,
+  deleteSubscriptions,
   syncIntranetNews,
 } from "../_shared/intranetNews.ts";
 
@@ -40,16 +40,16 @@ Deno.serve(async (req: Request) => {
 
   try {
     if (action === "subscribe" || action === "renew") {
-      const subscription = await createOrRenewSubscription(admin);
+      const subscriptions = await createOrRenewSubscriptions(admin);
       const sync = await syncIntranetNews(admin);
-      return jsonOk({ subscription, sync }, req);
+      return jsonOk({ subscriptions, sync }, req);
     }
     if (action === "sync") {
       return jsonOk(await syncIntranetNews(admin), req);
     }
     if (action === "unsubscribe") {
-      await deleteSubscription(admin);
-      return jsonOk({ ok: true }, req);
+      const removed = await deleteSubscriptions(admin);
+      return jsonOk({ ok: true, removed }, req);
     }
     return jsonError(`Ação desconhecida: ${action}`, req, 400);
   } catch (e) {

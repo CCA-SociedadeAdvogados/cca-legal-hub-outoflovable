@@ -1,18 +1,40 @@
 // Lógica de sincronização Intranet (SharePoint News) → cca_news.
 // Partilhada entre a função de webhook e a de gestão de subscrição.
+//
+// Fonte: um ou mais sites/secções SharePoint, cada um mapeado a setor(es).
+// O setor da notícia é inferido pela origem (site) — ver INTRANET_NEWS_SOURCES.
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClient = any;
 
 import { getGraphToken, graphGet, graphPost, graphDelete } from "./graph.ts";
 
-// SharePoint list: expiração máxima ~30 dias. Renovamos a cada poucos dias.
-const SUBSCRIPTION_TTL_MINUTES = 7 * 24 * 60; // 7 dias
+// SharePoint list: expiração máxima ~30 dias. Renovamos a cada 7 dias.
+const SUBSCRIPTION_TTL_MINUTES = 7 * 24 * 60;
 
-export function getSiteId(): string {
-  const siteId = Deno.env.get("INTRANET_NEWS_SITE_ID");
-  if (!siteId) throw new Error("INTRANET_NEWS_SITE_ID não configurado");
-  return siteId;
+export interface NewsSource {
+  siteId: string;
+  /** Setores associados a esta fonte. Vazio = geral (visível a todos). */
+  sectors: string[];
+}
+
+/**
+ * Fontes de notícias. Configuradas via INTRANET_NEWS_SOURCES (JSON):
+ *   [{ "siteId": "...", "sectors": ["ambiente_energia_residuos"] },
+ *    { "siteId": "...", "sectors": [] }]
+ * Retrocompatível: INTRANET_NEWS_SITE_ID define uma única fonte geral.
+ */
+export function getSources(): NewsSource[] {
+  const raw = Deno.env.get("INTRANET_NEWS_SOURCES");
+  if (raw) {
+    const parsed = JSON.parse(raw) as Array<{ siteId: string; sectors?: string[] }>;
+    return parsed
+      .filter((s) => s?.siteId)
+      .map((s) => ({ siteId: s.siteId, sectors: Array.isArray(s.sectors) ? s.sectors : [] }));
+  }
+  const single = Deno.env.get("INTRANET_NEWS_SITE_ID");
+  if (single) return [{ siteId: single, sectors: [] }];
+  throw new Error("Configurar INTRANET_NEWS_SOURCES (JSON) ou INTRANET_NEWS_SITE_ID");
 }
 
 function getWebhookUrl(): string {
@@ -91,39 +113,45 @@ export interface SyncResult {
 
 export async function syncIntranetNews(admin: SupabaseClient): Promise<SyncResult> {
   const token = await getGraphToken();
-  const siteId = getSiteId();
-  const pages = await fetchPublishedNews(token, siteId);
+  const sources = getSources();
 
+  let fetched = 0;
   let inserted = 0;
   let updated = 0;
 
-  for (const page of pages) {
-    const externalId = page.id as string;
-    const row = {
-      titulo: (page.title as string) || "(sem título)",
-      resumo: (page.description as string) || null,
-      conteudo: extractContent(page),
-      estado: "publicado",
-      data_publicacao: (page.lastModifiedDateTime as string) ?? new Date().toISOString(),
-      source: "intranet",
-      external_id: externalId,
-      external_url: (page.webUrl as string) ?? null,
-      updated_at: new Date().toISOString(),
-    };
+  for (const source of sources) {
+    const pages = await fetchPublishedNews(token, source.siteId);
+    fetched += pages.length;
 
-    const { data: existing } = await admin
-      .from("cca_news")
-      .select("id")
-      .eq("source", "intranet")
-      .eq("external_id", externalId)
-      .maybeSingle();
+    for (const page of pages) {
+      const externalId = page.id as string;
+      const row = {
+        titulo: (page.title as string) || "(sem título)",
+        resumo: (page.description as string) || null,
+        conteudo: extractContent(page),
+        estado: "publicado",
+        data_publicacao: (page.lastModifiedDateTime as string) ?? new Date().toISOString(),
+        sectors: source.sectors,
+        source: "intranet",
+        external_id: externalId,
+        external_url: (page.webUrl as string) ?? null,
+        updated_at: new Date().toISOString(),
+      };
 
-    if (existing) {
-      await admin.from("cca_news").update(row).eq("id", existing.id);
-      updated++;
-    } else {
-      await admin.from("cca_news").insert(row);
-      inserted++;
+      const { data: existing } = await admin
+        .from("cca_news")
+        .select("id")
+        .eq("source", "intranet")
+        .eq("external_id", externalId)
+        .maybeSingle();
+
+      if (existing) {
+        await admin.from("cca_news").update(row).eq("id", existing.id);
+        updated++;
+      } else {
+        await admin.from("cca_news").insert(row);
+        inserted++;
+      }
     }
   }
 
@@ -132,12 +160,12 @@ export async function syncIntranetNews(admin: SupabaseClient): Promise<SyncResul
     .update({ last_synced_at: new Date().toISOString() })
     .neq("id", "00000000-0000-0000-0000-000000000000");
 
-  return { fetched: pages.length, inserted, updated };
+  return { fetched, inserted, updated };
 }
 
-// ─── Subscrição de notificações ───────────────────────────────────────────────
+// ─── Subscrições de notificações (uma por fonte/site) ─────────────────────────
 
-// Resolve o id da biblioteca "Site Pages" (onde vivem as notícias).
+// Resolve o id da biblioteca "Site Pages" (onde vivem as notícias) de um site.
 async function resolveSitePagesListId(token: string, siteId: string): Promise<string> {
   const res = await graphGet<{ value: Array<{ id: string; displayName?: string; list?: { template?: string } }> }>(
     token,
@@ -147,84 +175,95 @@ async function resolveSitePagesListId(token: string, siteId: string): Promise<st
   if (byTemplate) return byTemplate.id;
   const byName = res.value.find((l) => l.displayName === "Site Pages");
   if (byName) return byName.id;
-  throw new Error("Biblioteca 'Site Pages' não encontrada no site da intranet");
+  throw new Error(`Biblioteca 'Site Pages' não encontrada no site ${siteId}`);
 }
 
 export interface SubscriptionResult {
+  resource: string;
   action: "created" | "renewed";
   subscriptionId: string;
   expirationDateTime: string;
 }
 
-export async function createOrRenewSubscription(admin: SupabaseClient): Promise<SubscriptionResult> {
+export async function createOrRenewSubscriptions(admin: SupabaseClient): Promise<SubscriptionResult[]> {
   const token = await getGraphToken();
-  const siteId = getSiteId();
-  const listId = await resolveSitePagesListId(token, siteId);
-  const resource = `sites/${siteId}/lists/${listId}`;
-  const expirationDateTime = new Date(Date.now() + SUBSCRIPTION_TTL_MINUTES * 60 * 1000).toISOString();
+  const sources = getSources();
+  const results: SubscriptionResult[] = [];
 
-  const { data: existing } = await admin
-    .from("intranet_news_subscription")
-    .select("id, subscription_id")
-    .limit(1)
-    .maybeSingle();
+  for (const source of sources) {
+    const listId = await resolveSitePagesListId(token, source.siteId);
+    const resource = `sites/${source.siteId}/lists/${listId}`;
+    const expirationDateTime = new Date(Date.now() + SUBSCRIPTION_TTL_MINUTES * 60 * 1000).toISOString();
 
-  // Tentar renovar a subscrição existente
-  if (existing?.subscription_id) {
-    try {
-      const renewed = await graphPatch(token, `/subscriptions/${existing.subscription_id}`, {
-        expirationDateTime,
-      });
-      await admin
-        .from("intranet_news_subscription")
-        .update({ expiration_at: renewed.expirationDateTime, resource, updated_at: new Date().toISOString() })
-        .eq("id", existing.id);
-      return {
-        action: "renewed",
-        subscriptionId: existing.subscription_id,
-        expirationDateTime: renewed.expirationDateTime,
-      };
-    } catch (_e) {
-      // Subscrição expirou/foi removida no Graph — criar nova abaixo
-      await admin.from("intranet_news_subscription").delete().eq("id", existing.id);
+    const { data: existing } = await admin
+      .from("intranet_news_subscription")
+      .select("id, subscription_id")
+      .eq("resource", resource)
+      .maybeSingle();
+
+    if (existing?.subscription_id) {
+      try {
+        const renewed = await graphPatch(token, `/subscriptions/${existing.subscription_id}`, {
+          expirationDateTime,
+        });
+        await admin
+          .from("intranet_news_subscription")
+          .update({ expiration_at: renewed.expirationDateTime, updated_at: new Date().toISOString() })
+          .eq("id", existing.id);
+        results.push({
+          resource,
+          action: "renewed",
+          subscriptionId: existing.subscription_id,
+          expirationDateTime: renewed.expirationDateTime,
+        });
+        continue;
+      } catch (_e) {
+        await admin.from("intranet_news_subscription").delete().eq("id", existing.id);
+      }
     }
+
+    const created = await graphPost(token, `/subscriptions`, {
+      changeType: "updated",
+      notificationUrl: getWebhookUrl(),
+      resource,
+      expirationDateTime,
+      clientState: getClientState(),
+    });
+
+    await admin.from("intranet_news_subscription").insert({
+      subscription_id: created.id,
+      resource,
+      expiration_at: created.expirationDateTime,
+      client_state: getClientState(),
+    });
+
+    results.push({
+      resource,
+      action: "created",
+      subscriptionId: created.id,
+      expirationDateTime: created.expirationDateTime,
+    });
   }
 
-  const created = await graphPost(token, `/subscriptions`, {
-    changeType: "updated",
-    notificationUrl: getWebhookUrl(),
-    resource,
-    expirationDateTime,
-    clientState: getClientState(),
-  });
-
-  await admin.from("intranet_news_subscription").insert({
-    subscription_id: created.id,
-    resource,
-    expiration_at: created.expirationDateTime,
-    client_state: getClientState(),
-  });
-
-  return {
-    action: "created",
-    subscriptionId: created.id,
-    expirationDateTime: created.expirationDateTime,
-  };
+  return results;
 }
 
-export async function deleteSubscription(admin: SupabaseClient): Promise<void> {
+export async function deleteSubscriptions(admin: SupabaseClient): Promise<number> {
   const token = await getGraphToken();
-  const { data: existing } = await admin
+  const { data: rows } = await admin
     .from("intranet_news_subscription")
-    .select("id, subscription_id")
-    .limit(1)
-    .maybeSingle();
-  if (!existing?.subscription_id) return;
-  await graphDelete(token, `/subscriptions/${existing.subscription_id}`);
-  await admin.from("intranet_news_subscription").delete().eq("id", existing.id);
+    .select("id, subscription_id");
+
+  let removed = 0;
+  for (const row of rows ?? []) {
+    if (row.subscription_id) await graphDelete(token, `/subscriptions/${row.subscription_id}`);
+    await admin.from("intranet_news_subscription").delete().eq("id", row.id);
+    removed++;
+  }
+  return removed;
 }
 
-// PATCH não existe no helper partilhado (raro) — implementado localmente.
+// PATCH não consta do helper partilhado (uso raro) — implementado localmente.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function graphPatch(token: string, path: string, body: unknown): Promise<any> {
   const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {

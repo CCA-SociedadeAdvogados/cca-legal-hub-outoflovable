@@ -1785,6 +1785,19 @@
     "news": {
       "empty": "Ainda não há novidades publicadas."
     },
+    "profile": {
+      "account": "Conta",
+      "name": "Nome",
+      "email": "Email",
+      "organization": "Organização",
+      "organizationName": "Nome",
+      "sectors": "Setor(es)",
+      "noSectors": "Sem setor definido",
+      "sectorHint": "O setor é definido pela CCA e determina as novidades que recebe. Para alterar, contacte a CCA.",
+      "preferences": "Preferências",
+      "language": "Idioma",
+      "theme": "Tema"
+    },
     "financial": {
       "documents": "Conta corrente",
       "lastSync": "Última atualização",

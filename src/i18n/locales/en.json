@@ -1785,6 +1785,19 @@
     "news": {
       "empty": "No news published yet."
     },
+    "profile": {
+      "account": "Account",
+      "name": "Name",
+      "email": "Email",
+      "organization": "Organization",
+      "organizationName": "Name",
+      "sectors": "Sector(s)",
+      "noSectors": "No sector defined",
+      "sectorHint": "Your sector is set by CCA and determines the news you receive. To change it, contact CCA.",
+      "preferences": "Preferences",
+      "language": "Language",
+      "theme": "Theme"
+    },
     "financial": {
       "documents": "Account statement",
       "lastSync": "Last updated",
