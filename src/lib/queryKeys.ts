@@ -33,6 +33,9 @@ export const queryKeys = {
   executiveSummary: {
     byContract: (contractId: string) => ['executive-summary', contractId] as const,
   },
+  clientAnalysis: {
+    byContract: (contractId: string) => ['client-analysis', contractId] as const,
+  },
   redline: {
     byContract: (contractId: string) => ['redline', contractId] as const,
   },

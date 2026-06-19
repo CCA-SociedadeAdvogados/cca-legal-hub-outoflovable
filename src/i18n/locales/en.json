@@ -1836,6 +1836,18 @@
       "disclaimer": "AI-generated summary based on contract data. Confirm with CCA before making important decisions.",
       "error": "Could not generate the summary"
     },
+    "analysis": {
+      "ctaTitle": "Obligations & risk analysis",
+      "ctaBody": "AI analyzes the contract and shows the key obligations and a risk grade (A–F) with the clauses to watch.",
+      "generate": "Analyze contract",
+      "generating": "Analyzing the contract...",
+      "loading": "Loading analysis...",
+      "risk": "Risk assessment",
+      "riskGrade": "Risk grade",
+      "obligations": "Key obligations",
+      "disclaimer": "AI-generated analysis based on contract data. Confirm with CCA before making important decisions.",
+      "error": "Could not generate the analysis"
+    },
     "requests": {
       "new": "New request",
       "formHint": "Describe what you need. The CCA team receives the request and replies here.",
