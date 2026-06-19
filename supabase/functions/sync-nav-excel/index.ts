@@ -608,27 +608,15 @@ serve(async (req) => {
       }
     }
 
-    // ── Persist to database ──────────────────────────────────────
-    // 1. Upsert parent cache records
-    const { error: upsertError } = await supabaseAdmin
-      .from("financeiro_nav_cache")
-      .upsert(cacheRecords, { onConflict: "jvris_id" });
-    if (upsertError) throw upsertError;
-
-    // 2. Replace child items: delete old → insert new
+    // ── Persist to database (atómico) ────────────────────────────
+    // Upsert do cache + substituição dos itens numa única transação, via RPC.
+    // Evita a janela em que os itens ficariam vazios se a corrida falhasse a meio.
     const syncedIds = cacheRecords.map((r) => r.jvris_id);
-    const { error: deleteError } = await supabaseAdmin
-      .from("financeiro_nav_items")
-      .delete()
-      .in("jvris_id", syncedIds);
-    if (deleteError) throw deleteError;
-
-    if (itemRecords.length > 0) {
-      const { error: insertError } = await supabaseAdmin
-        .from("financeiro_nav_items")
-        .insert(itemRecords);
-      if (insertError) throw insertError;
-    }
+    const { error: replaceError } = await supabaseAdmin.rpc("fn_replace_nav_data", {
+      p_cache: cacheRecords,
+      p_items: itemRecords,
+    });
+    if (replaceError) throw replaceError;
 
     // ── Update client names in organizations_legacy + organizations ─
     // Only updates rows where name is NULL or equals client_code (placeholder).
