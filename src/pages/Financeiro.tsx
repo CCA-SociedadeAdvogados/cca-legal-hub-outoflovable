@@ -94,9 +94,7 @@ export default function Financeiro() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('organizations')
-        .select(
-          'id, name, slug, client_code, tipo_cliente, prazo_pagamento_dias, logo_url, industry_sectors, created_at',
-        )
+        .select('id, name, client_code, logo_url, industry_sectors, created_at')
         .eq('id', organizationId!)
         .maybeSingle();
 
@@ -524,7 +522,7 @@ export default function Financeiro() {
               <div className="min-w-0">
                 <h3 className="truncate text-xl font-semibold">{orgCliente.name}</h3>
                 <p className="truncate font-mono text-sm text-muted-foreground">
-                  {orgCliente.slug}
+                  {orgCliente.client_code}
                 </p>
               </div>
             </div>

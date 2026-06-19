@@ -82,7 +82,6 @@ export async function searchCCAClients(
 export interface Organization {
   id: string;
   name: string;
-  slug: string;
   logo_url: string | null;
   lawyer_name: string | null;
   lawyer_photo_url: string | null;
