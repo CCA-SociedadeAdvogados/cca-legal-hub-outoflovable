@@ -171,6 +171,11 @@ export const queryKeys = {
     byDeptIds: (deptIds: string[]) => ['dept-members', deptIds] as const,
   },
 
+  // ── Pedidos à CCA (on-demand requests) ─────────────────────
+  pedidos: {
+    byOrg: (orgId: string) => ['pedidos', orgId] as const,
+  },
+
   // ── Compliance & Requisitos ────────────────────────────────
   requisitos: {
     byOrg: (orgId: string) => ['requisitos', orgId] as const,

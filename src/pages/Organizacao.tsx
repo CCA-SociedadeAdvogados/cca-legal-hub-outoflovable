@@ -244,7 +244,7 @@ export default function Organizacao() {
               {currentOrganization.name}
             </CardTitle>
             <CardDescription>
-              {t('organization.identifier')}: {currentOrganization.slug}
+              {t('organization.identifier')}: {currentOrganization.client_code}
             </CardDescription>
           </CardHeader>
         </Card>

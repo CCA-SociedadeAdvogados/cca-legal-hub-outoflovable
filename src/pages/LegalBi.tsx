@@ -85,12 +85,8 @@ export default function LegalBi() {
   });
 
   const externalBIUrl =
-    (isCCAInternalAuthorized
-      ? viewingOrg?.legalbi_url
-      : ((currentOrganization as Record<string, unknown>)?.legalbi_url as
-          | string
-          | null
-          | undefined)) || 'https://bi.cca.law/Identity/Account/Login';
+    (isCCAInternalAuthorized ? viewingOrg?.legalbi_url : currentOrganization?.legalbi_url) ||
+    'https://bi.cca.law/Identity/Account/Login';
 
   /** KPIs, bar chart and area distribution computed from real contract data. */
   const analytics = useMemo(() => {

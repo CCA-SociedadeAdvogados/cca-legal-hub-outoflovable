@@ -10,10 +10,13 @@
 -- idempotente (no-op onde já está alinhado).
 -- ============================================================
 
--- 1. Remover colunas que a produção já não tem e a aplicação não usa.
+-- 1. Remover slug (substituído por client_code/JVRIS como identificador canónico).
 --    CASCADE remove também a constraint única organizations_slug_key.
 ALTER TABLE public.organizations DROP COLUMN IF EXISTS slug CASCADE;
-ALTER TABLE public.organizations DROP COLUMN IF EXISTS logo_url;
+
+-- 1b. Restaurar logo_url (logótipo da organização) — usado pelo cockpit; a coluna
+--     tinha-se perdido em produção. Mantém-se opcional (sem branding obrigatório).
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS logo_url text;
 
 -- 2. Repor o default são do id (perdido em produção).
 ALTER TABLE public.organizations ALTER COLUMN id SET DEFAULT gen_random_uuid();

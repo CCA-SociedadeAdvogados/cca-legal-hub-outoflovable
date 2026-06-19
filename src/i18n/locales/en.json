@@ -119,7 +119,19 @@
     "admin": "Administration",
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
+    "requests": "Client requests",
     "legalbi": "LegalBI"
+  },
+  "requests": {
+    "cca": {
+      "title": "Requests to CCA",
+      "description": "Requests opened by clients. Respond and track the status of each one.",
+      "selectClient": "Select a client to see their requests.",
+      "empty": "This client hasn't opened any requests yet.",
+      "respond": "Respond",
+      "state": "Status",
+      "responsePlaceholder": "Write your reply to the client..."
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1795,6 +1807,56 @@
       "inForce": "in force",
       "unknownEvent": "Legislative change"
     },
+    "summary": {
+      "heading": "Executive summary",
+      "ctaTitle": "1-click executive summary",
+      "ctaBody": "Generate a clear, plain-language summary of this contract — the essentials, key dates, value and what to do next.",
+      "generate": "Generate summary",
+      "generating": "Generating executive summary...",
+      "loading": "Loading summary...",
+      "keyPoints": "What matters",
+      "keyDates": "Key dates",
+      "value": "Value and payment",
+      "nextAction": "Next action",
+      "alerts": "Alerts",
+      "disclaimer": "AI-generated summary based on contract data. Confirm with CCA before making important decisions.",
+      "error": "Could not generate the summary"
+    },
+    "requests": {
+      "new": "New request",
+      "formHint": "Describe what you need. The CCA team receives the request and replies here.",
+      "submit": "Send request",
+      "empty": "You haven't opened any requests to CCA yet.",
+      "response": "CCA's reply",
+      "cancel": "Cancel request",
+      "fields": {
+        "subject": "Subject",
+        "subjectPlaceholder": "e.g. Review of confidentiality clause",
+        "type": "Type",
+        "priority": "Priority",
+        "contract": "Related contract",
+        "noContract": "None",
+        "description": "Description",
+        "descriptionPlaceholder": "Give as much context as possible..."
+      },
+      "types": {
+        "conformidade": "Compliance",
+        "revisao_clausulas": "Clause review",
+        "due_diligence": "Due diligence",
+        "outro": "Other"
+      },
+      "priorities": {
+        "urgente": "Urgent",
+        "normal": "Normal",
+        "baixa": "Low"
+      },
+      "estados": {
+        "pendente": "Submitted",
+        "em_analise": "In review",
+        "concluido": "Answered",
+        "cancelado": "Cancelled"
+      }
+    },
     "assistant": {
       "eyebrow": "Assistant",
       "title": "Ask about your contracts",
@@ -1877,10 +1939,16 @@
       "deadlines": "Deadlines",
       "radar": "Legislative radar",
       "financial": "Account statement",
+      "requests": "Requests to CCA",
       "news": "CCA News",
       "profile": "Profile & settings"
     },
     "pages": {
+      "requests": {
+        "eyebrow": "Requests",
+        "title": "Requests to CCA",
+        "description": "Open a request to the CCA team and track the reply — all in one place, no email back-and-forth."
+      },
       "home": {
         "eyebrow": "Overview",
         "title": "Welcome to your portal",

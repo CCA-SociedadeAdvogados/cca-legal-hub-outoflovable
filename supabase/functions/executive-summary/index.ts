@@ -13,6 +13,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const CLAUDE_HAIKU = "claude-haiku-4-5-20251001";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 
 async function callClaude(apiKey: string, system: string, user: string, maxTokens = 1024): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -95,6 +96,36 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Obter dados do contrato (inclui organization_id para autorização)
+    const { data: contrato, error: contratoError } = await supabase
+      .from("contratos")
+      .select(`
+        organization_id,
+        titulo_contrato, tipo_contrato, objeto_resumido,
+        parte_a_nome_legal, parte_b_nome_legal,
+        data_inicio_vigencia, data_termo, tipo_renovacao,
+        aviso_denuncia_dias, renovacao_periodo_meses,
+        valor_total_estimado, moeda, periodicidade_faturacao,
+        tratamento_dados_pessoais, existe_dpa_anexo_rgpd, transferencia_internacional,
+        flag_confidencialidade, flag_exclusividade, flag_nao_concorrencia,
+        obrigacoes_parte_a, obrigacoes_parte_b
+      `)
+      .eq("id", contract_id)
+      .maybeSingle();
+
+    if (contratoError || !contrato) {
+      throw new Error(`Contrato não encontrado: ${contratoError?.message}`);
+    }
+
+    // Autorização: o chamador tem de pertencer à organização do contrato
+    // (ou ser CCA/admin/service role). Impede fuga cross-tenant via service role.
+    if (!(await isAuthorizedForOrg(req, supabase, contrato.organization_id))) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: sem acesso a este contrato" }),
+        { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
     // Verificar se já existe resumo em cache
     if (!force_regenerate) {
       const { data: existing } = await supabase
@@ -111,26 +142,6 @@ serve(async (req) => {
           { headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
         );
       }
-    }
-
-    // Obter dados do contrato
-    const { data: contrato, error: contratoError } = await supabase
-      .from("contratos")
-      .select(`
-        titulo_contrato, tipo_contrato, objeto_resumido,
-        parte_a_nome_legal, parte_b_nome_legal,
-        data_inicio_vigencia, data_termo, tipo_renovacao,
-        aviso_denuncia_dias, renovacao_periodo_meses,
-        valor_total_estimado, moeda, periodicidade_faturacao,
-        tratamento_dados_pessoais, existe_dpa_anexo_rgpd, transferencia_internacional,
-        flag_confidencialidade, flag_exclusividade, flag_nao_concorrencia,
-        obrigacoes_parte_a, obrigacoes_parte_b
-      `)
-      .eq("id", contract_id)
-      .maybeSingle();
-
-    if (contratoError || !contrato) {
-      throw new Error(`Contrato não encontrado: ${contratoError?.message}`);
     }
 
     const systemPrompt = `Você é um assistente jurídico especializado em explicar contratos em linguagem simples.

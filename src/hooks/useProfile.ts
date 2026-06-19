@@ -11,15 +11,20 @@ export const useProfile = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading, error } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['profile', user?.id],
     staleTime: 2 * 60 * 1000,
     queryFn: async () => {
       if (!user?.id) return null;
-      
-            const { data, error } = await supabase
+
+      const { data, error } = await supabase
         .from('profiles')
-        .select(`
+        .select(
+          `
           id,
           email,
           nome_completo,
@@ -30,13 +35,16 @@ export const useProfile = () => {
           sso_external_id,
           sso_group,
           departamento,
-          theme_preference
-        `)
+          theme_preference,
+          two_factor_enabled,
+          created_at
+        `,
+        )
         .eq('id', user.id)
         .maybeSingle();
-      
+
       if (error) throw error;
-      
+
       // If profile doesn't exist, create it (self-healing)
       if (!data) {
         console.log('Profile not found, creating...');
@@ -50,15 +58,15 @@ export const useProfile = () => {
           })
           .select()
           .single();
-        
+
         if (insertError) {
           console.error('Error creating profile:', insertError);
           throw insertError;
         }
-        
+
         return newProfile;
       }
-      
+
       return data;
     },
     enabled: !!user?.id,
@@ -67,12 +75,13 @@ export const useProfile = () => {
   const updateProfile = useMutation({
     mutationFn: async (updates: ProfileUpdate) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
-      
-            const { data, error } = await supabase
+
+      const { data, error } = await supabase
         .from('profiles')
         .update(updates)
         .eq('id', user.id)
-        .select(`
+        .select(
+          `
           id,
           email,
           nome_completo,
@@ -83,10 +92,13 @@ export const useProfile = () => {
           sso_external_id,
           sso_group,
           departamento,
-          theme_preference
-        `)
+          theme_preference,
+          two_factor_enabled,
+          created_at
+        `,
+        )
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -95,29 +107,33 @@ export const useProfile = () => {
       toast({ title: 'Perfil atualizado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao atualizar perfil', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao atualizar perfil',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
       if (!user?.id) throw new Error('Utilizador não autenticado');
-      
+
       const fileExt = file.name.split('.').pop();
       const filePath = `${user.id}/avatar.${fileExt}`;
-      
+
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
         .from('contratos')
         .upload(filePath, file, { upsert: true });
-      
+
       if (uploadError) throw uploadError;
-      
+
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('contratos')
-        .getPublicUrl(filePath);
-      
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('contratos').getPublicUrl(filePath);
+
       // Update profile with avatar URL
       const { data, error } = await supabase
         .from('profiles')
@@ -125,7 +141,7 @@ export const useProfile = () => {
         .eq('id', user.id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data;
     },
@@ -134,7 +150,11 @@ export const useProfile = () => {
       toast({ title: 'Avatar atualizado com sucesso' });
     },
     onError: (error: Error) => {
-      toast({ title: 'Erro ao carregar avatar', description: error.message, variant: 'destructive' });
+      toast({
+        title: 'Erro ao carregar avatar',
+        description: error.message,
+        variant: 'destructive',
+      });
     },
   });
 

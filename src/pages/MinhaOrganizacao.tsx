@@ -150,7 +150,7 @@ export default function MinhaOrganizacao() {
             <div>
               <Label>Identificador</Label>
               <p className="mt-1 text-muted-foreground font-mono text-sm">
-                {currentOrganization.slug}
+                {currentOrganization.client_code}
               </p>
             </div>
             {!canEdit && (

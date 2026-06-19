@@ -119,7 +119,19 @@
     "admin": "Administração",
     "ccaNews": "Novidades CCA",
     "financial": "Minha Conta Corrente CCA",
+    "requests": "Pedidos de clientes",
     "legalbi": "LegalBI"
+  },
+  "requests": {
+    "cca": {
+      "title": "Pedidos à CCA",
+      "description": "Pedidos abertos pelos clientes. Responda e acompanhe o estado de cada um.",
+      "selectClient": "Selecione um cliente para ver os respetivos pedidos.",
+      "empty": "Este cliente ainda não abriu pedidos.",
+      "respond": "Responder",
+      "state": "Estado",
+      "responsePlaceholder": "Escreva a resposta ao cliente..."
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -1795,6 +1807,56 @@
       "inForce": "em vigor",
       "unknownEvent": "Alteração legislativa"
     },
+    "summary": {
+      "heading": "Resumo executivo",
+      "ctaTitle": "Resumo executivo em 1 clique",
+      "ctaBody": "Gere um resumo claro deste contrato em linguagem simples — o essencial, datas críticas, valor e o que deve fazer a seguir.",
+      "generate": "Gerar resumo",
+      "generating": "A gerar o resumo executivo...",
+      "loading": "A carregar resumo...",
+      "keyPoints": "O que importa",
+      "keyDates": "Datas importantes",
+      "value": "Valor e pagamento",
+      "nextAction": "Próxima ação",
+      "alerts": "Alertas",
+      "disclaimer": "Resumo gerado por IA a partir dos dados do contrato. Confirme com a CCA antes de decisões importantes.",
+      "error": "Não foi possível gerar o resumo"
+    },
+    "requests": {
+      "new": "Novo pedido",
+      "formHint": "Descreva o que precisa. A equipa da CCA recebe o pedido e responde por aqui.",
+      "submit": "Enviar pedido",
+      "empty": "Ainda não abriu pedidos à CCA.",
+      "response": "Resposta da CCA",
+      "cancel": "Cancelar pedido",
+      "fields": {
+        "subject": "Assunto",
+        "subjectPlaceholder": "Ex.: Revisão de cláusula de confidencialidade",
+        "type": "Tipo",
+        "priority": "Prioridade",
+        "contract": "Contrato relacionado",
+        "noContract": "Nenhum",
+        "description": "Descrição",
+        "descriptionPlaceholder": "Dê o máximo de contexto possível..."
+      },
+      "types": {
+        "conformidade": "Conformidade",
+        "revisao_clausulas": "Revisão de cláusulas",
+        "due_diligence": "Due diligence",
+        "outro": "Outro"
+      },
+      "priorities": {
+        "urgente": "Urgente",
+        "normal": "Normal",
+        "baixa": "Baixa"
+      },
+      "estados": {
+        "pendente": "Submetido",
+        "em_analise": "Em análise",
+        "concluido": "Respondido",
+        "cancelado": "Cancelado"
+      }
+    },
     "assistant": {
       "eyebrow": "Assistente",
       "title": "Pergunte sobre os seus contratos",
@@ -1877,10 +1939,16 @@
       "deadlines": "Prazos",
       "radar": "Radar legislativo",
       "financial": "Conta corrente",
+      "requests": "Pedidos à CCA",
       "news": "Novidades CCA",
       "profile": "Perfil e definições"
     },
     "pages": {
+      "requests": {
+        "eyebrow": "Pedidos",
+        "title": "Pedidos à CCA",
+        "description": "Abra um pedido à equipa da CCA e acompanhe a resposta — tudo num só sítio, sem trocas de email."
+      },
       "home": {
         "eyebrow": "Visão geral",
         "title": "Bem-vindo ao seu portal",

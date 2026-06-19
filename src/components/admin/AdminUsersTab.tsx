@@ -1,17 +1,17 @@
-import { useState, useMemo } from "react";
-import { useTranslation } from "react-i18next";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Users,
   Shield,
@@ -33,20 +33,19 @@ import {
   Building2,
   Trash2,
   UserCog,
-} from "lucide-react";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
-import type { Database } from "@/integrations/supabase/types";
-import { AdminUserMetrics, UserMetricsData } from "./AdminUserMetrics";
-import { useDepartments } from "@/hooks/useDepartments";
-import type { DepartmentRef } from "@/hooks/useAllUsersMetrics";
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import type { Database } from '@/integrations/supabase/types';
+import { AdminUserMetrics, UserMetricsData } from './AdminUserMetrics';
+import { useDepartments } from '@/hooks/useDepartments';
+import type { DepartmentRef } from '@/hooks/useAllUsersMetrics';
 
-type AppRole = Database["public"]["Enums"]["app_role"];
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface Organization {
   id: string;
   name: string;
-  slug: string;
 }
 
 interface MemberProfile {
@@ -89,10 +88,10 @@ interface AdminUsersTabProps {
 }
 
 const roleColors: Record<AppRole, string> = {
-  owner: "bg-risk-medium/20 text-risk-medium",
-  admin: "bg-primary/20 text-primary",
-  editor: "bg-primary/15 text-primary",
-  viewer: "bg-muted text-muted-foreground",
+  owner: 'bg-risk-medium/20 text-risk-medium',
+  admin: 'bg-primary/20 text-primary',
+  editor: 'bg-primary/15 text-primary',
+  viewer: 'bg-muted text-muted-foreground',
 };
 
 const roleIcons: Record<AppRole, React.ReactNode> = {
@@ -103,8 +102,8 @@ const roleIcons: Record<AppRole, React.ReactNode> = {
 };
 
 const authMethodColors: Record<string, string> = {
-  local: "bg-primary/20 text-primary",
-  sso_cca: "bg-risk-low/20 text-risk-low",
+  local: 'bg-primary/20 text-primary',
+  sso_cca: 'bg-risk-low/20 text-risk-low',
 };
 
 const authMethodIcons: Record<string, React.ReactNode> = {
@@ -150,11 +149,11 @@ export function AdminUsersTab({
   currentUserId,
 }: AdminUsersTabProps) {
   const { t } = useTranslation();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [filterAuthMethod, setFilterAuthMethod] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterDeptId, setFilterDeptId] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterAuthMethod, setFilterAuthMethod] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterDeptId, setFilterDeptId] = useState<string>('all');
 
   // Load departments for selected org (for filter)
   const { departments: orgDepartments } = useDepartments(selectedOrgId);
@@ -171,8 +170,8 @@ export function AdminUsersTab({
 
   const getAuthMethodLabel = (method: string) => {
     const labels: Record<string, string> = {
-      local: "E-mail/Password",
-      sso_cca: "SSO CCA",
+      local: 'E-mail/Password',
+      sso_cca: 'SSO CCA',
     };
     return labels[method] || method;
   };
@@ -194,38 +193,56 @@ export function AdminUsersTab({
         m.profiles?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.organization?.name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesRole = filterRole === "all" || m.role === filterRole;
+      const matchesRole = filterRole === 'all' || m.role === filterRole;
 
       const authMethod = m.profiles?.auth_method || 'local';
-      const matchesAuthMethod = filterAuthMethod === "all" || authMethod === filterAuthMethod;
+      const matchesAuthMethod = filterAuthMethod === 'all' || authMethod === filterAuthMethod;
 
       const isLocked = isUserLocked(m);
-      const matchesStatus = filterStatus === "all" ||
-        (filterStatus === "locked" ? isLocked : !isLocked);
+      const matchesStatus =
+        filterStatus === 'all' || (filterStatus === 'locked' ? isLocked : !isLocked);
 
-      const matchesDept = filterDeptId === "all" ||
-        m.departments.some((d) => d.id === filterDeptId);
+      const matchesDept =
+        filterDeptId === 'all' || m.departments.some((d) => d.id === filterDeptId);
 
       return matchesSearch && matchesRole && matchesAuthMethod && matchesStatus && matchesDept;
     });
-  }, [allMembers, selectedOrgId, searchTerm, filterRole, filterAuthMethod, filterStatus, filterDeptId]);
+  }, [
+    allMembers,
+    selectedOrgId,
+    searchTerm,
+    filterRole,
+    filterAuthMethod,
+    filterStatus,
+    filterDeptId,
+  ]);
 
   const displayMetrics = useMemo((): UserMetricsData => {
     const members = selectedOrgId
-      ? allMembers?.filter(m => m.organization_id === selectedOrgId)
+      ? allMembers?.filter((m) => m.organization_id === selectedOrgId)
       : allMembers;
 
     if (!members) {
-      return { total: 0, admins: 0, editors: 0, viewers: 0, ssoUsers: 0, localUsers: 0, lockedUsers: 0 };
+      return {
+        total: 0,
+        admins: 0,
+        editors: 0,
+        viewers: 0,
+        ssoUsers: 0,
+        localUsers: 0,
+        lockedUsers: 0,
+      };
     }
 
     return {
       total: members.length,
-      admins: members.filter((m) => m.role === "admin" || m.role === "owner").length,
-      editors: members.filter((m) => m.role === "editor").length,
-      viewers: members.filter((m) => m.role === "viewer").length,
-      ssoUsers: members.filter((m) => m.profiles?.auth_method === "sso_cca").length,
-      localUsers: members.filter((m) => !m.profiles?.auth_method || m.profiles?.auth_method === "local").length,
+      admins: members.filter((m) => m.role === 'admin' || m.role === 'owner').length,
+      editors: members.filter((m) => m.role === 'editor').length,
+      viewers: members.filter((m) => m.role === 'viewer').length,
+      ssoUsers: members.filter((m) => m.profiles?.auth_method === 'sso_cca').length,
+      localUsers: members.filter(
+        (m) => !m.profiles?.auth_method || m.profiles?.auth_method === 'local',
+      ).length,
       lockedUsers: members.filter((m) => isUserLocked(m)).length,
     };
   }, [allMembers, selectedOrgId]);
@@ -240,19 +257,24 @@ export function AdminUsersTab({
             {t('admin.usersTab.scope', 'Âmbito')}
           </CardTitle>
           <CardDescription>
-            {t('admin.usersTab.scopeDescription', 'Selecione uma organização para ver os seus utilizadores ou veja todos.')}
+            {t(
+              'admin.usersTab.scopeDescription',
+              'Selecione uma organização para ver os seus utilizadores ou veja todos.',
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Select
-            value={selectedOrgId || "all"}
+            value={selectedOrgId || 'all'}
             onValueChange={(value) => {
-              onOrgChange(value === "all" ? null : value);
-              setFilterDeptId("all");
+              onOrgChange(value === 'all' ? null : value);
+              setFilterDeptId('all');
             }}
           >
             <SelectTrigger className="w-full md:w-80">
-              <SelectValue placeholder={t('admin.usersTab.selectOrg', 'Selecionar organização...')} />
+              <SelectValue
+                placeholder={t('admin.usersTab.selectOrg', 'Selecionar organização...')}
+              />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
@@ -283,15 +305,15 @@ export function AdminUsersTab({
       {/* Role Permissions Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t('users.permissionLevels', 'Níveis de Permissão')}</CardTitle>
+          <CardTitle className="text-lg">
+            {t('users.permissionLevels', 'Níveis de Permissão')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
-            {(["owner", "admin", "editor", "viewer"] as AppRole[]).map((role) => (
+            {(['owner', 'admin', 'editor', 'viewer'] as AppRole[]).map((role) => (
               <div key={role} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                <div className={`p-2 rounded-lg ${roleColors[role]}`}>
-                  {roleIcons[role]}
-                </div>
+                <div className={`p-2 rounded-lg ${roleColors[role]}`}>{roleIcons[role]}</div>
                 <div>
                   <p className="font-medium">{getRoleLabel(role)}</p>
                   <p className="text-xs text-muted-foreground">
@@ -356,7 +378,9 @@ export function AdminUsersTab({
             <SelectContent>
               <SelectItem value="all">Todos os departamentos</SelectItem>
               {orgDepartments.map((d) => (
-                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -411,7 +435,7 @@ export function AdminUsersTab({
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={member.profiles?.avatar_url || undefined} />
                               <AvatarFallback>
-                                {member.profiles?.nome_completo?.[0] || "?"}
+                                {member.profiles?.nome_completo?.[0] || '?'}
                               </AvatarFallback>
                             </Avatar>
                             <div>
@@ -425,7 +449,9 @@ export function AdminUsersTab({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={`${roleColors[member.role]} flex items-center gap-1 w-fit`}>
+                          <Badge
+                            className={`${roleColors[member.role]} flex items-center gap-1 w-fit`}
+                          >
                             {roleIcons[member.role]}
                             <span>{getRoleLabel(member.role)}</span>
                           </Badge>
@@ -442,11 +468,21 @@ export function AdminUsersTab({
                               cls = 'bg-risk-medium/20 text-risk-medium';
                               icon = <Crown className="h-3 w-3" />;
                             } else if (auth === 'sso_cca') {
-                              if (role === 'admin') { label = 'Gestão CCA'; cls = 'bg-primary/20 text-primary'; }
-                              else { label = 'Utilizador CCA'; cls = 'bg-primary/10 text-primary'; }
+                              if (role === 'admin') {
+                                label = 'Gestão CCA';
+                                cls = 'bg-primary/20 text-primary';
+                              } else {
+                                label = 'Utilizador CCA';
+                                cls = 'bg-primary/10 text-primary';
+                              }
                             } else {
-                              if (role === 'viewer') { label = 'Utilizador Org.'; cls = 'bg-muted text-muted-foreground'; }
-                              else { label = 'Gestão Org.'; cls = 'bg-risk-medium/20 text-risk-medium'; }
+                              if (role === 'viewer') {
+                                label = 'Utilizador Org.';
+                                cls = 'bg-muted text-muted-foreground';
+                              } else {
+                                label = 'Gestão Org.';
+                                cls = 'bg-risk-medium/20 text-risk-medium';
+                              }
                             }
                             return (
                               <Badge className={`${cls} flex items-center gap-1 w-fit text-xs`}>
@@ -457,15 +493,15 @@ export function AdminUsersTab({
                           })()}
                         </TableCell>
                         <TableCell>
-                          <Badge className={`${authMethodColors[authMethod]} flex items-center gap-1 w-fit`}>
+                          <Badge
+                            className={`${authMethodColors[authMethod]} flex items-center gap-1 w-fit`}
+                          >
                             {authMethodIcons[authMethod]}
                             <span>{getAuthMethodLabel(authMethod)}</span>
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm">
-                            {member.organization?.name || '-'}
-                          </span>
+                          <span className="text-sm">{member.organization?.name || '-'}</span>
                         </TableCell>
                         <TableCell>
                           <DepartmentBadges departments={member.departments} />
@@ -473,7 +509,11 @@ export function AdminUsersTab({
                         <TableCell>
                           <span className="text-sm text-muted-foreground">
                             {member.profiles?.last_login_at
-                              ? format(new Date(member.profiles.last_login_at), "dd/MM/yyyy HH:mm", { locale: pt })
+                              ? format(
+                                  new Date(member.profiles.last_login_at),
+                                  'dd/MM/yyyy HH:mm',
+                                  { locale: pt },
+                                )
                               : '-'}
                           </span>
                         </TableCell>
@@ -484,7 +524,10 @@ export function AdminUsersTab({
                               {t('users.status.locked', 'Bloqueado')}
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-risk-low border-risk-low flex items-center gap-1 w-fit">
+                            <Badge
+                              variant="outline"
+                              className="text-risk-low border-risk-low flex items-center gap-1 w-fit"
+                            >
                               {t('users.status.active', 'Ativo')}
                             </Badge>
                           )}
@@ -509,9 +552,14 @@ export function AdminUsersTab({
                               className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() => onDeleteUser?.(member)}
                               disabled={member.user_id === currentUserId || isDeletingUser}
-                              title={member.user_id === currentUserId
-                                ? t('users.cannotDeleteSelf', 'Não pode eliminar a sua própria conta')
-                                : t('users.deleteUser', 'Eliminar utilizador')}
+                              title={
+                                member.user_id === currentUserId
+                                  ? t(
+                                      'users.cannotDeleteSelf',
+                                      'Não pode eliminar a sua própria conta',
+                                    )
+                                  : t('users.deleteUser', 'Eliminar utilizador')
+                              }
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

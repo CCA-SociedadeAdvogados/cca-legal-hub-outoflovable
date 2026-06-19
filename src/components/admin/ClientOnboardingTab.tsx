@@ -48,7 +48,6 @@ type Departamento = Database['public']['Enums']['departamento'];
 interface OrgOption {
   id: string;
   name: string;
-  slug: string;
   jvris_id?: string | null;
   client_code?: string | null;
 }
@@ -151,8 +150,7 @@ function IndividualOnboarding({ organizations }: { organizations: OrgOption[] })
     return (
       (o.name ?? '').toLowerCase().includes(q) ||
       (o.jvris_id ?? '').toLowerCase().includes(q) ||
-      (o.client_code ?? '').toLowerCase().includes(q) ||
-      (o.slug ?? '').toLowerCase().includes(q)
+      (o.client_code ?? '').toLowerCase().includes(q)
     );
   });
 

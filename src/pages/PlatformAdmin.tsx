@@ -140,11 +140,10 @@ export default function PlatformAdmin() {
   const [editingOrg, setEditingOrg] = useState<{
     id: string;
     name: string;
-    slug: string;
+    client_code: string | null;
     industry_sectors?: string[] | null;
   } | null>(null);
   const [editOrgName, setEditOrgName] = useState('');
-  const [editOrgSlug, setEditOrgSlug] = useState('');
   const [editOrgSectors, setEditOrgSectors] = useState<string[]>([]);
   const [isEditOrgOpen, setIsEditOrgOpen] = useState(false);
 
@@ -239,17 +238,33 @@ export default function PlatformAdmin() {
 
       const { data, error } = await supabase
         .from('impersonation_sessions')
-        .select(
-          `
-          *,
-          organizations:impersonated_organization_id (name)
-        `,
-        )
+        .select('*')
         .order('started_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      return data;
+      const rows = data ?? [];
+
+      // PostgREST não resolve a relação impersonated_organization_id → organizations;
+      // enriquecer com o nome da org manualmente.
+      const orgIds = [
+        ...new Set(rows.map((s) => s.impersonated_organization_id).filter(Boolean)),
+      ] as string[];
+      const orgsMap = new Map<string, string>();
+      if (orgIds.length > 0) {
+        const { data: orgsData } = await supabase
+          .from('organizations')
+          .select('id, name')
+          .in('id', orgIds);
+        for (const org of orgsData || []) orgsMap.set(org.id, org.name);
+      }
+
+      return rows.map((s) => ({
+        ...s,
+        organizations: s.impersonated_organization_id
+          ? { name: orgsMap.get(s.impersonated_organization_id) ?? null }
+          : null,
+      }));
     },
   });
 
@@ -298,7 +313,7 @@ export default function PlatformAdmin() {
     ?.filter(
       (org) =>
         (org.name ?? '').toLowerCase().includes(orgSearch.toLowerCase()) ||
-        (org.slug ?? '').toLowerCase().includes(orgSearch.toLowerCase()),
+        (org.client_code ?? '').toLowerCase().includes(orgSearch.toLowerCase()),
     )
     .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'pt'));
 
@@ -430,21 +445,20 @@ export default function PlatformAdmin() {
   const handleEditOrganization = (org: {
     id: string;
     name: string;
-    slug: string;
+    client_code: string | null;
     industry_sectors?: string[] | null;
   }) => {
     setEditingOrg(org);
     setEditOrgName(org.name);
-    setEditOrgSlug(org.slug);
     setEditOrgSectors(org.industry_sectors || []);
     setIsEditOrgOpen(true);
   };
 
   const handleUpdateOrganization = async () => {
-    if (!editingOrg || !editOrgName.trim() || !editOrgSlug.trim()) {
+    if (!editingOrg || !editOrgName.trim()) {
       toast({
         title: t('common.error'),
-        description: 'Nome e slug são obrigatórios',
+        description: 'O nome é obrigatório',
         variant: 'destructive',
       });
       return;
@@ -454,7 +468,6 @@ export default function PlatformAdmin() {
       await updateOrganization.mutateAsync({
         id: editingOrg.id,
         name: editOrgName.trim(),
-        slug: editOrgSlug.trim().toLowerCase().replace(/\s+/g, '-'),
         industrySectors: editOrgSectors,
       });
       toast({
@@ -463,7 +476,6 @@ export default function PlatformAdmin() {
       });
       setEditingOrg(null);
       setEditOrgName('');
-      setEditOrgSlug('');
       setEditOrgSectors([]);
       setIsEditOrgOpen(false);
     } catch (error: unknown) {
@@ -819,7 +831,7 @@ export default function PlatformAdmin() {
                             </div>
                             <div>
                               <p className="font-medium">{org.name}</p>
-                              <p className="text-sm text-muted-foreground">{org.slug}</p>
+                              <p className="text-sm text-muted-foreground">{org.client_code}</p>
                             </div>
                           </div>
                           <Button
@@ -863,8 +875,7 @@ export default function PlatformAdmin() {
                             <div className="flex items-center gap-2">
                               <Building2 className="h-4 w-4 text-muted-foreground" />
                               <span className="font-medium">
-                                {(session.organizations as { name: string } | null)?.name ||
-                                  'Organização removida'}
+                                {session.organizations?.name || 'Organização removida'}
                               </span>
                             </div>
                             <Badge
@@ -941,7 +952,7 @@ export default function PlatformAdmin() {
                           <TableRow key={org.id}>
                             <TableCell className="font-medium">{org.name}</TableCell>
                             <TableCell>
-                              <Badge variant="outline">{org.slug}</Badge>
+                              <Badge variant="outline">{org.client_code}</Badge>
                             </TableCell>
                             <TableCell>
                               {sectors.length > 0 ? (
@@ -977,7 +988,7 @@ export default function PlatformAdmin() {
                                     handleEditOrganization({
                                       id: org.id,
                                       name: org.name,
-                                      slug: org.slug,
+                                      client_code: org.client_code,
                                       industry_sectors: (
                                         org as { industry_sectors?: string[] | null }
                                       ).industry_sectors,
@@ -1056,15 +1067,11 @@ export default function PlatformAdmin() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="edit-org-slug">Identificador único</Label>
-                    <Input
-                      id="edit-org-slug"
-                      value={editOrgSlug}
-                      onChange={(e) => setEditOrgSlug(e.target.value)}
-                      placeholder="identificador-da-organizacao"
-                    />
+                    <Label>Código de cliente (JVRIS)</Label>
+                    <Input value={editingOrg?.client_code ?? '—'} disabled readOnly />
                     <p className="text-xs text-muted-foreground">
-                      Apenas Platform Admins podem alterar o identificador
+                      O identificador segue a lógica do JVRIS (C.XXXX) e é gerido na configuração
+                      JVRIS da organização.
                     </p>
                   </div>
                   <IndustrySectorSelect

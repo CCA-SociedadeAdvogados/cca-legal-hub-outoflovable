@@ -231,10 +231,14 @@ export type Database = {
           created_by_id: string | null
           data_publicacao: string | null
           estado: string
+          external_id: string | null
+          external_url: string | null
           id: string
           links: Json | null
           organization_id: string | null
           resumo: string | null
+          sectors: string[]
+          source: string
           titulo: string
           updated_at: string | null
         }
@@ -245,10 +249,14 @@ export type Database = {
           created_by_id?: string | null
           data_publicacao?: string | null
           estado?: string
+          external_id?: string | null
+          external_url?: string | null
           id?: string
           links?: Json | null
           organization_id?: string | null
           resumo?: string | null
+          sectors?: string[]
+          source?: string
           titulo: string
           updated_at?: string | null
         }
@@ -259,10 +267,14 @@ export type Database = {
           created_by_id?: string | null
           data_publicacao?: string | null
           estado?: string
+          external_id?: string | null
+          external_url?: string | null
           id?: string
           links?: Json | null
           organization_id?: string | null
           resumo?: string | null
+          sectors?: string[]
+          source?: string
           titulo?: string
           updated_at?: string | null
         }
@@ -306,6 +318,77 @@ export type Database = {
           updated_by_id?: string | null
         }
         Relationships: []
+      }
+      client_document_text: {
+        Row: {
+          char_count: number
+          content: string
+          content_tsv: unknown
+          extracted_at: string
+          folder_path: string | null
+          id: string
+          name: string
+          organization_id: string
+          sharepoint_document_id: string | null
+          source_modified_at: string | null
+          web_url: string | null
+        }
+        Insert: {
+          char_count?: number
+          content?: string
+          content_tsv?: unknown
+          extracted_at?: string
+          folder_path?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          sharepoint_document_id?: string | null
+          source_modified_at?: string | null
+          web_url?: string | null
+        }
+        Update: {
+          char_count?: number
+          content?: string
+          content_tsv?: unknown
+          extracted_at?: string
+          folder_path?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          sharepoint_document_id?: string | null
+          source_modified_at?: string | null
+          web_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_document_text_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_document_text_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "client_document_text_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "client_document_text_sharepoint_document_id_fkey"
+            columns: ["sharepoint_document_id"]
+            isOneToOne: false
+            referencedRelation: "sharepoint_documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_folders: {
         Row: {
@@ -994,6 +1077,7 @@ export type Database = {
             | null
           moeda: string | null
           motivo_ultima_alteracao: string | null
+          nivel_risco: string | null
           numero_adendas: number | null
           numero_encomenda_po: string | null
           objeto_resumido: string | null
@@ -1106,6 +1190,7 @@ export type Database = {
             | null
           moeda?: string | null
           motivo_ultima_alteracao?: string | null
+          nivel_risco?: string | null
           numero_adendas?: number | null
           numero_encomenda_po?: string | null
           objeto_resumido?: string | null
@@ -1218,6 +1303,7 @@ export type Database = {
             | null
           moeda?: string | null
           motivo_ultima_alteracao?: string | null
+          nivel_risco?: string | null
           numero_adendas?: number | null
           numero_encomenda_po?: string | null
           objeto_resumido?: string | null
@@ -1989,6 +2075,7 @@ export type Database = {
           organization_id: string | null
           resolvido_por_id: string | null
           updated_at: string
+          updated_by_id: string | null
         }
         Insert: {
           contrato_id?: string | null
@@ -2005,6 +2092,7 @@ export type Database = {
           organization_id?: string | null
           resolvido_por_id?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Update: {
           contrato_id?: string | null
@@ -2021,6 +2109,7 @@ export type Database = {
           organization_id?: string | null
           resolvido_por_id?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Relationships: [
           {
@@ -2136,6 +2225,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      intranet_news_subscription: {
+        Row: {
+          client_state: string | null
+          created_at: string
+          expiration_at: string
+          id: string
+          last_synced_at: string | null
+          resource: string
+          subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_state?: string | null
+          created_at?: string
+          expiration_at: string
+          id?: string
+          last_synced_at?: string | null
+          resource: string
+          subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_state?: string | null
+          created_at?: string
+          expiration_at?: string
+          id?: string
+          last_synced_at?: string | null
+          resource?: string
+          subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       invoices: {
         Row: {
@@ -2658,30 +2780,40 @@ export type Database = {
           industry_sectors: string[] | null
           is_active: boolean
           jvris_id: string | null
+          lawyer_user_id: string | null
           legacy_org_id: number | null
           legalbi_url: string | null
+          logo_url: string | null
           name: string
           org_type: string
+          prazo_pagamento_dias: number | null
           responsible: string | null
           responsible_email: string | null
+          tipo_cliente: string | null
           updated_at: string
+          updated_by_id: string | null
         }
         Insert: {
           client_code?: string | null
           cost_center?: string | null
           created_at?: string
           group?: string | null
-          id: string
+          id?: string
           industry_sectors?: string[] | null
           is_active?: boolean
           jvris_id?: string | null
+          lawyer_user_id?: string | null
           legacy_org_id?: number | null
           legalbi_url?: string | null
+          logo_url?: string | null
           name: string
           org_type: string
+          prazo_pagamento_dias?: number | null
           responsible?: string | null
           responsible_email?: string | null
+          tipo_cliente?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
         Update: {
           client_code?: string | null
@@ -2692,15 +2824,35 @@ export type Database = {
           industry_sectors?: string[] | null
           is_active?: boolean
           jvris_id?: string | null
+          lawyer_user_id?: string | null
           legacy_org_id?: number | null
           legalbi_url?: string | null
+          logo_url?: string | null
           name?: string
           org_type?: string
+          prazo_pagamento_dias?: number | null
           responsible?: string | null
           responsible_email?: string | null
+          tipo_cliente?: string | null
           updated_at?: string
+          updated_by_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_lawyer_user_id_fkey"
+            columns: ["lawyer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organizations_lawyer_user_id_fkey"
+            columns: ["lawyer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       "organizations sso": {
         Row: {
@@ -4276,32 +4428,6 @@ export type Database = {
           },
         ]
       }
-      vw_cca_client_selector_tmp: {
-        Row: {
-          client_code: string | null
-          client_name: string | null
-          client_status: string | null
-          cost_center: string | null
-          group_code: string | null
-          organization_id: string | null
-          responsible: string | null
-          responsible_email: string | null
-          total_a_vencer: number | null
-          total_documentos: number | null
-          total_pendente: number | null
-          total_vencido: number | null
-          ultima_sincronizacao: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organizations_responsible_email_fkey"
-            columns: ["responsible_email"]
-            isOneToOne: false
-            referencedRelation: "platform_users"
-            referencedColumns: ["email"]
-          },
-        ]
-      }
       vw_client_finance_home: {
         Row: {
           client_code: string | null
@@ -4409,13 +4535,18 @@ export type Database = {
           industry_sectors: string[] | null
           is_active: boolean
           jvris_id: string | null
+          lawyer_user_id: string | null
           legacy_org_id: number | null
           legalbi_url: string | null
+          logo_url: string | null
           name: string
           org_type: string
+          prazo_pagamento_dias: number | null
           responsible: string | null
           responsible_email: string | null
+          tipo_cliente: string | null
           updated_at: string
+          updated_by_id: string | null
         }
         SetofOptions: {
           from: "*"
@@ -4425,6 +4556,7 @@ export type Database = {
         }
       }
       expire_stale_impersonation_sessions: { Args: never; Returns: number }
+      fn_get_cca_default_client_org_id: { Args: never; Returns: string }
       fn_get_client_home_for_actor: {
         Args: { p_user_id: string; p_viewing_organization_id: string }
         Returns: {
@@ -4542,6 +4674,19 @@ export type Database = {
       fn_provision_orgs_for_client_codes: {
         Args: { p_client_codes: string[] }
         Returns: number
+      }
+      fn_replace_nav_data: {
+        Args: { p_cache: Json; p_items: Json }
+        Returns: undefined
+      }
+      fn_search_client_documents: {
+        Args: { p_limit?: number; p_org: string; p_query: string }
+        Returns: {
+          excerpt: string
+          folder_path: string
+          name: string
+          web_url: string
+        }[]
       }
       get_cca_org_id: { Args: never; Returns: string }
       get_legal_document: {
