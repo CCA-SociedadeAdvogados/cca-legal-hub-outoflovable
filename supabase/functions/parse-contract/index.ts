@@ -373,9 +373,11 @@ async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string
     );
   }
 
-  // Point to the matching worker version on esm.sh (required by pdfjs-dist)
+  // Worker do pdfjs: servido raw pelo jsDelivr (o ficheiro existe no pacote npm).
+  // O esm.sh com ?external=canvas devolvia 404 para o worker ("Module not found"),
+  // partindo a extração de texto. O worker é um bundle autónomo e não precisa de canvas.
   pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs?external=canvas";
+    "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs";
 
   const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
   const pages: string[] = [];
