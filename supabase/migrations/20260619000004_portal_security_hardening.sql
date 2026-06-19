@@ -1,7 +1,9 @@
 -- Endurecimento de segurança do portal — fecha fugas entre organizações
 -- (cross-tenant) confirmadas pelos advisors do Supabase.
 -- Mantém o comportamento atual do cockpit e do portal (acesso scopado por org).
--- Nota: o helper is_cca_user é garantido na migração 20260619000001 (anterior).
+-- Nota: a verificação "utilizador CCA" é inlined (EXISTS sobre organization_members)
+-- para não depender da função is_cca_user — assim a migração é auto-suficiente
+-- numa build de raiz, independentemente da ordem de criação de funções.
 
 -- ── 1. contract_extractions: substituir políticas "sempre verdadeiras" ────────
 -- Antes: SELECT/INSERT/UPDATE/DELETE com using(true) → qualquer autenticado lia
@@ -16,7 +18,10 @@ CREATE POLICY ce_select ON public.contract_extractions FOR SELECT TO authenticat
 USING (EXISTS (
   SELECT 1 FROM public.contratos c
   WHERE c.id = contract_extractions.contrato_id
-    AND (is_platform_admin(auth.uid()) OR is_cca_user(auth.uid())
+    AND (is_platform_admin(auth.uid())
+         OR EXISTS (SELECT 1 FROM public.organization_members _om
+                    JOIN public.organizations _o ON _o.id = _om.organization_id
+                    WHERE _om.user_id = auth.uid() AND _o.org_type = 'cca_owner')
          OR c.organization_id = get_user_organization_id(auth.uid()))
 ));
 
@@ -24,7 +29,10 @@ CREATE POLICY ce_insert ON public.contract_extractions FOR INSERT TO authenticat
 WITH CHECK (EXISTS (
   SELECT 1 FROM public.contratos c
   WHERE c.id = contract_extractions.contrato_id
-    AND (is_platform_admin(auth.uid()) OR is_cca_user(auth.uid())
+    AND (is_platform_admin(auth.uid())
+         OR EXISTS (SELECT 1 FROM public.organization_members _om
+                    JOIN public.organizations _o ON _o.id = _om.organization_id
+                    WHERE _om.user_id = auth.uid() AND _o.org_type = 'cca_owner')
          OR c.organization_id = get_user_organization_id(auth.uid()))
 ));
 
@@ -32,13 +40,19 @@ CREATE POLICY ce_update ON public.contract_extractions FOR UPDATE TO authenticat
 USING (EXISTS (
   SELECT 1 FROM public.contratos c
   WHERE c.id = contract_extractions.contrato_id
-    AND (is_platform_admin(auth.uid()) OR is_cca_user(auth.uid())
+    AND (is_platform_admin(auth.uid())
+         OR EXISTS (SELECT 1 FROM public.organization_members _om
+                    JOIN public.organizations _o ON _o.id = _om.organization_id
+                    WHERE _om.user_id = auth.uid() AND _o.org_type = 'cca_owner')
          OR c.organization_id = get_user_organization_id(auth.uid()))
 ))
 WITH CHECK (EXISTS (
   SELECT 1 FROM public.contratos c
   WHERE c.id = contract_extractions.contrato_id
-    AND (is_platform_admin(auth.uid()) OR is_cca_user(auth.uid())
+    AND (is_platform_admin(auth.uid())
+         OR EXISTS (SELECT 1 FROM public.organization_members _om
+                    JOIN public.organizations _o ON _o.id = _om.organization_id
+                    WHERE _om.user_id = auth.uid() AND _o.org_type = 'cca_owner')
          OR c.organization_id = get_user_organization_id(auth.uid()))
 ));
 
@@ -46,7 +60,10 @@ CREATE POLICY ce_delete ON public.contract_extractions FOR DELETE TO authenticat
 USING (EXISTS (
   SELECT 1 FROM public.contratos c
   WHERE c.id = contract_extractions.contrato_id
-    AND (is_platform_admin(auth.uid()) OR is_cca_user(auth.uid())
+    AND (is_platform_admin(auth.uid())
+         OR EXISTS (SELECT 1 FROM public.organization_members _om
+                    JOIN public.organizations _o ON _o.id = _om.organization_id
+                    WHERE _om.user_id = auth.uid() AND _o.org_type = 'cca_owner')
          OR c.organization_id = get_user_organization_id(auth.uid()))
 ));
 
