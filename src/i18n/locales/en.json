@@ -1765,6 +1765,9 @@
       "root": "Root",
       "back": "Back",
       "open": "Open in SharePoint",
+      "upload": "Upload",
+      "uploadHint": "Upload here the documents you want to share with CCA.",
+      "preparing": "Preparing your document archive...",
       "empty": "No documents in this folder.",
       "notReady": "Your documents are not available yet",
       "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here."
