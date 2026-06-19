@@ -1765,6 +1765,9 @@
       "root": "Raiz",
       "back": "Voltar",
       "open": "Abrir no SharePoint",
+      "upload": "Carregar",
+      "uploadHint": "Carregue aqui os documentos que quer partilhar com a CCA.",
+      "preparing": "A preparar o seu arquivo de documentos...",
       "empty": "Nenhum documento nesta pasta.",
       "notReady": "Os seus documentos ainda não estão disponíveis",
       "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui."

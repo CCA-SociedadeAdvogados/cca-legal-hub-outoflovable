@@ -269,46 +269,66 @@ serve(async (req) => {
   }
 
   try {
-    // Validate authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
+    // Corpo do pedido (tolerante a vazio para o modo agendado)
+    let body: { organization_id?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
     }
 
-    // Verify platform admin
-    const { data: adminRecord } = await supabaseAdmin
-      .from("platform_admins")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // ── Autenticação: modo agendado (segredo) OU admin (JWT) ──────────────────
+    // Modo agendado: header x-cron-secret == NAV_SYNC_SECRET (cron/CI sem utilizador).
+    // Modo admin: JWT de um platform admin (chamada interativa a partir da app).
+    const cronSecret = Deno.env.get("NAV_SYNC_SECRET");
+    const providedSecret = req.headers.get("x-cron-secret");
+    const isCron = !!cronSecret && providedSecret === cronSecret;
 
-    if (!adminRecord) {
-      return new Response(JSON.stringify({ error: "Forbidden: platform admin required" }), {
-        status: 403,
-        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
-      });
+    if (!isCron) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      const token = authHeader.replace("Bearer ", "");
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
+      const { data: adminRecord } = await supabaseAdmin
+        .from("platform_admins")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!adminRecord) {
+        return new Response(JSON.stringify({ error: "Forbidden: platform admin required" }), {
+          status: 403,
+          headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+        });
+      }
     }
 
-    // Read JSON body with organization_id
-    const body = await req.json();
-    const { organization_id } = body;
+    // organization_id: do corpo ou, no modo agendado, resolver a org CCA (cca_owner)
+    let organization_id = body.organization_id;
+    if (!organization_id) {
+      const { data: ccaOrg } = await supabaseAdmin
+        .from("organizations")
+        .select("id")
+        .eq("org_type", "cca_owner")
+        .limit(1)
+        .maybeSingle();
+      organization_id = ccaOrg?.id;
+    }
 
     if (!organization_id) {
       return new Response(JSON.stringify({ error: "organization_id is required" }), {
@@ -588,27 +608,15 @@ serve(async (req) => {
       }
     }
 
-    // ── Persist to database ──────────────────────────────────────
-    // 1. Upsert parent cache records
-    const { error: upsertError } = await supabaseAdmin
-      .from("financeiro_nav_cache")
-      .upsert(cacheRecords, { onConflict: "jvris_id" });
-    if (upsertError) throw upsertError;
-
-    // 2. Replace child items: delete old → insert new
+    // ── Persist to database (atómico) ────────────────────────────
+    // Upsert do cache + substituição dos itens numa única transação, via RPC.
+    // Evita a janela em que os itens ficariam vazios se a corrida falhasse a meio.
     const syncedIds = cacheRecords.map((r) => r.jvris_id);
-    const { error: deleteError } = await supabaseAdmin
-      .from("financeiro_nav_items")
-      .delete()
-      .in("jvris_id", syncedIds);
-    if (deleteError) throw deleteError;
-
-    if (itemRecords.length > 0) {
-      const { error: insertError } = await supabaseAdmin
-        .from("financeiro_nav_items")
-        .insert(itemRecords);
-      if (insertError) throw insertError;
-    }
+    const { error: replaceError } = await supabaseAdmin.rpc("fn_replace_nav_data", {
+      p_cache: cacheRecords,
+      p_items: itemRecords,
+    });
+    if (replaceError) throw replaceError;
 
     // ── Update client names in organizations_legacy + organizations ─
     // Only updates rows where name is NULL or equals client_code (placeholder).

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 
 interface SharePointConfig {
   id: string;
@@ -527,6 +528,14 @@ serve(async (req) => {
 
     if (!organization_id) {
       throw new Error("organization_id is required");
+    }
+
+    // Autorização: o chamador tem de pertencer à org (ou ser CCA/admin/service role)
+    if (!(await isAuthorizedForOrg(req, supabase, organization_id))) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: sem acesso a esta organização" }),
+        { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
     }
 
     // ============ SAVE CONFIG ACTION ============

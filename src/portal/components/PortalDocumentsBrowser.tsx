@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -12,8 +12,15 @@ import {
   ExternalLink,
   Loader2,
   Cloud,
+  Upload,
 } from 'lucide-react';
-import { useSharePointConfig, useSharePointDocuments } from '@/hooks/useSharePoint';
+import {
+  useSharePointConfig,
+  useSharePointDocuments,
+  useUploadToSharePoint,
+} from '@/hooks/useSharePoint';
+import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { cn } from '@/lib/utils';
 import { dateFnsLocale } from '@/portal/lib/contrato';
 
@@ -42,20 +49,44 @@ function formatFileSize(bytes: number | null): string {
 }
 
 /**
- * Browser de documentos read-only para o cliente. Lê os documentos do SharePoint
- * já sincronizados (tabela sharepoint_documents), scopados à organização do cliente
- * via RLS. Sem sincronização manual nem upload — operações que ficam do lado da CCA.
+ * Browser de documentos do cliente. Lê os documentos do SharePoint já
+ * sincronizados (sharepoint_documents), scopados à organização via RLS.
+ *
+ * - Auto-provisão: se a org ainda não tiver pastas, são criadas no primeiro acesso.
+ * - Upload: o cliente pode entregar documentos para a sua pasta.
  */
 export function PortalDocumentsBrowser() {
   const { t, i18n } = useTranslation();
   const [currentPath, setCurrentPath] = useState('/');
   const [pathHistory, setPathHistory] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { currentOrganization } = useOrganizations();
   const { data: config, isLoading: isLoadingConfig } = useSharePointConfig();
   const { data: documents, isLoading: isLoadingDocs } = useSharePointDocuments(currentPath);
+  const { provision } = useProvisionSharePoint();
+  const uploadToSharePoint = useUploadToSharePoint();
 
   const locale = dateFnsLocale(i18n.language);
   const breadcrumbParts = currentPath.split('/').filter(Boolean);
+
+  // ── Auto-provisão da pasta do cliente no primeiro acesso ────────────────────
+  const provisionAttempted = useRef<string | null>(null);
+  const canProvision =
+    !!currentOrganization?.id && !!currentOrganization?.client_code && !!currentOrganization?.name;
+  useEffect(() => {
+    if (isLoadingConfig || config) return;
+    if (!canProvision) return;
+    if (provision.isPending) return;
+    if (provisionAttempted.current === currentOrganization!.id) return;
+    provisionAttempted.current = currentOrganization!.id;
+    provision.mutate({
+      organizationId: currentOrganization!.id,
+      clientCode: currentOrganization!.client_code as string,
+      clientName: currentOrganization!.name,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingConfig, config, canProvision, currentOrganization]);
 
   const navigateToFolder = (folderPath: string) => {
     setPathHistory([...pathHistory, currentPath]);
@@ -70,14 +101,26 @@ export function PortalDocumentsBrowser() {
     setCurrentPath(previousPath);
   };
 
-  if (isLoadingConfig) {
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permitir re-selecionar o mesmo ficheiro
+    if (file) uploadToSharePoint.mutate({ file, folderPath: currentPath });
+  };
+
+  // A preparar (sem config ainda, mas a provisionar)
+  if (
+    isLoadingConfig ||
+    (!config && (provision.isPending || (canProvision && provisionAttempted.current)))
+  ) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-ink-mute" />
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <Loader2 className="mb-3 h-8 w-8 animate-spin text-ink-mute" />
+        <p className="text-[13px] text-ink-mute">{t('portal.documents.preparing')}</p>
       </div>
     );
   }
 
+  // Sem config e não dá para provisionar (org sem client_code)
   if (!config) {
     return (
       <div className="flex flex-col items-center justify-center rounded-control border border-dashed border-line bg-surface/50 py-16 text-center">
@@ -92,39 +135,56 @@ export function PortalDocumentsBrowser() {
 
   return (
     <div className="space-y-3">
-      {/* Breadcrumb */}
-      <div className="min-w-0 overflow-x-auto">
-        <div className="flex min-w-max items-center gap-1 text-[12.5px]">
-          <button
-            type="button"
-            onClick={() => {
-              setCurrentPath('/');
-              setPathHistory([]);
-            }}
-            disabled={currentPath === '/'}
-            className="rounded-control px-2 py-1 font-medium text-ink-mute transition-colors hover:text-ink disabled:text-ink disabled:hover:text-ink"
-          >
-            {t('portal.documents.root')}
-          </button>
-          {breadcrumbParts.map((part, index) => (
-            <div key={index} className="flex items-center">
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-mute" />
-              <button
-                type="button"
-                onClick={() => {
-                  const newPath = '/' + breadcrumbParts.slice(0, index + 1).join('/');
-                  if (newPath !== currentPath) {
-                    setPathHistory([...pathHistory, currentPath]);
-                    setCurrentPath(newPath);
-                  }
-                }}
-                className="rounded-control px-2 py-1 text-ink-mute transition-colors hover:text-ink"
-              >
-                {part}
-              </button>
-            </div>
-          ))}
+      {/* Barra: breadcrumb + upload */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <div className="flex min-w-max items-center gap-1 text-[12.5px]">
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentPath('/');
+                setPathHistory([]);
+              }}
+              disabled={currentPath === '/'}
+              className="rounded-control px-2 py-1 font-medium text-ink-mute transition-colors hover:text-ink disabled:text-ink"
+            >
+              {t('portal.documents.root')}
+            </button>
+            {breadcrumbParts.map((part, index) => (
+              <div key={index} className="flex items-center">
+                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-ink-mute" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newPath = '/' + breadcrumbParts.slice(0, index + 1).join('/');
+                    if (newPath !== currentPath) {
+                      setPathHistory([...pathHistory, currentPath]);
+                      setCurrentPath(newPath);
+                    }
+                  }}
+                  className="rounded-control px-2 py-1 text-ink-mute transition-colors hover:text-ink"
+                >
+                  {part}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
+
+        <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected} />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadToSharePoint.isPending}
+          className="inline-flex h-8 shrink-0 items-center gap-2 rounded-control bg-brand px-3 text-[12.5px] font-medium text-white transition-colors hover:bg-brand/90 disabled:opacity-60"
+        >
+          {uploadToSharePoint.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="h-4 w-4" />
+          )}
+          {t('portal.documents.upload')}
+        </button>
       </div>
 
       {pathHistory.length > 0 && (
@@ -147,6 +207,7 @@ export function PortalDocumentsBrowser() {
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Folder className="mb-2 h-9 w-9 text-ink-mute" strokeWidth={1.5} />
             <p className="text-[13px] text-ink-mute">{t('portal.documents.empty')}</p>
+            <p className="mt-1 text-[12px] text-ink-mute">{t('portal.documents.uploadHint')}</p>
           </div>
         ) : (
           <div className="divide-y divide-line">

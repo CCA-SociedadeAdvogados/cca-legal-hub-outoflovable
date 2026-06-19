@@ -1,0 +1,28 @@
+name: NAV daily sync
+
+# Sincroniza diariamente a conta corrente NAV (Excel no SharePoint → Supabase).
+# Dispara a edge function sync-nav-excel em modo agendado (header x-cron-secret).
+# Pré-requisitos (secrets do repositório):
+#   - SUPABASE_PROJECT_ID  (já usado no deploy das functions)
+#   - NAV_SYNC_SECRET      (mesmo valor definido como secret da edge function)
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # todos os dias às 06:00 UTC
+  workflow_dispatch: {} # permite correr manualmente
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger NAV sync
+        run: |
+          code=$(curl -s -o /tmp/nav.json -w "%{http_code}" -X POST \
+            "https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/sync-nav-excel" \
+            -H "x-cron-secret: ${{ secrets.NAV_SYNC_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP $code"
+          cat /tmp/nav.json
+          echo ""
+          test "$code" = "200"
