@@ -120,7 +120,7 @@ serve(async (req) => {
         const bytes = new Uint8Array(await contentRes.arrayBuffer());
         const text = (await extractText(bytes, doc.name, doc.mime_type)).slice(0, MAX_CHARS);
 
-        await supabase.from("client_document_text").upsert(
+        const { error: upsertError } = await supabase.from("client_document_text").upsert(
           {
             organization_id,
             sharepoint_document_id: doc.id,
@@ -134,6 +134,11 @@ serve(async (req) => {
           },
           { onConflict: "sharepoint_document_id" },
         );
+        if (upsertError) {
+          console.warn(`[index-client-documents] upsert ${doc.name}:`, upsertError.message);
+          failed++;
+          continue;
+        }
         processed++;
       } catch (e) {
         console.warn(`[index-client-documents] ${doc.name}:`, e instanceof Error ? e.message : e);
