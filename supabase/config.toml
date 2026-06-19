@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.intranet-news-subscribe]
 verify_jwt = false
+
+[functions.portal-assistant]
+verify_jwt = false

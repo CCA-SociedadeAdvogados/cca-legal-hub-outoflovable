@@ -1788,6 +1788,24 @@
     "news": {
       "empty": "No news published yet."
     },
+    "assistant": {
+      "eyebrow": "Assistant",
+      "title": "Ask about your contracts",
+      "introTitle": "Hi! I'm your portal assistant.",
+      "introBody": "Ask me in natural language about your contract portfolio with CCA — deadlines, renewals, risks, values or clauses.",
+      "placeholder": "Type your question...",
+      "send": "Send",
+      "thinking": "Analysing your contracts...",
+      "error": "Could not get a response",
+      "errorReply": "Sorry, an error occurred while processing your question. Please try again.",
+      "disclaimer": "AI-generated answers based on your contracts. Confirm with CCA before important decisions.",
+      "suggestions": [
+        "Which contracts expire in the next 90 days?",
+        "Which ones have an exclusivity clause?",
+        "What GDPR risks should I watch out for?",
+        "What is the total value of my portfolio?"
+      ]
+    },
     "profile": {
       "account": "Account",
       "name": "Name",
@@ -1846,6 +1864,7 @@
     },
     "nav": {
       "home": "Home",
+      "assistant": "Assistant",
       "contracts": "My contracts",
       "documents": "Documents",
       "deadlines": "Deadlines",

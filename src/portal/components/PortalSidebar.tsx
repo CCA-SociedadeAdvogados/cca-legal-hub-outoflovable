@@ -8,6 +8,7 @@ import ccaLogo from '@/assets/cca-logo.png';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Home,
+  Sparkles,
   FileText,
   FolderOpen,
   CalendarClock,
@@ -146,6 +147,13 @@ export function PortalSidebar() {
           icon={Home}
           label={t('portal.nav.home')}
           isActive={isActive('/portal')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/assistente"
+          icon={Sparkles}
+          label={t('portal.nav.assistant')}
+          isActive={isActive('/portal/assistente')}
           isCollapsed={isCollapsed}
         />
         <NavItem

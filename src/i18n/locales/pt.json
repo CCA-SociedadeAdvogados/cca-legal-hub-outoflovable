@@ -1788,6 +1788,24 @@
     "news": {
       "empty": "Ainda não há novidades publicadas."
     },
+    "assistant": {
+      "eyebrow": "Assistente",
+      "title": "Pergunte sobre os seus contratos",
+      "introTitle": "Olá! Sou o assistente do seu portal.",
+      "introBody": "Pergunte-me em linguagem natural sobre a sua carteira de contratos com a CCA — prazos, renovações, riscos, valores ou cláusulas.",
+      "placeholder": "Escreva a sua pergunta...",
+      "send": "Enviar",
+      "thinking": "A analisar os seus contratos...",
+      "error": "Não foi possível obter resposta",
+      "errorReply": "Lamento, ocorreu um erro ao processar a sua pergunta. Tente novamente.",
+      "disclaimer": "Respostas geradas por IA com base nos seus contratos. Confirme com a CCA antes de decisões importantes.",
+      "suggestions": [
+        "Que contratos expiram nos próximos 90 dias?",
+        "Quais têm cláusula de exclusividade?",
+        "Que riscos de RGPD devo ter em atenção?",
+        "Qual o valor total da minha carteira?"
+      ]
+    },
     "profile": {
       "account": "Conta",
       "name": "Nome",
@@ -1846,6 +1864,7 @@
     },
     "nav": {
       "home": "Início",
+      "assistant": "Assistente",
       "contracts": "Os meus contratos",
       "documents": "Documentos",
       "deadlines": "Prazos",
