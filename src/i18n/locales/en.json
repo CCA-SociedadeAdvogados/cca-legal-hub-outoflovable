@@ -1782,6 +1782,9 @@
         "recentContracts": "Recent contracts"
       }
     },
+    "news": {
+      "empty": "No news published yet."
+    },
     "financial": {
       "documents": "Account statement",
       "lastSync": "Last updated",
