@@ -8,13 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useOrganizations, useOrganizationMembers } from '@/hooks/useOrganizations';
-import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { Navigate } from 'react-router-dom';
-import { generateSlug } from '@/lib/utils';
 import {
   Building2,
-  Plus,
   Users,
   Loader2,
   UserPlus,
@@ -65,21 +62,16 @@ export default function Organizacao() {
     userMemberships,
     isLoading,
     membershipsLoading,
-    createOrganization,
     switchOrganization,
   } = useOrganizations();
   const { members, inviteMember, updateMemberRole, removeMember } = useOrganizationMembers(
     currentOrganization?.id,
   );
-  const { isPlatformAdmin } = usePlatformAdmin();
   const { legalHubProfile, isLoading: profileLoading } = useLegalHubProfile();
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<string | null>(null);
 
-  const [newOrgName, setNewOrgName] = useState('');
-  const [newOrgSlug, setNewOrgSlug] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('editor');
 
@@ -94,14 +86,6 @@ export default function Organizacao() {
     admin: t('organization.roles.admin'),
     editor: t('organization.roles.editor'),
     viewer: t('organization.roles.viewer'),
-  };
-
-  const handleCreateOrg = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createOrganization.mutateAsync({ name: newOrgName, slug: newOrgSlug });
-    setCreateDialogOpen(false);
-    setNewOrgName('');
-    setNewOrgSlug('');
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -393,68 +377,8 @@ export default function Organizacao() {
           </CardContent>
         </Card>
 
-        {/* Create New Organization - Only for Platform Admins */}
-        {isPlatformAdmin && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('organization.createNew')}</CardTitle>
-              <CardDescription>{t('organization.createNewDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Plus className="mr-2 h-4 w-4" />
-                    {t('organization.newOrganization')}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{t('organization.createOrganization')}</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateOrg} className="space-y-4">
-                    <div>
-                      <Label htmlFor="newOrgName">{t('organization.name')}</Label>
-                      <Input
-                        id="newOrgName"
-                        value={newOrgName}
-                        onChange={(e) => {
-                          setNewOrgName(e.target.value);
-                          setNewOrgSlug(generateSlug(e.target.value));
-                        }}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="newOrgSlug">
-                        {t('organization.identifier', 'Identificador único')}
-                      </Label>
-                      <Input
-                        id="newOrgSlug"
-                        value={newOrgSlug}
-                        readOnly
-                        className="bg-muted cursor-not-allowed"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Gerado automaticamente a partir do nome
-                      </p>
-                    </div>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={createOrganization.isPending}
-                    >
-                      {createOrganization.isPending && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      {t('common.create')}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
-        )}
+        {/* Criação de organizações removida: os clientes são provisionados a
+            partir do JVRIS (código C.XXXX), não criados manualmente. */}
       </div>
 
       {/* Remove Member Confirmation */}

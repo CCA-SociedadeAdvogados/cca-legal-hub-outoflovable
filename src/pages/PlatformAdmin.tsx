@@ -25,7 +25,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -58,7 +57,6 @@ import { useAllUsersMetrics, AllMembersEntry } from '@/hooks/useAllUsersMetrics'
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { generateSlug } from '@/lib/utils';
 import { IndustrySectorSelect } from '@/components/organizations/IndustrySectorSelect';
 import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
 import { ClientOnboardingTab } from '@/components/admin/ClientOnboardingTab';
@@ -139,11 +137,6 @@ export default function PlatformAdmin() {
   const [searchEmail, setSearchEmail] = useState('');
   const [contractSearch, setContractSearch] = useState('');
   const [orgSearch, setOrgSearch] = useState('');
-  const [newOrgName, setNewOrgName] = useState('');
-  const [newOrgSlug, setNewOrgSlug] = useState('');
-  const [newOrgSectors, setNewOrgSectors] = useState<string[]>([]);
-  const [newOrgLegalBiUrl, setNewOrgLegalBiUrl] = useState('');
-  const [isCreateOrgOpen, setIsCreateOrgOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<{
     id: string;
     name: string;
@@ -211,7 +204,6 @@ export default function PlatformAdmin() {
     isLoadingAdmins,
     addPlatformAdmin,
     removePlatformAdmin,
-    createOrganization,
     updateOrganization,
     deleteOrganization,
     useOrganizationMembers,
@@ -414,41 +406,6 @@ export default function PlatformAdmin() {
       toast({
         title: t('common.error'),
         description: 'Erro ao remover admin',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleCreateOrganization = async () => {
-    if (!newOrgName.trim() || !newOrgSlug.trim()) {
-      toast({
-        title: t('common.error'),
-        description: 'Nome e slug são obrigatórios',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      await createOrganization.mutateAsync({
-        name: newOrgName.trim(),
-        slug: newOrgSlug.trim().toLowerCase().replace(/\s+/g, '-'),
-        industrySectors: newOrgSectors,
-        legalbiUrl: newOrgLegalBiUrl.trim() || undefined,
-      });
-      toast({
-        title: t('common.success'),
-        description: 'Organização criada com sucesso',
-      });
-      setNewOrgName('');
-      setNewOrgSlug('');
-      setNewOrgSectors([]);
-      setNewOrgLegalBiUrl('');
-      setIsCreateOrgOpen(false);
-    } catch (error: unknown) {
-      toast({
-        title: t('common.error'),
-        description: error instanceof Error ? error.message : 'Erro ao criar organização',
         variant: 'destructive',
       });
     }
@@ -958,84 +915,7 @@ export default function PlatformAdmin() {
           <TabsContent value="organizations">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>{t('admin.organizations', 'Organizações')}</CardTitle>
-                  <Dialog open={isCreateOrgOpen} onOpenChange={setIsCreateOrgOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Nova Organização
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Criar Nova Organização</DialogTitle>
-                        <DialogDescription>
-                          Preencha os dados para criar uma nova organização na plataforma.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
-                        <div className="grid gap-2">
-                          <Label htmlFor="org-name">{t('common.name', 'Nome')}</Label>
-                          <Input
-                            id="org-name"
-                            value={newOrgName}
-                            onChange={(e) => {
-                              setNewOrgName(e.target.value);
-                              setNewOrgSlug(generateSlug(e.target.value));
-                            }}
-                            placeholder="Nome da organização"
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="org-slug">Identificador único</Label>
-                          <Input
-                            id="org-slug"
-                            value={newOrgSlug}
-                            onChange={(e) => setNewOrgSlug(e.target.value)}
-                            placeholder="identificador-da-organizacao"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Gerado automaticamente, mas pode ser personalizado
-                          </p>
-                        </div>
-                        <IndustrySectorSelect
-                          selectedSectors={newOrgSectors}
-                          onSectorsChange={setNewOrgSectors}
-                        />
-                        <div className="grid gap-2">
-                          <Label htmlFor="org-legalbi-url">URL LegalBI</Label>
-                          <Input
-                            id="org-legalbi-url"
-                            value={newOrgLegalBiUrl}
-                            onChange={(e) => setNewOrgLegalBiUrl(e.target.value)}
-                            placeholder="https://bi.cca.law/..."
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Opcional. Pode ser configurado/alterado posteriormente através da
-                            edição.
-                          </p>
-                        </div>
-                        {/* SharePoint will be configured after org creation via Edit */}
-                        <p className="text-xs text-muted-foreground italic">
-                          A configuração SharePoint pode ser adicionada após criar a organização,
-                          através da edição.
-                        </p>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsCreateOrgOpen(false)}>
-                          {t('common.cancel', 'Cancelar')}
-                        </Button>
-                        <Button
-                          onClick={handleCreateOrganization}
-                          disabled={createOrganization.isPending}
-                        >
-                          {createOrganization.isPending ? 'A criar...' : 'Criar Organização'}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </div>
+                <CardTitle>{t('admin.organizations', 'Organizações')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoadingOrgs ? (
