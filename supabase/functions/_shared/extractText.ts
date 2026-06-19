@@ -1,37 +1,25 @@
 // Extração de texto de documentos (PDF / Word .docx / texto), partilhada.
-// Reaproveita a abordagem comprovada do parse-contract.
 
-interface PdfTextItem {
-  str: string;
-}
-interface PdfPage {
-  getTextContent(): Promise<{ items: PdfTextItem[] }>;
-}
-interface PdfDocument {
-  numPages: number;
-  getPage(pageNumber: number): Promise<PdfPage>;
-}
-interface PdfjsModule {
-  GlobalWorkerOptions: { workerSrc: string };
-  getDocument(params: { data: Uint8Array }): { promise: Promise<PdfDocument> };
+interface UnpdfModule {
+  getDocumentProxy(data: Uint8Array): Promise<unknown>;
+  extractText(
+    pdf: unknown,
+    opts?: { mergePages?: boolean },
+  ): Promise<{ totalPages: number; text: string }>;
 }
 
 export async function extractTextFromPDF(fileBytes: Uint8Array): Promise<string> {
-  const pdfjs = (await import(
-    "https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas"
-  )) as unknown as PdfjsModule;
-  // Worker raw do jsDelivr (o esm.sh com ?external=canvas devolvia 404 no worker).
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs";
+  // unpdf usa um build serverless do pdf.js (sem worker nem canvas) — fiável em
+  // Deno/Edge. A abordagem anterior (pdf.js + workerSrc) falhava com
+  // "Setting up fake worker failed: Module not found" porque o Deno não resolve
+  // os imports internos do worker .mjs.
+  const { getDocumentProxy, extractText } = (await import(
+    "https://esm.sh/unpdf@1.6.2"
+  )) as unknown as UnpdfModule;
 
-  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
-  const pages: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    pages.push(content.items.map((it) => it.str).join(" "));
-  }
-  return pages.join("\n\n");
+  const pdf = await getDocumentProxy(fileBytes);
+  const { text } = await extractText(pdf, { mergePages: true });
+  return (text ?? "").trim();
 }
 
 function extractTextFromXml(xml: string): string {

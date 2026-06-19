@@ -346,52 +346,33 @@ INSTRUÇÕES IMPORTANTES:
   }
 });
 
-// ── Extracção de texto de PDF via pdfjs-dist ──────────────────────────────
+// ── Extracção de texto de PDF via unpdf (build serverless do pdf.js) ──────────
 async function extractTextFromPDF(fileBytes: Uint8Array): Promise<{ text: string; isScanned: boolean }> {
   console.log("[parse-contract] Extracting text from PDF, size:", fileBytes.length);
 
-  interface PdfTextItem { str: string }
-  interface PdfPage {
-    getTextContent(): Promise<{ items: PdfTextItem[] }>;
-  }
-  interface PdfDocument {
-    numPages: number;
-    getPage(pageNumber: number): Promise<PdfPage>;
-  }
-  interface PdfjsModule {
-    GlobalWorkerOptions: { workerSrc: string };
-    getDocument(params: { data: Uint8Array }): { promise: Promise<PdfDocument> };
+  interface UnpdfModule {
+    getDocumentProxy(data: Uint8Array): Promise<unknown>;
+    extractText(
+      pdf: unknown,
+      opts?: { mergePages?: boolean },
+    ): Promise<{ totalPages: number; text: string }>;
   }
 
-  let pdfjs: PdfjsModule;
+  let unpdf: UnpdfModule;
   try {
-    pdfjs = await import("https://esm.sh/pdfjs-dist@4.8.69/build/pdf.min.mjs?external=canvas") as unknown as PdfjsModule;
+    // unpdf evita o worker/canvas do pdf.js (que falhava em Deno com
+    // "Setting up fake worker failed: Module not found").
+    unpdf = (await import("https://esm.sh/unpdf@1.6.2")) as unknown as UnpdfModule;
   } catch (importErr) {
-    console.error("[parse-contract] Failed to import pdfjs-dist:", importErr instanceof Error ? importErr.message : String(importErr));
+    console.error("[parse-contract] Failed to import unpdf:", importErr instanceof Error ? importErr.message : String(importErr));
     throw new Error(
       "Não foi possível carregar o módulo de leitura de PDF. Tente converter o ficheiro para .docx ou .txt.",
     );
   }
 
-  // Worker do pdfjs: servido raw pelo jsDelivr (o ficheiro existe no pacote npm).
-  // O esm.sh com ?external=canvas devolvia 404 para o worker ("Module not found"),
-  // partindo a extração de texto. O worker é um bundle autónomo e não precisa de canvas.
-  pdfjs.GlobalWorkerOptions.workerSrc =
-    "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs";
-
-  const pdf = await pdfjs.getDocument({ data: fileBytes }).promise;
-  const pages: string[] = [];
-
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => item.str)
-      .join(" ");
-    pages.push(pageText);
-  }
-
-  const fullText = pages.join("\n\n");
+  const pdf = await unpdf.getDocumentProxy(fileBytes);
+  const { text } = await unpdf.extractText(pdf, { mergePages: true });
+  const fullText = (text ?? "").trim();
 
   // PDF digitalizado: texto extraído vazio ou muito curto
   const isScanned = !fullText || fullText.trim().length < 100;
