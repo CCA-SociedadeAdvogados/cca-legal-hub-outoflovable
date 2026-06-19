@@ -1723,5 +1723,199 @@
       "title": "Autenticação de Dois Fatores (2FA)",
       "verify": "Verificar e Ativar"
     }
+  },
+  "portal": {
+    "brand": "Portal",
+    "searchPlaceholder": "Pesquisar nos meus contratos e documentos...",
+    "placeholder": {
+      "title": "Esta área está a ser construída."
+    },
+    "contracts": {
+      "searchPlaceholder": "Pesquisar por título, contraparte ou referência...",
+      "count": "{{count}} contratos",
+      "empty": "Não foram encontrados contratos.",
+      "noDeadline": "Sem prazo identificado",
+      "nextDeadline": "Próximo prazo",
+      "renewalDecision": "Decisão de renovação",
+      "term": "Termo",
+      "inDays": "{{count}} dias",
+      "summary": "Resumo",
+      "startDate": "Início de vigência",
+      "endDate": "Termo",
+      "value": "Valor",
+      "reference": "Referência",
+      "filters": {
+        "all": "Todos",
+        "active": "Ativos",
+        "expiring": "A expirar (≤60 dias)",
+        "terminated": "Terminados"
+      },
+      "columns": {
+        "contract": "Contrato",
+        "status": "Estado",
+        "nextDeadline": "Próximo prazo",
+        "value": "Valor"
+      },
+      "parties": {
+        "a": "Primeira parte",
+        "b": "Contraparte"
+      }
+    },
+    "documents": {
+      "root": "Raiz",
+      "back": "Voltar",
+      "open": "Abrir no SharePoint",
+      "empty": "Nenhum documento nesta pasta.",
+      "notReady": "Os seus documentos ainda não estão disponíveis",
+      "notReadyDesc": "A CCA está a preparar o seu arquivo de documentos. Assim que estiver pronto, aparecerá aqui."
+    },
+    "home": {
+      "greeting": "Bem-vindo, {{name}}",
+      "greetingNoName": "Bem-vindo ao seu portal",
+      "viewAll": "Ver tudo",
+      "kpi": {
+        "activeContracts": "Contratos ativos",
+        "upcomingDeadlines": "Prazos (próximos 30 dias)"
+      },
+      "sections": {
+        "deadlines": "Próximos prazos",
+        "recentContracts": "Contratos recentes"
+      }
+    },
+    "news": {
+      "empty": "Ainda não há novidades publicadas."
+    },
+    "profile": {
+      "account": "Conta",
+      "name": "Nome",
+      "email": "Email",
+      "organization": "Organização",
+      "organizationName": "Nome",
+      "sectors": "Setor(es)",
+      "noSectors": "Sem setor definido",
+      "sectorHint": "O setor é definido pela CCA e determina as novidades que recebe. Para alterar, contacte a CCA.",
+      "preferences": "Preferências",
+      "language": "Idioma",
+      "theme": "Tema"
+    },
+    "financial": {
+      "documents": "Conta corrente",
+      "lastSync": "Última atualização",
+      "empty": "Não há documentos na sua conta corrente.",
+      "status": {
+        "em_dia": "A sua conta está em dia.",
+        "em_aberto": "Tem valores em aberto dentro do prazo.",
+        "em_incumprimento": "Tem valores vencidos por regularizar."
+      },
+      "kpi": {
+        "outstanding": "Total em aberto",
+        "dueSoon": "Faturas a vencer",
+        "overdue": "Faturas vencidas"
+      },
+      "columns": {
+        "document": "Documento",
+        "description": "Descrição",
+        "dueDate": "Vencimento",
+        "status": "Estado",
+        "amount": "Valor"
+      },
+      "itemStatus": {
+        "vencido": "Vencido",
+        "a_vencer": "A vencer"
+      }
+    },
+    "deadlines": {
+      "empty": "Não há prazos identificados nos seus contratos.",
+      "today": "Hoje",
+      "inDays": "Em {{count}} dias",
+      "overdueDays": "Há {{count}} dias",
+      "kinds": {
+        "renewal": "Decisão de renovação",
+        "term": "Termo do contrato",
+        "notice": "Aviso prévio de não renovação"
+      },
+      "buckets": {
+        "overdue": "Vencidos",
+        "next30": "Próximos 30 dias",
+        "next90": "31 a 90 dias",
+        "later": "Mais tarde"
+      }
+    },
+    "nav": {
+      "home": "Início",
+      "contracts": "Os meus contratos",
+      "documents": "Documentos",
+      "deadlines": "Prazos",
+      "financial": "Conta corrente",
+      "news": "Novidades CCA",
+      "profile": "Perfil e definições"
+    },
+    "pages": {
+      "home": {
+        "eyebrow": "Visão geral",
+        "title": "Bem-vindo ao seu portal",
+        "description": "Um resumo do que importa: os seus contratos ativos, prazos próximos, documentos recentes e a sua conta corrente com a CCA.",
+        "upcoming": [
+          "Resumo de contratos ativos",
+          "Prazos a vencer nos próximos dias",
+          "Documentos partilhados recentemente",
+          "Faturação em aberto"
+        ]
+      },
+      "contracts": {
+        "eyebrow": "Contratos",
+        "title": "Os meus contratos",
+        "description": "Consulte os seus contratos, o respetivo estado e detalhe. As ações disponíveis dependem das permissões da sua organização.",
+        "upcoming": [
+          "Lista de contratos da sua organização",
+          "Detalhe de cada contrato",
+          "Estado e datas-chave",
+          "Documentos associados"
+        ]
+      },
+      "documents": {
+        "eyebrow": "Documentos",
+        "title": "Documentos",
+        "description": "Aceda aos documentos partilhados entre a sua organização e a CCA.",
+        "upcoming": [
+          "Documentos da sua organização",
+          "Pré-visualização e download",
+          "Organização por pastas"
+        ]
+      },
+      "deadlines": {
+        "eyebrow": "Prazos",
+        "title": "Prazos",
+        "description": "Acompanhe as datas-chave dos seus contratos e obrigações.",
+        "upcoming": [
+          "Linha temporal de prazos",
+          "Alertas de datas a vencer",
+          "Ligação ao contrato relacionado"
+        ]
+      },
+      "financial": {
+        "eyebrow": "Financeiro",
+        "title": "Conta corrente CCA",
+        "description": "Consulte a sua faturação e conta corrente com a CCA.",
+        "upcoming": ["Faturas e estado de pagamento", "Saldo em aberto", "Histórico de movimentos"]
+      },
+      "news": {
+        "eyebrow": "Comunicação",
+        "title": "Novidades CCA",
+        "description": "Comunicações, novidades e conteúdos partilhados pela CCA.",
+        "upcoming": ["Comunicados da CCA", "Novidades relevantes para a sua organização"]
+      },
+      "profile": {
+        "eyebrow": "Conta",
+        "title": "Perfil e definições",
+        "description": "Faça a gestão dos seus dados, preferências e segurança da conta.",
+        "upcoming": [
+          "Dados de perfil",
+          "Preferências de notificações",
+          "Idioma e tema",
+          "Segurança da conta"
+        ]
+      }
+    }
   }
 }

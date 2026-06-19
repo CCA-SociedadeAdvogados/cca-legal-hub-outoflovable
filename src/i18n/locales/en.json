@@ -1723,5 +1723,195 @@
       "title": "Two-Factor Authentication (2FA)",
       "verify": "Verify and Enable"
     }
+  },
+  "portal": {
+    "brand": "Portal",
+    "searchPlaceholder": "Search my contracts and documents...",
+    "placeholder": {
+      "title": "This area is under construction."
+    },
+    "contracts": {
+      "searchPlaceholder": "Search by title, counterparty or reference...",
+      "count": "{{count}} contracts",
+      "empty": "No contracts found.",
+      "noDeadline": "No deadline identified",
+      "nextDeadline": "Next deadline",
+      "renewalDecision": "Renewal decision",
+      "term": "Term",
+      "inDays": "{{count}} days",
+      "summary": "Summary",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "value": "Value",
+      "reference": "Reference",
+      "filters": {
+        "all": "All",
+        "active": "Active",
+        "expiring": "Expiring (≤60 days)",
+        "terminated": "Terminated"
+      },
+      "columns": {
+        "contract": "Contract",
+        "status": "Status",
+        "nextDeadline": "Next deadline",
+        "value": "Value"
+      },
+      "parties": {
+        "a": "First party",
+        "b": "Counterparty"
+      }
+    },
+    "documents": {
+      "root": "Root",
+      "back": "Back",
+      "open": "Open in SharePoint",
+      "empty": "No documents in this folder.",
+      "notReady": "Your documents are not available yet",
+      "notReadyDesc": "CCA is preparing your document archive. Once it's ready, it will appear here."
+    },
+    "home": {
+      "greeting": "Welcome, {{name}}",
+      "greetingNoName": "Welcome to your portal",
+      "viewAll": "View all",
+      "kpi": {
+        "activeContracts": "Active contracts",
+        "upcomingDeadlines": "Deadlines (next 30 days)"
+      },
+      "sections": {
+        "deadlines": "Upcoming deadlines",
+        "recentContracts": "Recent contracts"
+      }
+    },
+    "news": {
+      "empty": "No news published yet."
+    },
+    "profile": {
+      "account": "Account",
+      "name": "Name",
+      "email": "Email",
+      "organization": "Organization",
+      "organizationName": "Name",
+      "sectors": "Sector(s)",
+      "noSectors": "No sector defined",
+      "sectorHint": "Your sector is set by CCA and determines the news you receive. To change it, contact CCA.",
+      "preferences": "Preferences",
+      "language": "Language",
+      "theme": "Theme"
+    },
+    "financial": {
+      "documents": "Account statement",
+      "lastSync": "Last updated",
+      "empty": "No documents in your account statement.",
+      "status": {
+        "em_dia": "Your account is up to date.",
+        "em_aberto": "You have open amounts within term.",
+        "em_incumprimento": "You have overdue amounts to settle."
+      },
+      "kpi": {
+        "outstanding": "Total outstanding",
+        "dueSoon": "Invoices due soon",
+        "overdue": "Overdue invoices"
+      },
+      "columns": {
+        "document": "Document",
+        "description": "Description",
+        "dueDate": "Due date",
+        "status": "Status",
+        "amount": "Amount"
+      },
+      "itemStatus": {
+        "vencido": "Overdue",
+        "a_vencer": "Due"
+      }
+    },
+    "deadlines": {
+      "empty": "No deadlines identified in your contracts.",
+      "today": "Today",
+      "inDays": "In {{count}} days",
+      "overdueDays": "{{count}} days ago",
+      "kinds": {
+        "renewal": "Renewal decision",
+        "term": "Contract term",
+        "notice": "Non-renewal notice"
+      },
+      "buckets": {
+        "overdue": "Overdue",
+        "next30": "Next 30 days",
+        "next90": "31 to 90 days",
+        "later": "Later"
+      }
+    },
+    "nav": {
+      "home": "Home",
+      "contracts": "My contracts",
+      "documents": "Documents",
+      "deadlines": "Deadlines",
+      "financial": "Account statement",
+      "news": "CCA News",
+      "profile": "Profile & settings"
+    },
+    "pages": {
+      "home": {
+        "eyebrow": "Overview",
+        "title": "Welcome to your portal",
+        "description": "A summary of what matters: your active contracts, upcoming deadlines, recent documents and your account statement with CCA.",
+        "upcoming": [
+          "Active contracts summary",
+          "Deadlines due in the coming days",
+          "Recently shared documents",
+          "Outstanding invoices"
+        ]
+      },
+      "contracts": {
+        "eyebrow": "Contracts",
+        "title": "My contracts",
+        "description": "Review your contracts, their status and details. Available actions depend on your organization's permissions.",
+        "upcoming": [
+          "Your organization's contract list",
+          "Detail of each contract",
+          "Status and key dates",
+          "Associated documents"
+        ]
+      },
+      "documents": {
+        "eyebrow": "Documents",
+        "title": "Documents",
+        "description": "Access documents shared between your organization and CCA.",
+        "upcoming": ["Your organization's documents", "Preview and download", "Folder organization"]
+      },
+      "deadlines": {
+        "eyebrow": "Deadlines",
+        "title": "Deadlines",
+        "description": "Track the key dates of your contracts and obligations.",
+        "upcoming": [
+          "Deadline timeline",
+          "Alerts for upcoming dates",
+          "Link to the related contract"
+        ]
+      },
+      "financial": {
+        "eyebrow": "Financial",
+        "title": "CCA account statement",
+        "description": "Review your invoicing and account statement with CCA.",
+        "upcoming": ["Invoices and payment status", "Outstanding balance", "Transaction history"]
+      },
+      "news": {
+        "eyebrow": "Communication",
+        "title": "CCA News",
+        "description": "Communications, news and content shared by CCA.",
+        "upcoming": ["CCA announcements", "News relevant to your organization"]
+      },
+      "profile": {
+        "eyebrow": "Account",
+        "title": "Profile & settings",
+        "description": "Manage your data, preferences and account security.",
+        "upcoming": [
+          "Profile data",
+          "Notification preferences",
+          "Language and theme",
+          "Account security"
+        ]
+      }
+    }
   }
 }

@@ -83,3 +83,9 @@ verify_jwt = false
 
 [functions.fetch-azure-photo]
 verify_jwt = false
+
+[functions.intranet-news-webhook]
+verify_jwt = false
+
+[functions.intranet-news-subscribe]
+verify_jwt = false
