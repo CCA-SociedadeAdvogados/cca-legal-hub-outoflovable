@@ -13,6 +13,7 @@ import {
   Home,
   Bell,
   Wallet,
+  MessageSquarePlus,
   BarChart3,
   FileText,
   FolderOpen,
@@ -230,6 +231,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           icon={Wallet}
           label={t('nav.financial')}
           isActive={location.pathname === '/financeiro'}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/pedidos"
+          icon={MessageSquarePlus}
+          label={t('nav.requests')}
+          isActive={location.pathname === '/pedidos'}
           isCollapsed={isCollapsed}
         />
         <NavItem

@@ -14,6 +14,7 @@ import {
   CalendarClock,
   Scale,
   Wallet,
+  MessageSquarePlus,
   Newspaper,
   Moon,
   Sun,
@@ -190,6 +191,13 @@ export function PortalSidebar() {
           icon={Wallet}
           label={t('portal.nav.financial')}
           isActive={isActive('/portal/financeiro')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/pedidos"
+          icon={MessageSquarePlus}
+          label={t('portal.nav.requests')}
+          isActive={isActive('/portal/pedidos')}
           isCollapsed={isCollapsed}
         />
 
