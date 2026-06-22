@@ -302,9 +302,9 @@ export default function Dashboard() {
                     ))}
                   </div>
                 )}
-                {/* RGPD Footer */}
-                <div className="grid grid-cols-4 gap-2 p-3 border-t border-border/60 bg-muted/20">
-                  {[
+                {/* RGPD Footer — só indicadores com valor (esconde zeros) */}
+                {(() => {
+                  const rgpdItems = [
                     {
                       label: t('legalbi.comDadosPessoais', 'Com Dados Pessoais'),
                       value: biData.portfolio.rgpdStats.comDadosPessoais,
@@ -321,18 +321,26 @@ export default function Dashboard() {
                       label: t('legalbi.renAutomat', 'Renov. Auto.'),
                       value: biData.portfolio.renovacaoStats.automatica,
                     },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="bg-card rounded-lg px-2 py-2 text-center border border-border/50"
-                    >
-                      <p className="text-[10px] text-muted-foreground leading-tight mb-1">
-                        {item.label}
-                      </p>
-                      <p className="text-base font-bold">{item.value}</p>
+                  ].filter((item) => item.value > 0);
+
+                  if (rgpdItems.length === 0) return null;
+
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-3 border-t border-border/60 bg-muted/20">
+                      {rgpdItems.map((item) => (
+                        <div
+                          key={item.label}
+                          className="bg-card rounded-lg px-2 py-2 text-center border border-border/50"
+                        >
+                          <p className="text-[10px] text-muted-foreground leading-tight mb-1">
+                            {item.label}
+                          </p>
+                          <p className="text-base font-bold">{item.value}</p>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 
@@ -453,17 +461,24 @@ export default function Dashboard() {
                     );
                   })()
                 )}
-                {/* RGPD pills */}
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-warn/10 text-warn border border-warn/30">
-                    {biData.portfolio.rgpdStats.comDadosPessoais}{' '}
-                    {t('legalbi.comDadosPessoais', 'com dados pessoais')}
-                  </span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-                    {biData.portfolio.rgpdStats.transferenciaInternacional}{' '}
-                    {t('legalbi.transferInt', 'Transf. Internacional')}
-                  </span>
-                </div>
+                {/* RGPD pills — só quando há valor */}
+                {(biData.portfolio.rgpdStats.comDadosPessoais > 0 ||
+                  biData.portfolio.rgpdStats.transferenciaInternacional > 0) && (
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
+                    {biData.portfolio.rgpdStats.comDadosPessoais > 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-warn/10 text-warn border border-warn/30">
+                        {biData.portfolio.rgpdStats.comDadosPessoais}{' '}
+                        {t('legalbi.comDadosPessoais', 'com dados pessoais')}
+                      </span>
+                    )}
+                    {biData.portfolio.rgpdStats.transferenciaInternacional > 0 && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+                        {biData.portfolio.rgpdStats.transferenciaInternacional}{' '}
+                        {t('legalbi.transferInt', 'Transf. Internacional')}
+                      </span>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
