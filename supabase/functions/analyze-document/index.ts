@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const AI_MODELS = [
-  { model: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
+  { model: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
   { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
 ];
 
