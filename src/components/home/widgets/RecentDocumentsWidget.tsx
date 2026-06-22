@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
-import { FileText, Folder, ArrowRight } from 'lucide-react';
+import { FileText, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDocumentosGerados } from '@/hooks/useDocumentosGerados';
 import { format } from 'date-fns';
@@ -58,25 +58,9 @@ const RecentDocumentsWidget = forwardRef<HTMLDivElement, RecentDocumentsWidgetPr
       );
     }
 
+    // Sem documentos: ocultar o widget.
     if (recentDocuments.length === 0) {
-      return (
-        <Card ref={ref}>
-          <CCACardHeader eyebrow="Documentos" title={title} />
-          <div className="flex flex-col items-center justify-center px-5 py-8 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-bg-alt">
-              <Folder className="h-5 w-5 text-ink-mute" strokeWidth={1.5} />
-            </div>
-            <p className="mb-3 text-[13px] text-ink-mute">{t('home.noDocuments')}</p>
-            <Link
-              to="/documentos"
-              className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:text-brand-strong"
-            >
-              {t('home.viewDocuments')}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </Card>
-      );
+      return null;
     }
 
     return (

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLawyerProfile } from '@/hooks/useLawyerProfile';
-import { Scale, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { CCACardHeader } from '@/components/cca';
 
 interface LawyerCardProps {
@@ -34,18 +34,9 @@ const LawyerCard = forwardRef<HTMLDivElement, LawyerCardProps>(function LawyerCa
     );
   }
 
+  // Sem advogado associado: ocultar o widget (não mostrar cartão vazio ao cliente).
   if (!lawyer?.nome_completo) {
-    return (
-      <Card ref={ref}>
-        <CCACardHeader eyebrow="Advogado associado" title={title} />
-        <div className="flex flex-col items-center justify-center px-5 py-8 text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-bg-alt">
-            <Scale className="h-6 w-6 text-ink-mute" strokeWidth={1.5} />
-          </div>
-          <p className="text-[13px] text-ink-mute">{t('home.noLawyerAssociated')}</p>
-        </div>
-      </Card>
-    );
+    return null;
   }
 
   const displayInitials = lawyer.nome_completo

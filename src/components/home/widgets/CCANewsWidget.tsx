@@ -117,13 +117,9 @@ const CCANewsWidget = forwardRef<HTMLDivElement, CCANewsWidgetProps>(function CC
     );
   }
 
+  // Sem novidades publicadas: ocultar o widget.
   if (!publishedNews?.length) {
-    return (
-      <Card ref={ref}>
-        <CCACardHeader eyebrow="Novidades" title={title} />
-        <p className="px-5 py-5 text-[13px] text-ink-mute">{t('home.noNews')}</p>
-      </Card>
-    );
+    return null;
   }
 
   return (

@@ -80,22 +80,9 @@ const RecentContractsWidget = forwardRef<HTMLDivElement, RecentContractsWidgetPr
       );
     }
 
+    // Sem contratos: ocultar o widget.
     if (!recentContracts?.length) {
-      return (
-        <Card ref={ref}>
-          <CCACardHeader eyebrow="Contratos" title={title} />
-          <div className="space-y-3 px-5 py-5">
-            <p className="text-[13px] text-ink-mute">{t('home.noContracts')}</p>
-            <Link
-              to="/contratos/novo"
-              className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:text-brand-strong"
-            >
-              {t('home.createContract')}
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </Card>
-      );
+      return null;
     }
 
     return (
