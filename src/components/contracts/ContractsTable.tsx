@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Trash2,
 } from 'lucide-react';
 import { Contrato } from '@/hooks/useContratos';
 import {
@@ -497,6 +498,10 @@ export function ContractsTable({
     setContractToDelete(null);
   };
 
+  const contractToDeleteTitle = contractToDelete
+    ? (contratos.find((c) => c.id === contractToDelete)?.titulo_contrato ?? null)
+    : null;
+
   const colCount = isViewer ? 5 : 6;
 
   return (
@@ -693,6 +698,21 @@ export function ContractsTable({
                               Arquivar
                             </DropdownMenuItem>
                           )}
+                          {isInternal && onDelete && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setContractToDelete(c.id);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -718,7 +738,15 @@ export function ContractsTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Eliminar contrato?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação é irreversível. O contrato será eliminado permanentemente.
+              {contractToDeleteTitle ? (
+                <>
+                  Vai eliminar permanentemente{' '}
+                  <span className="font-medium text-foreground">{contractToDeleteTitle}</span>. Esta
+                  ação é irreversível.
+                </>
+              ) : (
+                'Esta ação é irreversível. O contrato será eliminado permanentemente.'
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
