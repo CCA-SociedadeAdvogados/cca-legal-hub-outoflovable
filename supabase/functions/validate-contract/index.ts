@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 // AI: Claude Sonnet 4.6 — segunda passagem de validação e correcção de campos críticos
 const CLAUDE_SONNET = "claude-sonnet-4-6";
@@ -11,30 +12,7 @@ async function callClaude(
   user: string,
   maxTokens = 2048,
 ): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: CLAUDE_SONNET,
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content: user }],
-    }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err.slice(0, 400)}`);
-  }
-
-  const data = await res.json();
-  const text = data.content?.[0]?.text;
-  if (!text) throw new Error("Claude retornou resposta vazia");
-  return text;
+  return anthropicMessage({ apiKey, model: CLAUDE_SONNET, system, user, maxTokens });
 }
 
 function parseJSONResponse(content: string): unknown {

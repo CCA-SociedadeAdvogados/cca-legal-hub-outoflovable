@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 import { extractText } from "../_shared/extractText.ts";
+import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 /**
  * classify-document
@@ -21,28 +22,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_TEXT_CHARS = 12_000;
 
 async function callClaude(apiKey: string, system: string, user: string): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: CLAUDE_HAIKU,
-      max_tokens: 400,
-      system,
-      messages: [{ role: "user", content: user }],
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  const text = data.content?.[0]?.text;
-  if (!text) throw new Error("Claude retornou resposta vazia");
-  return text;
+  return anthropicMessage({ apiKey, model: CLAUDE_HAIKU, system, user, maxTokens: 400 });
 }
 
 function parseJSON(content: string): Record<string, unknown> {

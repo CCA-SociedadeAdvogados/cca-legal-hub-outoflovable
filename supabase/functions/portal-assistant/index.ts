@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
+import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 /**
  * portal-assistant
@@ -38,23 +39,7 @@ async function callClaude(
   messages: Array<{ role: "user" | "assistant"; content: string }>,
   maxTokens = 1024,
 ): Promise<string> {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages }),
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  const text = data.content?.[0]?.text;
-  if (!text) throw new Error("Claude retornou resposta vazia");
-  return text;
+  return anthropicMessage({ apiKey, model, system, messages, maxTokens });
 }
 
 serve(async (req) => {
