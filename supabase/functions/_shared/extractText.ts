@@ -1,5 +1,8 @@
 // Extração de texto de documentos (PDF / Word .docx / texto), partilhada.
 
+// Limite de tamanho do ficheiro a processar (proteção de memória).
+const MAX_FILE_BYTES = 15 * 1024 * 1024;
+
 interface UnpdfModule {
   getDocumentProxy(data: Uint8Array): Promise<unknown>;
   extractText(
@@ -69,6 +72,12 @@ export async function extractText(
   mimeType?: string | null,
 ): Promise<string> {
   const lower = (fileName ?? "").toLowerCase();
+  if (fileBytes.length > MAX_FILE_BYTES) {
+    console.warn(
+      `[extractText] Ficheiro ${fileName} (${fileBytes.length} bytes) excede o limite de ${MAX_FILE_BYTES} — ignorado.`,
+    );
+    return "";
+  }
   try {
     if (mimeType === "application/pdf" || lower.endsWith(".pdf")) {
       return await extractTextFromPDF(fileBytes);
