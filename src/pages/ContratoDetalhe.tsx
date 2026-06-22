@@ -205,7 +205,7 @@ export default function ContratoDetalhe() {
                 <RefreshCw
                   className={`mr-2 h-4 w-4 ${triggerCCAValidation.isPending ? 'animate-spin' : ''}`}
                 />
-                {validationStatus === 'failed' ? 'Reprocessar no CCA' : 'Revalidar no CCA'}
+                {validationStatus === 'failed' ? 'Reprocessar' : 'Revalidar'}
               </Button>
             )}
             <Button variant="outline">

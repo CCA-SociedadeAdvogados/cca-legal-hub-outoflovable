@@ -673,7 +673,7 @@ export function ContractsTable({
                           {isInternal && (
                             <DropdownMenuItem>
                               <RefreshCw className="mr-2 h-4 w-4" />
-                              Reprocessar CCA
+                              Reprocessar
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />
