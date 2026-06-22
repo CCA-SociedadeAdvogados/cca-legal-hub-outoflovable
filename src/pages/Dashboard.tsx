@@ -9,7 +9,7 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
 import { useProfile } from '@/hooks/useProfile';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import {
   FileCheck,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TIPO_CONTRATO_LABELS, ESTADO_CONTRATO_LABELS } from '@/types/contracts';
+import { getContractPhase } from '@/lib/contractEstado';
 import { cn } from '@/lib/utils';
 
 const ESTADO_ICON_BG: Record<string, string> = {
@@ -64,6 +65,21 @@ export default function Dashboard() {
   const { t } = useTranslation();
 
   const firstName = (profile?.nome_completo ?? '').trim().split(' ')[0] || '';
+
+  // Distribuição da carteira por fase (em preparação · em vigor · terminado).
+  const phases = useMemo(() => {
+    const active = (contratos ?? []).filter((c) => !c.arquivado);
+    let preparacao = 0;
+    let vigor = 0;
+    let terminado = 0;
+    for (const c of active) {
+      const phase = getContractPhase(c.estado_contrato);
+      if (phase === 'vigor') vigor++;
+      else if (phase === 'terminado') terminado++;
+      else preparacao++;
+    }
+    return { preparacao, vigor, terminado, total: active.length };
+  }, [contratos]);
 
   const docStats = useMemo(() => {
     const uploaded = checklistItems.filter((i) => i.entry?.status === 'uploaded').length;
@@ -194,6 +210,65 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Carteira por fase — leitura macro do ciclo de vida (CLM) */}
+          {phases.total > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                    {t('dashboard.portfolioByPhase', 'Carteira por fase')}
+                  </p>
+                  <Link
+                    to="/contratos"
+                    className="text-accent text-xs inline-flex items-center hover:underline"
+                  >
+                    {t('dashboard.viewAll')} <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                  </Link>
+                </div>
+                <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                  {phases.preparacao > 0 && (
+                    <div
+                      className="h-full bg-warn"
+                      style={{ width: `${(phases.preparacao / phases.total) * 100}%` }}
+                      title={t('portal.lifecycle.phases.preparacao', 'Em preparação')}
+                    />
+                  )}
+                  {phases.vigor > 0 && (
+                    <div
+                      className="h-full bg-brand"
+                      style={{ width: `${(phases.vigor / phases.total) * 100}%` }}
+                      title={t('portal.lifecycle.phases.vigor', 'Em vigor')}
+                    />
+                  )}
+                  {phases.terminado > 0 && (
+                    <div
+                      className="h-full bg-ink-mute/40"
+                      style={{ width: `${(phases.terminado / phases.total) * 100}%` }}
+                      title={t('portal.lifecycle.phases.terminado', 'Terminados')}
+                    />
+                  )}
+                </div>
+                <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-warn" />
+                    {t('portal.lifecycle.phases.preparacao', 'Em preparação')}
+                    <span className="font-mono">{phases.preparacao}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-brand" />
+                    {t('portal.lifecycle.phases.vigor', 'Em vigor')}
+                    <span className="font-mono">{phases.vigor}</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="h-2 w-2 rounded-full bg-ink-mute/50" />
+                    {t('portal.lifecycle.phases.terminado', 'Terminados')}
+                    <span className="font-mono">{phases.terminado}</span>
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Mid Grid: Contratos Recentes (fluid) + Validade Documental (fixed 320px) */}
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_320px]">
             {/* Contratos Recentes */}
@@ -299,20 +374,41 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border/50">
-                  {contratosAExpirar.slice(0, 5).map((c) => (
-                    <Link
-                      key={c.id}
-                      to={`/contratos/${c.id}`}
-                      className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
-                    >
-                      <p className="text-sm font-medium truncate">{c.titulo_contrato}</p>
-                      {c.data_termo && (
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {format(new Date(c.data_termo), 'dd/MM/yyyy')}
-                        </span>
-                      )}
-                    </Link>
-                  ))}
+                  {contratosAExpirar.slice(0, 5).map((c) => {
+                    const days = c.data_termo
+                      ? differenceInDays(new Date(c.data_termo), new Date())
+                      : null;
+                    const urgent = days !== null && days <= 30;
+                    return (
+                      <Link
+                        key={c.id}
+                        to={`/contratos/${c.id}`}
+                        className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                      >
+                        <p className="text-sm font-medium truncate">{c.titulo_contrato}</p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {days !== null && (
+                            <span
+                              className={cn(
+                                'rounded-full px-2 py-0.5 text-[10px] font-semibold leading-tight',
+                                urgent ? 'bg-danger/10 text-danger' : 'bg-warn/10 text-warn',
+                              )}
+                            >
+                              {t('dashboard.inDays', {
+                                count: days,
+                                defaultValue: `em ${days} dias`,
+                              })}
+                            </span>
+                          )}
+                          {c.data_termo && (
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(c.data_termo), 'dd/MM/yyyy')}
+                            </span>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
