@@ -1230,6 +1230,12 @@
       "root": "Root",
       "back": "Back",
       "empty": "No documents in this folder",
+      "search": "Search in this folder…",
+      "sortName": "Name",
+      "sortModified": "Recent",
+      "folders": "Folders",
+      "files": "Files",
+      "noResults": "No results for “{{query}}”.",
       "archiveHint": "Store your active documents here to keep everything organized and accessible.",
       "fullSync": "Full synchronization",
       "upload": "Upload"

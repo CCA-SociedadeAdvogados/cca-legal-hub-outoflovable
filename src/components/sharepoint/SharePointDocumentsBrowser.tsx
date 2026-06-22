@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,9 @@ import {
   FolderOpen,
   AlertCircle,
   Upload,
+  Search,
+  ArrowDownAZ,
+  Clock,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -89,6 +93,8 @@ export function SharePointDocumentsBrowser({
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'name' | 'modified'>('name');
 
   const navigateToFolder = (folderPath: string) => {
     setPathHistory([...pathHistory, currentPath]);
@@ -113,6 +119,91 @@ export function SharePointDocumentsBrowser({
   };
 
   const breadcrumbParts = currentPath.split('/').filter(Boolean);
+
+  // Filtro por nome + ordenação; pastas e ficheiros são separados em secções.
+  const filteredDocs = (documents ?? []).filter((d: any) =>
+    d.name.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const sortDocs = (a: any, b: any) =>
+    sortBy === 'name'
+      ? a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+      : new Date(b.sharepoint_modified_at ?? 0).getTime() -
+        new Date(a.sharepoint_modified_at ?? 0).getTime();
+  const folders = filteredDocs.filter((d: any) => d.is_folder).sort(sortDocs);
+  const files = filteredDocs.filter((d: any) => !d.is_folder).sort(sortDocs);
+
+  const renderRow = (doc: any) => {
+    const FileIcon = doc.is_folder ? Folder : getFileIcon(doc.file_extension);
+    return (
+      <div
+        key={doc.id}
+        className={cn(
+          'flex min-w-0 items-center justify-between gap-3 rounded-control px-3 py-2 transition-colors hover:bg-bg-alt',
+          doc.is_folder && 'cursor-pointer',
+        )}
+        onClick={() => {
+          if (doc.is_folder) {
+            const targetPath = currentPath === '/' ? `/${doc.name}` : `${currentPath}/${doc.name}`;
+            navigateToFolder(targetPath);
+          } else if (onSelectDocument) {
+            onSelectDocument(doc);
+          }
+        }}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div
+            className={cn(
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-control border',
+              doc.is_folder
+                ? 'border-warn/30 bg-warn/10 text-warn'
+                : 'border-brand/30 bg-brand/[0.08] text-brand',
+            )}
+          >
+            <FileIcon className="h-[18px] w-[18px]" strokeWidth={1.5} />
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
+              {doc.name}
+            </p>
+            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px] text-ink-mute">
+              {!doc.is_folder && doc.size_bytes && (
+                <span className="shrink-0">{formatFileSize(doc.size_bytes)}</span>
+              )}
+              {doc.sharepoint_modified_at && (
+                <span className="shrink-0">
+                  {formatDistanceToNow(new Date(doc.sharepoint_modified_at), {
+                    addSuffix: true,
+                    locale: pt,
+                  })}
+                </span>
+              )}
+              {doc.sharepoint_modified_by && (
+                <span className="max-w-[150px] truncate">{doc.sharepoint_modified_by}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          {doc.web_url && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-ink-mute hover:text-brand"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenInSharePoint(doc.web_url!);
+              }}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          )}
+          {doc.is_folder && <ChevronRight className="h-4 w-4 text-ink-mute" />}
+        </div>
+      </div>
+    );
+  };
 
   if (isLoadingConfig) {
     return (
@@ -286,84 +377,67 @@ export function SharePointDocumentsBrowser({
             )}
           </div>
         ) : (
-          <div className="divide-y">
-            {documents.map((doc) => {
-              const FileIcon = doc.is_folder ? Folder : getFileIcon(doc.file_extension);
-
-              return (
-                <div
-                  key={doc.id}
-                  className={cn(
-                    'flex min-w-0 items-center justify-between gap-3 rounded-control px-3 py-3 transition-colors hover:bg-bg-alt',
-                    doc.is_folder && 'cursor-pointer',
-                  )}
-                  onClick={() => {
-                    if (doc.is_folder) {
-                      const targetPath =
-                        currentPath === '/' ? `/${doc.name}` : `${currentPath}/${doc.name}`;
-                      navigateToFolder(targetPath);
-                    } else if (onSelectDocument) {
-                      onSelectDocument(doc);
-                    }
-                  }}
+          <>
+            {/* Toolbar: pesquisa + ordenação */}
+            <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-mute" />
+                <Input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t('sharepoint.browser.search', 'Pesquisar nesta pasta…')}
+                  className="h-9 pl-8"
+                />
+              </div>
+              <div className="flex shrink-0 items-center gap-1 rounded-control border p-0.5">
+                <Button
+                  variant={sortBy === 'name' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => setSortBy('name')}
                 >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      className={cn(
-                        'flex h-10 w-10 shrink-0 items-center justify-center rounded-control border',
-                        doc.is_folder
-                          ? 'border-warn/30 bg-warn/10 text-warn'
-                          : 'border-brand/30 bg-brand/[0.08] text-brand',
-                      )}
-                    >
-                      <FileIcon className="h-5 w-5" strokeWidth={1.5} />
-                    </div>
+                  <ArrowDownAZ className="mr-1 h-4 w-4" />
+                  {t('sharepoint.browser.sortName', 'Nome')}
+                </Button>
+                <Button
+                  variant={sortBy === 'modified' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => setSortBy('modified')}
+                >
+                  <Clock className="mr-1 h-4 w-4" />
+                  {t('sharepoint.browser.sortModified', 'Recentes')}
+                </Button>
+              </div>
+            </div>
 
-                    <div className="min-w-0">
-                      <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
-                        {doc.name}
-                      </p>
-                      <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px] text-ink-mute">
-                        {!doc.is_folder && doc.size_bytes && (
-                          <span className="shrink-0">{formatFileSize(doc.size_bytes)}</span>
-                        )}
-                        {doc.sharepoint_modified_at && (
-                          <span className="shrink-0">
-                            {formatDistanceToNow(new Date(doc.sharepoint_modified_at), {
-                              addSuffix: true,
-                              locale: pt,
-                            })}
-                          </span>
-                        )}
-                        {doc.sharepoint_modified_by && (
-                          <span className="max-w-[150px] truncate">
-                            {doc.sharepoint_modified_by}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    {doc.web_url && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-ink-mute hover:text-brand"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleOpenInSharePoint(doc.web_url!);
-                        }}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {doc.is_folder && <ChevronRight className="h-4 w-4 text-ink-mute" />}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            {folders.length === 0 && files.length === 0 ? (
+              <p className="py-8 text-center text-sm text-ink-mute">
+                {t('sharepoint.browser.noResults', 'Sem resultados para “{{query}}”.', { query })}
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {folders.length > 0 && (
+                  <section>
+                    <h4 className="mb-1 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
+                      {t('sharepoint.browser.folders', 'Pastas')}
+                      <span className="font-mono">{folders.length}</span>
+                    </h4>
+                    <div className="divide-y">{folders.map(renderRow)}</div>
+                  </section>
+                )}
+                {files.length > 0 && (
+                  <section>
+                    <h4 className="mb-1 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
+                      {t('sharepoint.browser.files', 'Ficheiros')}
+                      <span className="font-mono">{files.length}</span>
+                    </h4>
+                    <div className="divide-y">{files.map(renderRow)}</div>
+                  </section>
+                )}
+              </div>
+            )}
+          </>
         )}
       </CardContent>
 
