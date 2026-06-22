@@ -20,8 +20,6 @@ import {
   FolderOpen,
   Newspaper,
   Shield,
-  Coins,
-  BookOpen,
   Users,
   Building2,
   Moon,
@@ -356,10 +354,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           isActive={location.pathname === '/politicas'}
           isCollapsed={isCollapsed}
         />
-
-        {/* Locked tiers — Impostos / Legislação */}
-        <NavItem icon={Coins} label={t('nav.impacts')} isCollapsed={isCollapsed} locked />
-        <NavItem icon={BookOpen} label={t('nav.normativos')} isCollapsed={isCollapsed} locked />
 
         {/* Org-scoped items */}
         {can('users:view_own_org') && (
