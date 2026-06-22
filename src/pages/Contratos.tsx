@@ -17,6 +17,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import { ContractFilters, ContractFiltersState } from '@/components/contracts/ContractFilters';
 import { ContractsTable } from '@/components/contracts/ContractsTable';
+import { ContratosLifecycle } from '@/portal/components/ContratosLifecycle';
 import { ContractAIParser } from '@/components/contracts/ContractAIParser';
 import { GenerateContractDialog } from '@/components/contracts/GenerateContractDialog';
 import { MultiContractAnalysis } from '@/components/contracts/MultiContractAnalysis';
@@ -116,6 +117,9 @@ export default function Contratos() {
     () => contratos?.filter((c) => c.arquivado).length || 0,
     [contratos],
   );
+
+  /** Carteira activa (não arquivada) — base da visão macro de ciclo de vida. */
+  const portfolio = useMemo(() => (contratos ?? []).filter((c) => !c.arquivado), [contratos]);
 
   /** Summary line: "N contratos · € X em valor activo" (only when on the contratos tab). */
   const summary = useMemo(() => {
@@ -232,6 +236,9 @@ export default function Contratos() {
           </TabsList>
 
           <TabsContent value="contratos" className="mt-5 space-y-4">
+            {/* Visão macro do ciclo de vida da carteira (oculta no modo arquivo) */}
+            {!showArchived && portfolio.length > 0 && <ContratosLifecycle contratos={portfolio} />}
+
             {/* Archive toggle + summary counter */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button
