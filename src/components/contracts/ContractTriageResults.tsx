@@ -84,15 +84,13 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Bot className="h-5 w-5" />
-            CCA AI Agent
+            Triagem do contrato
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
             <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-4">
-              Este contrato ainda não foi analisado pelo agente de triagem.
-            </p>
+            <p className="text-muted-foreground mb-4">Este contrato ainda não foi analisado.</p>
             <Button onClick={handleRunTriage} disabled={isRunning}>
               {isRunning ? (
                 <>
@@ -128,7 +126,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <Bot className="h-5 w-5" />
-              CCA AI Agent
+              Triagem do contrato
             </CardTitle>
             <Button variant="outline" size="sm" onClick={handleRunTriage} disabled={isRunning}>
               {isRunning ? (
@@ -319,9 +317,7 @@ export function ContractTriageResults({ contratoId }: ContractTriageResultsProps
       {/* Analysis Source Badge */}
       <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
         <Bot className="h-3 w-3" />
-        <span>
-          Análise realizada por CCA AI Agent • Dados extraídos automaticamente do contrato
-        </span>
+        <span>Análise automática • Dados extraídos automaticamente do contrato</span>
       </div>
     </div>
   );

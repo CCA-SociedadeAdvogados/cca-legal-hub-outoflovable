@@ -7,13 +7,8 @@ import { useOrganizations, searchCCAClients } from '@/hooks/useOrganizations';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { Building2, Hash, Loader2, Search, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Building2, Eye, Loader2, Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function ClienteSelectorCCA() {
@@ -68,28 +63,29 @@ export function ClienteSelectorCCA() {
   return (
     <div className="flex items-center gap-2">
       {cliente && (
-        <Badge variant="secondary" className="flex items-center gap-1.5 py-1 px-2.5">
-          <Hash className="h-3 w-3" />
-          <span className="font-mono text-xs">{cliente.clientCode}</span>
-          <span className="text-xs text-muted-foreground">— {cliente.nome}</span>
+        <div className="flex shrink-0 items-center gap-1.5 rounded-control border border-brand/30 bg-brand/[0.08] py-1 pl-2.5 pr-1.5">
+          <Eye className="h-3.5 w-3.5 shrink-0 text-brand" strokeWidth={1.8} />
+          <span className="hidden text-[10px] font-medium uppercase tracking-wide text-brand lg:inline">
+            {t('common.viewingClient')}
+          </span>
+          <span className="font-mono text-xs text-ink">{cliente.clientCode}</span>
+          <span className="max-w-[150px] truncate text-xs text-ink-soft">— {cliente.nome}</span>
           <button
             onClick={handleClear}
-            className="ml-1 hover:text-destructive transition-colors"
+            aria-label={t('common.exitClientView')}
+            title={t('common.exitClientView')}
+            className="ml-0.5 rounded p-0.5 text-ink-mute transition-colors hover:bg-brand/10 hover:text-destructive"
           >
-            <X className="h-3 w-3" />
+            <X className="h-3.5 w-3.5" />
           </button>
-        </Badge>
+        </div>
       )}
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex shrink-0 items-center gap-2"
-          >
+          <Button variant="outline" size="sm" className="flex shrink-0 items-center gap-2">
             <Search className="h-4 w-4" />
-            {t('financial.searchByClientCode')}
+            {cliente ? t('common.changeClient') : t('financial.searchByClientCode')}
           </Button>
         </PopoverTrigger>
 
@@ -131,9 +127,7 @@ export function ClienteSelectorCCA() {
                 Escreva pelo menos 2 caracteres
               </div>
             ) : isFetching && resultados.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                A pesquisar...
-              </div>
+              <div className="py-6 text-center text-sm text-muted-foreground">A pesquisar...</div>
             ) : resultados.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 {t('financial.noMatchingClients')}
@@ -171,9 +165,7 @@ export function ClienteSelectorCCA() {
                       </p>
                     )}
                     {item.group_code && (
-                      <p className="text-[11px] text-muted-foreground">
-                        grupo: {item.group_code}
-                      </p>
+                      <p className="text-[11px] text-muted-foreground">grupo: {item.group_code}</p>
                     )}
                   </div>
                 </button>

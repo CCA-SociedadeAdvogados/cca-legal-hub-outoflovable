@@ -45,7 +45,7 @@ export async function callCCAAgent({
   });
 
   if (error) {
-    throw new Error(error.message ?? 'Erro na validação CCA');
+    throw new Error(error.message ?? 'Erro na validação do contrato');
   }
 
   return data;

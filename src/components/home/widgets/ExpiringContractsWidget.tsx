@@ -68,15 +68,9 @@ const ExpiringContractsWidget = forwardRef<HTMLDivElement, ExpiringContractsWidg
       );
     }
 
+    // Sem contratos a expirar na janela: ocultar o widget.
     if (!expiringContracts?.length) {
-      return (
-        <Card ref={ref}>
-          <CCACardHeader eyebrow="Renovações" title={title} />
-          <p className="px-5 py-5 text-[13px] text-ink-mute">
-            {t('home.noExpiringContracts', { days: daysAhead })}
-          </p>
-        </Card>
-      );
+      return null;
     }
 
     return (

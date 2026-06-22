@@ -1299,11 +1299,10 @@ export default function ContratoForm() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {isLocal ? (
-                      /* Utilizadores cliente: apenas 3 indicadores de leitura preenchidos pelo Agente CCA */
+                      /* Utilizadores cliente: apenas 3 indicadores de leitura detetados automaticamente */
                       <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                          Indicadores detectados automaticamente pelo Agente CCA após análise do
-                          documento.
+                          Indicadores detetados automaticamente após análise do documento.
                         </p>
                         <div className="grid gap-4 md:grid-cols-3">
                           <div className="flex items-center gap-3 rounded-lg border p-4">

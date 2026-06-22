@@ -24,6 +24,9 @@
     "no": "Não",
     "compliance": "Conformidade",
     "reservedArea": "Área Reservada",
+    "viewingClient": "A ver como cliente",
+    "exitClientView": "Sair da vista do cliente",
+    "changeClient": "Trocar cliente",
     "total": "Total",
     "all": "Todos",
     "noResults": "Nenhum resultado encontrado",
@@ -1826,7 +1829,7 @@
       "viewAll": "Ver tudo",
       "kpi": {
         "activeContracts": "Contratos ativos",
-        "upcomingDeadlines": "Prazos (próximos 30 dias)"
+        "upcomingDeadlines": "Prazos a precisar de atenção"
       },
       "sections": {
         "deadlines": "Próximos prazos",

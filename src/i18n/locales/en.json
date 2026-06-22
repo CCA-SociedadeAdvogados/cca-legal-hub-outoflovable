@@ -24,6 +24,9 @@
     "no": "No",
     "compliance": "Compliance",
     "reservedArea": "Reserved Area",
+    "viewingClient": "Viewing as client",
+    "exitClientView": "Exit client view",
+    "changeClient": "Change client",
     "total": "Total",
     "all": "All",
     "noResults": "No results found",
@@ -1826,7 +1829,7 @@
       "viewAll": "View all",
       "kpi": {
         "activeContracts": "Active contracts",
-        "upcomingDeadlines": "Deadlines (next 30 days)"
+        "upcomingDeadlines": "Deadlines needing attention"
       },
       "sections": {
         "deadlines": "Upcoming deadlines",
