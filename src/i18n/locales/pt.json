@@ -1,5 +1,6 @@
 {
   "common": {
+    "changeLanguage": "Mudar idioma",
     "search": "Pesquisar contratos, políticas, eventos...",
     "searchPlaceholder": "Pesquisar...",
     "notifications": "Notificações",
@@ -1230,6 +1231,7 @@
       "root": "Raiz",
       "back": "Voltar",
       "empty": "Nenhum documento nesta pasta",
+      "openInSharePoint": "Abrir no SharePoint",
       "search": "Pesquisar nesta pasta…",
       "sortName": "Nome",
       "sortModified": "Recentes",

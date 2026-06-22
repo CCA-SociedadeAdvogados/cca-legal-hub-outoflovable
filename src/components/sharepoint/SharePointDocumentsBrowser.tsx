@@ -191,6 +191,7 @@ export function SharePointDocumentsBrowser({
               variant="ghost"
               size="icon"
               className="h-8 w-8 text-ink-mute hover:text-brand"
+              aria-label={t('sharepoint.browser.openInSharePoint', 'Abrir no SharePoint')}
               onClick={(e) => {
                 e.stopPropagation();
                 handleOpenInSharePoint(doc.web_url!);
