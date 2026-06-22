@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 import { useContratos } from '@/hooks/useContratos';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
-import { ContractFiltersState } from '@/components/contracts/ContractFilters';
+import { ContractFilters, ContractFiltersState } from '@/components/contracts/ContractFilters';
 import { ContractsTable } from '@/components/contracts/ContractsTable';
 import { ContractAIParser } from '@/components/contracts/ContractAIParser';
 import { GenerateContractDialog } from '@/components/contracts/GenerateContractDialog';
@@ -51,7 +51,7 @@ const eurFormatter = new Intl.NumberFormat('pt-PT', {
 
 export default function Contratos() {
   const { t } = useTranslation();
-  const [filters, _setFilters] = useState<ContractFiltersState>(initialFilters);
+  const [filters, setFilters] = useState<ContractFiltersState>(initialFilters);
   const [activeTab, setActiveTab] = useState<'contratos' | 'ia' | 'arquivo'>('contratos');
   const [showArchived, setShowArchived] = useState(false);
   const { contratos, isLoading, archiveContrato, restoreContrato, deleteContrato } = useContratos();
@@ -263,6 +263,15 @@ export default function Contratos() {
                 activo
               </div>
             </div>
+
+            {!showArchived && (
+              <ContractFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClearFilters={() => setFilters(initialFilters)}
+                totalResults={filteredContracts.length}
+              />
+            )}
 
             <ContractsTable
               contratos={filteredContracts}
