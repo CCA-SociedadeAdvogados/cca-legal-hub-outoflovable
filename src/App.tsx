@@ -30,6 +30,7 @@ import { useAudience } from '@/portal/useAudience';
 
 // Lazy-loaded pages — code-split for smaller initial bundle
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const PrazosTimeline = React.lazy(() => import('./pages/PrazosTimeline'));
 const Eventos = React.lazy(() => import('./pages/Eventos'));
 const ContratosUploadMassa = React.lazy(() => import('./pages/ContratosUploadMassa'));
 const ContratosTriagem = React.lazy(() => import('./pages/ContratosTriagem'));
@@ -339,7 +340,14 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/prazos" element={<Navigate to="/" replace />} />
+        <Route
+          path="/prazos"
+          element={
+            <ProtectedRoute>
+              <PrazosTimeline />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/notificacoes"
           element={
