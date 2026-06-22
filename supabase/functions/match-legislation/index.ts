@@ -58,10 +58,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get content for top documents
+    // Get content for top documents — em paralelo (evita N+1 sequencial)
+    const topDocs = documents.slice(0, 30);
+    const fullDocs = await Promise.all(
+      topDocs.map((doc: { id: string }) => supabase.rpc('get_legal_document', { p_id: doc.id })),
+    );
     const docsWithContent: LegalDocument[] = [];
-    for (const doc of documents.slice(0, 30)) {
-      const { data: fullDoc } = await supabase.rpc('get_legal_document', { p_id: doc.id });
+    topDocs.forEach((doc: { id: string; canonical_url: string }, i: number) => {
+      const fullDoc = fullDocs[i]?.data;
       if (fullDoc && fullDoc[0]) {
         docsWithContent.push({
           id: fullDoc[0].id,
@@ -72,7 +76,7 @@ Deno.serve(async (req) => {
           canonical_url: fullDoc[0].canonical_url
         });
       }
-    }
+    });
 
     // Build contract context
     const contractContext = `
@@ -171,32 +175,36 @@ Não incluas explicações fora do JSON.`;
       userId = user?.id || null;
     }
 
-    // Save matches to database
+    // Save matches to database — upsert em lote (uma única query)
     const savedMatches = [];
-    for (const match of matches) {
+    if (matches.length > 0) {
+      const rows = matches.map((match) => ({
+        contrato_id: contrato_id,
+        documento_id: match.id,
+        relevancia_score: Math.min(1, Math.max(0, match.score || 0.5)),
+        motivo_associacao: match.motivo,
+        tipo_associacao: 'automatico',
+        created_by_id: userId,
+      }));
+
       const { error: insertError } = await supabase
         .from('contrato_normativos')
-        .upsert({
-          contrato_id: contrato_id,
-          documento_id: match.id,
-          relevancia_score: Math.min(1, Math.max(0, match.score || 0.5)),
-          motivo_associacao: match.motivo,
-          tipo_associacao: 'automatico',
-          created_by_id: userId
-        }, {
-          onConflict: 'contrato_id,documento_id'
-        });
+        .upsert(rows, { onConflict: 'contrato_id,documento_id' });
 
-      if (!insertError) {
-        const doc = docsWithContent.find(d => d.id === match.id);
-        savedMatches.push({
-          documento_id: match.id,
-          titulo: doc?.title,
-          fonte: doc?.source_key,
-          url: doc?.canonical_url,
-          score: match.score,
-          motivo: match.motivo
-        });
+      if (insertError) {
+        console.error('Failed to save matches:', insertError);
+      } else {
+        for (const match of matches) {
+          const doc = docsWithContent.find(d => d.id === match.id);
+          savedMatches.push({
+            documento_id: match.id,
+            titulo: doc?.title,
+            fonte: doc?.source_key,
+            url: doc?.canonical_url,
+            score: match.score,
+            motivo: match.motivo
+          });
+        }
       }
     }
 
