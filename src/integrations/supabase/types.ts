@@ -121,6 +121,164 @@ export type Database = {
           },
         ]
       }
+      assunto_eventos: {
+        Row: {
+          assunto_id: string
+          created_at: string
+          created_by_id: string | null
+          data: string
+          descricao: string | null
+          id: string
+          organization_id: string
+          tipo: string
+          titulo: string
+          visivel_cliente: boolean
+        }
+        Insert: {
+          assunto_id: string
+          created_at?: string
+          created_by_id?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          organization_id: string
+          tipo?: string
+          titulo: string
+          visivel_cliente?: boolean
+        }
+        Update: {
+          assunto_id?: string
+          created_at?: string
+          created_by_id?: string | null
+          data?: string
+          descricao?: string | null
+          id?: string
+          organization_id?: string
+          tipo?: string
+          titulo?: string
+          visivel_cliente?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assunto_eventos_assunto_id_fkey"
+            columns: ["assunto_id"]
+            isOneToOne: false
+            referencedRelation: "assuntos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assunto_eventos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assunto_eventos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "assunto_eventos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      assuntos: {
+        Row: {
+          created_at: string
+          created_by_id: string | null
+          data_abertura: string
+          data_conclusao: string | null
+          data_prevista_conclusao: string | null
+          descricao: string | null
+          estado: string
+          id: string
+          organization_id: string
+          referencia: string | null
+          responsavel_id: string | null
+          tipo: string
+          titulo: string
+          updated_at: string
+          updated_by_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by_id?: string | null
+          data_abertura?: string
+          data_conclusao?: string | null
+          data_prevista_conclusao?: string | null
+          descricao?: string | null
+          estado?: string
+          id?: string
+          organization_id: string
+          referencia?: string | null
+          responsavel_id?: string | null
+          tipo?: string
+          titulo: string
+          updated_at?: string
+          updated_by_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by_id?: string | null
+          data_abertura?: string
+          data_conclusao?: string | null
+          data_prevista_conclusao?: string | null
+          descricao?: string | null
+          estado?: string
+          id?: string
+          organization_id?: string
+          referencia?: string | null
+          responsavel_id?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+          updated_by_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assuntos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assuntos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "assuntos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "assuntos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assuntos_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -4556,6 +4714,7 @@ export type Database = {
         }
       }
       expire_stale_impersonation_sessions: { Args: never; Returns: number }
+      fn_create_client_deadline_notifications: { Args: never; Returns: number }
       fn_get_cca_default_client_org_id: { Args: never; Returns: string }
       fn_get_client_home_for_actor: {
         Args: { p_user_id: string; p_viewing_organization_id: string }

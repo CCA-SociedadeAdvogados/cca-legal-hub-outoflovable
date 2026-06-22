@@ -120,6 +120,7 @@
     "ccaNews": "Novidades CCA",
     "financial": "Minha Conta Corrente CCA",
     "requests": "Pedidos de clientes",
+    "matters": "Assuntos",
     "legalbi": "LegalBI"
   },
   "requests": {
@@ -131,6 +132,27 @@
       "respond": "Responder",
       "state": "Estado",
       "responsePlaceholder": "Escreva a resposta ao cliente..."
+    }
+  },
+  "matters": {
+    "cca": {
+      "title": "Assuntos do cliente",
+      "description": "Faça a gestão dos assuntos/processos em curso e do ponto de situação que o cliente vê no portal.",
+      "new": "Novo assunto",
+      "create": "Criar",
+      "add": "Adicionar",
+      "addUpdate": "Adicionar atualização",
+      "selectClient": "Selecione um cliente para gerir os assuntos.",
+      "empty": "Este cliente ainda não tem assuntos.",
+      "internal": "Interno",
+      "visibleClient": "Visível ao cliente",
+      "fields": {
+        "title": "Título",
+        "type": "Tipo",
+        "reference": "Referência",
+        "description": "Descrição",
+        "visibility": "Visibilidade"
+      }
     }
   },
   "dashboard": {
@@ -1961,6 +1983,7 @@
       "home": "Início",
       "assistant": "Assistente",
       "contracts": "Os meus contratos",
+      "matters": "Os meus assuntos",
       "documents": "Documentos",
       "deadlines": "Prazos",
       "radar": "Radar legislativo",
@@ -1977,7 +2000,41 @@
       "download": "Descarregar",
       "downloadError": "Não foi possível descarregar o ficheiro"
     },
+    "matters": {
+      "empty": "Ainda não há assuntos em curso.",
+      "opened": "Aberto em",
+      "expected": "Conclusão prevista",
+      "timeline": "Evolução",
+      "noUpdates": "Sem atualizações ainda.",
+      "estados": {
+        "aberto": "Aberto",
+        "em_curso": "Em curso",
+        "aguarda_cliente": "Aguarda cliente",
+        "concluido": "Concluído",
+        "suspenso": "Suspenso"
+      },
+      "tipos": {
+        "contencioso": "Contencioso",
+        "consultoria": "Consultoria",
+        "transacao": "Transação",
+        "due_diligence": "Due diligence",
+        "registo": "Registo",
+        "outro": "Outro"
+      },
+      "eventoTipos": {
+        "marco": "Marco",
+        "atualizacao": "Atualização",
+        "documento": "Documento",
+        "decisao": "Decisão",
+        "outro": "Outro"
+      }
+    },
     "pages": {
+      "matters": {
+        "eyebrow": "Assuntos",
+        "title": "Os meus assuntos",
+        "description": "Acompanhe o ponto de situação dos trabalhos que a CCA tem em curso para si."
+      },
       "policies": {
         "eyebrow": "Políticas",
         "title": "Políticas",

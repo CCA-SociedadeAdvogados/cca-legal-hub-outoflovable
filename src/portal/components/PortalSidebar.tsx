@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import {
   Home,
   Sparkles,
+  Briefcase,
   FileText,
   FolderOpen,
   CalendarClock,
@@ -164,6 +165,13 @@ export function PortalSidebar() {
           icon={FileText}
           label={t('portal.nav.contracts')}
           isActive={isActive('/portal/contratos')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/assuntos"
+          icon={Briefcase}
+          label={t('portal.nav.matters')}
+          isActive={isActive('/portal/assuntos')}
           isCollapsed={isCollapsed}
         />
         <NavItem

@@ -179,6 +179,14 @@ export const queryKeys = {
     byOrg: (orgId: string) => ['pedidos', orgId] as const,
   },
 
+  // ── Assuntos / Processos (matter status) ───────────────────
+  assuntos: {
+    byOrg: (orgId: string) => ['assuntos', orgId] as const,
+  },
+  assuntoEventos: {
+    byAssunto: (assuntoId: string) => ['assunto-eventos', assuntoId] as const,
+  },
+
   // ── Compliance & Requisitos ────────────────────────────────
   requisitos: {
     byOrg: (orgId: string) => ['requisitos', orgId] as const,
