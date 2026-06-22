@@ -22,11 +22,40 @@ import {
   RefreshCw,
   Bot,
   Gavel,
+  CalendarClock,
+  ChevronDown,
+  ArrowRightLeft,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { ValidationBadge } from '@/components/contracts/ValidationBadge';
 import { useContractExtractions } from '@/hooks/useContractExtractions';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/hooks/use-toast';
+import { exportContratosToCSV } from '@/lib/exportUtils';
+import { getContratoDeadlines } from '@/portal/lib/contrato';
+import { VALID_STATE_TRANSITIONS } from '@/lib/contractStateMachine';
 import { useContrato } from '@/hooks/useContratos';
 import { useCCAStatus } from '@/hooks/useCCAStatus';
 import {
@@ -38,6 +67,7 @@ import {
   ESTRUTURA_PRECOS_LABELS,
   PERIODICIDADE_FATURACAO_LABELS,
   PAPEL_ENTIDADE_LABELS,
+  type EstadoContrato,
 } from '@/types/contracts';
 import { ContractTimeline } from '@/components/contracts/ContractTimeline';
 import { ContractAttachments } from '@/components/contracts/ContractAttachments';
@@ -82,6 +112,49 @@ function BooleanBadge({ value, label }: { value: boolean; label: string }) {
   );
 }
 
+const DEADLINE_KIND_LABELS: Record<'renewal' | 'term' | 'notice', string> = {
+  renewal: 'Decisão de renovação',
+  term: 'Termo do contrato',
+  notice: 'Aviso prévio de não renovação',
+};
+
+/** Banner que destaca o próximo prazo relevante do contrato no topo da ficha. */
+function NextDeadlineBanner({ deadlines }: { deadlines: ReturnType<typeof getContratoDeadlines> }) {
+  // Próximo prazo ainda por cumprir (o mais próximo no futuro); cai para o mais atrasado se todos passaram.
+  const upcoming = deadlines.filter((d) => d.days >= 0).sort((a, b) => a.days - b.days);
+  const next = upcoming[0] ?? [...deadlines].sort((a, b) => b.days - a.days)[0] ?? null;
+  if (!next) return null;
+
+  const overdue = next.days < 0;
+  const tone =
+    overdue || next.days <= 30
+      ? 'border-danger/40 bg-danger/[0.06] text-danger'
+      : next.days <= 90
+        ? 'border-warn/40 bg-warn/[0.06] text-warn'
+        : 'border-line bg-bg-alt text-ink-soft';
+
+  const daysLabel = overdue
+    ? `há ${Math.abs(next.days)} dias`
+    : next.days === 0
+      ? 'hoje'
+      : `em ${next.days} dias`;
+
+  return (
+    <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${tone}`}>
+      <CalendarClock className="h-5 w-5 shrink-0" />
+      <div className="flex flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5">
+        <span className="text-xs font-semibold uppercase tracking-wide opacity-80">
+          Próximo prazo
+        </span>
+        <span className="font-medium">{DEADLINE_KIND_LABELS[next.kind]}</span>
+        <span className="text-sm">
+          {format(next.date, "d 'de' MMMM 'de' yyyy", { locale: pt })} ({daysLabel})
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function ContratoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const { data: contrato, isLoading } = useContrato(id);
@@ -89,7 +162,32 @@ export default function ContratoDetalhe() {
   const { isLocal } = useLegalHubProfile();
   const { viewingOrganizationId } = useCliente();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [pendingState, setPendingState] = useState<EstadoContrato | null>(null);
   useCCAStatus(id);
+
+  const changeState = useMutation({
+    mutationFn: async (newState: EstadoContrato) => {
+      const { error } = await supabase
+        .from('contratos')
+        .update({ estado_contrato: newState, updated_by_id: user?.id })
+        .eq('id', id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contrato', id] });
+      queryClient.invalidateQueries({ queryKey: ['contratos'] });
+      toast({ title: 'Estado do contrato atualizado' });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Erro ao mudar estado',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const effectiveOrgId =
     viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
@@ -137,6 +235,15 @@ export default function ContratoDetalhe() {
     ? differenceInDays(new Date(contrato.data_termo), new Date())
     : null;
   const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 90 && daysUntilExpiry > 0;
+
+  const deadlines = getContratoDeadlines(contrato);
+  const validTransitions = VALID_STATE_TRANSITIONS[contrato.estado_contrato] ?? [];
+  const canChangeState = !isLocal && validTransitions.length > 0;
+
+  const handleExport = () => {
+    exportContratosToCSV([contrato]);
+    toast({ title: 'Contrato exportado (CSV)' });
+  };
 
   const formatCurrency = (value?: number) => {
     if (!value) return '—';
@@ -208,7 +315,31 @@ export default function ContratoDetalhe() {
                 {validationStatus === 'failed' ? 'Reprocessar' : 'Revalidar'}
               </Button>
             )}
-            <Button variant="outline">
+            {canChangeState && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" disabled={changeState.isPending}>
+                    {changeState.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    )}
+                    Mudar estado
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Transição válida</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {validTransitions.map((state) => (
+                    <DropdownMenuItem key={state} onClick={() => setPendingState(state)}>
+                      {ESTADO_CONTRATO_LABELS[state]}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            <Button variant="outline" onClick={handleExport}>
               <Download className="mr-2 h-4 w-4" />
               Exportar
             </Button>
@@ -220,6 +351,9 @@ export default function ContratoDetalhe() {
             </Button>
           </div>
         </div>
+
+        {/* Próximo prazo em destaque */}
+        <NextDeadlineBanner deadlines={deadlines} />
 
         {/* Tabs */}
         <Tabs defaultValue="geral" className="space-y-6">
@@ -620,6 +754,40 @@ export default function ContratoDetalhe() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Confirmação de transição de estado */}
+      <AlertDialog
+        open={pendingState !== null}
+        onOpenChange={(open) => !open && setPendingState(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mudar estado do contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O estado passará de{' '}
+              <span className="font-medium text-foreground">
+                {ESTADO_CONTRATO_LABELS[contrato.estado_contrato]}
+              </span>{' '}
+              para{' '}
+              <span className="font-medium text-foreground">
+                {pendingState ? ESTADO_CONTRATO_LABELS[pendingState] : ''}
+              </span>
+              .
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingState) changeState.mutate(pendingState);
+                setPendingState(null);
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
