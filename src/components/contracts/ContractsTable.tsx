@@ -11,7 +11,6 @@ import {
   Search,
   X,
   ExternalLink,
-  RefreshCw,
   Shield,
   AlertCircle,
   CheckCircle2,
@@ -224,10 +223,9 @@ interface ContractDrawerProps {
   contrato: Contrato | null;
   open: boolean;
   onClose: () => void;
-  isInternal: boolean;
 }
 
-function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerProps) {
+function ContractDrawer({ contrato, open, onClose }: ContractDrawerProps) {
   const { label: deadlineLabel, days } = contrato
     ? getNextDeadline(contrato)
     : { label: '', days: null };
@@ -327,19 +325,6 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
                   <ExternalLink className="h-4 w-4" />
                   {contrato.arquivo_nome_original || 'Abrir documento'}
                 </a>
-              </Button>
-            </div>
-          )}
-
-          {/* Internal-only actions */}
-          {isInternal && (
-            <div className="pt-2 border-t space-y-2">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Acções internas
-              </p>
-              <Button variant="outline" size="sm" className="gap-2 w-full">
-                <RefreshCw className="h-4 w-4" />
-                Reprocessar
               </Button>
             </div>
           )}
@@ -641,12 +626,6 @@ export function ContractsTable({
                             <FileText className="mr-2 h-4 w-4" />
                             Abrir ficha
                           </DropdownMenuItem>
-                          {isInternal && (
-                            <DropdownMenuItem>
-                              <RefreshCw className="mr-2 h-4 w-4" />
-                              Reprocessar
-                            </DropdownMenuItem>
-                          )}
                           <DropdownMenuSeparator />
                           {showArchived ? (
                             <DropdownMenuItem onClick={() => onRestore?.(c.id)}>
@@ -693,7 +672,6 @@ export function ContractsTable({
         contrato={drawerContract}
         open={drawerContract !== null}
         onClose={() => setDrawerContract(null)}
-        isInternal={isInternal}
       />
 
       {/* ── Delete dialog ── */}
