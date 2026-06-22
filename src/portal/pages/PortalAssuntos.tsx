@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Briefcase, ChevronDown, ChevronRight, Loader2, Circle } from 'lucide-react';
 import { Eyebrow } from '@/components/cca';
@@ -26,6 +27,8 @@ export default function PortalAssuntos() {
   const { t } = useTranslation();
   const { currentOrganization } = useOrganizations();
   const { assuntos, isLoading } = useAssuntos(currentOrganization?.id);
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('assunto');
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -53,7 +56,7 @@ export default function PortalAssuntos() {
       ) : (
         <div className="space-y-3">
           {assuntos.map((a) => (
-            <AssuntoCard key={a.id} assunto={a} />
+            <AssuntoCard key={a.id} assunto={a} highlight={a.id === highlightId} />
           ))}
         </div>
       )}
@@ -61,14 +64,26 @@ export default function PortalAssuntos() {
   );
 }
 
-function AssuntoCard({ assunto }: { assunto: Assunto }) {
+function AssuntoCard({ assunto, highlight = false }: { assunto: Assunto; highlight?: boolean }) {
   const { t, i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(highlight);
   const { data: eventos = [], isLoading } = useAssuntoEventos(open ? assunto.id : null);
   const estado = (assunto.estado as AssuntoEstado) ?? 'aberto';
+  const ref = useRef<HTMLElement>(null);
+
+  // Quando referenciado por ?assunto=<id>, abre a timeline e faz scroll até ao cartão.
+  useEffect(() => {
+    if (highlight) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [highlight]);
 
   return (
-    <article className="rounded-card border border-line bg-surface p-5">
+    <article
+      ref={ref}
+      className={cn(
+        'rounded-card border border-line bg-surface p-5 transition-shadow',
+        highlight && 'ring-2 ring-brand/40',
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="font-display text-[15px] font-medium leading-snug text-ink">

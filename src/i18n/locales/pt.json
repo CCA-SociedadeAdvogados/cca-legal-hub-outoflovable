@@ -1903,7 +1903,8 @@
         "em_analise": "Em análise",
         "concluido": "Respondido",
         "cancelado": "Cancelado"
-      }
+      },
+      "becameMatter": "Tornou-se um assunto · ver acompanhamento"
     },
     "assistant": {
       "eyebrow": "Assistente",
