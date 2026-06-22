@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   MessageSquarePlus,
@@ -8,6 +9,8 @@ import {
   Clock,
   XCircle,
   Hourglass,
+  Briefcase,
+  ArrowRight,
 } from 'lucide-react';
 import { Eyebrow } from '@/components/cca';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +44,7 @@ import {
   type PedidoTipo,
   type PedidoPrioridade,
 } from '@/hooks/usePedidos';
+import { useAssuntos } from '@/hooks/useAssuntos';
 import { formatDate } from '@/portal/lib/contrato';
 
 const ESTADO_META: Record<PedidoEstado, { tone: string; icon: React.ElementType }> = {
@@ -58,6 +62,12 @@ export default function PortalPedidos() {
   const { currentOrganization } = useOrganizations();
   const { contratos } = useContratos();
   const { pedidos, isLoading, createPedido, cancelPedido } = usePedidos(currentOrganization?.id);
+  const { assuntos } = useAssuntos(currentOrganization?.id);
+
+  // Pedido → assunto em que foi promovido (para o cliente saltar para o acompanhamento).
+  const assuntoByPedido = new Map(
+    assuntos.filter((a) => a.pedido_origem_id).map((a) => [a.pedido_origem_id as string, a.id]),
+  );
 
   const [open, setOpen] = useState(false);
   const [titulo, setTitulo] = useState('');
@@ -123,6 +133,7 @@ export default function PortalPedidos() {
               key={p.id}
               pedido={p}
               lang={i18n.language}
+              assuntoId={assuntoByPedido.get(p.id) ?? null}
               onCancel={() => cancelPedido.mutate(p.id)}
               canceling={cancelPedido.isPending}
             />
@@ -231,11 +242,13 @@ export default function PortalPedidos() {
 function PedidoCard({
   pedido,
   lang,
+  assuntoId,
   onCancel,
   canceling,
 }: {
   pedido: Pedido;
   lang: string;
+  assuntoId: string | null;
   onCancel: () => void;
   canceling: boolean;
 }) {
@@ -280,11 +293,25 @@ function PedidoCard({
         </div>
       )}
 
-      {canCancel && (
-        <div className="mt-3 flex justify-end">
-          <Button variant="ghost" size="sm" onClick={onCancel} disabled={canceling}>
-            {t('portal.requests.cancel')}
-          </Button>
+      {(assuntoId || canCancel) && (
+        <div className="mt-3 flex items-center justify-between gap-2">
+          {assuntoId ? (
+            <Link
+              to={`/portal/assuntos?assunto=${assuntoId}`}
+              className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-brand transition-colors hover:text-brand/80"
+            >
+              <Briefcase className="h-3.5 w-3.5" />
+              {t('portal.requests.becameMatter')}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          ) : (
+            <span />
+          )}
+          {canCancel && (
+            <Button variant="ghost" size="sm" onClick={onCancel} disabled={canceling}>
+              {t('portal.requests.cancel')}
+            </Button>
+          )}
         </div>
       )}
     </article>
