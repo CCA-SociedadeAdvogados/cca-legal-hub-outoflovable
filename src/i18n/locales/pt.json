@@ -1230,6 +1230,12 @@
       "root": "Raiz",
       "back": "Voltar",
       "empty": "Nenhum documento nesta pasta",
+      "search": "Pesquisar nesta pasta…",
+      "sortName": "Nome",
+      "sortModified": "Recentes",
+      "folders": "Pastas",
+      "files": "Ficheiros",
+      "noResults": "Sem resultados para “{{query}}”.",
       "archiveHint": "Guarde aqui os documentos ativos para manter tudo organizado e acessível.",
       "fullSync": "Sincronização completa",
       "upload": "Carregar"
