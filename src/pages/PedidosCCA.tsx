@@ -21,10 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { MessageSquarePlus, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { MessageSquarePlus, Loader2, Briefcase } from 'lucide-react';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import { usePedidos, type Pedido, type PedidoEstado } from '@/hooks/usePedidos';
+import { useAssuntos } from '@/hooks/useAssuntos';
 
 const ESTADO_TONE: Record<PedidoEstado, string> = {
   pendente: 'bg-muted text-muted-foreground',
@@ -43,11 +54,18 @@ export default function PedidosCCA() {
   const organizationId =
     viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
 
-  const { pedidos, isLoading, respondPedido } = usePedidos(organizationId);
+  const { pedidos, isLoading, respondPedido, promoteToAssunto } = usePedidos(organizationId);
+  const { assuntos } = useAssuntos(organizationId);
+
+  // Pedidos que já foram promovidos a assunto (para não duplicar).
+  const promotedPedidoIds = new Set(
+    assuntos.map((a) => a.pedido_origem_id).filter((id): id is string => !!id),
+  );
 
   const [editing, setEditing] = useState<Pedido | null>(null);
   const [resposta, setResposta] = useState('');
   const [estado, setEstado] = useState<PedidoEstado>('em_analise');
+  const [promoting, setPromoting] = useState<Pedido | null>(null);
 
   const openRespond = (p: Pedido) => {
     setEditing(p);
@@ -126,7 +144,25 @@ export default function PedidosCCA() {
                         <p className="mt-1 whitespace-pre-wrap text-sm">{p.resposta}</p>
                       </div>
                     )}
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-end gap-2">
+                      {promotedPedidoIds.has(p.id) ? (
+                        <Badge variant="outline" className="gap-1.5 font-normal">
+                          <Briefcase className="h-3.5 w-3.5" />
+                          {t('requests.cca.promoted')}
+                        </Badge>
+                      ) : (
+                        est !== 'cancelado' && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="gap-1.5"
+                            onClick={() => setPromoting(p)}
+                          >
+                            <Briefcase className="h-3.5 w-3.5" />
+                            {t('requests.cca.promote')}
+                          </Button>
+                        )
+                      )}
                       <Button size="sm" variant="outline" onClick={() => openRespond(p)}>
                         {t('requests.cca.respond')}
                       </Button>
@@ -182,6 +218,27 @@ export default function PedidosCCA() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={promoting !== null} onOpenChange={(v) => !v && setPromoting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('requests.cca.promoteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('requests.cca.promoteConfirmDesc')}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel', 'Cancelar')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!promoting) return;
+                await promoteToAssunto.mutateAsync(promoting);
+                setPromoting(null);
+              }}
+            >
+              {t('requests.cca.promote')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

@@ -232,6 +232,12 @@ function CockpitAssuntoCard({
               {t(`portal.matters.tipos.${assunto.tipo}`)}
               {assunto.referencia ? ` · ${assunto.referencia}` : ''}
             </CardDescription>
+            {assunto.pedido_origem_id && (
+              <Badge variant="outline" className="mt-1.5 gap-1.5 font-normal">
+                <MessageSquarePlus className="h-3 w-3" />
+                {t('matters.cca.fromRequest')}
+              </Badge>
+            )}
           </div>
           <Badge className={ESTADO_TONE[estado]}>{t(`portal.matters.estados.${estado}`)}</Badge>
         </div>

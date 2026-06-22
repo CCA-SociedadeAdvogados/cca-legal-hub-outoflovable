@@ -136,7 +136,11 @@
       "empty": "Este cliente ainda não abriu pedidos.",
       "respond": "Responder",
       "state": "Estado",
-      "responsePlaceholder": "Escreva a resposta ao cliente..."
+      "responsePlaceholder": "Escreva a resposta ao cliente...",
+      "promote": "Promover a assunto",
+      "promoted": "Promovido a assunto",
+      "promoteConfirmTitle": "Promover este pedido a assunto?",
+      "promoteConfirmDesc": "É criado um assunto com o título e a descrição deste pedido, ligado a ele. O pedido passa a “Em análise” e o acompanhamento continua no assunto."
     }
   },
   "matters": {
@@ -157,7 +161,8 @@
         "reference": "Referência",
         "description": "Descrição",
         "visibility": "Visibilidade"
-      }
+      },
+      "fromRequest": "Origem: pedido do cliente"
     }
   },
   "dashboard": {
