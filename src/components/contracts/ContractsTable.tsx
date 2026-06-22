@@ -593,7 +593,9 @@ export function ContractsTable({
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={colCount} className="h-24 text-center text-muted-foreground">
-                  Nenhum contrato encontrado.
+                  {debouncedSearch || quickFilter !== 'all'
+                    ? 'Nenhum contrato corresponde aos filtros.'
+                    : 'Ainda não há contratos.'}
                 </TableCell>
               </TableRow>
             ) : (
