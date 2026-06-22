@@ -209,7 +209,7 @@ DROP POLICY IF EXISTS "Org members can view bc config" ON public.bc_config;
 CREATE POLICY "Org members can view bc config"
     ON public.bc_config FOR SELECT
     USING (
-        organization_id = public.get_user_organization_id()
+        organization_id = public.get_user_organization_id(auth.uid())
         OR public.is_platform_admin()
     );
 
@@ -230,7 +230,7 @@ DROP POLICY IF EXISTS "Org members can view bc customers" ON public.bc_customers
 CREATE POLICY "Org members can view bc customers"
     ON public.bc_customers FOR SELECT
     USING (
-        organization_id = public.get_user_organization_id()
+        organization_id = public.get_user_organization_id(auth.uid())
         OR public.is_platform_admin()
     );
 
@@ -245,7 +245,7 @@ DROP POLICY IF EXISTS "Org members can view bc accounts" ON public.bc_accounts;
 CREATE POLICY "Org members can view bc accounts"
     ON public.bc_accounts FOR SELECT
     USING (
-        organization_id = public.get_user_organization_id()
+        organization_id = public.get_user_organization_id(auth.uid())
         OR public.is_platform_admin()
     );
 
@@ -260,7 +260,7 @@ DROP POLICY IF EXISTS "Org members can view bc ledger" ON public.bc_ledger;
 CREATE POLICY "Org members can view bc ledger"
     ON public.bc_ledger FOR SELECT
     USING (
-        organization_id = public.get_user_organization_id()
+        organization_id = public.get_user_organization_id(auth.uid())
         OR public.is_platform_admin()
     );
 
@@ -275,7 +275,7 @@ DROP POLICY IF EXISTS "Org members can view bc sync logs" ON public.bc_sync_logs
 CREATE POLICY "Org members can view bc sync logs"
     ON public.bc_sync_logs FOR SELECT
     USING (
-        organization_id = public.get_user_organization_id()
+        organization_id = public.get_user_organization_id(auth.uid())
         OR public.is_platform_admin()
     );
 
