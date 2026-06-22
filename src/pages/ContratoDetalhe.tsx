@@ -56,6 +56,7 @@ import { toast } from '@/hooks/use-toast';
 import { exportContratosToCSV } from '@/lib/exportUtils';
 import { getContratoDeadlines } from '@/portal/lib/contrato';
 import { VALID_STATE_TRANSITIONS } from '@/lib/contractStateMachine';
+import { estadoBadgeClass } from '@/lib/contractEstado';
 import { useContrato } from '@/hooks/useContratos';
 import { useCCAStatus } from '@/hooks/useCCAStatus';
 import {
@@ -278,7 +279,7 @@ export default function ContratoDetalhe() {
                   </Badge>
                 )}
                 {!isLocal && (
-                  <Badge variant={contrato.estado_contrato === 'activo' ? 'active' : 'secondary'}>
+                  <Badge variant="outline" className={estadoBadgeClass(contrato.estado_contrato)}>
                     {ESTADO_CONTRATO_LABELS[contrato.estado_contrato]}
                   </Badge>
                 )}
