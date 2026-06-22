@@ -244,21 +244,36 @@ serve(async (req) => {
   }
 });
 
+/** Inteiro uniforme em [0, max) usando RNG criptográfico, sem viés de módulo. */
+function randomInt(max: number): number {
+  const limit = Math.floor(0x100000000 / max) * max;
+  const buf = new Uint32Array(1);
+  let x = 0;
+  do {
+    crypto.getRandomValues(buf);
+    x = buf[0];
+  } while (x >= limit);
+  return x % max;
+}
+
 function generateSecurePassword(): string {
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lowercase = 'abcdefghijklmnopqrstuvwxyz';
   const numbers = '0123456789';
   const special = '!@#$%&*';
   const allChars = uppercase + lowercase + numbers + special;
-  let password = '';
-  password += uppercase[Math.floor(Math.random() * uppercase.length)];
-  password += lowercase[Math.floor(Math.random() * lowercase.length)];
-  password += numbers[Math.floor(Math.random() * numbers.length)];
-  password += special[Math.floor(Math.random() * special.length)];
+  const pick = (set: string) => set[randomInt(set.length)];
+
+  const chars = [pick(uppercase), pick(lowercase), pick(numbers), pick(special)];
   for (let i = 0; i < 8; i++) {
-    password += allChars[Math.floor(Math.random() * allChars.length)];
+    chars.push(pick(allChars));
   }
-  return password.split('').sort(() => Math.random() - 0.5).join('');
+  // Fisher–Yates com RNG criptográfico
+  for (let i = chars.length - 1; i > 0; i--) {
+    const j = randomInt(i + 1);
+    [chars[i], chars[j]] = [chars[j], chars[i]];
+  }
+  return chars.join('');
 }
 
 function getCorsHeaders(req: Request) {
