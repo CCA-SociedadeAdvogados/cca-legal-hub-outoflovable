@@ -15,9 +15,6 @@ verify_jwt = true
 [functions.parse-contract]
 verify_jwt = true
 
-[functions.send-contract-alerts]
-verify_jwt = true
-
 [functions.match-legislation]
 verify_jwt = true
 
