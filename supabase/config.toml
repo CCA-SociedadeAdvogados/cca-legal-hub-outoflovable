@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.classify-document]
 verify_jwt = false
+
+[functions.analyze-contract-client]
+verify_jwt = false

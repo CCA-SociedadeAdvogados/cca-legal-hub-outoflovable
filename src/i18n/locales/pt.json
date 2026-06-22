@@ -1836,6 +1836,18 @@
       "disclaimer": "Resumo gerado por IA a partir dos dados do contrato. Confirme com a CCA antes de decisões importantes.",
       "error": "Não foi possível gerar o resumo"
     },
+    "analysis": {
+      "ctaTitle": "Análise de obrigações e risco",
+      "ctaBody": "A IA analisa o contrato e mostra as obrigações-chave e um grau de risco (A–F) com as cláusulas a ter atenção.",
+      "generate": "Analisar contrato",
+      "generating": "A analisar o contrato...",
+      "loading": "A carregar análise...",
+      "risk": "Avaliação de risco",
+      "riskGrade": "Grau de risco",
+      "obligations": "Obrigações-chave",
+      "disclaimer": "Análise gerada por IA a partir dos dados do contrato. Confirme com a CCA antes de decisões importantes.",
+      "error": "Não foi possível gerar a análise"
+    },
     "requests": {
       "new": "Novo pedido",
       "formHint": "Descreva o que precisa. A equipa da CCA recebe o pedido e responde por aqui.",
@@ -1955,9 +1967,22 @@
       "financial": "Conta corrente",
       "requests": "Pedidos à CCA",
       "news": "Novidades CCA",
+      "policies": "Políticas",
       "profile": "Perfil e definições"
     },
+    "policies": {
+      "empty": "Ainda não há políticas publicadas pela CCA.",
+      "version": "Versão {{n}}",
+      "read": "Ler",
+      "download": "Descarregar",
+      "downloadError": "Não foi possível descarregar o ficheiro"
+    },
     "pages": {
+      "policies": {
+        "eyebrow": "Políticas",
+        "title": "Políticas",
+        "description": "Políticas e documentos normativos disponibilizados pela CCA para a sua organização."
+      },
       "requests": {
         "eyebrow": "Pedidos",
         "title": "Pedidos à CCA",

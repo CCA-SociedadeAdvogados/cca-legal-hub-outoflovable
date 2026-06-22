@@ -16,6 +16,7 @@ import {
   Wallet,
   MessageSquarePlus,
   Newspaper,
+  ShieldCheck,
   Moon,
   Sun,
   Settings,
@@ -208,6 +209,13 @@ export function PortalSidebar() {
           icon={Newspaper}
           label={t('portal.nav.news')}
           isActive={isActive('/portal/novidades')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/politicas"
+          icon={ShieldCheck}
+          label={t('portal.nav.policies')}
+          isActive={isActive('/portal/politicas')}
           isCollapsed={isCollapsed}
         />
       </nav>

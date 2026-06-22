@@ -9,6 +9,7 @@ import PortalPrazos from './pages/PortalPrazos';
 import PortalFinanceiro from './pages/PortalFinanceiro';
 import PortalPedidos from './pages/PortalPedidos';
 import PortalNovidades from './pages/PortalNovidades';
+import PortalPoliticas from './pages/PortalPoliticas';
 import PortalPerfil from './pages/PortalPerfil';
 
 /**
@@ -30,6 +31,7 @@ export default function PortalRoutes() {
         <Route path="financeiro" element={<PortalFinanceiro />} />
         <Route path="pedidos" element={<PortalPedidos />} />
         <Route path="novidades" element={<PortalNovidades />} />
+        <Route path="politicas" element={<PortalPoliticas />} />
         <Route path="perfil" element={<PortalPerfil />} />
         <Route path="*" element={<Navigate to="/portal" replace />} />
       </Routes>
