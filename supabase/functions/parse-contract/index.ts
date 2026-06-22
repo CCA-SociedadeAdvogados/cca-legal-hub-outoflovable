@@ -8,9 +8,11 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 const CLAUDE_SONNET = "claude-sonnet-4-6";
-// 150K chars ≈ 37K tokens — seguro para Haiku 200K context.
+// 150K chars ≈ 37K tokens — seguro para o contexto de 200K do Sonnet.
 // Apenas como salvaguarda; a maioria dos contratos fica bem abaixo disto.
 const MAX_CHARS = 150000;
+// Limite de tamanho do ficheiro (descarregado do storage ou enviado em base64).
+const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
 
 async function callClaude(
   apiKey: string,
@@ -106,6 +108,22 @@ Deno.serve(async (req) => {
 
     console.log(`[parse-contract] payload keys: ${Object.keys(body).join(", ")}`);
 
+    // O storagePath é descarregado com a service-role key (ignora RLS), por isso
+    // só é permitido o prefixo temporário usado pelo fluxo de upload do frontend.
+    // Sem esta restrição, um chamador poderia exfiltrar qualquer ficheiro do bucket.
+    if (storagePath !== undefined && storagePath !== null) {
+      if (
+        typeof storagePath !== "string" ||
+        !storagePath.startsWith("temp/") ||
+        storagePath.includes("..")
+      ) {
+        return new Response(
+          JSON.stringify({ error: "Caminho de ficheiro inválido" }),
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
       throw new Error("ANTHROPIC_API_KEY não está configurada");
@@ -135,6 +153,13 @@ Deno.serve(async (req) => {
           throw new Error(`Erro ao descarregar ficheiro: ${storageError?.message ?? "ficheiro não encontrado"}`);
         }
 
+        if (blob.size > MAX_FILE_BYTES) {
+          return new Response(
+            JSON.stringify({ error: "Ficheiro demasiado grande (máx. 15 MB)" }),
+            { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+          );
+        }
+
         const arrayBuffer = await blob.arrayBuffer();
         fileBytes = new Uint8Array(arrayBuffer);
 
@@ -151,6 +176,12 @@ Deno.serve(async (req) => {
       } else if (fileContent) {
         console.log("Processing file from base64:", resolvedName, "Type:", resolvedMime);
         const binaryStr = atob(fileContent as string);
+        if (binaryStr.length > MAX_FILE_BYTES) {
+          return new Response(
+            JSON.stringify({ error: "Ficheiro demasiado grande (máx. 15 MB)" }),
+            { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+          );
+        }
         fileBytes = new Uint8Array(binaryStr.length);
         for (let i = 0; i < binaryStr.length; i++) {
           fileBytes[i] = binaryStr.charCodeAt(i);
@@ -186,7 +217,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── 2. Analisar contrato com Claude Haiku 4.5 ─────────────────────────
+    // ── 2. Analisar contrato com Claude Sonnet 4.6 ────────────────────────
     console.log(`[parse-contract] Text length: ${contractText.length} chars, scanned: ${isScannedPDF}`);
 
     const truncatedText = contractText.length > MAX_CHARS
