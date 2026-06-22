@@ -136,7 +136,11 @@
       "empty": "This client hasn't opened any requests yet.",
       "respond": "Respond",
       "state": "Status",
-      "responsePlaceholder": "Write your reply to the client..."
+      "responsePlaceholder": "Write your reply to the client...",
+      "promote": "Promote to matter",
+      "promoted": "Promoted to matter",
+      "promoteConfirmTitle": "Promote this request to a matter?",
+      "promoteConfirmDesc": "A matter is created with this request’s title and description, linked to it. The request moves to “In review” and follow-up continues in the matter."
     }
   },
   "matters": {
@@ -157,7 +161,8 @@
         "reference": "Reference",
         "description": "Description",
         "visibility": "Visibility"
-      }
+      },
+      "fromRequest": "Origin: client request"
     }
   },
   "dashboard": {

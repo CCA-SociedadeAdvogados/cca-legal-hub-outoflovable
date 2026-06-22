@@ -3,13 +3,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { queryKeys } from '@/lib/queryKeys';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+import type { AssuntoTipo } from '@/hooks/useAssuntos';
 
 export type Pedido = Tables<'on_demand_requests'>;
 
 export type PedidoEstado = 'pendente' | 'em_analise' | 'concluido' | 'cancelado';
 export type PedidoTipo = 'conformidade' | 'revisao_clausulas' | 'due_diligence' | 'outro';
 export type PedidoPrioridade = 'urgente' | 'normal' | 'baixa';
+
+/** Mapeia o tipo de análise do pedido para o tipo de assunto correspondente. */
+const PEDIDO_TO_ASSUNTO_TIPO: Record<PedidoTipo, AssuntoTipo> = {
+  conformidade: 'consultoria',
+  revisao_clausulas: 'consultoria',
+  due_diligence: 'due_diligence',
+  outro: 'consultoria',
+};
 
 export interface NovoPedido {
   titulo: string;
@@ -129,5 +138,49 @@ export function usePedidos(organizationId: string | null | undefined) {
     },
   });
 
-  return { pedidos, isLoading, error, createPedido, cancelPedido, respondPedido };
+  // CCA: promover um pedido a assunto (quando exige trabalho continuado).
+  // Cria o assunto ligado ao pedido (pedido_origem_id) e marca o pedido em análise.
+  const promoteToAssunto = useMutation({
+    mutationFn: async (pedido: Pedido) => {
+      if (!user) throw new Error('Utilizador não autenticado');
+      if (!orgId) throw new Error('Organização não definida');
+      const payload = {
+        organization_id: orgId,
+        titulo: pedido.titulo,
+        descricao: pedido.descricao ?? null,
+        tipo:
+          PEDIDO_TO_ASSUNTO_TIPO[(pedido.tipo_analise as PedidoTipo) ?? 'outro'] ?? 'consultoria',
+        estado: 'em_curso',
+        responsavel_id: user.id,
+        pedido_origem_id: pedido.id,
+        created_by_id: user.id,
+        updated_by_id: user.id,
+      } as unknown as TablesInsert<'assuntos'>;
+
+      const { data, error } = await supabase.from('assuntos').insert(payload).select('id').single();
+      if (error) throw error;
+
+      const { error: updErr } = await supabase
+        .from('on_demand_requests')
+        .update({ estado: 'em_analise', responsavel_id: user.id })
+        .eq('id', pedido.id);
+      if (updErr) throw updErr;
+
+      return data;
+    },
+    onSuccess: () => {
+      invalidate();
+      queryClient.invalidateQueries({ queryKey: queryKeys.assuntos.byOrg(orgId ?? 'none') });
+      toast({ title: 'Pedido promovido a assunto' });
+    },
+    onError: (e: Error) => {
+      toast({
+        title: 'Erro ao promover a assunto',
+        description: e.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  return { pedidos, isLoading, error, createPedido, cancelPedido, respondPedido, promoteToAssunto };
 }

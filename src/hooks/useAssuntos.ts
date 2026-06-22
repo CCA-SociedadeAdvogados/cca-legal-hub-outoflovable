@@ -5,7 +5,11 @@ import { toast } from '@/hooks/use-toast';
 import { queryKeys } from '@/lib/queryKeys';
 import type { Tables } from '@/integrations/supabase/types';
 
-export type Assunto = Tables<'assuntos'>;
+export type Assunto = Tables<'assuntos'> & {
+  /** Pedido à CCA que originou este assunto (quando promovido). Coluna nova,
+   * ainda não refletida nos tipos gerados — remover o augment após gen:types. */
+  pedido_origem_id?: string | null;
+};
 export type AssuntoEvento = Tables<'assunto_eventos'>;
 
 export type AssuntoEstado = 'aberto' | 'em_curso' | 'aguarda_cliente' | 'concluido' | 'suspenso';
