@@ -21,9 +21,6 @@ export const queryKeys = {
   contractExtractions: {
     byContrato: (contratoId: string) => ['contract-extractions', contratoId] as const,
   },
-  contractTriage: {
-    byContrato: (contratoId: string) => ['contract-triage', contratoId] as const,
-  },
   contractComplianceAnalysis: {
     byContrato: (contratoId: string) => ['contract-compliance-analysis', contratoId] as const,
   },

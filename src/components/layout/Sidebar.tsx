@@ -33,7 +33,6 @@ import {
   Lock,
   List,
   Upload,
-  ScanSearch,
   CalendarClock,
 } from 'lucide-react';
 
@@ -263,14 +262,6 @@ export function Sidebar({ clientName }: SidebarProps) {
                   icon={List}
                   label={t('nav.contractsList')}
                   isActive={location.pathname === '/contratos'}
-                  isCollapsed={false}
-                  isSubmenu
-                />
-                <NavItem
-                  to="/contratos/triagem"
-                  icon={ScanSearch}
-                  label={t('nav.contractsTriage', 'Triagem')}
-                  isActive={location.pathname === '/contratos/triagem'}
                   isCollapsed={false}
                   isSubmenu
                 />

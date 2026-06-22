@@ -47,7 +47,6 @@ import { ContractComplianceAnalyzer } from '@/components/contracts/ContractCompl
 import { ContractClassification } from '@/components/contracts/ContractClassification';
 import { ContractMainUpload } from '@/components/contracts/ContractMainUpload';
 import { ContractInitialUpload } from '@/components/contracts/ContractInitialUpload';
-// TriageAuditBadge removed — analysis done by external CCA agent
 import { cn } from '@/lib/utils';
 import { useContratos, useContrato, type ContratoInsert } from '@/hooks/useContratos';
 import {
@@ -177,7 +176,6 @@ export default function ContratoForm() {
   const [showUploadStep, setShowUploadStep] = useState(true);
   const [_uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedContractText, setExtractedContractText] = useState<string>('');
-  // triageResult removed — analysis done by external CCA agent
 
   const [classifiedAreas, setClassifiedAreas] = useState<string[]>(
     existingContrato?.areas_direito_aplicaveis || [],
