@@ -102,7 +102,6 @@
     "contracts": "My Contracts",
     "contractsOverview": "Overview",
     "contractsList": "Contract List",
-    "contractsTriage": "Triage",
     "contractsDocuments": "Documents",
     "contractsUpload": "Bulk Upload",
     "accounting": "Accounting Services",
@@ -978,28 +977,7 @@
     },
     "archiveTab": "Archive",
     "openEnded": "Open-ended",
-    "risk": "Risk",
-    "triage": {
-      "analyze": "Analyze Contract",
-      "analyzing": "Analyzing contract...",
-      "clauseAnalysis": "Clause-by-Clause Analysis",
-      "collapseAll": "Collapse All",
-      "contractName": "Contract Name (optional)",
-      "contractNamePlaceholder": "E.g.: SaaS Contract with Supplier X",
-      "contractText": "Contract Text",
-      "contractTextPlaceholder": "Paste the full contract text here for analysis...",
-      "description": "Automated contract analysis based on the BAE Contractual Playbook",
-      "errorEmptyText": "Please enter the contract text.",
-      "executiveSummary": "Executive Summary",
-      "expandAll": "Expand All",
-      "exportReport": "Export Report (JSON)",
-      "inputTab": "Enter Contract",
-      "nextSteps": "Next Steps",
-      "priorityRedFlags": "Priority Red Flags",
-      "recommendations": "Recommendations",
-      "resultsTab": "Results",
-      "title": "Contract Triage Agent"
-    }
+    "risk": "Risk"
   },
   "financial": {
     "title": "Financial",

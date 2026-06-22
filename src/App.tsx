@@ -33,7 +33,6 @@ const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const PrazosTimeline = React.lazy(() => import('./pages/PrazosTimeline'));
 const Eventos = React.lazy(() => import('./pages/Eventos'));
 const ContratosUploadMassa = React.lazy(() => import('./pages/ContratosUploadMassa'));
-const ContratosTriagem = React.lazy(() => import('./pages/ContratosTriagem'));
 const Impactos = React.lazy(() => import('./pages/Impactos'));
 const Perfil = React.lazy(() => import('./pages/Perfil'));
 const Organizacao = React.lazy(() => import('./pages/Organizacao'));
@@ -211,14 +210,6 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <ContratosUploadMassa />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/contratos/triagem"
-          element={
-            <ProtectedRoute>
-              <ContratosTriagem />
             </ProtectedRoute>
           }
         />

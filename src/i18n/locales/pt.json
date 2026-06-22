@@ -102,7 +102,6 @@
     "contracts": "Meus Contratos",
     "contractsOverview": "Visão Geral",
     "contractsList": "Lista de Contratos",
-    "contractsTriage": "Triagem",
     "contractsDocuments": "Documentos",
     "contractsUpload": "Upload em Massa",
     "accounting": "Serviços de Contabilidade",
@@ -978,28 +977,7 @@
     },
     "archiveTab": "Arquivo",
     "openEnded": "Prazo indeterminado",
-    "risk": "Risco",
-    "triage": {
-      "analyze": "Analisar Contrato",
-      "analyzing": "A analisar contrato...",
-      "clauseAnalysis": "Análise por Cláusula",
-      "collapseAll": "Colapsar Todas",
-      "contractName": "Nome do Contrato (opcional)",
-      "contractNamePlaceholder": "Ex: Contrato SaaS com Fornecedor X",
-      "contractText": "Texto do Contrato",
-      "contractTextPlaceholder": "Cole aqui o texto completo do contrato para análise...",
-      "description": "Análise automática de contratos baseada no Playbook Contratual BAE",
-      "errorEmptyText": "Por favor, insira o texto do contrato.",
-      "executiveSummary": "Resumo Executivo",
-      "expandAll": "Expandir Todas",
-      "exportReport": "Exportar Relatório (JSON)",
-      "inputTab": "Inserir Contrato",
-      "nextSteps": "Próximos Passos",
-      "priorityRedFlags": "Red Flags Prioritários",
-      "recommendations": "Recomendações",
-      "resultsTab": "Resultados",
-      "title": "Contract Triage Agent"
-    }
+    "risk": "Risco"
   },
   "financial": {
     "title": "Financeiro",
