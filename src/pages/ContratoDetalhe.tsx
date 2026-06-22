@@ -48,7 +48,7 @@ import { ValidationBadge } from '@/components/contracts/ValidationBadge';
 import { useContractExtractions } from '@/hooks/useContractExtractions';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -187,6 +187,20 @@ export default function ContratoDetalhe() {
         description: error.message,
         variant: 'destructive',
       });
+    },
+  });
+
+  // Resolve o nome do responsável interno (a ficha guarda apenas o id).
+  const { data: responsavel } = useQuery({
+    queryKey: ['profile-name', contrato?.responsavel_interno_id],
+    enabled: !!contrato?.responsavel_interno_id && !isLocal,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('nome_completo')
+        .eq('id', contrato!.responsavel_interno_id!)
+        .maybeSingle();
+      return data;
     },
   });
 
@@ -404,8 +418,8 @@ export default function ContratoDetalhe() {
                   )}
                   {!isLocal && (
                     <InfoRow
-                      label="Responsável ID"
-                      value={contrato.responsavel_interno_id}
+                      label="Responsável"
+                      value={responsavel?.nome_completo ?? undefined}
                       icon={User}
                     />
                   )}
@@ -449,6 +463,21 @@ export default function ContratoDetalhe() {
                     <InfoRow
                       label="Período Renovação"
                       value={`${contrato.renovacao_periodo_meses} meses`}
+                    />
+                  )}
+                  {contrato.data_limite_decisao_renovacao && (
+                    <InfoRow
+                      label="Decisão de renovação até"
+                      value={formatDate(
+                        contrato.data_limite_decisao_renovacao as unknown as string,
+                      )}
+                      icon={CalendarClock}
+                    />
+                  )}
+                  {contrato.aviso_previo_nao_renovacao_dias && (
+                    <InfoRow
+                      label="Aviso prévio de não renovação"
+                      value={`${contrato.aviso_previo_nao_renovacao_dias} dias`}
                     />
                   )}
                 </CardContent>
