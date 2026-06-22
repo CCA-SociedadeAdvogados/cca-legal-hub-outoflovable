@@ -20,8 +20,19 @@ import { useOrganizationSettings } from '@/hooks/useOrganizationSettings';
 import { PrivacySettings } from '@/components/settings/PrivacySettings';
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { NotificationPreferencesPanel } from '@/components/settings/NotificationPreferencesPanel';
+import { BusinessCentralSettings } from '@/components/settings/BusinessCentralSettings';
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
-import { Settings, Brain, Bell, Shield, Upload, Loader2, Lock, Palette } from 'lucide-react';
+import {
+  Settings,
+  Brain,
+  Bell,
+  Shield,
+  Upload,
+  Loader2,
+  Lock,
+  Palette,
+  Building2,
+} from 'lucide-react';
 import { Eyebrow, VisualThemeSwitcher } from '@/components/cca';
 
 interface AIModel {
@@ -152,6 +163,14 @@ export default function Definicoes() {
               <TabsTrigger value="ai" className="gap-2">
                 <Brain className="h-4 w-4" />
                 <span className="hidden sm:inline">{t('settings.tabs.ai')}</span>
+              </TabsTrigger>
+            )}
+            {isPlatformAdmin && (
+              <TabsTrigger value="business-central" className="gap-2">
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">
+                  {t('settings.tabs.businessCentral', 'Business Central')}
+                </span>
               </TabsTrigger>
             )}
             <TabsTrigger value="notifications" className="gap-2">
@@ -395,6 +414,13 @@ export default function Definicoes() {
                   </Button>
                 </CardContent>
               </Card>
+            </TabsContent>
+          )}
+
+          {/* Business Central Settings */}
+          {isPlatformAdmin && (
+            <TabsContent value="business-central" className="space-y-6">
+              <BusinessCentralSettings />
             </TabsContent>
           )}
 

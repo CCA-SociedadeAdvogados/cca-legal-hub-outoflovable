@@ -16,6 +16,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Receipt, AlertTriangle, CheckCircle, Clock, Building2, FileText } from 'lucide-react';
 import { SharePointDocumentsBrowser } from '@/components/sharepoint/SharePointDocumentsBrowser';
+import { BCContaCorrente } from '@/components/financeiro/BCContaCorrente';
 import { useSharePointConfig } from '@/hooks/useSharePoint';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -397,6 +398,8 @@ export default function Financeiro() {
       {sharepointConfigOrgId && (
         <SharePointDocumentsBrowser overrideOrgId={sharepointConfigOrgId} />
       )}
+
+      <BCContaCorrente />
     </>
   );
 
