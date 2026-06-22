@@ -101,3 +101,9 @@ verify_jwt = false
 
 [functions.analyze-contract-client]
 verify_jwt = false
+
+[functions.client-notifications-cron]
+verify_jwt = false
+
+[functions.client-weekly-digest]
+verify_jwt = false
