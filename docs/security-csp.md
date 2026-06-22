@@ -8,19 +8,17 @@ A política está **bloqueante**. O `script-src 'self'` está estrito (a proteç
 mais importante — impede injeção/execução de scripts não próprios), tal como
 `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'` e `form-action 'self'`.
 
-### `connect-src` ainda amplo (`https: wss:`) — aperto fino pendente
+### `connect-src` apertado ao Supabase
 
-O `connect-src` permite, por agora, qualquer destino `https:`/`wss:`. Isto é
-deliberado: o `ContractTriageAgent` faz `fetch` ao agente externo em
-`VITE_API_URL`, cuja **origem exata ainda não foi confirmada**. Assim que essa
-origem for conhecida, apertar para:
+O `connect-src` está restrito a `'self' https://*.supabase.co wss://*.supabase.co`.
+Confirmou-se que **não existe `VITE_API_URL`** configurado no Vercel, pelo que o
+frontend só comunica com o Supabase (REST, Storage, Functions, Realtime). Se for
+adicionado um agente de triagem externo no futuro (`VITE_API_URL`), acrescentar
+essa origem aqui:
 
 ```
 connect-src 'self' https://*.supabase.co wss://*.supabase.co https://<ORIGEM-DO-VITE_API_URL>;
 ```
-
-Até lá, manter `https: wss:` garante que o Triage e o Supabase funcionam sem
-violações, mantendo já bloqueado o essencial (`script-src`, etc.).
 
 ## Origens externas conhecidas (já contempladas)
 
@@ -36,35 +34,19 @@ Notas:
 - **LegalBI** (`https://bi.cca.law`) abre em **nova aba** (`window.open`) → navegação de topo, **não** precisa de entrada na CSP.
 - **SharePoint** é acedido pelas Edge Functions (backend) → **não** precisa de entrada na CSP do browser.
 
-## ⚠️ Aperto fino pendente: `VITE_API_URL`
+## Nota: agente de triagem (`VITE_API_URL`)
 
-`src/components/contracts/ContractTriageAgent.tsx` faz `fetch` direto ao agente
-externo de triagem em `import.meta.env.VITE_API_URL`. Para apertar o `connect-src`
-(remover o `https:` amplo), essa **origem tem de ser adicionada explicitamente**
-(ex.: `https://o-teu-agente.onrender.com`). Em desenvolvimento o fallback é
-`http://localhost:8000`.
+`src/components/contracts/ContractTriageAgent.tsx` faz `fetch` a
+`import.meta.env.VITE_API_URL` (fallback `http://localhost:8000`). Esta variável
+**não está configurada no Vercel**, pelo que a triagem externa não tem backend em
+produção. Se vier a ser ativada, adicionar a origem ao `connect-src`.
 
-## Política totalmente apertada (quando `VITE_API_URL` for conhecido)
-
-```
-default-src 'self';
-script-src 'self';
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-img-src 'self' data: blob: https:;
-font-src 'self' data: https://fonts.gstatic.com;
-connect-src 'self' https://*.supabase.co wss://*.supabase.co https://<ORIGEM-DO-VITE_API_URL>;
-frame-ancestors 'none';
-object-src 'none';
-base-uri 'self';
-form-action 'self'
-```
-
-Valor para `vercel.json` (uma linha, já com a chave bloqueante):
+## Política bloqueante atual (em `vercel.json`)
 
 ```json
 {
   "key": "Content-Security-Policy",
-  "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://<ORIGEM-DO-VITE_API_URL>; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+  "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
 }
 ```
 
