@@ -19,7 +19,6 @@ translationService.initialize();
 // Critical path — imported eagerly (login, home, core contracts)
 import Login from './pages/auth/Login';
 import SSOCallback from './pages/auth/SSOCallback';
-import Home from './pages/Home';
 import Contratos from './pages/Contratos';
 import ContratoDetalhe from './pages/ContratoDetalhe';
 import ContratoForm from './pages/ContratoForm';
@@ -179,33 +178,20 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Home page - nova página inicial */}
+        {/* Início — vista única de overview (KPIs + contratos + conformidade) */}
         <Route
           path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Contratos e subpáginas */}
-        <Route
-          path="/contratos/visao-geral"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
           }
         />
+        <Route path="/home" element={<Navigate to="/" replace />} />
+
+        {/* Contratos e subpáginas */}
+        {/* "Visão Geral" foi unificada com o Início */}
+        <Route path="/contratos/visao-geral" element={<Navigate to="/" replace />} />
         <Route
           path="/contratos"
           element={
@@ -321,9 +307,9 @@ const AppRoutes = () => {
         />
 
         {/* Páginas removidas do menu - redirect para home */}
-        <Route path="/requisitos" element={<Navigate to="/contratos/visao-geral" replace />} />
-        <Route path="/templates" element={<Navigate to="/contratos/visao-geral" replace />} />
-        <Route path="/auditoria" element={<Navigate to="/contratos/visao-geral" replace />} />
+        <Route path="/requisitos" element={<Navigate to="/" replace />} />
+        <Route path="/templates" element={<Navigate to="/" replace />} />
+        <Route path="/auditoria" element={<Navigate to="/" replace />} />
 
         {/* Novas páginas */}
         <Route
@@ -366,7 +352,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/prazos" element={<Navigate to="/contratos/visao-geral" replace />} />
+        <Route path="/prazos" element={<Navigate to="/" replace />} />
         <Route
           path="/notificacoes"
           element={

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useLegalBiStats } from '@/hooks/useLegalBiStats';
 import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
+import { useProfile } from '@/hooks/useProfile';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -77,7 +78,10 @@ export default function Dashboard() {
   const { stats, contratosAExpirar, contratos, isLoading } = useDashboardStats();
   const biData = useLegalBiStats();
   const { items: checklistItems, isTableAvailable: checklistAvailable } = useDocumentChecklist();
+  const { profile } = useProfile();
   const { t } = useTranslation();
+
+  const firstName = (profile?.nome_completo ?? '').trim().split(' ')[0] || '';
 
   const docStats = useMemo(() => {
     const uploaded = checklistItems.filter((i) => i.entry?.status === 'uploaded').length;
@@ -112,7 +116,9 @@ export default function Dashboard() {
         {/* Page Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
+            <h1 className="text-2xl font-bold">
+              {firstName ? t('dashboard.welcome', { name: firstName }) : t('dashboard.title')}
+            </h1>
             <p className="text-muted-foreground text-sm mt-0.5">{t('dashboard.subtitle')}</p>
           </div>
           <div className="flex gap-2">
@@ -147,32 +153,28 @@ export default function Dashboard() {
               icon={FileCheck}
               variant="accent"
             />
-            {/* Compliance Documental KPI */}
-            <Card
-              className={cn(
-                'overflow-hidden relative',
-                checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                  ? 'border-danger/30'
-                  : '',
-              )}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      {t('dashboard.docCompliance', 'Compliance Documental')}
-                    </p>
-                    <p
-                      className={cn(
-                        'text-3xl font-bold font-serif tracking-tight',
-                        checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                          ? 'text-danger'
-                          : '',
-                      )}
-                    >
-                      {checklistAvailable && docStats.total > 0 ? `${docStats.percent}%` : '—'}
-                    </p>
-                    {checklistAvailable && docStats.total > 0 && (
+            {/* Compliance Documental KPI — só quando há checklist com dados */}
+            {checklistAvailable && docStats.total > 0 && (
+              <Card
+                className={cn(
+                  'overflow-hidden relative',
+                  docStats.percent < 50 && 'border-danger/30',
+                )}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        {t('dashboard.docCompliance', 'Compliance Documental')}
+                      </p>
+                      <p
+                        className={cn(
+                          'text-3xl font-bold font-serif tracking-tight',
+                          docStats.percent < 50 && 'text-danger',
+                        )}
+                      >
+                        {docStats.percent}%
+                      </p>
                       <p
                         className={cn(
                           'text-xs',
@@ -182,21 +184,19 @@ export default function Dashboard() {
                         {docStats.expired + docStats.missing}{' '}
                         {t('dashboard.docsIssue', 'em falta ou expirados')}
                       </p>
-                    )}
+                    </div>
+                    <div
+                      className={cn(
+                        'flex h-10 w-10 items-center justify-center rounded-lg',
+                        docStats.percent < 50
+                          ? 'bg-danger/10 text-danger'
+                          : 'bg-primary/10 text-primary',
+                      )}
+                    >
+                      <AlertTriangle className="h-5 w-5" />
+                    </div>
                   </div>
-                  <div
-                    className={cn(
-                      'flex h-10 w-10 items-center justify-center rounded-lg',
-                      checklistAvailable && docStats.total > 0 && docStats.percent < 50
-                        ? 'bg-danger/10 text-danger'
-                        : 'bg-primary/10 text-primary',
-                    )}
-                  >
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                </div>
-              </CardContent>
-              {checklistAvailable && docStats.total > 0 && (
+                </CardContent>
                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
                   <div
                     className={cn(
@@ -210,8 +210,8 @@ export default function Dashboard() {
                     style={{ width: `${docStats.percent}%` }}
                   />
                 </div>
-              )}
-            </Card>
+              </Card>
+            )}
             <StatCard
               title={t('dashboard.expiring90Days')}
               value={stats.contratosExpirar90Dias}

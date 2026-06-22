@@ -31,7 +31,6 @@ import {
   ChevronDown,
   ChevronRight,
   Lock,
-  LayoutDashboard,
   List,
   Upload,
 } from 'lucide-react';
@@ -153,7 +152,7 @@ export function Sidebar({ clientName }: SidebarProps) {
   const badges = useSidebarBadges();
   const { can, isAppAdmin, isCCAUser, isOrgManager, isOrgUser } = usePermissions();
 
-  const isContractsRoute = location.pathname.startsWith('/contratos') || location.pathname === '/';
+  const isContractsRoute = location.pathname.startsWith('/contratos');
   const [contractsExpanded, setContractsExpanded] = useState(isContractsRoute);
 
   const handleSignOut = async () => {
@@ -170,7 +169,7 @@ export function Sidebar({ clientName }: SidebarProps) {
     >
       {/* Brand block */}
       <Link
-        to="/home"
+        to="/"
         className={cn(
           'flex h-[60px] items-center gap-3 transition-colors duration-150 hover:bg-sidebar-ink/5',
           isCollapsed ? 'justify-center px-0' : 'px-4',
@@ -211,10 +210,10 @@ export function Sidebar({ clientName }: SidebarProps) {
         )}
       >
         <NavItem
-          to="/home"
+          to="/"
           icon={Home}
           label={t('nav.home')}
-          isActive={location.pathname === '/home'}
+          isActive={location.pathname === '/' || location.pathname === '/home'}
           isCollapsed={isCollapsed}
         />
         <NavItem
@@ -293,16 +292,6 @@ export function Sidebar({ clientName }: SidebarProps) {
             </button>
             {contractsExpanded && (
               <div className="ml-3.5 mt-0.5 space-y-0.5 border-l border-sidebar-ink/10 pl-2">
-                <NavItem
-                  to="/contratos/visao-geral"
-                  icon={LayoutDashboard}
-                  label={t('nav.contractsOverview')}
-                  isActive={
-                    location.pathname === '/' || location.pathname === '/contratos/visao-geral'
-                  }
-                  isCollapsed={false}
-                  isSubmenu
-                />
                 <NavItem
                   to="/contratos"
                   icon={List}
