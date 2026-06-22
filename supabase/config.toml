@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.client-weekly-digest]
 verify_jwt = false
+
+[functions.fetch-business-central]
+verify_jwt = true

@@ -273,4 +273,17 @@ export const queryKeys = {
   legalBi: {
     orgUrl: (orgId: string) => ['legalbi-org-url', orgId] as const,
   },
+
+  // ── Business Central ───────────────────────────────────────
+  businessCentral: {
+    config: (orgId: string | null | undefined) => ['bc-config', orgId] as const,
+    syncStatus: (orgId: string | null | undefined) => ['bc-sync-status', orgId] as const,
+    syncLogs: (orgId: string | null | undefined, limit: number) =>
+      ['bc-sync-logs', orgId, limit] as const,
+    customers: (orgId: string | null | undefined, search?: string) =>
+      ['bc-customers', orgId, search ?? null] as const,
+    accounts: (orgId: string | null | undefined) => ['bc-accounts', orgId] as const,
+    ledger: (orgId: string | null | undefined, params: unknown) =>
+      ['bc-ledger', orgId, params] as const,
+  },
 } as const;

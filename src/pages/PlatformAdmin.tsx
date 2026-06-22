@@ -63,6 +63,7 @@ import { ClientOnboardingTab } from '@/components/admin/ClientOnboardingTab';
 import { OrgSharePointConfig } from '@/components/admin/OrgSharePointConfig';
 import { OrgLegalBiConfig } from '@/components/admin/OrgLegalBiConfig';
 import { OrgJvrisIdConfig } from '@/components/admin/OrgJvrisIdConfig';
+import { OrgBusinessCentralConfig } from '@/components/admin/OrgBusinessCentralConfig';
 import { useProvisionSharePoint } from '@/hooks/useProvisionSharePoint';
 import {
   Building2,
@@ -1114,6 +1115,7 @@ export default function PlatformAdmin() {
                   <OrgSharePointConfig organizationId={editingOrg?.id || null} />
                   <OrgLegalBiConfig organizationId={editingOrg?.id || null} />
                   <OrgJvrisIdConfig organizationId={editingOrg?.id || null} />
+                  <OrgBusinessCentralConfig organizationId={editingOrg?.id || null} />
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setIsEditOrgOpen(false)}>
