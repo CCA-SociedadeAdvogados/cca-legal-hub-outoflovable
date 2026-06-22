@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -19,6 +19,7 @@ import {
   Loader2,
   Calendar,
   Download,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -69,6 +70,7 @@ function downloadICS(events: TimelineEvent[]) {
 
 export default function PrazosTimeline() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { contratos, isLoading: isLoadingContratos } = useContratos();
   const { financialItems, isLoading: isLoadingFinanceiro } = useFinanceiro();
   const [tab, setTab] = useState('all');
@@ -280,72 +282,92 @@ export default function PrazosTimeline() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {filteredEvents.map((event) => (
-              <Card
-                key={event.id}
-                className={cn(
-                  'transition-colors',
-                  event.urgency === 'critical' && 'border-danger/30',
-                  event.urgency === 'warning' && 'border-warn/30',
-                )}
-              >
-                <CardContent className="flex items-center gap-4 py-3">
-                  <div
-                    className={cn(
-                      'flex items-center justify-center w-10 h-10 rounded-full shrink-0',
-                      event.urgency === 'critical'
-                        ? 'bg-danger/10 text-danger'
-                        : event.urgency === 'warning'
-                          ? 'bg-warn/10 text-warn'
-                          : 'bg-muted text-muted-foreground',
-                    )}
-                  >
-                    {typeIcon(event.type)}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {event.contractId ? (
-                        <Link
-                          to={`/contratos/${event.contractId}`}
-                          className="font-medium hover:underline truncate"
-                        >
-                          {event.title}
-                        </Link>
-                      ) : (
-                        <span className="font-medium truncate">{event.title}</span>
+            {filteredEvents.map((event) => {
+              const actionable = Boolean(event.contractId);
+              const openContract = () => {
+                if (event.contractId) navigate(`/contratos/${event.contractId}`);
+              };
+              return (
+                <Card
+                  key={event.id}
+                  onClick={actionable ? openContract : undefined}
+                  role={actionable ? 'button' : undefined}
+                  tabIndex={actionable ? 0 : undefined}
+                  onKeyDown={
+                    actionable
+                      ? (e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            openContract();
+                          }
+                        }
+                      : undefined
+                  }
+                  aria-label={
+                    actionable
+                      ? `${t('prazos.viewContract', 'Ver contrato')}: ${event.title}`
+                      : undefined
+                  }
+                  className={cn(
+                    'transition-colors',
+                    actionable && 'cursor-pointer hover:bg-muted/40 hover:border-primary/30',
+                    event.urgency === 'critical' && 'border-danger/30',
+                    event.urgency === 'warning' && 'border-warn/30',
+                  )}
+                >
+                  <CardContent className="flex items-center gap-4 py-3">
+                    <div
+                      className={cn(
+                        'flex items-center justify-center w-10 h-10 rounded-full shrink-0',
+                        event.urgency === 'critical'
+                          ? 'bg-danger/10 text-danger'
+                          : event.urgency === 'warning'
+                            ? 'bg-warn/10 text-warn'
+                            : 'bg-muted text-muted-foreground',
                       )}
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {typeLabel(event.type)}
+                    >
+                      {typeIcon(event.type)}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium truncate">{event.title}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {typeLabel(event.type)}
+                        </Badge>
+                      </div>
+                      {event.subtitle && (
+                        <p className="text-sm text-muted-foreground truncate">{event.subtitle}</p>
+                      )}
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-medium">
+                        {format(event.date, 'd MMM yyyy', { locale: pt })}
+                      </p>
+                      <Badge
+                        variant={
+                          event.urgency === 'critical'
+                            ? 'destructive'
+                            : event.urgency === 'warning'
+                              ? 'default'
+                              : 'secondary'
+                        }
+                        className="text-xs"
+                      >
+                        {event.daysUntil <= 0
+                          ? t('prazos.overdue', 'Vencido')
+                          : `${event.daysUntil}d`}
                       </Badge>
                     </div>
-                    {event.subtitle && (
-                      <p className="text-sm text-muted-foreground truncate">{event.subtitle}</p>
-                    )}
-                  </div>
 
-                  <div className="text-right shrink-0">
-                    <p className="text-sm font-medium">
-                      {format(event.date, 'd MMM yyyy', { locale: pt })}
-                    </p>
-                    <Badge
-                      variant={
-                        event.urgency === 'critical'
-                          ? 'destructive'
-                          : event.urgency === 'warning'
-                            ? 'default'
-                            : 'secondary'
-                      }
-                      className="text-xs"
-                    >
-                      {event.daysUntil <= 0
-                        ? t('prazos.overdue', 'Vencido')
-                        : `${event.daysUntil}d`}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    {actionable && (
+                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
