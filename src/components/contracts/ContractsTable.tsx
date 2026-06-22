@@ -12,7 +12,6 @@ import {
   X,
   ExternalLink,
   RefreshCw,
-  GitCompare,
   Shield,
   AlertCircle,
   CheckCircle2,
@@ -210,7 +209,7 @@ function FaseBadge({
         className="border-brand/40 text-brand bg-brand/[0.08] gap-1.5 text-xs"
       >
         <Loader2 className="h-3 w-3 animate-spin" />
-        Em validação CCA
+        Em validação
       </Badge>
     );
   }
@@ -323,10 +322,10 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
             </p>
           </div>
 
-          {/* CCA validation */}
+          {/* Validation */}
           <div>
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              Validação CCA
+              Validação
             </p>
             <ValidationBadge
               status={(contrato.validation_status as ValidationStatusType) || 'none'}
@@ -375,11 +374,7 @@ function ContractDrawer({ contrato, open, onClose, isInternal }: ContractDrawerP
               </p>
               <Button variant="outline" size="sm" className="gap-2 w-full">
                 <RefreshCw className="h-4 w-4" />
-                Reprocessar CCA
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 w-full">
-                <GitCompare className="h-4 w-4" />
-                Ver diferenças Draft vs Canónico
+                Reprocessar
               </Button>
             </div>
           )}
@@ -403,7 +398,7 @@ const QUICK_FILTERS: Array<{ key: QuickFilter; label: string }> = [
   { key: 'active', label: 'Activos' },
   { key: 'expiring30', label: 'A expirar ≤30 dias' },
   { key: 'expiring60', label: 'A expirar ≤60 dias' },
-  { key: 'validating', label: 'Em validação CCA' },
+  { key: 'validating', label: 'Em validação' },
   { key: 'needs_review', label: 'Needs review' },
 ];
 
@@ -578,7 +573,7 @@ export function ContractsTable({
             <TableRow className="bg-muted/40">
               <TableHead className="w-[35%]">Contrato</TableHead>
               <TableHead>Fase</TableHead>
-              <TableHead>Validação CCA</TableHead>
+              <TableHead>Validação</TableHead>
               <TableHead>Próximo prazo</TableHead>
               {!isViewer && <TableHead className="text-right">Valor</TableHead>}
               <TableHead className="w-[48px]" />
@@ -645,7 +640,7 @@ export function ContractsTable({
                       />
                     </TableCell>
 
-                    {/* Col 3 – Validação CCA */}
+                    {/* Col 3 – Validação */}
                     <TableCell className="py-3">
                       <ValidationBadge status={effectiveStatus} compact />
                     </TableCell>

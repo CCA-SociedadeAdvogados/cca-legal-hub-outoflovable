@@ -241,7 +241,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
     const confidenceDisplay = extractedData.confianca ? `${extractedData.confianca}%` : 'N/A';
     toast({
       title: 'Extracção completa',
-      description: `Confiança: ${confidenceDisplay} — A análise de risco será feita pelo CCA.`,
+      description: `Confiança: ${confidenceDisplay} — A análise de risco será feita pela nossa equipa.`,
     });
 
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -291,8 +291,8 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
           </div>
           <h2 className="text-xl font-semibold mb-2">Carregar Contrato</h2>
           <p className="text-muted-foreground">
-            Carregue o documento e a IA extrairá os dados. A análise de risco será feita pelo agente
-            CCA.
+            Carregue o documento e a IA extrairá os dados. A análise de risco será feita pela nossa
+            equipa.
           </p>
         </div>
 

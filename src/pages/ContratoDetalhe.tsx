@@ -450,8 +450,7 @@ export default function ContratoDetalhe() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Indicadores detectados automaticamente pelo Agente CCA após análise do
-                    documento.
+                    Indicadores detetados automaticamente após análise do documento.
                   </p>
                   <div className="grid gap-4 md:grid-cols-3">
                     <div className="flex items-center gap-3 rounded-lg border p-4">
