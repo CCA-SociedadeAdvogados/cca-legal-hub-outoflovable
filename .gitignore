@@ -40,3 +40,6 @@ supabase/.temp/
 
 # TypeScript incremental build info
 *.tsbuildinfo
+
+# Claude Code agent worktrees (temporários, criados por subagentes isolados)
+.claude/worktrees/
