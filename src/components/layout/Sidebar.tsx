@@ -216,42 +216,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           isActive={location.pathname === '/' || location.pathname === '/home'}
           isCollapsed={isCollapsed}
         />
-        <NavItem
-          to="/notificacoes"
-          icon={Bell}
-          label={t('common.notifications')}
-          isActive={location.pathname === '/notificacoes'}
-          isCollapsed={isCollapsed}
-          badge={badges.notifications}
-        />
-        <NavItem
-          to="/financeiro"
-          icon={Wallet}
-          label={t('nav.financial')}
-          isActive={location.pathname === '/financeiro'}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/pedidos"
-          icon={MessageSquarePlus}
-          label={t('nav.requests')}
-          isActive={location.pathname === '/pedidos'}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/assuntos"
-          icon={Briefcase}
-          label={t('nav.matters')}
-          isActive={location.pathname === '/assuntos'}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/legalbi"
-          icon={BarChart3}
-          label={t('nav.legalbi')}
-          isActive={location.pathname === '/legalbi'}
-          isCollapsed={isCollapsed}
-        />
 
         {/* Contratos — submenu when expanded */}
         {isCollapsed ? (
@@ -324,10 +288,46 @@ export function Sidebar({ clientName }: SidebarProps) {
           }
           isCollapsed={isCollapsed}
         />
+        <NavItem
+          to="/notificacoes"
+          icon={Bell}
+          label={t('common.notifications')}
+          isActive={location.pathname === '/notificacoes'}
+          isCollapsed={isCollapsed}
+          badge={badges.notifications}
+        />
 
-        {/* Subtle divider between contract-flow and informational items */}
+        {/* Núcleo CLM acima; módulos secundários abaixo */}
         <div className="my-2 border-t border-sidebar-ink/10" />
 
+        <NavItem
+          to="/financeiro"
+          icon={Wallet}
+          label={t('nav.financial')}
+          isActive={location.pathname === '/financeiro'}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/pedidos"
+          icon={MessageSquarePlus}
+          label={t('nav.requests')}
+          isActive={location.pathname === '/pedidos'}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/assuntos"
+          icon={Briefcase}
+          label={t('nav.matters')}
+          isActive={location.pathname === '/assuntos'}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/legalbi"
+          icon={BarChart3}
+          label={t('nav.legalbi')}
+          isActive={location.pathname === '/legalbi'}
+          isCollapsed={isCollapsed}
+        />
         <NavItem
           to="/novidades-cca"
           icon={Newspaper}
