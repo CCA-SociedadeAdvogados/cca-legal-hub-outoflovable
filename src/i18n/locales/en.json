@@ -160,6 +160,7 @@
   },
   "dashboard": {
     "title": "Dashboard",
+    "welcome": "Welcome, {{name}}",
     "subtitle": "Complete overview of your organization's compliance",
     "totalContracts": "Total Contracts",
     "activeContracts": "Active Contracts",

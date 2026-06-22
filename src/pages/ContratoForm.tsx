@@ -183,6 +183,9 @@ export default function ContratoForm() {
     existingContrato?.areas_direito_aplicaveis || [],
   );
 
+  // Estado inicial escolhido na criação (na edição preserva-se o existente).
+  const [initialEstado, setInitialEstado] = useState<'rascunho' | 'activo'>('activo');
+
   // Function to generate internal ID
   const generateInternalId = () => {
     const year = new Date().getFullYear();
@@ -399,7 +402,9 @@ export default function ContratoForm() {
       tipo_contrato: data.tipo_contrato as any,
       tipo_contrato_personalizado:
         data.tipo_contrato === 'outro' ? data.tipo_contrato_personalizado || null : null,
-      estado_contrato: 'activo' as any,
+      estado_contrato: (isEditing
+        ? ((existingContrato?.estado_contrato as any) ?? 'activo')
+        : initialEstado) as any,
       departamento_responsavel: data.departamento_responsavel as any,
       objeto_resumido: data.objeto_resumido || null,
       parte_a_nome_legal: data.parte_a_nome_legal,
@@ -744,6 +749,25 @@ export default function ContratoForm() {
                         </FormItem>
                       )}
                     />
+                    {!isEditing && (
+                      <FormItem>
+                        <FormLabel>Estado inicial</FormLabel>
+                        <Select
+                          value={initialEstado}
+                          onValueChange={(v) => setInitialEstado(v as 'rascunho' | 'activo')}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="activo">Activo</SelectItem>
+                            <SelectItem value="rascunho">Rascunho</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
                     <FormField
                       control={form.control}
                       name="objeto_resumido"

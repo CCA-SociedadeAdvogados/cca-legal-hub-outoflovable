@@ -7,7 +7,7 @@ import { useCliente } from '@/contexts/ClienteContext';
 import { useContratos } from '@/hooks/useContratos';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card } from '@/components/ui/card';
-import { ExternalLink, Loader2 } from 'lucide-react';
+import { ExternalLink, Loader2, PieChart } from 'lucide-react';
 import { CCACardHeader, Eyebrow, GhostButton, KPI } from '@/components/cca';
 import { cn } from '@/lib/utils';
 
@@ -230,7 +230,10 @@ export default function LegalBi() {
             <CCACardHeader eyebrow="Carteira" title="Distribuição por área" />
             <div className="space-y-4 px-6 py-6">
               {analytics.distribution.length === 0 ? (
-                <p className="text-[13px] text-ink-mute">Sem dados de carteira para apresentar.</p>
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <PieChart className="mb-2 h-8 w-8 text-ink-mute opacity-40" strokeWidth={1.5} />
+                  <p className="text-[13px] text-ink-mute">Ainda não há contratos para analisar.</p>
+                </div>
               ) : (
                 analytics.distribution.map((row) => (
                   <div key={row.key} className="space-y-1.5">

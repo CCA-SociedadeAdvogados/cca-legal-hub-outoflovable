@@ -21,27 +21,8 @@ import { PrivacySettings } from '@/components/settings/PrivacySettings';
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { NotificationPreferencesPanel } from '@/components/settings/NotificationPreferencesPanel';
 import { usePlatformAdmin } from '@/hooks/usePlatformAdmin';
-import {
-  Settings,
-  Pen,
-  Brain,
-  Bell,
-  Shield,
-  Upload,
-  FileSignature,
-  CheckCircle,
-  Loader2,
-  Lock,
-  Palette,
-} from 'lucide-react';
+import { Settings, Brain, Bell, Shield, Upload, Loader2, Lock, Palette } from 'lucide-react';
 import { Eyebrow, VisualThemeSwitcher } from '@/components/cca';
-
-interface SignatureProvider {
-  id: string;
-  name: string;
-  descriptionKey: string;
-  status: 'configured' | 'not_configured' | 'coming_soon';
-}
 
 interface AIModel {
   id: string;
@@ -85,11 +66,6 @@ export default function Definicoes() {
     impactAlerts: true,
     daysBeforeExpiry: 30,
   });
-  const [signatureSettings, setSignatureSettings] = useState({
-    provider: 'manual',
-    autoSendForSignature: false,
-    reminderDays: 7,
-  });
 
   // Sync settings from database
   useEffect(() => {
@@ -106,40 +82,8 @@ export default function Definicoes() {
         impactAlerts: settings.notification_impact_alerts,
         daysBeforeExpiry: settings.notification_days_before_expiry,
       });
-      setSignatureSettings({
-        provider: settings.signature_provider,
-        autoSendForSignature: settings.signature_auto_send,
-        reminderDays: settings.signature_reminder_days,
-      });
     }
   }, [settings]);
-
-  const signatureProviders: SignatureProvider[] = [
-    {
-      id: 'docusign',
-      name: 'DocuSign',
-      descriptionKey: 'settings.signatures.docusignDesc',
-      status: 'coming_soon',
-    },
-    {
-      id: 'autenticacao_gov',
-      name: 'Autenticação.Gov',
-      descriptionKey: 'settings.signatures.govDesc',
-      status: 'coming_soon',
-    },
-    {
-      id: 'adobe_sign',
-      name: 'Adobe Sign',
-      descriptionKey: 'settings.signatures.adobeDesc',
-      status: 'coming_soon',
-    },
-    {
-      id: 'manual',
-      name: t('settings.signatures.manual'),
-      descriptionKey: 'settings.signatures.manualDesc',
-      status: 'configured',
-    },
-  ];
 
   const handleSaveAISettings = async () => {
     setIsLoading(true);
@@ -175,22 +119,6 @@ export default function Definicoes() {
     }
   };
 
-  const handleSaveSignature = async () => {
-    setIsLoading(true);
-    try {
-      updateSettings({
-        signature_provider: signatureSettings.provider,
-        signature_auto_send: signatureSettings.autoSendForSignature,
-        signature_reminder_days: signatureSettings.reminderDays,
-      });
-      toast.success(t('settings.signatures.saveSuccess'));
-    } catch {
-      toast.error(t('settings.saveError'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <AppLayout>
       <div className="space-y-7">
@@ -219,10 +147,6 @@ export default function Definicoes() {
             <TabsTrigger value="security" className="gap-2">
               <Shield className="h-4 w-4" />
               <span className="hidden sm:inline">{t('settings.tabs.security', 'Segurança')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="signatures" className="gap-2">
-              <FileSignature className="h-4 w-4" />
-              <span className="hidden sm:inline">{t('settings.tabs.signatures')}</span>
             </TabsTrigger>
             {isPlatformAdmin && (
               <TabsTrigger value="ai" className="gap-2">
@@ -365,154 +289,6 @@ export default function Definicoes() {
           {/* Security Settings - 2FA/MFA */}
           <TabsContent value="security" className="space-y-6">
             <SecuritySettings />
-          </TabsContent>
-
-          {/* Signature Settings */}
-          <TabsContent value="signatures" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileSignature className="h-5 w-5" />
-                  {t('settings.signatures.title')}
-                </CardTitle>
-                <CardDescription>{t('settings.signatures.description')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-4">
-                  {signatureProviders.map((provider) => (
-                    <div
-                      key={provider.id}
-                      className={`flex items-center justify-between rounded-lg border p-4 transition-colors ${
-                        signatureSettings.provider === provider.id
-                          ? 'border-primary bg-primary/5'
-                          : provider.status === 'coming_soon'
-                            ? 'opacity-60'
-                            : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                          <Pen className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium">{provider.name}</h4>
-                            {provider.status === 'configured' && (
-                              <Badge variant="default" className="bg-positive">
-                                <CheckCircle className="mr-1 h-3 w-3" />
-                                {t('settings.signatures.active')}
-                              </Badge>
-                            )}
-                            {provider.status === 'coming_soon' && (
-                              <Badge variant="secondary">
-                                {t('settings.signatures.comingSoon')}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {t(provider.descriptionKey)}
-                          </p>
-                        </div>
-                      </div>
-                      {provider.status !== 'coming_soon' && (
-                        <Button
-                          variant={
-                            signatureSettings.provider === provider.id ? 'default' : 'outline'
-                          }
-                          size="sm"
-                          onClick={() =>
-                            setSignatureSettings({
-                              ...signatureSettings,
-                              provider: provider.id,
-                            })
-                          }
-                        >
-                          {signatureSettings.provider === provider.id
-                            ? t('settings.signatures.selected')
-                            : t('settings.signatures.select')}
-                        </Button>
-                      )}
-                      {provider.status === 'coming_soon' && (
-                        <Button variant="outline" size="sm" disabled>
-                          {t('settings.signatures.comingSoon')}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t pt-6 space-y-4">
-                  <h4 className="font-medium">{t('settings.signatures.settingsTitle')}</h4>
-
-                  <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <Label>{t('settings.signatures.autoSend')}</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {t('settings.signatures.autoSendDesc')}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={signatureSettings.autoSendForSignature}
-                      onCheckedChange={(checked) =>
-                        setSignatureSettings({
-                          ...signatureSettings,
-                          autoSendForSignature: checked,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reminderDays">{t('settings.signatures.reminder')}</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="reminderDays"
-                        type="number"
-                        value={signatureSettings.reminderDays}
-                        onChange={(e) =>
-                          setSignatureSettings({
-                            ...signatureSettings,
-                            reminderDays: parseInt(e.target.value) || 7,
-                          })
-                        }
-                        className="w-24"
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {t('settings.signatures.daysAfterSend')}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button onClick={handleSaveSignature} disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t('settings.saveSettings')}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  {t('settings.certificates.title')}
-                </CardTitle>
-                <CardDescription>{t('settings.certificates.description')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-lg border border-dashed p-8 text-center">
-                  <FileSignature className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h4 className="mt-4 font-medium">{t('settings.certificates.noCertificate')}</h4>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t('settings.certificates.configure')}
-                  </p>
-                  <Button variant="outline" className="mt-4" disabled>
-                    <Upload className="mr-2 h-4 w-4" />
-                    {t('settings.certificates.uploadComing')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* AI Settings - Only visible for platform admins */}

@@ -399,7 +399,7 @@ const QUICK_FILTERS: Array<{ key: QuickFilter; label: string }> = [
   { key: 'expiring30', label: 'A expirar ≤30 dias' },
   { key: 'expiring60', label: 'A expirar ≤60 dias' },
   { key: 'validating', label: 'Em validação' },
-  { key: 'needs_review', label: 'Needs review' },
+  { key: 'needs_review', label: 'Requer revisão' },
 ];
 
 const SORT_OPTIONS: Array<{ key: SortField; label: string }> = [
@@ -593,7 +593,9 @@ export function ContractsTable({
             ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={colCount} className="h-24 text-center text-muted-foreground">
-                  Nenhum contrato encontrado.
+                  {debouncedSearch || quickFilter !== 'all'
+                    ? 'Nenhum contrato corresponde aos filtros.'
+                    : 'Ainda não há contratos.'}
                 </TableCell>
               </TableRow>
             ) : (
@@ -673,7 +675,7 @@ export function ContractsTable({
                           {isInternal && (
                             <DropdownMenuItem>
                               <RefreshCw className="mr-2 h-4 w-4" />
-                              Reprocessar CCA
+                              Reprocessar
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuSeparator />

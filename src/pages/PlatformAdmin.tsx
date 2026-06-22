@@ -727,7 +727,7 @@ export default function PlatformAdmin() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                {t('admin.platformAdmins', 'Platform Admins')}
+                {t('admin.platformAdmins', 'Administradores da Plataforma')}
               </CardTitle>
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -749,7 +749,7 @@ export default function PlatformAdmin() {
           <TabsList className="flex-wrap">
             <TabsTrigger value="impersonation">
               <UserCheck className="h-4 w-4 mr-2" />
-              Impersonation
+              {t('admin.impersonation', 'Personificação')}
             </TabsTrigger>
             <TabsTrigger value="organizations">
               <Building2 className="h-4 w-4 mr-2" />
@@ -765,11 +765,11 @@ export default function PlatformAdmin() {
             </TabsTrigger>
             <TabsTrigger value="admins">
               <Shield className="h-4 w-4 mr-2" />
-              {t('admin.platformAdmins', 'Platform Admins')}
+              {t('admin.platformAdmins', 'Administradores da Plataforma')}
             </TabsTrigger>
             <TabsTrigger value="onboarding">
               <UserPlus className="h-4 w-4 mr-2" />
-              Onboarding Clientes
+              {t('admin.onboarding', 'Onboarding de Clientes')}
             </TabsTrigger>
           </TabsList>
 
@@ -1222,7 +1222,9 @@ export default function PlatformAdmin() {
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{t('admin.platformAdmins', 'Platform Admins')}</CardTitle>
+                  <CardTitle>
+                    {t('admin.platformAdmins', 'Administradores da Plataforma')}
+                  </CardTitle>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Email do utilizador..."

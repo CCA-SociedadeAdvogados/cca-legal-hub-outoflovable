@@ -19,7 +19,6 @@ translationService.initialize();
 // Critical path — imported eagerly (login, home, core contracts)
 import Login from './pages/auth/Login';
 import SSOCallback from './pages/auth/SSOCallback';
-import Home from './pages/Home';
 import Contratos from './pages/Contratos';
 import ContratoDetalhe from './pages/ContratoDetalhe';
 import ContratoForm from './pages/ContratoForm';
@@ -39,7 +38,6 @@ const Perfil = React.lazy(() => import('./pages/Perfil'));
 const Organizacao = React.lazy(() => import('./pages/Organizacao'));
 const Definicoes = React.lazy(() => import('./pages/Definicoes'));
 const Politicas = React.lazy(() => import('./pages/Politicas'));
-const AssinaturaDigital = React.lazy(() => import('./pages/AssinaturaDigital'));
 const DocumentosGlobal = React.lazy(() => import('./pages/DocumentosGlobal'));
 const Normativos = React.lazy(() => import('./pages/Normativos'));
 const NormativoDetalhe = React.lazy(() => import('./pages/NormativoDetalhe'));
@@ -50,10 +48,8 @@ const Assuntos = React.lazy(() => import('./pages/Assuntos'));
 const Notificacoes = React.lazy(() => import('./pages/Notificacoes'));
 const PlatformAdmin = React.lazy(() => import('./pages/PlatformAdmin'));
 const MeuDepartamento = React.lazy(() => import('./pages/MeuDepartamento'));
-const MinhaOrganizacao = React.lazy(() => import('./pages/MinhaOrganizacao'));
 const UtilizadoresOrg = React.lazy(() => import('./pages/UtilizadoresOrg'));
 const LegalBi = React.lazy(() => import('./pages/LegalBi'));
-const OrganizationsPage = React.lazy(() => import('./pages/OrganizationsPage'));
 
 // Portal do Cliente — árvore de rotas separada (audiência "client"), lazy-loaded
 // para que utilizadores CCA não transfiram este código e vice-versa.
@@ -179,33 +175,20 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Home page - nova página inicial */}
+        {/* Início — vista única de overview (KPIs + contratos + conformidade) */}
         <Route
           path="/"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Contratos e subpáginas */}
-        <Route
-          path="/contratos/visao-geral"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
           }
         />
+        <Route path="/home" element={<Navigate to="/" replace />} />
+
+        {/* Contratos e subpáginas */}
+        {/* "Visão Geral" foi unificada com o Início */}
+        <Route path="/contratos/visao-geral" element={<Navigate to="/" replace />} />
         <Route
           path="/contratos"
           element={
@@ -238,10 +221,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/contratos/documentos"
-          element={<Navigate to="/assinatura-digital" replace />}
-        />
+        <Route path="/contratos/documentos" element={<Navigate to="/documentos" replace />} />
         <Route
           path="/contratos/:id/editar"
           element={
@@ -259,15 +239,8 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Assinatura Digital (antiga página de Documentos gerados) */}
-        <Route
-          path="/assinatura-digital"
-          element={
-            <ProtectedRoute>
-              <AssinaturaDigital />
-            </ProtectedRoute>
-          }
-        />
+        {/* Assinatura Digital removida — redireciona para Documentos */}
+        <Route path="/assinatura-digital" element={<Navigate to="/documentos" replace />} />
 
         {/* Nova página global de Documentos */}
         <Route
@@ -321,9 +294,9 @@ const AppRoutes = () => {
         />
 
         {/* Páginas removidas do menu - redirect para home */}
-        <Route path="/requisitos" element={<Navigate to="/contratos/visao-geral" replace />} />
-        <Route path="/templates" element={<Navigate to="/contratos/visao-geral" replace />} />
-        <Route path="/auditoria" element={<Navigate to="/contratos/visao-geral" replace />} />
+        <Route path="/requisitos" element={<Navigate to="/" replace />} />
+        <Route path="/templates" element={<Navigate to="/" replace />} />
+        <Route path="/auditoria" element={<Navigate to="/" replace />} />
 
         {/* Novas páginas */}
         <Route
@@ -366,7 +339,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/prazos" element={<Navigate to="/contratos/visao-geral" replace />} />
+        <Route path="/prazos" element={<Navigate to="/" replace />} />
         <Route
           path="/notificacoes"
           element={
@@ -385,14 +358,8 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/minha-organizacao"
-          element={
-            <ProtectedRoute>
-              <MinhaOrganizacao />
-            </ProtectedRoute>
-          }
-        />
+        {/* "Minha Organização" consolidada com "Organização" */}
+        <Route path="/minha-organizacao" element={<Navigate to="/organizacao" replace />} />
         <Route
           path="/utilizadores-org"
           element={
@@ -401,23 +368,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/organizations"
-          element={
-            <ProtectedRoute>
-              <OrganizationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/organizations/:clientCode"
-          element={
-            <ProtectedRoute>
-              <OrganizationsPage />
-            </ProtectedRoute>
-          }
-        />
-
         {/* Utilizadores - redirect para admin com tab users */}
         <Route
           path="/utilizadores"
