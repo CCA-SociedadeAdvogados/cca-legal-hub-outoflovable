@@ -47,10 +47,13 @@ Deno.serve(async (req: Request) => {
     expected = null;
   }
 
-  // Validar clientState — ignora (mas confirma 202) notificações não autênticas
+  // Validar clientState — ignora (mas confirma 202) notificações não autênticas.
+  // Fail-closed: se o segredo não estiver configurado (expected === null), rejeita
+  // tudo. Caso contrário, um segredo em falta tornaria o webhook aberto a qualquer um.
   const authentic =
+    expected !== null &&
     notifications.length > 0 &&
-    notifications.every((n) => !expected || n.clientState === expected);
+    notifications.every((n) => n.clientState === expected);
   if (!authentic) {
     return new Response(null, { status: 202 });
   }
