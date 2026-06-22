@@ -1826,7 +1826,7 @@
       "viewAll": "View all",
       "kpi": {
         "activeContracts": "Active contracts",
-        "upcomingDeadlines": "Deadlines (next 30 days)"
+        "upcomingDeadlines": "Deadlines needing attention"
       },
       "sections": {
         "deadlines": "Upcoming deadlines",

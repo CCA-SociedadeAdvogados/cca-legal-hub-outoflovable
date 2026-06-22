@@ -74,19 +74,20 @@ export default function PortalHome() {
     [contratos],
   );
 
+  // Mesma fonte da aba Prazos (getContratoDeadlines): inclui vencidos e futuros.
+  // Mostra os mais urgentes primeiro (datas mais antigas → vencidos no topo).
   const upcomingDeadlines = useMemo(() => {
     const items = (contratos ?? []).flatMap((c) =>
-      getContratoDeadlines(c)
-        .filter((d) => d.days >= 0)
-        .map((d) => ({ contratoId: c.id, titulo: c.titulo_contrato, ...d })),
+      getContratoDeadlines(c).map((d) => ({ contratoId: c.id, titulo: c.titulo_contrato, ...d })),
     );
     return items.sort((a, b) => a.date.getTime() - b.date.getTime()).slice(0, 5);
   }, [contratos]);
 
+  // KPI: prazos a precisar de atenção = vencidos + a vencer nos próximos 30 dias.
   const upcoming30 = useMemo(
     () =>
       (contratos ?? []).reduce(
-        (acc, c) => acc + getContratoDeadlines(c).filter((d) => d.days >= 0 && d.days <= 30).length,
+        (acc, c) => acc + getContratoDeadlines(c).filter((d) => d.days <= 30).length,
         0,
       ),
     [contratos],
@@ -156,13 +157,23 @@ export default function PortalHome() {
             <ul className="space-y-2.5">
               {upcomingDeadlines.map((d, idx) => {
                 const Icon = KIND_ICON[d.kind];
-                const tone = d.days <= 30 ? 'text-warn' : 'text-ink-soft';
+                const tone =
+                  d.days < 0 ? 'text-danger' : d.days <= 30 ? 'text-warn' : 'text-ink-soft';
+                const daysLabel =
+                  d.days < 0
+                    ? t('portal.deadlines.overdueDays', { count: Math.abs(d.days) })
+                    : d.days === 0
+                      ? t('portal.deadlines.today')
+                      : t('portal.deadlines.inDays', { count: d.days });
                 return (
                   <li key={`${d.contratoId}-${d.kind}-${idx}`} className="flex items-center gap-3">
                     <Icon className="h-4 w-4 shrink-0 text-ink-mute" strokeWidth={1.5} />
                     <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{d.titulo}</span>
-                    <span className={cn('shrink-0 font-mono text-[11.5px]', tone)}>
-                      {formatDate(d.date.toISOString(), lang)}
+                    <span className="shrink-0 text-right">
+                      <span className="block font-mono text-[11.5px] text-ink-soft">
+                        {formatDate(d.date.toISOString(), lang)}
+                      </span>
+                      <span className={cn('block text-[11px] font-medium', tone)}>{daysLabel}</span>
                     </span>
                   </li>
                 );

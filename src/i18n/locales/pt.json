@@ -1826,7 +1826,7 @@
       "viewAll": "Ver tudo",
       "kpi": {
         "activeContracts": "Contratos ativos",
-        "upcomingDeadlines": "Prazos (próximos 30 dias)"
+        "upcomingDeadlines": "Prazos a precisar de atenção"
       },
       "sections": {
         "deadlines": "Próximos prazos",
