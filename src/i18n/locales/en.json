@@ -1907,7 +1907,8 @@
         "em_analise": "In review",
         "concluido": "Answered",
         "cancelado": "Cancelled"
-      }
+      },
+      "becameMatter": "Became a matter · view progress"
     },
     "assistant": {
       "eyebrow": "Assistant",
