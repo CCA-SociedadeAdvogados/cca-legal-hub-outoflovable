@@ -16,32 +16,35 @@ const languages = [
 ];
 
 export function LanguageSelector() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const debounceRef = useRef<number | null>(null);
 
-  const changeLanguage = useCallback((lng: string) => {
-    // Cancel any in-flight translations
-    translationService.abort();
-    
-    // Debounce rapid language switches
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-    
-    debounceRef.current = window.setTimeout(() => {
-      i18n.changeLanguage(lng);
-      localStorage.setItem('language', lng);
-    }, 300);
-  }, [i18n]);
+  const changeLanguage = useCallback(
+    (lng: string) => {
+      // Cancel any in-flight translations
+      translationService.abort();
 
-  const _currentLanguage = languages.find(l => l.code === i18n.language) || languages[0];
+      // Debounce rapid language switches
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+
+      debounceRef.current = window.setTimeout(() => {
+        i18n.changeLanguage(lng);
+        localStorage.setItem('language', lng);
+      }, 300);
+    },
+    [i18n],
+  );
+
+  const _currentLanguage = languages.find((l) => l.code === i18n.language) || languages[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Globe className="h-5 w-5" />
-          <span className="sr-only">Select language</span>
+          <span className="sr-only">{t('common.changeLanguage', 'Mudar idioma')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="bg-popover">

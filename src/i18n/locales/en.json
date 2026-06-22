@@ -1,5 +1,6 @@
 {
   "common": {
+    "changeLanguage": "Change language",
     "search": "Search contracts, policies, events...",
     "searchPlaceholder": "Search...",
     "notifications": "Notifications",
@@ -1230,6 +1231,7 @@
       "root": "Root",
       "back": "Back",
       "empty": "No documents in this folder",
+      "openInSharePoint": "Open in SharePoint",
       "search": "Search in this folder…",
       "sortName": "Name",
       "sortModified": "Recent",

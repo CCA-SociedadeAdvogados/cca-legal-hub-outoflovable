@@ -280,7 +280,7 @@ export default function ContratoDetalhe() {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex items-start gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild aria-label="Voltar à lista de contratos">
               <Link to="/contratos">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
