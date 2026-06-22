@@ -1,10 +1,30 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { extractTextFromWord } from "../_shared/extractText.ts";
 
 const AI_MODELS = [
   { model: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
   { model: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
 ];
+
+// Limite de texto enviado para análise. Trunca com aviso (em vez de em
+// silêncio) para não cortar contratos grandes sem que isso fique registado.
+const MAX_DOC_CHARS = 50000;
+
+function clampDocText(text: string): string {
+  if (text.length > MAX_DOC_CHARS) {
+    console.warn(`[analyze-document] Texto truncado de ${text.length} para ${MAX_DOC_CHARS} chars`);
+    return text.substring(0, MAX_DOC_CHARS);
+  }
+  return text;
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
 
 type MessageContent =
   | string
@@ -153,7 +173,7 @@ serve(async (req) => {
       const isWord = data.mimeType?.includes('word') || isDocx || isLegacyDoc;
 
       if (isPdf) {
-        console.log(`Sending PDF directly to Gemini for analysis: ${data.fileName}`);
+        console.log(`Sending PDF directly to Claude for analysis: ${data.fileName}`);
         const pdfPrompt = language === 'en' 
           ? "Analyze this PDF document and extract all relevant information as requested."
           : "Analise este documento PDF e extraia todas as informações relevantes conforme solicitado.";
@@ -176,10 +196,11 @@ serve(async (req) => {
       } else if (isWord) {
         if (isDocx) {
           console.log(`Extracting text from DOCX document: ${data.fileName}`);
-          textContent = await extractTextFromWord(data.fileContent);
+          textContent = await extractTextFromWord(base64ToBytes(data.fileContent));
+          const docText = clampDocText(textContent);
           const docPrompt = language === 'en'
-            ? `Analyze the following document:\n\n${textContent.substring(0, 12000)}`
-            : `Analise o seguinte documento:\n\n${textContent.substring(0, 12000)}`;
+            ? `Analyze the following document:\n\n${docText}`
+            : `Analise o seguinte documento:\n\n${docText}`;
           messages.push({
             role: "user",
             content: docPrompt
@@ -201,9 +222,10 @@ serve(async (req) => {
         throw new Error(errorMsg);
       }
     } else if (textContent) {
+      const docText = clampDocText(textContent);
       const docPrompt = language === 'en'
-        ? `Analyze the following document:\n\n${textContent.substring(0, 12000)}`
-        : `Analise o seguinte documento:\n\n${textContent.substring(0, 12000)}`;
+        ? `Analyze the following document:\n\n${docText}`
+        : `Analise o seguinte documento:\n\n${docText}`;
       messages.push({
         role: "user",
         content: docPrompt
@@ -285,45 +307,6 @@ serve(async (req) => {
     );
   }
 });
-
-async function extractTextFromWord(base64Content: string): Promise<string> {
-  const zipjs = await import("https://deno.land/x/zipjs@v2.7.30/index.js");
-  const { BlobReader, ZipReader, TextWriter } = zipjs;
-  
-  try {
-    const binaryString = atob(base64Content);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    const blob = new Blob([bytes]);
-    
-    const zipReader = new ZipReader(new BlobReader(blob));
-    const entries = await zipReader.getEntries();
-    
-    const documentEntry = entries.find((e: { filename: string }) => e.filename === "word/document.xml");
-    if (!documentEntry || !documentEntry.getData) {
-      await zipReader.close();
-      throw new Error("Invalid Word file");
-    }
-    
-    const xmlContent = await documentEntry.getData(new TextWriter());
-    await zipReader.close();
-    
-    // Extract text from XML tags
-    const text = (xmlContent as string)
-      .replace(/<w:p[^>]*>/g, "\n")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    
-    console.log(`Word extraction complete, extracted ${text.length} characters`);
-    return text;
-  } catch (error) {
-    console.error("Error extracting Word text:", error);
-    throw new Error("Error extracting text from Word file");
-  }
-}
 
 function getSystemPrompt(type: string, language: string = 'pt'): string {
   if (language === 'en') {
