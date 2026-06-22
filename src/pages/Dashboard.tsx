@@ -6,21 +6,11 @@ import { ExportPDFButton } from '@/components/shared/ExportPDFButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { useLegalBiStats } from '@/hooks/useLegalBiStats';
 import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
 import { useProfile } from '@/hooks/useProfile';
 import { useTranslation } from 'react-i18next';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-} from 'recharts';
 import {
   FileCheck,
   AlertTriangle,
@@ -33,13 +23,6 @@ import {
 import { Link } from 'react-router-dom';
 import { TIPO_CONTRATO_LABELS, ESTADO_CONTRATO_LABELS } from '@/types/contracts';
 import { cn } from '@/lib/utils';
-
-const chartTooltipStyle = {
-  backgroundColor: 'hsl(var(--card))',
-  border: '1px solid hsl(var(--border))',
-  borderRadius: '0.5rem',
-  fontSize: '0.8rem',
-};
 
 const ESTADO_ICON_BG: Record<string, string> = {
   rascunho: 'bg-gray-100 dark:bg-gray-800',
@@ -76,7 +59,6 @@ const ESTADO_BADGE_CLASS: Record<string, string> = {
 
 export default function Dashboard() {
   const { stats, contratosAExpirar, contratos, isLoading } = useDashboardStats();
-  const biData = useLegalBiStats();
   const { items: checklistItems, isTableAvailable: checklistAvailable } = useDocumentChecklist();
   const { profile } = useProfile();
   const { t } = useTranslation();
@@ -92,7 +74,7 @@ export default function Dashboard() {
     return { uploaded, expired, missing, total, percent };
   }, [checklistItems]);
 
-  if (isLoading || biData.isLoading) {
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center py-24">
@@ -101,14 +83,6 @@ export default function Dashboard() {
       </AppLayout>
     );
   }
-
-  const TIPO_COLORS = [
-    'hsl(20,100%,55%)',
-    'hsl(220,14%,65%)',
-    'hsl(262,83%,62%)',
-    'hsl(142,71%,45%)',
-    'hsl(38,92%,50%)',
-  ];
 
   return (
     <AppLayout>
@@ -302,37 +276,6 @@ export default function Dashboard() {
                     ))}
                   </div>
                 )}
-                {/* RGPD Footer */}
-                <div className="grid grid-cols-4 gap-2 p-3 border-t border-border/60 bg-muted/20">
-                  {[
-                    {
-                      label: t('legalbi.comDadosPessoais', 'Com Dados Pessoais'),
-                      value: biData.portfolio.rgpdStats.comDadosPessoais,
-                    },
-                    {
-                      label: t('legalbi.comDPA', 'Com DPA'),
-                      value: biData.portfolio.rgpdStats.comDPA,
-                    },
-                    {
-                      label: t('legalbi.prazoIndet', 'Prazo Indet.'),
-                      value: biData.portfolio.duracaoStats.indeterminado,
-                    },
-                    {
-                      label: t('legalbi.renAutomat', 'Renov. Auto.'),
-                      value: biData.portfolio.renovacaoStats.automatica,
-                    },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="bg-card rounded-lg px-2 py-2 text-center border border-border/50"
-                    >
-                      <p className="text-[10px] text-muted-foreground leading-tight mb-1">
-                        {item.label}
-                      </p>
-                      <p className="text-base font-bold">{item.value}</p>
-                    </div>
-                  ))}
-                </div>
               </CardContent>
             </Card>
 
@@ -340,169 +283,40 @@ export default function Dashboard() {
             <DocumentValidityAlerts />
           </div>
 
-          {/* Bottom Grid: Evolução + Por Tipo + A Expirar */}
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_1fr_220px]">
-            {/* Evolução 12 meses */}
+          {/* A Expirar — só quando há contratos a expirar (próximos 90 dias) */}
+          {contratosAExpirar.length > 0 && (
             <Card>
               <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
-                <CardTitle className="text-sm font-semibold">
-                  {t('legalbi.evolucao', 'Evolução (12 meses)')}
-                </CardTitle>
-                <div className="flex gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-0.5 rounded-full bg-primary inline-block" />
-                    {t('legalbi.criados', 'Criados')}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-3 h-0.5 rounded-full bg-danger inline-block" />
-                    {t('legalbi.terminados', 'Terminados')}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0">
-                <div className="h-[100px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={biData.portfolio.contratosPorMes}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fontSize: 9 }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        allowDecimals={false}
-                        tick={{ fontSize: 9 }}
-                        axisLine={false}
-                        tickLine={false}
-                        width={20}
-                      />
-                      <RechartsTooltip contentStyle={chartTooltipStyle} />
-                      <Area
-                        type="monotone"
-                        dataKey="criados"
-                        stroke="hsl(20,100%,63%)"
-                        fill="hsl(20,100%,63%)"
-                        fillOpacity={0.15}
-                        strokeWidth={1.5}
-                        dot={false}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="expirados"
-                        stroke="hsl(0,84%,70%)"
-                        fill="hsl(0,84%,70%)"
-                        fillOpacity={0.1}
-                        strokeWidth={1.5}
-                        dot={false}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Por Tipo de Contrato */}
-            <Card>
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm font-semibold">
-                  {t('dashboard.byContractType')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-3 pt-0">
-                {Object.entries(stats.contratosPorTipo).length === 0 ? (
-                  <p className="text-center text-muted-foreground py-4 text-sm">
-                    {t('dashboard.noData')}
-                  </p>
-                ) : (
-                  (() => {
-                    const sorted = Object.entries(stats.contratosPorTipo)
-                      .sort(([, a], [, b]) => b - a)
-                      .slice(0, 5);
-                    const maxCount = Math.max(...sorted.map(([, c]) => c), 1);
-                    return (
-                      <div className="space-y-2.5 mb-3">
-                        {sorted.map(([tipo, count], i) => (
-                          <div key={tipo} className="flex items-center gap-2.5">
-                            <div
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ background: TIPO_COLORS[i % TIPO_COLORS.length] }}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-sm truncate">
-                                  {TIPO_CONTRATO_LABELS[
-                                    tipo as keyof typeof TIPO_CONTRATO_LABELS
-                                  ] || tipo}
-                                </span>
-                                <span className="text-sm font-bold ml-2">{count}</span>
-                              </div>
-                              <div className="h-1 rounded-full bg-muted overflow-hidden">
-                                <div
-                                  className="h-full rounded-full"
-                                  style={{
-                                    width: `${(count / maxCount) * 100}%`,
-                                    background: TIPO_COLORS[i % TIPO_COLORS.length],
-                                  }}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()
-                )}
-                {/* RGPD pills */}
-                <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border/60">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-warn/10 text-warn border border-warn/30">
-                    {biData.portfolio.rgpdStats.comDadosPessoais}{' '}
-                    {t('legalbi.comDadosPessoais', 'com dados pessoais')}
-                  </span>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-                    {biData.portfolio.rgpdStats.transferenciaInternacional}{' '}
-                    {t('legalbi.transferInt', 'Transf. Internacional')}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* A Expirar */}
-            <Card>
-              <CardHeader className="py-3 px-4">
-                <CardTitle className="text-sm font-semibold">
+                <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-warn" />
                   {t('dashboard.contractsExpiring', 'A Expirar')}
                 </CardTitle>
+                <Button variant="ghost" size="sm" className="text-accent h-7 text-xs px-2" asChild>
+                  <Link to="/contratos">
+                    {t('dashboard.viewAll')} <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                  </Link>
+                </Button>
               </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0">
-                {contratosAExpirar.length === 0 ? (
-                  <div className="flex flex-col items-center py-6 text-muted-foreground">
-                    <Clock className="h-7 w-7 mb-2 opacity-25" />
-                    <p className="text-xs text-center leading-relaxed">
-                      {t('dashboard.noExpiringContracts', 'Sem expirações nos próximos 90 dias')}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {contratosAExpirar.slice(0, 4).map((c) => (
-                      <Link
-                        key={c.id}
-                        to={`/contratos/${c.id}`}
-                        className="block hover:opacity-80 transition-opacity"
-                      >
-                        <p className="text-xs font-semibold truncate">{c.titulo_contrato}</p>
-                        {c.data_termo && (
-                          <p className="text-[10px] text-muted-foreground">
-                            {format(new Date(c.data_termo), 'dd/MM/yyyy')}
-                          </p>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+              <CardContent className="p-0">
+                <div className="divide-y divide-border/50">
+                  {contratosAExpirar.slice(0, 5).map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/contratos/${c.id}`}
+                      className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                    >
+                      <p className="text-sm font-medium truncate">{c.titulo_contrato}</p>
+                      {c.data_termo && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {format(new Date(c.data_termo), 'dd/MM/yyyy')}
+                        </span>
+                      )}
+                    </Link>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          </div>
+          )}
         </div>
         {/* end dashboard-content */}
       </div>

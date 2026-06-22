@@ -106,43 +106,51 @@ export function DocumentValidityAlerts() {
           </div>
         </div>
 
-        {/* Summary counters */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <div className="flex items-center gap-2 rounded-lg border p-2">
-            <CheckCircle2 className="h-4 w-4 text-positive shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">{t('docValidity.valid', 'Válidos')}</p>
-              <p className="font-bold text-sm">{groups.valid.length}</p>
+        {/* Summary counters — só mostra os que têm valor (esconde zeros) */}
+        {(() => {
+          const counters = [
+            {
+              key: 'valid',
+              icon: <CheckCircle2 className="h-4 w-4 text-positive shrink-0" />,
+              label: t('docValidity.valid', 'Válidos'),
+              value: groups.valid.length,
+            },
+            {
+              key: 'expiringSoon',
+              icon: <AlertTriangle className="h-4 w-4 text-warn shrink-0" />,
+              label: t('docValidity.expiringSoon', 'A expirar'),
+              value: groups.expiringSoon.length,
+            },
+            {
+              key: 'expired',
+              icon: <XCircle className="h-4 w-4 text-danger shrink-0" />,
+              label: t('docValidity.expired', 'Expirados'),
+              value: groups.expired.length,
+            },
+            {
+              key: 'advisory',
+              icon: <Info className="h-4 w-4 text-brand shrink-0" />,
+              label: t('docValidity.advisory', 'Recomendação'),
+              value: groups.advisory.length,
+            },
+          ].filter((c) => c.value > 0);
+
+          if (counters.length === 0) return null;
+
+          return (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {counters.map((c) => (
+                <div key={c.key} className="flex items-center gap-2 rounded-lg border p-2">
+                  {c.icon}
+                  <div>
+                    <p className="text-xs text-muted-foreground">{c.label}</p>
+                    <p className="font-bold text-sm">{c.value}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border p-2">
-            <AlertTriangle className="h-4 w-4 text-warn shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">
-                {t('docValidity.expiringSoon', 'A expirar')}
-              </p>
-              <p className="font-bold text-sm">{groups.expiringSoon.length}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border p-2">
-            <XCircle className="h-4 w-4 text-danger shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">
-                {t('docValidity.expired', 'Expirados')}
-              </p>
-              <p className="font-bold text-sm">{groups.expired.length}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 rounded-lg border p-2">
-            <Info className="h-4 w-4 text-brand shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">
-                {t('docValidity.advisory', 'Recomendação')}
-              </p>
-              <p className="font-bold text-sm">{groups.advisory.length}</p>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Alert items */}
         <div className="space-y-2">
