@@ -47,3 +47,27 @@ export async function isAuthorizedForOrg(
     .maybeSingle();
   return !!mem;
 }
+
+// Verifica se o chamador é service role ou platform admin.
+// Para operações privilegiadas (ex.: gerir configuração de integrações), onde
+// pertencer à organização não basta — alinhado com RLS restrita a platform admin.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function isPlatformAdminOrService(req: Request, supabase: any): Promise<boolean> {
+  const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
+  if (!token) return false;
+
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceKey && token === serviceKey) return true;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+  if (!user) return false;
+
+  const { data: pa } = await supabase
+    .from("platform_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  return !!pa;
+}
