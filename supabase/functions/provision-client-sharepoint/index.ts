@@ -45,7 +45,14 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
   return data.access_token;
 }
 
-/** Cria uma pasta num drive do SharePoint. Retorna o item criado (com webUrl). */
+/**
+ * Cria uma pasta num drive do SharePoint. Retorna o item criado (com webUrl).
+ *
+ * conflictBehavior "fail": se já existir uma pasta com este nome, o Graph
+ * devolve 409 em vez de criar um duplicado ("Contratos 1"). Como as funções
+ * que chamam createFolder fazem sempre um GET-por-path antes (idempotência),
+ * "fail" garante que uma corrida não gera pastas duplicadas silenciosamente.
+ */
 async function createFolder(
   accessToken: string,
   driveId: string,
@@ -65,7 +72,7 @@ async function createFolder(
     body: JSON.stringify({
       name: folderName,
       folder: {},
-      "@microsoft.graph.conflictBehavior": "rename",
+      "@microsoft.graph.conflictBehavior": "fail",
     }),
   });
 
@@ -78,36 +85,65 @@ async function createFolder(
   return { id: item.id, webUrl: item.webUrl };
 }
 
-/** Resolve o ID de uma pasta por path. Cria se não existir. */
+/** GET de uma pasta por path. Retorna null em 404. */
+async function getFolderByPath(
+  accessToken: string,
+  driveId: string,
+  folderPath: string,
+): Promise<{ id: string; webUrl: string } | null> {
+  const encodedPath = encodeURIComponent(folderPath).replace(/%2F/g, "/");
+  const res = await fetch(
+    `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (res.ok) {
+    const item = await res.json();
+    return { id: item.id, webUrl: item.webUrl };
+  }
+  if (res.status === 404) return null;
+  const err = await res.text();
+  throw new Error(`Erro ao verificar pasta "${folderPath}": ${res.status} — ${err.slice(0, 200)}`);
+}
+
+/**
+ * Garante (idempotente) uma subpasta dentro de um parent conhecido.
+ * Faz GET-por-path; só cria se não existir — evita duplicados em re-execuções.
+ */
+async function ensureChildFolder(
+  accessToken: string,
+  driveId: string,
+  parentId: string,
+  parentPath: string,
+  name: string,
+): Promise<{ id: string; webUrl: string }> {
+  const existing = await getFolderByPath(accessToken, driveId, `${parentPath}/${name}`);
+  if (existing) return existing;
+  return await createFolder(accessToken, driveId, parentId, name);
+}
+
+/**
+ * Resolve o ID de uma pasta por path, criando o que faltar — idempotente
+ * nível a nível. Verifica cada segmento por GET e só cria os em falta, de
+ * modo a nunca recriar/duplicar pastas-pai que já existam (ex.: "Clientes").
+ */
 async function ensureFolder(
   accessToken: string,
   driveId: string,
   folderPath: string,
 ): Promise<{ id: string; webUrl: string }> {
-  // Tentar obter pelo path primeiro
-  const encodedPath = encodeURIComponent(folderPath).replace(/%2F/g, "/");
-  const getUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`;
-
-  const getRes = await fetch(getUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (getRes.ok) {
-    const item = await getRes.json();
-    return { id: item.id, webUrl: item.webUrl };
-  }
-
-  if (getRes.status !== 404) {
-    const err = await getRes.text();
-    throw new Error(`Erro ao verificar pasta "${folderPath}": ${getRes.status} — ${err.slice(0, 200)}`);
-  }
-
-  // Não existe — criar hierarquia de pastas
   const parts = folderPath.replace(/^\//, "").split("/").filter(Boolean);
   let currentId = "root";
   let currentWebUrl = "";
+  let pathSoFar = "";
 
   for (const part of parts) {
+    pathSoFar = pathSoFar ? `${pathSoFar}/${part}` : part;
+    const existing = await getFolderByPath(accessToken, driveId, pathSoFar);
+    if (existing) {
+      currentId = existing.id;
+      currentWebUrl = existing.webUrl;
+      continue;
+    }
     const created = await createFolder(accessToken, driveId, currentId, part);
     currentId = created.id;
     currentWebUrl = created.webUrl;
@@ -169,12 +205,12 @@ serve(async (req) => {
     console.log(`[provision-sharepoint] Creating root folder: ${rootFolderPath}`);
     const rootFolder = await ensureFolder(accessToken, driveId, rootFolderPath);
 
-    // 2. Criar subpastas em paralelo
+    // 2. Garantir subpastas (idempotente — não duplica em re-execuções)
     const [contratosFolder, financeiroFolder, correspondenciaFolder, legalbiFolder] = await Promise.all([
-      createFolder(accessToken, driveId, rootFolder.id, "Contratos"),
-      createFolder(accessToken, driveId, rootFolder.id, "Financeiro"),
-      createFolder(accessToken, driveId, rootFolder.id, "Correspondência"),
-      createFolder(accessToken, driveId, rootFolder.id, "LegalBI"),
+      ensureChildFolder(accessToken, driveId, rootFolder.id, rootFolderPath, "Contratos"),
+      ensureChildFolder(accessToken, driveId, rootFolder.id, rootFolderPath, "Financeiro"),
+      ensureChildFolder(accessToken, driveId, rootFolder.id, rootFolderPath, "Correspondência"),
+      ensureChildFolder(accessToken, driveId, rootFolder.id, rootFolderPath, "LegalBI"),
     ]);
 
     console.log(`[provision-sharepoint] All folders created. LegalBI webUrl: ${legalbiFolder.webUrl}`);
