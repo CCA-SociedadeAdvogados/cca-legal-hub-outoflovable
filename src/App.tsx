@@ -38,7 +38,6 @@ const Perfil = React.lazy(() => import('./pages/Perfil'));
 const Organizacao = React.lazy(() => import('./pages/Organizacao'));
 const Definicoes = React.lazy(() => import('./pages/Definicoes'));
 const Politicas = React.lazy(() => import('./pages/Politicas'));
-const AssinaturaDigital = React.lazy(() => import('./pages/AssinaturaDigital'));
 const DocumentosGlobal = React.lazy(() => import('./pages/DocumentosGlobal'));
 const Normativos = React.lazy(() => import('./pages/Normativos'));
 const NormativoDetalhe = React.lazy(() => import('./pages/NormativoDetalhe'));
@@ -224,10 +223,7 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/contratos/documentos"
-          element={<Navigate to="/assinatura-digital" replace />}
-        />
+        <Route path="/contratos/documentos" element={<Navigate to="/documentos" replace />} />
         <Route
           path="/contratos/:id/editar"
           element={
@@ -245,15 +241,8 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Assinatura Digital (antiga página de Documentos gerados) */}
-        <Route
-          path="/assinatura-digital"
-          element={
-            <ProtectedRoute>
-              <AssinaturaDigital />
-            </ProtectedRoute>
-          }
-        />
+        {/* Assinatura Digital removida — redireciona para Documentos */}
+        <Route path="/assinatura-digital" element={<Navigate to="/documentos" replace />} />
 
         {/* Nova página global de Documentos */}
         <Route
