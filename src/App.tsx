@@ -50,7 +50,6 @@ const PlatformAdmin = React.lazy(() => import('./pages/PlatformAdmin'));
 const MeuDepartamento = React.lazy(() => import('./pages/MeuDepartamento'));
 const UtilizadoresOrg = React.lazy(() => import('./pages/UtilizadoresOrg'));
 const LegalBi = React.lazy(() => import('./pages/LegalBi'));
-const OrganizationsPage = React.lazy(() => import('./pages/OrganizationsPage'));
 
 // Portal do Cliente — árvore de rotas separada (audiência "client"), lazy-loaded
 // para que utilizadores CCA não transfiram este código e vice-versa.
@@ -369,23 +368,6 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/organizations"
-          element={
-            <ProtectedRoute>
-              <OrganizationsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/organizations/:clientCode"
-          element={
-            <ProtectedRoute>
-              <OrganizationsPage />
-            </ProtectedRoute>
-          }
-        />
-
         {/* Utilizadores - redirect para admin com tab users */}
         <Route
           path="/utilizadores"
