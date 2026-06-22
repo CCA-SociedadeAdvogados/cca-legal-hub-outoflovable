@@ -1813,7 +1813,11 @@
       "classifying": "AI is reading and classifying the document...",
       "docName": "Document name",
       "docNamePlaceholder": "e.g. Services agreement",
-      "destFolder": "Destination folder"
+      "destFolder": "Destination folder",
+      "folders": "Folders",
+      "files": "Files",
+      "searchPlaceholder": "Search in this folder…",
+      "noResults": "No results for “{{query}}”."
     },
     "home": {
       "greeting": "Welcome, {{name}}",

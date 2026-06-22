@@ -1813,7 +1813,11 @@
       "classifying": "A IA está a ler e a classificar o documento...",
       "docName": "Nome do documento",
       "docNamePlaceholder": "Ex.: Contrato de prestação de serviços",
-      "destFolder": "Pasta de destino"
+      "destFolder": "Pasta de destino",
+      "folders": "Pastas",
+      "files": "Ficheiros",
+      "searchPlaceholder": "Pesquisar nesta pasta…",
+      "noResults": "Sem resultados para “{{query}}”."
     },
     "home": {
       "greeting": "Bem-vindo, {{name}}",
