@@ -192,7 +192,9 @@
     "annualRecurringValue": "Valor Anual Recorrente",
     "docCompliance": "Compliance Documental",
     "docsIssue": "em falta ou expirados",
-    "noExpiringContracts": "Sem expirações nos próximos 90 dias"
+    "noExpiringContracts": "Sem expirações nos próximos 90 dias",
+    "portfolioByPhase": "Carteira por fase",
+    "inDays": "em {{count}} dias"
   },
   "contractsOld": {},
   "events": {
