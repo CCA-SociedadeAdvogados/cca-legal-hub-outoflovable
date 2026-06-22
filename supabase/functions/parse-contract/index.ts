@@ -8,9 +8,16 @@ import { corsHeaders } from "../_shared/cors.ts";
 import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 const CLAUDE_SONNET = "claude-sonnet-4-6";
-// 150K chars ≈ 37K tokens — seguro para Haiku 200K context.
-// Apenas como salvaguarda; a maioria dos contratos fica bem abaixo disto.
+// 150K chars ≈ 37K tokens — salvaguarda para o contexto do modelo.
+// A maioria dos contratos fica bem abaixo disto.
 const MAX_CHARS = 150000;
+// Limite de tamanho do ficheiro a processar (proteção de memória).
+const MAX_FILE_BYTES = 15 * 1024 * 1024;
+// Prefixo permitido para storagePath. O fluxo legítimo carrega sempre o
+// ficheiro para `temp/{uuid}_...` antes de chamar esta função; restringir
+// a este prefixo impede que o endpoint seja usado para ler ficheiros de
+// contratos reais de outras organizações (IDOR).
+const ALLOWED_STORAGE_PREFIX = "temp/";
 
 async function callClaude(
   apiKey: string,
@@ -106,6 +113,32 @@ Deno.serve(async (req) => {
 
     console.log(`[parse-contract] payload keys: ${Object.keys(body).join(", ")}`);
 
+    // Segurança: só permitir descarregar ficheiros do prefixo temporário.
+    if (storagePath && !String(storagePath).startsWith(ALLOWED_STORAGE_PREFIX)) {
+      return new Response(
+        JSON.stringify({ error: "Caminho de ficheiro inválido." }),
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    // Segurança: exigir um utilizador autenticado (a anon key pública não basta).
+    // Aceita também a service role para eventuais chamadas internas.
+    const authToken = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!authToken || authToken !== serviceRoleKey) {
+      const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+      const authClient = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey ?? "");
+      const {
+        data: { user },
+      } = await authClient.auth.getUser(authToken);
+      if (!user) {
+        return new Response(
+          JSON.stringify({ error: "Autenticação necessária." }),
+          { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
       throw new Error("ANTHROPIC_API_KEY não está configurada");
@@ -157,6 +190,13 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (fileBytes && fileBytes.length > MAX_FILE_BYTES) {
+        return new Response(
+          JSON.stringify({ error: "Ficheiro demasiado grande (máximo 15 MB)." }),
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
       if (fileBytes) {
         if (resolvedMime === "application/pdf" || resolvedName?.endsWith(".pdf")) {
           const extracted = await extractTextFromPDF(fileBytes);
@@ -186,7 +226,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── 2. Analisar contrato com Claude Haiku 4.5 ─────────────────────────
+    // ── 2. Analisar contrato com Claude Sonnet 4.6 ────────────────────────
     console.log(`[parse-contract] Text length: ${contractText.length} chars, scanned: ${isScannedPDF}`);
 
     const truncatedText = contractText.length > MAX_CHARS
