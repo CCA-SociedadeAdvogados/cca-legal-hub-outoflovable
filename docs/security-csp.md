@@ -2,11 +2,25 @@
 
 A CSP é aplicada via cabeçalhos HTTP no `vercel.json`.
 
-## Estado atual: `Report-Only` (não bloqueia)
+## Estado atual: `Content-Security-Policy` (bloqueante)
 
-A política está em **`Content-Security-Policy-Report-Only`**: o browser **reporta**
-violações na consola mas **não bloqueia** nada. Serve para validar a política em
-produção sem risco antes de a tornar bloqueante.
+A política está **bloqueante**. O `script-src 'self'` está estrito (a proteção
+mais importante — impede injeção/execução de scripts não próprios), tal como
+`object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'none'` e `form-action 'self'`.
+
+### `connect-src` ainda amplo (`https: wss:`) — aperto fino pendente
+
+O `connect-src` permite, por agora, qualquer destino `https:`/`wss:`. Isto é
+deliberado: o `ContractTriageAgent` faz `fetch` ao agente externo em
+`VITE_API_URL`, cuja **origem exata ainda não foi confirmada**. Assim que essa
+origem for conhecida, apertar para:
+
+```
+connect-src 'self' https://*.supabase.co wss://*.supabase.co https://<ORIGEM-DO-VITE_API_URL>;
+```
+
+Até lá, manter `https: wss:` garante que o Triage e o Supabase funcionam sem
+violações, mantendo já bloqueado o essencial (`script-src`, etc.).
 
 ## Origens externas conhecidas (já contempladas)
 
@@ -22,23 +36,15 @@ Notas:
 - **LegalBI** (`https://bi.cca.law`) abre em **nova aba** (`window.open`) → navegação de topo, **não** precisa de entrada na CSP.
 - **SharePoint** é acedido pelas Edge Functions (backend) → **não** precisa de entrada na CSP do browser.
 
-## ⚠️ Falta confirmar antes de bloquear: `VITE_API_URL`
+## ⚠️ Aperto fino pendente: `VITE_API_URL`
 
 `src/components/contracts/ContractTriageAgent.tsx` faz `fetch` direto ao agente
-externo de triagem em `import.meta.env.VITE_API_URL`. Essa **origem tem de ser
-adicionada ao `connect-src`** na versão bloqueante (ex.: `https://o-teu-agente.onrender.com`).
-Em desenvolvimento o fallback é `http://localhost:8000`.
+externo de triagem em `import.meta.env.VITE_API_URL`. Para apertar o `connect-src`
+(remover o `https:` amplo), essa **origem tem de ser adicionada explicitamente**
+(ex.: `https://o-teu-agente.onrender.com`). Em desenvolvimento o fallback é
+`http://localhost:8000`.
 
-## Como passar a bloqueante
-
-1. Fazer deploy com a versão `Report-Only` (atual) e usar a app normalmente.
-2. Na consola do browser, recolher as origens reportadas como violação (sobretudo
-   o `connect-src` do `VITE_API_URL`, e quaisquer imagens/fontes externas).
-3. Acrescentar essas origens às diretivas em baixo.
-4. Trocar a chave do header de `Content-Security-Policy-Report-Only` para
-   **`Content-Security-Policy`** no `vercel.json`.
-
-## Política bloqueante proposta (preencher `VITE_API_URL`)
+## Política totalmente apertada (quando `VITE_API_URL` for conhecido)
 
 ```
 default-src 'self';
