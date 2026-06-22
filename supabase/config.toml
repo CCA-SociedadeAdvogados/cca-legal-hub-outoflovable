@@ -7,10 +7,10 @@ verify_jwt = false
 verify_jwt = true
 
 [functions.legal-api]
-verify_jwt = false
+verify_jwt = true
 
 [functions.mirror-run]
-verify_jwt = false
+verify_jwt = true
 
 [functions.parse-contract]
 verify_jwt = true
