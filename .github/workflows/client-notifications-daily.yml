@@ -1,0 +1,29 @@
+name: Client notifications daily
+
+# Gera diariamente notificações proativas de prazos de contrato para os clientes
+# (termo e decisão de renovação a aproximarem-se). Dispara a edge function
+# client-notifications-cron (header x-cron-secret).
+# Pré-requisitos (secrets do repositório):
+#   - SUPABASE_PROJECT_ID
+#   - NAV_SYNC_SECRET   (mesmo valor definido como secret das edge functions)
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # todos os dias às 07:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger client notifications
+        run: |
+          code=$(curl -s -o /tmp/notif.json -w "%{http_code}" -X POST \
+            "https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/client-notifications-cron" \
+            -H "x-cron-secret: ${{ secrets.NAV_SYNC_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP $code"
+          cat /tmp/notif.json
+          echo ""
+          test "$code" = "200"

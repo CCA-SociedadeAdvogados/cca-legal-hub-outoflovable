@@ -1,0 +1,28 @@
+name: Client weekly digest
+
+# Envia semanalmente o resumo "o que mudou" a cada cliente. Dispara a edge
+# function client-weekly-digest (header x-cron-secret).
+# Pré-requisitos (secrets do repositório):
+#   - SUPABASE_PROJECT_ID
+#   - NAV_SYNC_SECRET   (mesmo valor definido como secret das edge functions)
+
+on:
+  schedule:
+    - cron: '0 8 * * 1' # segundas-feiras às 08:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger weekly digest
+        run: |
+          code=$(curl -s -o /tmp/digest.json -w "%{http_code}" -X POST \
+            "https://${{ secrets.SUPABASE_PROJECT_ID }}.supabase.co/functions/v1/client-weekly-digest" \
+            -H "x-cron-secret: ${{ secrets.NAV_SYNC_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP $code"
+          cat /tmp/digest.json
+          echo ""
+          test "$code" = "200"
