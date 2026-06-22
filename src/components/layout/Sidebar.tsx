@@ -356,12 +356,10 @@ export function Sidebar({ clientName }: SidebarProps) {
         )}
         {(isCCAUser || isOrgManager || isOrgUser) && (
           <NavItem
-            to="/minha-organizacao"
+            to="/organizacao"
             icon={Building2}
             label={t('nav.organization')}
-            isActive={
-              location.pathname === '/minha-organizacao' || location.pathname === '/organizacao'
-            }
+            isActive={location.pathname === '/organizacao'}
             isCollapsed={isCollapsed}
           />
         )}

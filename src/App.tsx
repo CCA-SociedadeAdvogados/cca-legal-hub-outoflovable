@@ -48,7 +48,6 @@ const Assuntos = React.lazy(() => import('./pages/Assuntos'));
 const Notificacoes = React.lazy(() => import('./pages/Notificacoes'));
 const PlatformAdmin = React.lazy(() => import('./pages/PlatformAdmin'));
 const MeuDepartamento = React.lazy(() => import('./pages/MeuDepartamento'));
-const MinhaOrganizacao = React.lazy(() => import('./pages/MinhaOrganizacao'));
 const UtilizadoresOrg = React.lazy(() => import('./pages/UtilizadoresOrg'));
 const LegalBi = React.lazy(() => import('./pages/LegalBi'));
 const OrganizationsPage = React.lazy(() => import('./pages/OrganizationsPage'));
@@ -360,14 +359,8 @@ const AppRoutes = () => {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/minha-organizacao"
-          element={
-            <ProtectedRoute>
-              <MinhaOrganizacao />
-            </ProtectedRoute>
-          }
-        />
+        {/* "Minha Organização" consolidada com "Organização" */}
+        <Route path="/minha-organizacao" element={<Navigate to="/organizacao" replace />} />
         <Route
           path="/utilizadores-org"
           element={
