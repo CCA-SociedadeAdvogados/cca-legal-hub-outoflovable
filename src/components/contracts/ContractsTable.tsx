@@ -52,42 +52,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ValidationBadge, ValidationStatusType } from './ValidationBadge';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
+import { estadoBadgeClass, estadoLabel } from '@/lib/contractEstado';
 import { cn } from '@/lib/utils';
 
 // ─── Mappings ─────────────────────────────────────────────────────────────────
-
-const FASE_MAP: Record<string, { label: string; className: string }> = {
-  rascunho: {
-    label: 'Em negociação',
-    className: 'border-line bg-bg-alt text-ink-soft',
-  },
-  em_revisao: {
-    label: 'Em validação',
-    className: 'border-warn/40 bg-warn/10 text-warn',
-  },
-  em_aprovacao: {
-    label: 'Em validação',
-    className: 'border-warn/40 bg-warn/10 text-warn',
-  },
-  enviado_para_assinatura: {
-    label: 'Em validação',
-    className: 'border-warn/40 bg-warn/10 text-warn',
-  },
-  activo: { label: 'Activo', className: 'border-positive/40 bg-positive/10 text-positive' },
-  expirado: {
-    label: 'Terminado',
-    className: 'border-danger/40 bg-danger/10 text-danger',
-  },
-  denunciado: {
-    label: 'Terminado',
-    className: 'border-danger/40 bg-danger/10 text-danger',
-  },
-  rescindido: {
-    label: 'Terminado',
-    className: 'border-danger/40 bg-danger/10 text-danger',
-  },
-  arquivado: { label: 'Arquivado', className: 'border-line bg-bg-alt text-ink-mute' },
-};
 
 const TIPO_LABELS: Record<string, string> = {
   nda: 'NDA',
@@ -214,13 +182,9 @@ function FaseBadge({
       </Badge>
     );
   }
-  const cfg = FASE_MAP[estado] || {
-    label: estado,
-    className: 'border-muted-foreground/40 text-muted-foreground',
-  };
   return (
-    <Badge variant="outline" className={cn('text-xs', cfg.className)}>
-      {cfg.label}
+    <Badge variant="outline" className={cn('text-xs', estadoBadgeClass(estado))}>
+      {estadoLabel(estado)}
     </Badge>
   );
 }
@@ -577,7 +541,7 @@ export function ContractsTable({
           <TableHeader>
             <TableRow className="bg-muted/40">
               <TableHead className="w-[35%]">Contrato</TableHead>
-              <TableHead>Fase</TableHead>
+              <TableHead>Estado</TableHead>
               <TableHead>Validação</TableHead>
               <TableHead>Próximo prazo</TableHead>
               {!isViewer && <TableHead className="text-right">Valor</TableHead>}
