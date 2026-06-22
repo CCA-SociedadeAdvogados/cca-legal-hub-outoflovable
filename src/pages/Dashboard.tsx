@@ -270,9 +270,9 @@ export default function Dashboard() {
           )}
 
           {/* Mid Grid: Contratos Recentes (fluid) + Validade Documental (fixed 320px) */}
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_320px]">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]">
             {/* Contratos Recentes */}
-            <Card>
+            <Card className="min-w-0">
               <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
                 <CardTitle className="text-sm font-semibold">
                   {t('dashboard.recentContracts')}
