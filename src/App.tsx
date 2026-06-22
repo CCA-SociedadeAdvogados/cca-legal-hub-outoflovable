@@ -46,6 +46,7 @@ const NormativoDetalhe = React.lazy(() => import('./pages/NormativoDetalhe'));
 const NovidadesCCA = React.lazy(() => import('./pages/NovidadesCCA'));
 const Financeiro = React.lazy(() => import('./pages/Financeiro'));
 const PedidosCCA = React.lazy(() => import('./pages/PedidosCCA'));
+const Assuntos = React.lazy(() => import('./pages/Assuntos'));
 const Notificacoes = React.lazy(() => import('./pages/Notificacoes'));
 const PlatformAdmin = React.lazy(() => import('./pages/PlatformAdmin'));
 const MeuDepartamento = React.lazy(() => import('./pages/MeuDepartamento'));
@@ -346,6 +347,14 @@ const AppRoutes = () => {
           element={
             <ProtectedRoute>
               <PedidosCCA />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/assuntos"
+          element={
+            <ProtectedRoute>
+              <Assuntos />
             </ProtectedRoute>
           }
         />

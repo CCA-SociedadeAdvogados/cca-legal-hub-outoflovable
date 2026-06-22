@@ -120,6 +120,7 @@
     "ccaNews": "CCA News",
     "financial": "My CCA Current Account",
     "requests": "Client requests",
+    "matters": "Matters",
     "legalbi": "LegalBI"
   },
   "requests": {
@@ -131,6 +132,27 @@
       "respond": "Respond",
       "state": "Status",
       "responsePlaceholder": "Write your reply to the client..."
+    }
+  },
+  "matters": {
+    "cca": {
+      "title": "Client matters",
+      "description": "Manage ongoing matters and the status the client sees in the portal.",
+      "new": "New matter",
+      "create": "Create",
+      "add": "Add",
+      "addUpdate": "Add update",
+      "selectClient": "Select a client to manage matters.",
+      "empty": "This client has no matters yet.",
+      "internal": "Internal",
+      "visibleClient": "Visible to client",
+      "fields": {
+        "title": "Title",
+        "type": "Type",
+        "reference": "Reference",
+        "description": "Description",
+        "visibility": "Visibility"
+      }
     }
   },
   "dashboard": {
@@ -1961,6 +1983,7 @@
       "home": "Home",
       "assistant": "Assistant",
       "contracts": "My contracts",
+      "matters": "My matters",
       "documents": "Documents",
       "deadlines": "Deadlines",
       "radar": "Legislative radar",
@@ -1977,7 +2000,41 @@
       "download": "Download",
       "downloadError": "Could not download the file"
     },
+    "matters": {
+      "empty": "No ongoing matters yet.",
+      "opened": "Opened on",
+      "expected": "Expected completion",
+      "timeline": "Progress",
+      "noUpdates": "No updates yet.",
+      "estados": {
+        "aberto": "Open",
+        "em_curso": "In progress",
+        "aguarda_cliente": "Awaiting client",
+        "concluido": "Completed",
+        "suspenso": "On hold"
+      },
+      "tipos": {
+        "contencioso": "Litigation",
+        "consultoria": "Advisory",
+        "transacao": "Transaction",
+        "due_diligence": "Due diligence",
+        "registo": "Filing",
+        "outro": "Other"
+      },
+      "eventoTipos": {
+        "marco": "Milestone",
+        "atualizacao": "Update",
+        "documento": "Document",
+        "decisao": "Decision",
+        "outro": "Other"
+      }
+    },
     "pages": {
+      "matters": {
+        "eyebrow": "Matters",
+        "title": "My matters",
+        "description": "Track the status of the work CCA is handling for you."
+      },
       "policies": {
         "eyebrow": "Policies",
         "title": "Policies",

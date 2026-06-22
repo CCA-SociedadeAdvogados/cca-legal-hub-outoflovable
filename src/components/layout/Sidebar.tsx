@@ -14,6 +14,7 @@ import {
   Bell,
   Wallet,
   MessageSquarePlus,
+  Briefcase,
   BarChart3,
   FileText,
   FolderOpen,
@@ -238,6 +239,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           icon={MessageSquarePlus}
           label={t('nav.requests')}
           isActive={location.pathname === '/pedidos'}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/assuntos"
+          icon={Briefcase}
+          label={t('nav.matters')}
+          isActive={location.pathname === '/assuntos'}
           isCollapsed={isCollapsed}
         />
         <NavItem
