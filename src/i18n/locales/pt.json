@@ -124,7 +124,8 @@
     "financial": "Minha Conta Corrente CCA",
     "requests": "Pedidos de clientes",
     "matters": "Assuntos",
-    "legalbi": "LegalBI"
+    "legalbi": "LegalBI",
+    "deadlines": "Prazos"
   },
   "requests": {
     "cca": {

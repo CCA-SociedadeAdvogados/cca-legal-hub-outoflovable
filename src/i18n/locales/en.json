@@ -124,7 +124,8 @@
     "financial": "My CCA Current Account",
     "requests": "Client requests",
     "matters": "Matters",
-    "legalbi": "LegalBI"
+    "legalbi": "LegalBI",
+    "deadlines": "Deadlines"
   },
   "requests": {
     "cca": {

@@ -33,6 +33,7 @@ import {
   Lock,
   List,
   Upload,
+  CalendarClock,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -279,6 +280,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           </div>
         )}
 
+        <NavItem
+          to="/prazos"
+          icon={CalendarClock}
+          label={t('nav.deadlines', 'Prazos')}
+          isActive={location.pathname === '/prazos'}
+          isCollapsed={isCollapsed}
+        />
         <NavItem
           to="/documentos"
           icon={FolderOpen}
