@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useContratos, type Contrato } from '@/hooks/useContratos';
 import { ContratoStatusBadge } from '@/portal/components/ContratoStatusBadge';
 import { ContratoDetailDrawer } from '@/portal/components/ContratoDetailDrawer';
+import { ContratosLifecycle } from '@/portal/components/ContratosLifecycle';
 import { formatCurrency, formatDate, getNextDeadline, tipoI18nKey } from '@/portal/lib/contrato';
 
 type QuickFilter = 'all' | 'active' | 'expiring' | 'terminated';
@@ -76,6 +77,9 @@ export default function PortalContratos() {
           {t('portal.pages.contracts.title')}
         </h1>
       </header>
+
+      {/* Visão macro do ciclo de vida */}
+      {!isLoading && <ContratosLifecycle contratos={contratos ?? []} />}
 
       {/* Pesquisa */}
       <div className="relative max-w-sm">

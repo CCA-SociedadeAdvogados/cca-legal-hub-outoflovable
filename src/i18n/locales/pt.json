@@ -2000,6 +2000,17 @@
       "download": "Descarregar",
       "downloadError": "Não foi possível descarregar o ficheiro"
     },
+    "lifecycle": {
+      "inForce": "Em vigor",
+      "attention": "A renovar/expirar (90 dias)",
+      "terminated": "Terminados",
+      "byPhase": "Distribuição por fase",
+      "phases": {
+        "preparacao": "Em preparação",
+        "vigor": "Em vigor",
+        "terminado": "Terminados"
+      }
+    },
     "matters": {
       "empty": "Ainda não há assuntos em curso.",
       "opened": "Aberto em",

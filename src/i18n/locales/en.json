@@ -2000,6 +2000,17 @@
       "download": "Download",
       "downloadError": "Could not download the file"
     },
+    "lifecycle": {
+      "inForce": "In force",
+      "attention": "Renewing/expiring (90 days)",
+      "terminated": "Terminated",
+      "byPhase": "Distribution by phase",
+      "phases": {
+        "preparacao": "In preparation",
+        "vigor": "In force",
+        "terminado": "Terminated"
+      }
+    },
     "matters": {
       "empty": "No ongoing matters yet.",
       "opened": "Opened on",
