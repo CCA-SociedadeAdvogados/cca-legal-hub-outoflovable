@@ -319,8 +319,46 @@ INSTRUÇÕES IMPORTANTES:
       ? `ATENÇÃO: Este PDF contém pouco texto extraível — pode ser um documento digitalizado. Analise o texto disponível com o máximo detalhe possível.\n\nContrato:\n\n${truncatedText}`
       : `Analise detalhadamente o seguinte contrato e extraia TODAS as informações disponíveis:\n\n${truncatedText}`;
 
-    console.log(`[parse-contract] Calling Claude Sonnet...`);
-    const content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 16384);
+    // PDF digitalizado (sem texto extraível): enviar o próprio PDF ao Claude
+    // como bloco `document` para OCR nativo, em vez do texto vazio.
+    const isPdf =
+      (typeof mimeType === "string" && mimeType.includes("pdf")) ||
+      (typeof fileName === "string" && (fileName as string).toLowerCase().endsWith(".pdf"));
+
+    let content: string;
+    if (isScannedPDF && isPdf && fileContent) {
+      console.log("[parse-contract] Scanned PDF — OCR via Claude document block");
+      content = await anthropicMessage({
+        apiKey: ANTHROPIC_API_KEY,
+        model: CLAUDE_SONNET,
+        system: systemPrompt,
+        maxTokens: 16384,
+        betaHeader: "pdfs-2024-09-25",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "document",
+                source: {
+                  type: "base64",
+                  media_type: "application/pdf",
+                  data: fileContent as string,
+                },
+              },
+              {
+                type: "text",
+                text:
+                  "Este é um contrato em PDF digitalizado (imagem). Faz OCR de todo o documento e extrai TODAS as informações disponíveis para o JSON pedido.",
+              },
+            ],
+          },
+        ],
+      });
+    } else {
+      console.log(`[parse-contract] Calling Claude Sonnet...`);
+      content = await callClaude(ANTHROPIC_API_KEY, systemPrompt, userMessage, 16384);
+    }
 
     // ── 3. Parsear resposta JSON ───────────────────────────────────────────
     let parsedData;

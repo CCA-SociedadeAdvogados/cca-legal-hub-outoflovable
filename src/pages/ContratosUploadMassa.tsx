@@ -398,6 +398,8 @@ export default function ContratosUploadMassa() {
         arquivo_nome_original: item.file.name,
         arquivo_mime_type: item.file.type || null,
         extraido_json: item.extractedData ? JSON.parse(JSON.stringify(item.extractedData)) : null,
+        // Entram como provisórios (a validar), tal como o upload individual.
+        validation_status: 'draft_only',
       }));
 
       const { error } = await supabase.from('contratos').insert(payload);
@@ -408,6 +410,8 @@ export default function ContratosUploadMassa() {
       });
 
       toast({ title: t('bulkUpload.success.created', { count: toCreate.length }) });
+      // Dar seguimento ao fluxo: levar o utilizador aos contratos criados.
+      navigate('/contratos');
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : t('bulkUpload.errors.createFailed');
       setGlobalError(errorMessage);
