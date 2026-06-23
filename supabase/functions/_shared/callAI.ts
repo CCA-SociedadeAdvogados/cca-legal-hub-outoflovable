@@ -9,7 +9,8 @@ const ANTHROPIC_VERSION = "2023-06-01";
 
 export interface ClaudeMessage {
   role: "user" | "assistant";
-  content: string;
+  // string (texto) ou array de blocos de conteúdo (text/image/document) para visão/OCR.
+  content: string | unknown[];
 }
 
 export interface CallClaudeOptions {
@@ -21,6 +22,8 @@ export interface CallClaudeOptions {
   /** Conversa multi-turno (alternativa a `user`). */
   messages?: ClaudeMessage[];
   maxTokens: number;
+  /** Cabeçalho anthropic-beta (ex.: "pdfs-2024-09-25" para blocos document PDF). */
+  betaHeader?: string;
 }
 
 /**
@@ -35,6 +38,7 @@ export async function callClaude({
   user,
   messages,
   maxTokens,
+  betaHeader,
 }: CallClaudeOptions): Promise<string> {
   const finalMessages: ClaudeMessage[] = messages ?? [
     { role: "user", content: user ?? "" },
@@ -45,6 +49,7 @@ export async function callClaude({
       "x-api-key": apiKey,
       "anthropic-version": ANTHROPIC_VERSION,
       "content-type": "application/json",
+      ...(betaHeader ? { "anthropic-beta": betaHeader } : {}),
     },
     body: JSON.stringify({
       model,
