@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ValidationBadge } from '@/components/contracts/ValidationBadge';
 import { useContractExtractions } from '@/hooks/useContractExtractions';
+import { useValidateContrato } from '@/hooks/useValidateContrato';
 import { format, differenceInDays } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -166,6 +167,8 @@ export default function ContratoDetalhe() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [pendingState, setPendingState] = useState<EstadoContrato | null>(null);
+  const [confirmValidate, setConfirmValidate] = useState(false);
+  const validateContrato = useValidateContrato();
   useCCAStatus(id);
 
   const changeState = useMutation({
@@ -328,6 +331,22 @@ export default function ContratoDetalhe() {
                   className={`mr-2 h-4 w-4 ${triggerCCAValidation.isPending ? 'animate-spin' : ''}`}
                 />
                 {validationStatus === 'failed' ? 'Reprocessar' : 'Revalidar'}
+              </Button>
+            )}
+            {!isLocal && validationStatus !== 'validated' && validationStatus !== 'validating' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-positive/40 text-positive hover:bg-positive/10"
+                disabled={validateContrato.isPending}
+                onClick={() => setConfirmValidate(true)}
+              >
+                {validateContrato.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                Validar
               </Button>
             )}
             {canChangeState && (
@@ -814,6 +833,32 @@ export default function ContratoDetalhe() {
               }}
             >
               Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirmação de validação humana */}
+      <AlertDialog open={confirmValidate} onOpenChange={setConfirmValidate}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Validar este contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O contrato deixa de estar{' '}
+              <span className="font-medium text-foreground">Provisório</span> e passa a{' '}
+              <span className="font-medium text-foreground">Validado</span>. Confirma que os dados
+              foram revistos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (id) validateContrato.mutate(id);
+                setConfirmValidate(false);
+              }}
+            >
+              Validar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

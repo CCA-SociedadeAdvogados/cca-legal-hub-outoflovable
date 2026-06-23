@@ -51,6 +51,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { ValidationBadge, ValidationStatusType } from './ValidationBadge';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
+import { useValidateContrato } from '@/hooks/useValidateContrato';
 import { estadoBadgeClass, estadoLabel } from '@/lib/contractEstado';
 import { cn } from '@/lib/utils';
 
@@ -381,6 +382,9 @@ export function ContractsTable({
   const [drawerContract, setDrawerContract] = useState<Contrato | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<string | null>(null);
+  const [validateDialogOpen, setValidateDialogOpen] = useState(false);
+  const [contractToValidate, setContractToValidate] = useState<string | null>(null);
+  const validateContrato = useValidateContrato();
 
   // Debounce search
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -449,6 +453,16 @@ export function ContractsTable({
 
   const contractToDeleteTitle = contractToDelete
     ? (contratos.find((c) => c.id === contractToDelete)?.titulo_contrato ?? null)
+    : null;
+
+  const confirmValidate = () => {
+    if (contractToValidate) validateContrato.mutate(contractToValidate);
+    setValidateDialogOpen(false);
+    setContractToValidate(null);
+  };
+
+  const contractToValidateTitle = contractToValidate
+    ? (contratos.find((c) => c.id === contractToValidate)?.titulo_contrato ?? null)
     : null;
 
   const colCount = isViewer ? 5 : 6;
@@ -627,6 +641,20 @@ export function ContractsTable({
                             Abrir ficha
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          {isInternal &&
+                            c.validation_status !== 'validated' &&
+                            c.validation_status !== 'validating' && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setContractToValidate(c.id);
+                                  setValidateDialogOpen(true);
+                                }}
+                                className="text-positive focus:text-positive"
+                              >
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Validar
+                              </DropdownMenuItem>
+                            )}
                           {showArchived ? (
                             <DropdownMenuItem onClick={() => onRestore?.(c.id)}>
                               <ArchiveRestore className="mr-2 h-4 w-4" />
@@ -699,6 +727,30 @@ export function ContractsTable({
             >
               Eliminar
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Validate dialog ── */}
+      <AlertDialog open={validateDialogOpen} onOpenChange={setValidateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Validar contrato?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {contractToValidateTitle ? (
+                <>
+                  <span className="font-medium text-foreground">{contractToValidateTitle}</span>{' '}
+                  deixa de estar Provisório e passa a Validado. Confirma que os dados foram
+                  revistos.
+                </>
+              ) : (
+                'O contrato deixa de estar Provisório e passa a Validado.'
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmValidate}>Validar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
