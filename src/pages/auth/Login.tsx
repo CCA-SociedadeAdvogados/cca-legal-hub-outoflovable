@@ -250,43 +250,6 @@ export default function Login() {
             Contratos, documentos, obrigações fiscais e legislação aplicável — tudo organizado e ao
             seu alcance.
           </p>
-
-          {/* Testimonial card */}
-          <div
-            className="relative mt-12 rounded-md p-7 backdrop-blur-sm"
-            style={{
-              background: 'hsl(var(--sidebar-ink) / 0.04)',
-              border: '1px solid hsl(var(--sidebar-ink) / 0.08)',
-            }}
-          >
-            <span
-              className="absolute right-5 top-3 font-serif text-[60px] italic leading-none opacity-35"
-              style={{ color: 'hsl(var(--accent-brand))' }}
-            >
-              &ldquo;
-            </span>
-            <p className="max-w-[430px] font-serif text-[17px] italic leading-[1.5] text-sidebar-ink">
-              A plataforma que nos permite antecipar riscos regulatórios e manter os nossos
-              contratos sempre em conformidade.
-            </p>
-            <div
-              className="mt-4 flex items-center gap-3 pt-3.5"
-              style={{ borderTop: '1px solid hsl(var(--sidebar-ink) / 0.08)' }}
-            >
-              <div
-                className="flex h-9 w-9 items-center justify-center rounded-full font-serif text-[13px] font-medium text-white"
-                style={{ background: 'hsl(var(--accent-brand))' }}
-              >
-                SP
-              </div>
-              <div className="leading-tight">
-                <div className="text-[12.5px] font-medium text-sidebar-ink">Sofia Pereira</div>
-                <div className="mt-0.5 text-[11px] text-sidebar-ink-mute">
-                  Head of Legal · Grupo Aurora · Cliente desde 2024
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
