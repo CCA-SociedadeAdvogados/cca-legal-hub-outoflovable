@@ -36,8 +36,8 @@ export function StatCard({
       variant="elevated"
       className="group relative overflow-hidden transition-transform duration-200 hover:-translate-y-[3px]"
     >
-      {/* Filete de acento no topo — cresce no hover */}
-      <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full" />
+      {/* Filete de acento no topo — visível em repouso (28px), cresce no hover */}
+      <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-7 bg-brand transition-all duration-300 group-hover:w-full" />
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">

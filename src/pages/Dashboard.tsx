@@ -21,6 +21,7 @@ import {
   Loader2,
   FileText,
   Clock,
+  ArrowRight,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TIPO_CONTRATO_LABELS, ESTADO_CONTRATO_LABELS } from '@/types/contracts';
@@ -165,6 +166,62 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Resumo do dia — banner hero */}
+        <section className="relative overflow-hidden rounded-card border border-line bg-gradient-to-r from-secondary to-card p-6 shadow-card lg:p-7">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 200 200"
+            className="pointer-events-none absolute -right-8 top-1/2 h-56 w-56 -translate-y-1/2 text-ink opacity-[0.07]"
+          >
+            {[88, 66, 44, 22].map((r) => (
+              <circle
+                key={r}
+                cx="100"
+                cy="100"
+                r={r}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            ))}
+          </svg>
+          <div className="relative z-10 max-w-2xl">
+            <div className="eyebrow mb-2.5" style={{ color: 'hsl(var(--accent-brand))' }}>
+              ✦ {t('home.summary.eyebrow')}
+            </div>
+            {stats.contratosExpirar90Dias > 0 ? (
+              <>
+                <h2 className="font-serif text-[24px] font-normal leading-tight tracking-tight text-ink">
+                  <span style={{ color: 'hsl(var(--accent-brand))' }}>
+                    {stats.contratosExpirar90Dias}
+                  </span>{' '}
+                  {t('home.summary.expiring', { count: stats.contratosExpirar90Dias })}
+                </h2>
+                <p className="mt-1 text-[13.5px] text-ink-soft">{t('home.summary.window')}</p>
+              </>
+            ) : (
+              <>
+                <h2 className="font-serif text-[24px] font-normal leading-tight tracking-tight text-ink">
+                  {t('home.summary.allClear')}
+                </h2>
+                <p className="mt-1 text-[13.5px] text-ink-soft">{t('home.summary.allClearSub')}</p>
+              </>
+            )}
+            <div className="mt-4 flex flex-wrap gap-2.5">
+              <Button asChild size="sm">
+                <Link to="/contratos">{t('home.summary.reviewContracts')}</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link to="/prazos">
+                  <Clock className="mr-2 h-4 w-4" />
+                  {t('home.summary.viewDeadlines')}
+                  <ArrowRight className="ml-1.5 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
         <div id="dashboard-content" className="dash-enter space-y-4">
           {/* KPI Row */}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -188,7 +245,7 @@ export default function Dashboard() {
                   docStats.percent < 50 && 'border-danger/30',
                 )}
               >
-                <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full" />
+                <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-7 bg-brand transition-all duration-300 group-hover:w-full" />
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
