@@ -754,7 +754,18 @@
     "widgetLoadError": "Unable to load this widget.",
     "greetingMorning": "Good morning",
     "greetingAfternoon": "Good afternoon",
-    "greetingEvening": "Good evening"
+    "greetingEvening": "Good evening",
+    "summary": {
+      "eyebrow": "Daily summary",
+      "expiring_one": "contract expiring",
+      "expiring_other": "contracts expiring",
+      "window": "In the next 90 days.",
+      "allClear": "You're all caught up.",
+      "allClearSub": "No contracts expiring in the next 90 days.",
+      "reviewContracts": "Review contracts",
+      "viewDeadlines": "View deadlines",
+      "sessionStarted": "Session started"
+    }
   },
   "legislation": {
     "title": "Legal Legislation",

@@ -754,7 +754,18 @@
     "widgetLoadError": "Não foi possível carregar este widget.",
     "greetingMorning": "Bom dia",
     "greetingAfternoon": "Boa tarde",
-    "greetingEvening": "Boa noite"
+    "greetingEvening": "Boa noite",
+    "summary": {
+      "eyebrow": "Resumo do dia",
+      "expiring_one": "contrato a expirar",
+      "expiring_other": "contratos a expirar",
+      "window": "Nos próximos 90 dias.",
+      "allClear": "Está tudo em dia.",
+      "allClearSub": "Sem contratos a expirar nos próximos 90 dias.",
+      "reviewContracts": "Rever contratos",
+      "viewDeadlines": "Ver prazos",
+      "sessionStarted": "Sessão iniciada"
+    }
   },
   "legislation": {
     "title": "Normativos Legais",
