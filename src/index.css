@@ -331,6 +331,47 @@
     text-wrap: balance;
   }
 
+  /* Staggered entrance for dashboard content */
+  .dash-enter > * {
+    animation: dashIn 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .dash-enter > *:nth-child(1) {
+    animation-delay: 0.02s;
+  }
+  .dash-enter > *:nth-child(2) {
+    animation-delay: 0.07s;
+  }
+  .dash-enter > *:nth-child(3) {
+    animation-delay: 0.12s;
+  }
+  .dash-enter > *:nth-child(4) {
+    animation-delay: 0.17s;
+  }
+  .dash-enter > *:nth-child(5) {
+    animation-delay: 0.22s;
+  }
+  .dash-enter > *:nth-child(6) {
+    animation-delay: 0.27s;
+  }
+  .dash-enter > *:nth-child(7) {
+    animation-delay: 0.32s;
+  }
+  @keyframes dashIn {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dash-enter > * {
+      animation: none;
+    }
+  }
+
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;

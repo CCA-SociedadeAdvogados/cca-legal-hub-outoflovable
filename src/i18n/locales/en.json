@@ -751,7 +751,10 @@
       "legislation": "Legislation",
       "noLinksConfigured": "No shortcuts configured."
     },
-    "widgetLoadError": "Unable to load this widget."
+    "widgetLoadError": "Unable to load this widget.",
+    "greetingMorning": "Good morning",
+    "greetingAfternoon": "Good afternoon",
+    "greetingEvening": "Good evening"
   },
   "legislation": {
     "title": "Legal Legislation",
