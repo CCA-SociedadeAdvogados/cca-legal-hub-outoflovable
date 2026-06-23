@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
 import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/contexts/AuthContext';
+import { Eyebrow } from '@/components/cca';
 import { useTranslation } from 'react-i18next';
-import { format, differenceInDays } from 'date-fns';
+import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import {
   FileCheck,
@@ -62,9 +64,30 @@ export default function Dashboard() {
   const { stats, contratosAExpirar, contratos, isLoading } = useDashboardStats();
   const { items: checklistItems, isTableAvailable: checklistAvailable } = useDocumentChecklist();
   const { profile } = useProfile();
-  const { t } = useTranslation();
+  const { user } = useAuth();
+  const { t, i18n } = useTranslation();
 
   const firstName = (profile?.nome_completo ?? '').trim().split(' ')[0] || '';
+
+  // Saudação consciente da hora + data por extenso (locale-aware).
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 13) return t('home.greetingMorning');
+    if (h < 20) return t('home.greetingAfternoon');
+    return t('home.greetingEvening');
+  };
+  const dateLong = () => {
+    const s = new Date().toLocaleDateString(i18n.language, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  const sessionStarted = user?.last_sign_in_at
+    ? formatDistanceToNow(new Date(user.last_sign_in_at), { addSuffix: true, locale: pt })
+    : null;
 
   // Distribuição da carteira por fase (em preparação · em vigor · terminado).
   const phases = useMemo(() => {
@@ -105,11 +128,25 @@ export default function Dashboard() {
       <div className="space-y-5 animate-fade-in">
         {/* Page Header */}
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">
-              {firstName ? t('dashboard.welcome', { name: firstName }) : t('dashboard.title')}
+          <div className="space-y-1.5">
+            <Eyebrow>{dateLong()}</Eyebrow>
+            <h1 className="font-display text-[32px] font-normal leading-[1.1] tracking-[-0.02em] text-ink">
+              {firstName ? (
+                <>
+                  {greeting()}, <span className="italic text-brand">{firstName}</span>.
+                </>
+              ) : (
+                greeting()
+              )}
             </h1>
-            <p className="text-muted-foreground text-sm mt-0.5">{t('dashboard.subtitle')}</p>
+            <p className="text-sm text-muted-foreground">{t('dashboard.subtitle')}</p>
+            {sessionStarted && (
+              <div className="inline-flex items-center gap-2 pt-1 text-[12px] text-ink-soft">
+                <span className="h-[7px] w-[7px] rounded-full bg-positive" />
+                {t('home.summary.sessionStarted')}{' '}
+                <span className="font-medium text-ink">{sessionStarted}</span>
+              </div>
+            )}
           </div>
           <div className="flex gap-2">
             <ExportPDFButton contentId="dashboard-content" filename="Visao-Geral" />
@@ -128,7 +165,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div id="dashboard-content" className="space-y-4">
+        <div id="dashboard-content" className="dash-enter space-y-4">
           {/* KPI Row */}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
@@ -147,10 +184,11 @@ export default function Dashboard() {
             {checklistAvailable && docStats.total > 0 && (
               <Card
                 className={cn(
-                  'overflow-hidden relative',
+                  'group relative overflow-hidden transition-transform duration-200 hover:-translate-y-[3px]',
                   docStats.percent < 50 && 'border-danger/30',
                 )}
               >
+                <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full" />
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
