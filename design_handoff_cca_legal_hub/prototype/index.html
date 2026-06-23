@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1440"/>
+<title>CCA · Legal Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=EB+Garamond:ital,wght@0,400..700;1,400..700&family=Cormorant+Garamond:ital,wght@0,400..700;1,400..700&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: #FAF7F1; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  button, input { font-family: inherit; }
+  .dash-enter > * { animation: dashIn .5s cubic-bezier(.2,.7,.2,1) both; }
+  .dash-enter > *:nth-child(1){animation-delay:.02s}
+  .dash-enter > *:nth-child(2){animation-delay:.07s}
+  .dash-enter > *:nth-child(3){animation-delay:.12s}
+  .dash-enter > *:nth-child(4){animation-delay:.17s}
+  .dash-enter > *:nth-child(5){animation-delay:.22s}
+  .dash-enter > *:nth-child(6){animation-delay:.27s}
+  .dash-enter > *:nth-child(7){animation-delay:.32s}
+  @keyframes dashIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){ .dash-enter > *{ animation: none; } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel">
+
+// ========== src/data.jsx ==========
+// CCA Legal Hub — real data based on reference screens
+// Sidebar order preserved from original
+
+const NAV = [
+  { id: 'inicio', icon: 'home', label: 'Início' },
+  { id: 'notificacoes', icon: 'bell', label: 'Notificações' },
+  { id: 'conta', icon: 'wallet', label: 'Minha Conta Corrente' },
+  { id: 'legalbi', icon: 'chart', label: 'LegalBI' },
+  { id: 'contratos', icon: 'doc', label: 'Meus Contratos', chevron: true },
+  { id: 'documentos', icon: 'folder', label: 'Documentos' },
+  { id: 'insights', icon: 'spark', label: 'Legal Insights' },
+  { id: 'novidades', icon: 'news', label: 'Novidades CCA' },
+  { id: 'politicas', icon: 'shield', label: 'Políticas' },
+  { id: 'impostos', icon: 'coin', label: 'Impostos', locked: true },
+  { id: 'legislacao', icon: 'book', label: 'Legislação & Jurisp.', locked: true },
+  { id: 'utilizadores', icon: 'users', label: 'Utilizadores' },
+  { id: 'organizacao', icon: 'building', label: 'Organização' },
+];
+
+const NAV_SECONDARY = [
+  { id: 'escuro', icon: 'moon', label: 'Modo Escuro' },
+  { id: 'admin', icon: 'gear', label: 'Administração' },
+  { id: 'defs', icon: 'sliders', label: 'Definições' },
+  { id: 'logout', icon: 'logout', label: 'Terminar sessão' },
+  { id: 'collapse', icon: 'collapse', label: 'Recolher' },
+];
+
+const CONTRACTS = [
+  { id: 'RENEW-001', title: 'AUTO RENEWAL ORDER FORM | DOCUSIGN', vendor: 'DocuSign International (EMEA) Limited', status: 'Activo', renews: '12 Jun 2026', value: '€ 48.200' },
+  { id: 'SPA-0274', title: 'Order and Sale Agreement R074267 CCA Intapp, Inc.', vendor: 'Integration Appliance, Inc. (Intapp)', status: 'Activo', renews: '03 Set 2026', value: '€ 124.500' },
+  { id: 'MSA-0189', title: 'Master Services Agreement — Microsoft Portugal', vendor: 'Microsoft Portugal, S.A.', status: 'Activo', renews: '28 Abr 2026', value: '€ 86.700' },
+  { id: 'NDA-0412', title: 'Mutual NDA — Deloitte Consulting', vendor: 'Deloitte Consultores, S.A.', status: 'Em revisão', renews: '—', value: '—' },
+  { id: 'SUB-0038', title: 'LexisNexis Enterprise Subscription', vendor: 'LexisNexis Portugal, Lda.', status: 'Activo', renews: '15 Jul 2026', value: '€ 22.100' },
+];
+
+const DOCUMENTS = [
+  { id: 'D-1034', title: 'Parecer fiscal Q1 2026', folder: 'Fiscalidade', updated: 'há 2 h', author: 'Dra. Helena Cunha', size: '2.4 MB' },
+  { id: 'D-1029', title: 'Ata Assembleia Geral — Abr 2026', folder: 'Corporate', updated: 'ontem', author: 'Dr. Rafael Campos', size: '1.1 MB' },
+  { id: 'D-1024', title: 'Due diligence — Projecto Aurora', folder: 'M&A', updated: 'há 3 dias', author: 'Dra. Beatriz Andrade', size: '18.7 MB' },
+  { id: 'D-1018', title: 'Minuta — Contrato de prestação de serviços', folder: 'Contratos', updated: 'há 5 dias', author: 'Dr. Gustavo Teixeira', size: '480 KB' },
+];
+
+const INSIGHTS = [
+  { cat: 'Fiscalidade', title: 'Reforma do IRC: impactos nas holdings familiares em 2026', date: '12 Abr 2026', read: '8 min', featured: true },
+  { cat: 'Regulatório', title: 'Nova regulação da ANACOM e o mercado de telecomunicações', date: '04 Abr 2026', read: '6 min' },
+  { cat: 'M&A', title: 'Cláusulas MAC em contratos pós-pandemia', date: '28 Mar 2026', read: '12 min' },
+  { cat: 'Compliance', title: 'DORA: o que muda para as empresas portuguesas', date: '22 Mar 2026', read: '10 min' },
+];
+
+const NEWS_CCA = [
+  { date: '18 Abr', title: 'CCA premiada como "Best Tax Firm 2026" pela Chambers Europe', tag: 'Prémio' },
+  { date: '11 Abr', title: 'Nova parceria com escritório em Madrid', tag: 'Expansão' },
+  { date: '02 Abr', title: 'CCA Talks: Reforma Tributária — registo aberto', tag: 'Evento' },
+];
+
+const KPIS = [
+  { label: 'Contratos activos', value: '23', delta: '+2', trend: 'up' },
+  { label: 'A expirar em 30 dias', value: '3', delta: 'atenção', trend: 'warn' },
+  { label: 'Documentos novos', value: '12', delta: '+5', trend: 'up' },
+  { label: 'Saldo em conta', value: '€ 14.280', delta: '—', trend: 'flat' },
+];
+
+const RECENT_ACTIVITY = [
+  { type: 'doc', who: 'Dra. Helena Cunha', what: 'carregou', obj: 'Parecer fiscal Q1 2026', when: 'há 2 h' },
+  { type: 'contract', who: 'Sistema', what: 'aprovou', obj: 'Renovação DocuSign', when: 'há 4 h' },
+  { type: 'message', who: 'Dr. Rafael Campos', what: 'enviou mensagem sobre', obj: 'Projecto Aurora', when: 'ontem' },
+  { type: 'news', who: 'CCA', what: 'publicou', obj: 'Legal Insight sobre reforma do IRC', when: 'ontem' },
+];
+
+window.CCA = { NAV, NAV_SECONDARY, CONTRACTS, DOCUMENTS, INSIGHTS, NEWS_CCA, KPIS, RECENT_ACTIVITY };
+
+
+// ========== src/themes.jsx ==========
+// Three elegant directions — each centered on CCA orange, handled with restraint.
+
+const THEMES = {
+  // 1) TERRACOTA — laranja queimado em paleta creme/barro. Editorial, italiano, sofisticado.
+  //    Laranja é acento de personalidade, não protagonista; fica "quente" sem ser gritante.
+  terracota: {
+    id: 'terracota',
+    name: 'Terracota',
+    tagline: 'Creme quente · laranja queimado · serifa editorial',
+    bg: '#F6F0E6',
+    bgAlt: '#EFE7D8',
+    surface: '#FCF7EC',
+    sidebar: '#1F1612',
+    sidebarInk: '#F2E7D2',
+    sidebarInkMute: '#9A8B74',
+    sidebarActive: '#C25A22',        // terracota, menos saturado
+    sidebarActiveInk: '#FCF7EC',
+    ink: '#1B1510',
+    inkSoft: '#5A4A3C',
+    inkMute: '#8F8271',
+    line: '#D8CBB0',
+    lineSoft: '#E8DEC8',
+    accent: '#B85022',                // terra cotta mais contido
+    accentSoft: '#B8502214',
+    accentStrong: '#A0421A',
+    positive: '#5A6E3F',
+    warn: '#B4702A',
+    danger: '#8B3622',
+    display: '"Fraunces", "EB Garamond", Georgia, serif',
+    serif: '"EB Garamond", Georgia, serif',
+    sans: '"Inter Tight", "Helvetica Neue", sans-serif',
+    mono: '"JetBrains Mono", ui-monospace, monospace',
+    radius: 2,
+    radiusCard: 4,
+  },
+
+  // 2) ÁMBAR — preto profundo + âmbar quente (o laranja CCA amadurecido).
+  //    Sidebar preto, canvas branco quase puro. Laranja só nos moments que importam.
+  ambar: {
+    id: 'ambar',
+    name: 'Âmbar',
+    tagline: 'Preto & branco-marfim · laranja em acentos precisos',
+    bg: '#FAF7F1',
+    bgAlt: '#F2EDE2',
+    surface: '#FFFFFF',
+    sidebar: '#0D0B09',
+    sidebarInk: '#EDE6D7',
+    sidebarInkMute: '#8A8274',
+    sidebarActive: '#C9591E',        // laranja CCA ajustado — menos néon
+    sidebarActiveInk: '#0D0B09',
+    ink: '#121010',
+    inkSoft: '#4A4540',
+    inkMute: '#8B857D',
+    line: '#E2DACB',
+    lineSoft: '#EDE7D9',
+    accent: '#BD4E18',                // âmbar quente, maduro
+    accentSoft: '#BD4E1810',
+    accentStrong: '#9F3F12',
+    positive: '#4F6B3D',
+    warn: '#C87828',
+    danger: '#9A3B25',
+    display: '"Fraunces", Georgia, serif',
+    serif: '"Fraunces", Georgia, serif',
+    sans: '"Inter Tight", "Helvetica Neue", sans-serif',
+    mono: '"JetBrains Mono", ui-monospace, monospace',
+    radius: 3,
+    radiusCard: 6,
+  },
+
+  // 3) COBRE — monocromo quente. Toda a paleta em tons de cobre/laranja/terracota.
+  //    Laranja é o DNA — controlado com escala de valores (claro, médio, escuro).
+  cobre: {
+    id: 'cobre',
+    name: 'Cobre',
+    tagline: 'Monocromia quente · laranja como sistema completo',
+    bg: '#FBF4EA',
+    bgAlt: '#F3E8D6',
+    surface: '#FEF9EF',
+    sidebar: '#2A160B',                // laranja escuríssimo, quase castanho
+    sidebarInk: '#F6E4CC',
+    sidebarInkMute: '#A48770',
+    sidebarActive: '#D0661F',        // cobre quente sem estridência
+    sidebarActiveInk: '#2A160B',
+    ink: '#2A160B',
+    inkSoft: '#6B4C35',
+    inkMute: '#9A7C63',
+    line: '#E3CEA8',
+    lineSoft: '#EEDEBD',
+    accent: '#B85018',                // cobre escurecido
+    accentSoft: '#B8501814',
+    accentStrong: '#8F3C10',
+    positive: '#6B7A3D',
+    warn: '#C8772A',
+    danger: '#8B3622',
+    display: '"Instrument Serif", "Cormorant Garamond", Georgia, serif',
+    serif: '"Cormorant Garamond", Georgia, serif',
+    sans: '"Inter Tight", "Helvetica Neue", sans-serif',
+    mono: '"JetBrains Mono", ui-monospace, monospace',
+    radius: 2,
+    radiusCard: 3,
+  },
+};
+
+window.THEMES = THEMES;
+
+
+// ========== src/icons.jsx ==========
+// Icons — simple stroked SVG set
+const Icon = ({ name, size = 16, color = 'currentColor' }) => {
+  const s = { width: size, height: size, stroke: color, fill: 'none', strokeWidth: 1.4, strokeLinecap: 'round', strokeLinejoin: 'round' };
+  const P = {
+    home: 'M3 10l9-7 9 7v10a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2V10z',
+    bell: 'M6 8a6 6 0 1 1 12 0v5l2 3H4l2-3V8zM10 19a2 2 0 0 0 4 0',
+    wallet: 'M3 7h15a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7zM3 7V5a2 2 0 0 1 2-2h11v4M16 13h3',
+    chart: 'M4 20V4M4 20h16M8 16V10M12 16V6M16 16v-8M20 16v-4',
+    doc: 'M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v4h4M8 12h8M8 16h8M8 8h3',
+    folder: 'M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z',
+    spark: 'M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8',
+    news: 'M4 5h13a2 2 0 0 1 2 2v11a2 2 0 0 0 2-2V6H7M4 5v13a2 2 0 0 0 2 2h10V7a2 2 0 0 0-2-2H4zM8 10h5M8 14h5',
+    shield: 'M12 3l8 3v6c0 4.5-3.3 8.5-8 10-4.7-1.5-8-5.5-8-10V6l8-3z',
+    coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM9 10h5M10 14h4M12 7v10',
+    book: 'M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3V4zM5 20a3 3 0 0 1 3-3h10',
+    users: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1M17 11a3 3 0 0 0 0-6M23 21v-1a4 4 0 0 0-4-4h-1',
+    building: 'M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16M9 7h2M13 7h2M9 11h2M13 11h2M9 15h2M13 15h2M10 21v-4h4v4',
+    moon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z',
+    gear: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
+    sliders: 'M4 6h10M18 6h2M4 12h2M10 12h10M4 18h14M18 18h2M14 4v4M6 10v4M14 16v4',
+    logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+    collapse: 'M9 4v16M15 4v16M6 8l-3 4 3 4',
+    search: 'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zM21 21l-4.3-4.3',
+    plus: 'M12 5v14M5 12h14',
+    arrow: 'M5 12h14M13 5l7 7-7 7',
+    chevron: 'M9 6l6 6-6 6',
+    lock: 'M6 11h12v9a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-9zM8 11V8a4 4 0 0 1 8 0v3',
+    dot: 'M12 12h.01',
+    sparkle: 'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3z',
+    check: 'M4 12l5 5L20 6',
+    bell_s: 'M6 8a6 6 0 0 1 12 0v5l2 3H4l2-3V8zM10 19a2 2 0 0 0 4 0',
+    external: 'M14 5h5v5M19 5l-8 8M5 5h6M5 5v14h14v-6',
+    calendar: 'M7 3v3M17 3v3M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    filter: 'M3 5h18M6 12h12M10 19h4',
+    more: 'M5 12h.01M12 12h.01M19 12h.01',
+  };
+  return (
+    <svg viewBox="0 0 24 24" style={{ ...s, flexShrink: 0 }}>
+      <path d={P[name] || P.dot} />
+    </svg>
+  );
+};
+window.Icon = Icon;
+
+
+// ========== src/shell.jsx ==========
+// Shell: sidebar + topbar + main area. Theme-driven.
+
+const Monogram = ({ theme, size = 28 }) => (
+  <svg width={size} height={size} viewBox="0 0 40 40">
+    <rect x="1" y="1" width="38" height="38" rx={theme.radius} fill="none" stroke={theme.sidebarActive} strokeWidth="1"/>
+    <text x="20" y="26" textAnchor="middle" fontFamily={theme.display} fontSize="15" fontWeight="500" fill={theme.sidebarActive} letterSpacing="0.5">CCA</text>
+  </svg>
+);
+
+const Sidebar = ({ theme, active, setActive, collapsed, setCollapsed }) => {
+  const W = collapsed ? 64 : 244;
+  return (
+    <aside style={{
+      width: W, flexShrink: 0,
+      background: theme.sidebar, color: theme.sidebarInk,
+      display: 'flex', flexDirection: 'column',
+      height: '100vh', position: 'sticky', top: 0,
+      transition: 'width 220ms ease',
+      fontFamily: theme.sans,
+    }}>
+      {/* brand */}
+      <div style={{ padding: collapsed ? '20px 12px' : '20px 18px', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Monogram theme={theme}/>
+        {!collapsed && <div style={{ lineHeight: 1.15 }}>
+          <div style={{ fontFamily: theme.display, fontSize: 16, fontWeight: 500, color: theme.sidebarInk, letterSpacing: '0.01em' }}>Legal Hub</div>
+          <div style={{ fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: theme.sidebarInkMute, marginTop: 3 }}>by CCA</div>
+        </div>}
+      </div>
+
+      {!collapsed && <div style={{ padding: '14px 18px', borderTop: `1px solid ${theme.sidebarInkMute}22`, borderBottom: `1px solid ${theme.sidebarInkMute}22` }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.22em', textTransform: 'uppercase', color: theme.sidebarInkMute, marginBottom: 4 }}>Área reservada</div>
+        <div style={{ fontFamily: theme.display, fontSize: 14, color: theme.sidebarInk }}>CCA · Sociedade de Advogados</div>
+      </div>}
+
+      <nav style={{ flex: 1, overflow: 'auto', padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {window.CCA.NAV.map(item => (
+          <NavItem key={item.id} theme={theme} item={item} active={active === item.id} collapsed={collapsed}
+            onClick={() => !item.locked && setActive(item.id)}/>
+        ))}
+      </nav>
+
+      <div style={{ borderTop: `1px solid ${theme.sidebarInkMute}22`, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {window.CCA.NAV_SECONDARY.map(item => (
+          <NavItem key={item.id} theme={theme} item={item} collapsed={collapsed} secondary
+            onClick={() => item.id === 'collapse' && setCollapsed(!collapsed)}/>
+        ))}
+      </div>
+    </aside>
+  );
+};
+
+const NavItem = ({ theme, item, active, collapsed, onClick, secondary }) => {
+  const [hover, setHover] = React.useState(false);
+  const dim = item.locked;
+  const showActive = active;
+  return (
+    <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: collapsed ? '10px 12px' : '9px 14px',
+        cursor: dim ? 'not-allowed' : 'pointer',
+        background: showActive ? theme.sidebarActive : (hover && !dim ? `${theme.sidebarInkMute}15` : 'transparent'),
+        color: showActive ? theme.sidebarActiveInk : (dim ? `${theme.sidebarInkMute}99` : (secondary ? theme.sidebarInkMute : theme.sidebarInk)),
+        borderRadius: theme.radius,
+        fontSize: 13, fontWeight: showActive ? 500 : 400,
+        transition: 'all 140ms',
+        position: 'relative',
+      }}>
+      <Icon name={item.icon} size={17} color="currentColor"/>
+      {!collapsed && <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>}
+      {!collapsed && item.locked && <Icon name="lock" size={12}/>}
+      {!collapsed && item.chevron && <Icon name="chevron" size={12}/>}
+    </div>
+  );
+};
+
+const Topbar = ({ theme, client, setClient }) => (
+  <header style={{
+    height: 60, borderBottom: `1px solid ${theme.line}`, background: theme.bg,
+    display: 'flex', alignItems: 'center', gap: 16, padding: '0 28px',
+    position: 'sticky', top: 0, zIndex: 20, backdropFilter: 'blur(8px)',
+  }}>
+    {/* search */}
+    <div style={{
+      flex: 1, maxWidth: 440, display: 'flex', alignItems: 'center', gap: 10,
+      padding: '9px 14px', background: theme.surface,
+      border: `1px solid ${theme.line}`, borderRadius: theme.radius,
+    }}>
+      <Icon name="search" size={15} color={theme.inkMute}/>
+      <input placeholder="Pesquisar contratos, políticas, eventos…" style={{
+        flex: 1, background: 'transparent', border: 'none', outline: 'none',
+        fontFamily: theme.sans, fontSize: 13, color: theme.ink,
+      }}/>
+      <kbd style={{ fontFamily: theme.mono, fontSize: 10, color: theme.inkMute, padding: '2px 6px', border: `1px solid ${theme.line}`, borderRadius: 3 }}>⌘ K</kbd>
+    </div>
+
+    <div style={{ flex: 1 }}/>
+
+    {/* client tab */}
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '7px 14px 7px 10px',
+      border: `1px solid ${theme.line}`, background: theme.surface, borderRadius: theme.radius,
+      fontSize: 12, color: theme.inkSoft,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent }}/>
+      <span style={{ fontFamily: theme.mono, color: theme.ink, fontWeight: 500 }}>C.0001</span>
+      <span style={{ color: theme.inkMute }}>—</span>
+      <span>{client}</span>
+      <Icon name="chevron" size={12} color={theme.inkMute}/>
+    </div>
+
+    {/* selector */}
+    <button style={{
+      display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px',
+      background: 'transparent', border: `1px solid ${theme.line}`,
+      fontFamily: theme.sans, fontSize: 12, color: theme.ink, cursor: 'pointer',
+      borderRadius: theme.radius, fontWeight: 500,
+    }}>
+      <Icon name="search" size={13}/>
+      Seleccionar cliente
+    </button>
+
+    {/* icons */}
+    <IconBtn theme={theme} icon="sparkle"/>
+    <IconBtn theme={theme} icon="bell_s" badge/>
+
+    {/* user */}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 6 }}>
+      <div style={{
+        width: 34, height: 34, borderRadius: '50%', background: theme.accent, color: theme.accentSoft.includes('#') ? theme.ink : theme.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: theme.display, fontSize: 14, fontWeight: 500,
+        color: theme.id === 'obsidian' ? '#0E0E10' : '#FBF8F1',
+      }}>A</div>
+      <div style={{ lineHeight: 1.2 }}>
+        <div style={{ fontSize: 12.5, color: theme.ink, fontWeight: 500 }}>André Silva</div>
+        <div style={{ fontSize: 10.5, color: theme.inkMute }}>asilva@cca.law</div>
+      </div>
+    </div>
+  </header>
+);
+
+const IconBtn = ({ theme, icon, badge }) => {
+  const [h, setH] = React.useState(false);
+  return (
+    <button onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{
+      position: 'relative', width: 36, height: 36, borderRadius: theme.radius,
+      border: `1px solid ${h ? theme.accent : theme.line}`, background: h ? theme.surface : 'transparent',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: theme.ink, cursor: 'pointer', transition: 'all 160ms',
+    }}>
+      <Icon name={icon} size={15}/>
+      {badge && <span style={{
+        position: 'absolute', top: 7, right: 7, width: 6, height: 6,
+        borderRadius: '50%', background: theme.accent,
+      }}/>}
+    </button>
+  );
+};
+
+window.Shell = { Sidebar, Topbar, Monogram };
+
+
+// ========== src/inicio.jsx ==========
+// Início — the main dashboard screen
+
+// Time-aware greeting + long date (PT-PT)
+window.ccaGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 13) return 'Bom dia';
+  if (h < 20) return 'Boa tarde';
+  return 'Boa noite';
+};
+window.ccaDateLong = () => {
+  try {
+    const s = new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  } catch (e) { return 'Início'; }
+};
+
+const UI = {};
+
+UI.Eyebrow = ({ theme, children }) => (
+  <div style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: theme.inkMute, fontWeight: 500, fontFamily: theme.sans, display: 'flex', alignItems: 'center', gap: 10 }}>
+    <span style={{ width: 16, height: 1, background: theme.accent }}/>
+    {children}
+  </div>
+);
+
+UI.Card = ({ theme, children, style, ...rest }) => (
+  <div {...rest} style={{
+    background: theme.surface, border: `1px solid ${theme.line}`,
+    borderRadius: theme.radiusCard,
+    boxShadow: '0 1px 2px rgba(43,22,11,0.04), 0 8px 20px -10px rgba(43,22,11,0.07)',
+    ...style,
+  }}>{children}</div>
+);
+
+UI.SectionLabel = ({ theme, children }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '44px 0 0' }}>
+    <span style={{ fontFamily: theme.sans, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: theme.inkMute, fontWeight: 500 }}>{children}</span>
+    <span style={{ flex: 1, height: 1, background: theme.lineSoft }}/>
+  </div>
+);
+
+UI.CardHeader = ({ theme, title, action, icon }) => (
+  <div style={{
+    padding: '18px 22px', borderBottom: `1px solid ${theme.lineSoft}`,
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+  }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {icon && <Icon name={icon} size={15} color={theme.accent}/>}
+      <h3 style={{ fontFamily: theme.display, fontSize: 19, fontWeight: 500, color: theme.ink, margin: 0, letterSpacing: '-0.005em' }}>{title}</h3>
+    </div>
+    {action && <span style={{ fontFamily: theme.sans, fontSize: 11, color: theme.accent, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 500, cursor: 'pointer' }}>{action} →</span>}
+  </div>
+);
+
+UI.Pill = ({ theme, tone = 'default', children }) => {
+  const tones = {
+    default: { bg: 'transparent', fg: theme.inkSoft, border: theme.line },
+    active: { bg: `${theme.positive}18`, fg: theme.positive, border: theme.positive },
+    warn: { bg: `${theme.warn}18`, fg: theme.warn, border: theme.warn },
+    accent: { bg: theme.accentSoft, fg: theme.accent, border: theme.accent },
+  };
+  const t = tones[tone] || tones.default;
+  return <span style={{
+    display: 'inline-flex', alignItems: 'center', gap: 6,
+    padding: '4px 10px', fontFamily: theme.sans, fontSize: 11, fontWeight: 500,
+    color: t.fg, background: t.bg, border: `1px solid ${t.border}`,
+    borderRadius: 100, letterSpacing: '0.04em',
+  }}>{children}</span>;
+};
+
+const Inicio = ({ theme }) => {
+  return (
+    <div className="dash-enter" style={{ padding: '28px 32px 64px', maxWidth: 1520 }}>
+      {/* Page header */}
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+        <div>
+          <UI.Eyebrow theme={theme}>{window.ccaDateLong()}</UI.Eyebrow>
+          <h1 style={{
+            fontFamily: theme.display, fontSize: 40, fontWeight: 400,
+            color: theme.ink, margin: '14px 0 8px', letterSpacing: '-0.02em', lineHeight: 1.05,
+          }}>
+            {window.ccaGreeting()}, <em style={{ color: theme.accent }}>André</em>.
+          </h1>
+          <p style={{ fontFamily: theme.serif, fontSize: 17, color: theme.inkSoft, margin: 0, fontStyle: 'italic' }}>
+            A sua área de gestão jurídica — contratos, documentos e obrigações num só lugar.
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', background: theme.surface, border: `1px solid ${theme.line}`, borderRadius: theme.radiusCard, boxShadow: '0 1px 2px rgba(43,22,11,0.04)' }}>
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: theme.positive }}/>
+          <span style={{ fontFamily: theme.sans, fontSize: 12, color: theme.inkSoft }}>
+            Última sessão: <span style={{ color: theme.ink, fontWeight: 500 }}>hoje, 08:42</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Welcome banner — the hero moment */}
+      <WelcomeBanner theme={theme}/>
+
+      {/* KPIs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 28 }}>
+        {window.CCA.KPIS.map((k, i) => <KPI key={i} theme={theme} kpi={k}/>)}
+      </div>
+
+      {/* Main grid */}
+      <UI.SectionLabel theme={theme}>A sua carteira</UI.SectionLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20, marginTop: 16 }}>
+        <ContractsCard theme={theme}/>
+        <OrgCard theme={theme}/>
+      </div>
+
+      <UI.SectionLabel theme={theme}>Conhecimento &amp; novidades</UI.SectionLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20, marginTop: 16 }}>
+        <DocumentsCard theme={theme}/>
+        <InsightsCard theme={theme}/>
+        <NewsCard theme={theme}/>
+      </div>
+
+      <UI.SectionLabel theme={theme}>Atividade &amp; atalhos</UI.SectionLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 20, marginTop: 16 }}>
+        <ActivityCard theme={theme}/>
+        <QuickActions theme={theme}/>
+      </div>
+    </div>
+  );
+};
+
+const WelcomeBanner = ({ theme }) => (
+  <div style={{
+    position: 'relative', overflow: 'hidden',
+    background: `linear-gradient(110deg, ${theme.bgAlt} 0%, ${theme.surface} 100%)`,
+    border: `1px solid ${theme.line}`,
+    borderRadius: theme.radiusCard,
+    padding: '32px 36px',
+    display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'center',
+  }}>
+    {/* Ornament */}
+    <svg viewBox="0 0 200 200" style={{ position: 'absolute', right: -30, top: -40, width: 260, height: 260, opacity: 0.08, pointerEvents: 'none' }}>
+      <circle cx="100" cy="100" r="98" fill="none" stroke={theme.accent} strokeWidth="0.5"/>
+      <circle cx="100" cy="100" r="78" fill="none" stroke={theme.accent} strokeWidth="0.5"/>
+      <circle cx="100" cy="100" r="58" fill="none" stroke={theme.accent} strokeWidth="0.5"/>
+      <text x="100" y="110" textAnchor="middle" fontFamily={theme.display} fontSize="52" fill={theme.accent}>CCA</text>
+    </svg>
+    <div style={{ position: 'relative', maxWidth: 720 }}>
+      <div style={{ fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase', color: theme.accent, fontWeight: 500, marginBottom: 10 }}>
+        ✦ Resumo do dia
+      </div>
+      <h2 style={{ fontFamily: theme.display, fontSize: 26, fontWeight: 500, color: theme.ink, margin: '0 0 10px', letterSpacing: '-0.01em', lineHeight: 1.15 }}>
+        Tem <span style={{ color: theme.accent }}>3 contratos</span> a expirar nos próximos 30 dias e <span style={{ color: theme.accent }}>5 novos documentos</span> à sua espera.
+      </h2>
+      <p style={{ fontFamily: theme.sans, fontSize: 13.5, color: theme.inkSoft, margin: 0, lineHeight: 1.55 }}>
+        Utilize o menu lateral para navegar entre secções e gerir contratos, documentos e obrigações legais.
+      </p>
+    </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, position: 'relative' }}>
+      <GoldButton theme={theme}>Rever contratos</GoldButton>
+      <GhostButton theme={theme}>Ver agenda</GhostButton>
+    </div>
+  </div>
+);
+
+const GoldButton = ({ theme, children, onClick }) => (
+  <button onClick={onClick} style={{
+    padding: '11px 22px', background: theme.accent,
+    color: theme.id === 'obsidian' ? '#0E0E10' : '#FBF8F1',
+    border: 'none', borderRadius: theme.radius,
+    fontFamily: theme.sans, fontSize: 12, fontWeight: 500, letterSpacing: '0.1em',
+    textTransform: 'uppercase', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 10, justifyContent: 'center',
+    whiteSpace: 'nowrap',
+  }}>{children} <Icon name="arrow" size={13}/></button>
+);
+
+const GhostButton = ({ theme, children, onClick }) => (
+  <button onClick={onClick} style={{
+    padding: '11px 22px', background: 'transparent',
+    color: theme.ink, border: `1px solid ${theme.line}`, borderRadius: theme.radius,
+    fontFamily: theme.sans, fontSize: 12, fontWeight: 500, letterSpacing: '0.1em',
+    textTransform: 'uppercase', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: 10, justifyContent: 'center',
+    whiteSpace: 'nowrap',
+  }}>{children}</button>
+);
+
+const KPI = ({ theme, kpi }) => {
+  const [h, setH] = React.useState(false);
+  return (
+    <div
+      onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+      style={{
+        background: theme.surface, border: `1px solid ${h ? theme.accent : theme.line}`,
+        borderRadius: theme.radiusCard, padding: '20px 22px 22px',
+        position: 'relative', overflow: 'hidden', cursor: 'default',
+        transform: h ? 'translateY(-3px)' : 'none',
+        boxShadow: h
+          ? '0 2px 4px rgba(43,22,11,0.05), 0 16px 30px -12px rgba(43,22,11,0.14)'
+          : '0 1px 2px rgba(43,22,11,0.04), 0 8px 20px -10px rgba(43,22,11,0.07)',
+        transition: 'transform 200ms cubic-bezier(.2,.7,.2,1), box-shadow 200ms, border-color 200ms',
+      }}>
+      {/* top accent rule */}
+      <span style={{
+        position: 'absolute', top: 0, left: 0, height: 2,
+        width: h ? '100%' : '28px', background: theme.accent,
+        transition: 'width 260ms cubic-bezier(.2,.7,.2,1)',
+      }}/>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+        <div style={{ fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: theme.inkMute, fontWeight: 500, fontFamily: theme.sans }}>
+          {kpi.label}
+        </div>
+        <UI.Pill theme={theme} tone={kpi.trend === 'up' ? 'active' : kpi.trend === 'warn' ? 'warn' : 'default'}>
+          {kpi.delta}
+        </UI.Pill>
+      </div>
+      <div style={{ fontFamily: theme.display, fontSize: 38, fontWeight: 400, color: theme.ink, letterSpacing: '-0.02em', lineHeight: 1 }}>
+        {kpi.value}
+      </div>
+    </div>
+  );
+};
+
+const ContractsCard = ({ theme }) => (
+  <UI.Card theme={theme}>
+    <UI.CardHeader theme={theme} title="Contratos Recentes" icon="doc" action="Ver todos"/>
+    <div>
+      {window.CCA.CONTRACTS.slice(0, 4).map((c, i) => <ContractRow key={c.id} theme={theme} c={c} last={i === 3}/>)}
+    </div>
+  </UI.Card>
+);
+
+const ContractRow = ({ theme, c, last }) => {
+  const [h, setH] = React.useState(false);
+  return (
+    <div onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)} style={{
+      padding: '16px 22px', display: 'grid', gridTemplateColumns: '1fr auto auto', gap: 16,
+      alignItems: 'center',
+      borderBottom: last ? 'none' : `1px solid ${theme.lineSoft}`,
+      background: h ? theme.bgAlt : 'transparent', cursor: 'pointer', transition: 'background 140ms',
+    }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: theme.display, fontSize: 15, color: theme.ink, fontWeight: 500, marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.005em' }}>
+          {c.title}
+        </div>
+        <div style={{ fontSize: 12, color: theme.inkMute, fontFamily: theme.sans }}>{c.vendor}</div>
+      </div>
+      <div style={{ textAlign: 'right' }}>
+        <div style={{ fontFamily: theme.mono, fontSize: 11.5, color: theme.inkSoft }}>{c.renews}</div>
+        <div style={{ fontFamily: theme.display, fontSize: 13, color: theme.ink, fontWeight: 500, marginTop: 2 }}>{c.value}</div>
+      </div>
+      <UI.Pill theme={theme} tone={c.status === 'Activo' ? 'active' : 'warn'}>{c.status}</UI.Pill>
+    </div>
+  );
+};
+
+const OrgCard = ({ theme }) => (
+  <UI.Card theme={theme} style={{ padding: 0 }}>
+    <UI.CardHeader theme={theme} title="A Nossa Organização" icon="building"/>
+    <div style={{ padding: '24px 22px 22px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 20 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: theme.radius,
+          background: theme.ink, color: theme.bg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: theme.display, fontSize: 18, fontWeight: 500, letterSpacing: '0.04em',
+        }}>CCA</div>
+        <div>
+          <div style={{ fontFamily: theme.display, fontSize: 18, color: theme.ink, fontWeight: 500 }}>CCA</div>
+          <div style={{ fontSize: 12, color: theme.inkMute, marginTop: 2 }}>Sociedade de Advogados · Lisboa</div>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, padding: '16px 0', borderTop: `1px solid ${theme.lineSoft}`, borderBottom: `1px solid ${theme.lineSoft}` }}>
+        <Stat theme={theme} label="Advogados" value="28"/>
+        <Stat theme={theme} label="Utilizadores" value="14"/>
+        <Stat theme={theme} label="Clientes" value="42"/>
+        <Stat theme={theme} label="Áreas" value="9"/>
+      </div>
+      <div style={{ marginTop: 16, fontSize: 12, color: theme.inkMute, fontFamily: theme.sans, lineHeight: 1.6 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+          <span>Advogado associado</span>
+          <span style={{ color: theme.ink }}>Dra. Helena Cunha</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+          <span>Plano</span>
+          <span style={{ color: theme.accent }}>Enterprise</span>
+        </div>
+      </div>
+    </div>
+  </UI.Card>
+);
+
+const Stat = ({ theme, label, value }) => (
+  <div>
+    <div style={{ fontFamily: theme.display, fontSize: 24, color: theme.ink, fontWeight: 400, lineHeight: 1 }}>{value}</div>
+    <div style={{ fontSize: 10, color: theme.inkMute, letterSpacing: '0.16em', textTransform: 'uppercase', marginTop: 6, fontWeight: 500 }}>{label}</div>
+  </div>
+);
+
+const DocumentsCard = ({ theme }) => (
+  <UI.Card theme={theme}>
+    <UI.CardHeader theme={theme} title="Documentos Recentes" icon="folder" action="Ver"/>
+    <div>
+      {window.CCA.DOCUMENTS.slice(0, 4).map((d, i) => (
+        <div key={d.id} style={{
+          padding: '14px 22px', borderBottom: i === 3 ? 'none' : `1px solid ${theme.lineSoft}`,
+          cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center',
+        }}>
+          <div style={{
+            width: 32, height: 36, border: `1px solid ${theme.line}`, borderRadius: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: theme.bgAlt, flexShrink: 0,
+          }}><Icon name="doc" size={14} color={theme.accent}/></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: theme.sans, fontSize: 13, color: theme.ink, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.title}</div>
+            <div style={{ fontSize: 11, color: theme.inkMute, marginTop: 2 }}>{d.folder} · {d.updated}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </UI.Card>
+);
+
+const InsightsCard = ({ theme }) => {
+  const feat = window.CCA.INSIGHTS[0];
+  return (
+    <UI.Card theme={theme}>
+      <UI.CardHeader theme={theme} title="Legal Insights" icon="spark" action="Explorar"/>
+      <div style={{ padding: 22 }}>
+        <div style={{ marginBottom: 16 }}>
+          <UI.Pill theme={theme} tone="accent">{feat.cat}</UI.Pill>
+        </div>
+        <div style={{ fontFamily: theme.display, fontSize: 19, color: theme.ink, fontWeight: 500, lineHeight: 1.25, letterSpacing: '-0.005em' }}>
+          {feat.title}
+        </div>
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${theme.lineSoft}`, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: theme.inkMute, letterSpacing: '0.08em' }}>
+          <span>{feat.date}</span>
+          <span>{feat.read} leitura</span>
+        </div>
+      </div>
+    </UI.Card>
+  );
+};
+
+const NewsCard = ({ theme }) => (
+  <UI.Card theme={theme}>
+    <UI.CardHeader theme={theme} title="Novidades CCA" icon="news" action="Ver"/>
+    <div>
+      {window.CCA.NEWS_CCA.map((n, i) => (
+        <div key={i} style={{
+          padding: '14px 22px', borderBottom: i === window.CCA.NEWS_CCA.length - 1 ? 'none' : `1px solid ${theme.lineSoft}`,
+          display: 'flex', gap: 14, alignItems: 'flex-start', cursor: 'pointer',
+        }}>
+          <div style={{
+            minWidth: 46, padding: '6px 4px', border: `1px solid ${theme.line}`, borderRadius: 2,
+            textAlign: 'center', background: theme.bgAlt,
+          }}>
+            <div style={{ fontFamily: theme.display, fontSize: 14, color: theme.ink, fontWeight: 500, lineHeight: 1 }}>{n.date.split(' ')[0]}</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: theme.accent, marginTop: 3, fontWeight: 500 }}>{n.date.split(' ')[1]}</div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: theme.sans, fontSize: 13, color: theme.ink, fontWeight: 500, lineHeight: 1.35 }}>{n.title}</div>
+            <div style={{ marginTop: 6 }}><UI.Pill theme={theme} tone="accent">{n.tag}</UI.Pill></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </UI.Card>
+);
+
+const ActivityCard = ({ theme }) => (
+  <UI.Card theme={theme}>
+    <UI.CardHeader theme={theme} title="Actividade Recente" icon="chart"/>
+    <div style={{ padding: '8px 22px 14px' }}>
+      {window.CCA.RECENT_ACTIVITY.map((a, i) => (
+        <div key={i} style={{
+          display: 'flex', gap: 14, alignItems: 'flex-start',
+          padding: '14px 0',
+          borderBottom: i === window.CCA.RECENT_ACTIVITY.length - 1 ? 'none' : `1px solid ${theme.lineSoft}`,
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: '50%', background: theme.bgAlt,
+            border: `1px solid ${theme.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: theme.accent, flexShrink: 0,
+          }}>
+            <Icon name={a.type === 'doc' ? 'doc' : a.type === 'contract' ? 'check' : a.type === 'message' ? 'bell' : 'spark'} size={13}/>
+          </div>
+          <div style={{ flex: 1, fontFamily: theme.sans, fontSize: 13, color: theme.inkSoft, lineHeight: 1.5 }}>
+            <span style={{ color: theme.ink, fontWeight: 500 }}>{a.who}</span> {a.what}{' '}
+            <span style={{ color: theme.ink, fontStyle: 'italic', fontFamily: theme.serif }}>"{a.obj}"</span>
+            <span style={{ color: theme.inkMute, marginLeft: 8, fontSize: 11 }}>· {a.when}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  </UI.Card>
+);
+
+const QuickActions = ({ theme }) => {
+  const actions = [
+    { icon: 'doc', label: 'Contratos' },
+    { icon: 'folder', label: 'Documentos' },
+    { icon: 'calendar', label: 'Eventos' },
+    { icon: 'shield', label: 'Normativos' },
+  ];
+  return (
+    <UI.Card theme={theme}>
+      <UI.CardHeader theme={theme} title="Atalhos Rápidos" icon="sparkle"/>
+      <div style={{ padding: 14, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        {actions.map((a, i) => (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '14px 16px',
+            background: theme.bgAlt, border: `1px solid ${theme.lineSoft}`,
+            borderRadius: theme.radius, cursor: 'pointer',
+            transition: 'all 140ms',
+          }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = theme.accent; e.currentTarget.style.background = theme.surface; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = theme.lineSoft; e.currentTarget.style.background = theme.bgAlt; }}>
+            <Icon name={a.icon} size={16} color={theme.accent}/>
+            <span style={{ fontFamily: theme.sans, fontSize: 13, color: theme.ink, fontWeight: 500 }}>{a.label}</span>
+          </div>
+        ))}
+      </div>
+    </UI.Card>
+  );
+};
+
+window.Inicio = Inicio;
+window.UI = UI;
+window.GoldButton = GoldButton;
+window.GhostButton = GhostButton;
+
+
+// ========== src/screens.jsx ==========
+// Secondary screens: Contratos, Documentos, Insights, LegalBI
+
+const Contratos = ({ theme }) => (
+  <div style={{ padding: '28px 32px 64px', maxWidth: 1520 }}>
+    <UI.Eyebrow theme={theme}>Meus Contratos</UI.Eyebrow>
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 14, marginBottom: 24 }}>
+      <h1 style={{ fontFamily: theme.display, fontSize: 36, fontWeight: 400, color: theme.ink, margin: 0, letterSpacing: '-0.02em' }}>
+        Contratos <em style={{ color: theme.accent }}>em vigor</em>
+      </h1>
+      <div style={{ display: 'flex', gap: 10 }}>
+        <GhostButton theme={theme}>Exportar</GhostButton>
+        <GoldButton theme={theme}>Novo contrato</GoldButton>
+      </div>
+    </div>
+
+    {/* Filters */}
+    <div style={{ display: 'flex', gap: 8, marginBottom: 20, alignItems: 'center' }}>
+      {['Todos', 'Activos', 'A expirar', 'Em revisão', 'Arquivados'].map((f, i) => (
+        <div key={f} style={{
+          padding: '8px 16px', fontSize: 12, fontFamily: theme.sans,
+          border: `1px solid ${i === 0 ? theme.accent : theme.line}`,
+          background: i === 0 ? theme.accentSoft : 'transparent',
+          color: i === 0 ? theme.accent : theme.inkSoft,
+          borderRadius: theme.radius, cursor: 'pointer', fontWeight: 500,
+        }}>{f}</div>
+      ))}
+      <div style={{ flex: 1 }}/>
+      <div style={{ fontSize: 12, color: theme.inkMute, fontFamily: theme.sans }}>
+        23 contratos · <span style={{ color: theme.accent }}>€ 482 K</span> em valor activo
+      </div>
+    </div>
+
+    {/* Table */}
+    <UI.Card theme={theme} style={{ padding: 0 }}>
+      <div style={{
+        display: 'grid', gridTemplateColumns: '90px 2fr 1.2fr 110px 120px 110px 40px',
+        gap: 16, padding: '14px 22px', borderBottom: `1px solid ${theme.line}`,
+        fontSize: 10, letterSpacing: '0.18em', textTransform: 'uppercase', color: theme.inkMute, fontWeight: 500,
+        background: theme.bgAlt,
+      }}>
+        <div>Ref.</div><div>Designação</div><div>Contraparte</div><div>Estado</div><div>Renovação</div><div style={{textAlign:'right'}}>Valor</div><div></div>
+      </div>
+      {window.CCA.CONTRACTS.map((c, i) => (
+        <div key={c.id} style={{
+          display: 'grid', gridTemplateColumns: '90px 2fr 1.2fr 110px 120px 110px 40px',
+          gap: 16, padding: '16px 22px', alignItems: 'center',
+          borderBottom: i === window.CCA.CONTRACTS.length - 1 ? 'none' : `1px solid ${theme.lineSoft}`,
+          cursor: 'pointer',
+        }}>
+          <div style={{ fontFamily: theme.mono, fontSize: 11, color: theme.accent }}>{c.id}</div>
+          <div style={{ fontFamily: theme.display, fontSize: 14, color: theme.ink, fontWeight: 500, letterSpacing: '-0.005em' }}>{c.title}</div>
+          <div style={{ fontSize: 12, color: theme.inkSoft }}>{c.vendor}</div>
+          <div><UI.Pill theme={theme} tone={c.status === 'Activo' ? 'active' : 'warn'}>{c.status}</UI.Pill></div>
+          <div style={{ fontFamily: theme.mono, fontSize: 11.5, color: theme.inkSoft }}>{c.renews}</div>
+          <div style={{ fontFamily: theme.display, fontSize: 14, color: theme.ink, textAlign: 'right', fontWeight: 500 }}>{c.value}</div>
+          <Icon name="chevron" size={13} color={theme.inkMute}/>
+        </div>
+      ))}
+    </UI.Card>
+  </div>
+);
+
+const Documentos = ({ theme }) => (
+  <div style={{ padding: '28px 32px 64px', maxWidth: 1520 }}>
+    <UI.Eyebrow theme={theme}>Documentos</UI.Eyebrow>
+    <h1 style={{ fontFamily: theme.display, fontSize: 36, fontWeight: 400, color: theme.ink, margin: '14px 0 24px', letterSpacing: '-0.02em' }}>
+      Biblioteca <em style={{ color: theme.accent }}>documental</em>
+    </h1>
+    <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 20 }}>
+      {/* Folders */}
+      <UI.Card theme={theme} style={{ padding: 16 }}>
+        <div style={{ fontSize: 10, letterSpacing: '0.2em', textTransform: 'uppercase', color: theme.inkMute, marginBottom: 12, fontWeight: 500 }}>Pastas</div>
+        {['Todos', 'Corporate', 'Contratos', 'Fiscalidade', 'M&A', 'Compliance', 'Arquivo'].map((f, i) => (
+          <div key={f} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px',
+            borderRadius: theme.radius, fontSize: 13,
+            background: i === 0 ? theme.accentSoft : 'transparent',
+            color: i === 0 ? theme.accent : theme.inkSoft, fontWeight: i === 0 ? 500 : 400,
+            cursor: 'pointer', marginBottom: 2,
+          }}>
+            <Icon name="folder" size={14}/>
+            <span style={{ flex: 1 }}>{f}</span>
+            <span style={{ fontSize: 11, color: theme.inkMute, fontFamily: theme.mono }}>{i === 0 ? 127 : Math.floor(Math.random()*30)+3}</span>
+          </div>
+        ))}
+      </UI.Card>
+
+      {/* Grid */}
+      <UI.Card theme={theme} style={{ padding: 0 }}>
+        <div style={{ padding: '14px 22px', borderBottom: `1px solid ${theme.line}`, display: 'flex', gap: 10, alignItems: 'center' }}>
+          <Icon name="filter" size={14} color={theme.inkMute}/>
+          <span style={{ fontSize: 12, color: theme.inkSoft }}>Ordenar por</span>
+          <span style={{ fontSize: 12, color: theme.ink, fontWeight: 500 }}>Modificado recentemente</span>
+          <div style={{ flex: 1 }}/>
+          <span style={{ fontSize: 11, color: theme.inkMute }}>127 documentos</span>
+        </div>
+        <div style={{ padding: 20, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          {[...window.CCA.DOCUMENTS, ...window.CCA.DOCUMENTS.slice(0,2)].map((d, i) => (
+            <div key={i} style={{
+              padding: 18, background: theme.bgAlt, border: `1px solid ${theme.lineSoft}`,
+              borderRadius: theme.radius, cursor: 'pointer',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <div style={{ width: 34, height: 40, border: `1px solid ${theme.line}`, background: theme.surface, borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Icon name="doc" size={15} color={theme.accent}/>
+                </div>
+                <UI.Pill theme={theme} tone="accent">{d.folder}</UI.Pill>
+              </div>
+              <div style={{ fontFamily: theme.display, fontSize: 15, color: theme.ink, fontWeight: 500, marginBottom: 10, lineHeight: 1.3, letterSpacing: '-0.005em' }}>
+                {d.title}
+              </div>
+              <div style={{ fontSize: 11, color: theme.inkMute, display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: `1px solid ${theme.lineSoft}` }}>
+                <span>{d.author}</span>
+                <span>{d.updated}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </UI.Card>
+    </div>
+  </div>
+);
+
+const LegalInsights = ({ theme }) => (
+  <div style={{ padding: '28px 32px 64px', maxWidth: 1520 }}>
+    <UI.Eyebrow theme={theme}>Legal Insights</UI.Eyebrow>
+    <h1 style={{ fontFamily: theme.display, fontSize: 40, fontWeight: 400, color: theme.ink, margin: '14px 0 6px', letterSpacing: '-0.02em', lineHeight: 1.05 }}>
+      Análises & <em style={{ color: theme.accent }}>jurisprudência</em>
+    </h1>
+    <p style={{ fontFamily: theme.serif, fontSize: 16, color: theme.inkSoft, margin: '0 0 32px', fontStyle: 'italic' }}>
+      Artigos e pareceres curados pela equipa jurídica CCA.
+    </p>
+
+    {/* Featured */}
+    <UI.Card theme={theme} style={{ padding: 0, display: 'grid', gridTemplateColumns: '1.2fr 1fr', overflow: 'hidden', marginBottom: 24 }}>
+      <div style={{ padding: 36, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <UI.Pill theme={theme} tone="accent">{window.CCA.INSIGHTS[0].cat} · em destaque</UI.Pill>
+        <h2 style={{ fontFamily: theme.display, fontSize: 34, fontWeight: 500, color: theme.ink, margin: '18px 0 14px', lineHeight: 1.1, letterSpacing: '-0.015em' }}>
+          {window.CCA.INSIGHTS[0].title}
+        </h2>
+        <p style={{ fontFamily: theme.serif, fontSize: 15, color: theme.inkSoft, margin: 0, lineHeight: 1.6, fontStyle: 'italic' }}>
+          Uma leitura aprofundada sobre as alterações legislativas e o seu impacto operacional nas estruturas empresariais familiares.
+        </p>
+        <div style={{ marginTop: 22, display: 'flex', gap: 16, alignItems: 'center', fontSize: 11, color: theme.inkMute, letterSpacing: '0.08em' }}>
+          <span>Por Dra. Helena Cunha</span><span>·</span><span>{window.CCA.INSIGHTS[0].date}</span><span>·</span><span>{window.CCA.INSIGHTS[0].read}</span>
+        </div>
+      </div>
+      <div style={{
+        background: `linear-gradient(135deg, ${theme.ink} 0%, ${theme.accent} 100%)`,
+        position: 'relative', minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <svg viewBox="0 0 200 200" style={{ width: '70%', opacity: 0.5 }}>
+          <circle cx="100" cy="100" r="90" fill="none" stroke={theme.surface} strokeWidth="0.5"/>
+          <circle cx="100" cy="100" r="70" fill="none" stroke={theme.surface} strokeWidth="0.5"/>
+          <text x="100" y="112" textAnchor="middle" fontFamily={theme.display} fontSize="48" fill={theme.surface} opacity="0.9">§</text>
+        </svg>
+      </div>
+    </UI.Card>
+
+    {/* Grid */}
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+      {window.CCA.INSIGHTS.slice(1).map((art, i) => (
+        <UI.Card key={i} theme={theme} style={{ padding: 24, cursor: 'pointer' }}>
+          <UI.Pill theme={theme} tone="accent">{art.cat}</UI.Pill>
+          <h3 style={{ fontFamily: theme.display, fontSize: 20, fontWeight: 500, color: theme.ink, margin: '16px 0 14px', lineHeight: 1.25, letterSpacing: '-0.005em' }}>
+            {art.title}
+          </h3>
+          <div style={{ marginTop: 20, paddingTop: 14, borderTop: `1px solid ${theme.lineSoft}`, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: theme.inkMute, letterSpacing: '0.08em' }}>
+            <span>{art.date}</span><span>{art.read}</span>
+          </div>
+        </UI.Card>
+      ))}
+    </div>
+  </div>
+);
+
+const LegalBI = ({ theme }) => (
+  <div style={{ padding: '28px 32px 64px', maxWidth: 1520 }}>
+    <UI.Eyebrow theme={theme}>LegalBI</UI.Eyebrow>
+    <h1 style={{ fontFamily: theme.display, fontSize: 36, fontWeight: 400, color: theme.ink, margin: '14px 0 24px', letterSpacing: '-0.02em' }}>
+      Indicadores <em style={{ color: theme.accent }}>jurídicos</em>
+    </h1>
+
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+      {window.CCA.KPIS.map((k, i) => <KPIBig key={i} theme={theme} kpi={k}/>)}
+    </div>
+
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <UI.Card theme={theme}>
+        <UI.CardHeader theme={theme} title="Valor contratual por trimestre" icon="chart"/>
+        <div style={{ padding: 24, height: 280 }}>
+          <BarChart theme={theme}/>
+        </div>
+      </UI.Card>
+      <UI.Card theme={theme}>
+        <UI.CardHeader theme={theme} title="Distribuição por área" icon="spark"/>
+        <div style={{ padding: 24 }}>
+          {[
+            { label: 'Fiscalidade', pct: 32 },
+            { label: 'M&A', pct: 24 },
+            { label: 'Corporate', pct: 18 },
+            { label: 'Regulatório', pct: 14 },
+            { label: 'Laboral', pct: 8 },
+            { label: 'Outros', pct: 4 },
+          ].map((row, i) => (
+            <div key={i} style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 12, fontFamily: theme.sans }}>
+                <span style={{ color: theme.ink, fontWeight: 500 }}>{row.label}</span>
+                <span style={{ color: theme.inkMute, fontFamily: theme.mono }}>{row.pct}%</span>
+              </div>
+              <div style={{ height: 4, background: theme.bgAlt, borderRadius: 100, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${row.pct}%`, background: theme.accent }}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </UI.Card>
+    </div>
+  </div>
+);
+
+const KPIBig = ({ theme, kpi }) => (
+  <UI.Card theme={theme} style={{ padding: 26 }}>
+    <div style={{ fontSize: 10.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: theme.inkMute, fontWeight: 500, marginBottom: 14 }}>{kpi.label}</div>
+    <div style={{ fontFamily: theme.display, fontSize: 44, fontWeight: 400, color: theme.ink, letterSpacing: '-0.02em', lineHeight: 1 }}>{kpi.value}</div>
+    <div style={{ marginTop: 12 }}>
+      <UI.Pill theme={theme} tone={kpi.trend === 'up' ? 'active' : kpi.trend === 'warn' ? 'warn' : 'default'}>{kpi.delta}</UI.Pill>
+    </div>
+  </UI.Card>
+);
+
+const BarChart = ({ theme }) => {
+  const data = [62, 78, 54, 88, 94, 72, 108, 124];
+  const labels = ['Q1/24', 'Q2/24', 'Q3/24', 'Q4/24', 'Q1/25', 'Q2/25', 'Q3/25', 'Q4/25'];
+  const max = Math.max(...data);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: '100%', paddingBottom: 24, position: 'relative' }}>
+      {data.map((v, i) => (
+        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, height: '100%' }}>
+          <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end' }}>
+            <div style={{
+              width: '100%', height: `${(v/max)*100}%`,
+              background: i === data.length - 1 ? theme.accent : theme.inkSoft, opacity: i === data.length - 1 ? 1 : 0.4,
+              borderRadius: 2,
+            }}/>
+          </div>
+          <div style={{ fontFamily: theme.mono, fontSize: 9.5, color: theme.inkMute, letterSpacing: '0.08em' }}>{labels[i]}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+window.Screens = { Contratos, Documentos, LegalInsights, LegalBI };
+
+
+// ========== src/app.jsx ==========
+// App root with Tweaks panel
+
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "ambar",
+  "screen": "inicio",
+  "collapsed": false
+}/*EDITMODE-END*/;
+
+const App = () => {
+  const [t, setT] = useState(TWEAK_DEFAULTS);
+  const [editMode, setEditMode] = useState(false);
+  const theme = window.THEMES[t.theme] || window.THEMES.ambar;
+
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === '__activate_edit_mode') setEditMode(true);
+      if (e.data.type === '__deactivate_edit_mode') setEditMode(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const setKey = (k, v) => {
+    setT(prev => {
+      const next = { ...prev, [k]: v };
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+      return next;
+    });
+  };
+
+  const [collapsed, setCollapsed] = useState(t.collapsed);
+  useEffect(() => setCollapsed(t.collapsed), [t.collapsed]);
+
+  const Screen = {
+    inicio: window.Inicio,
+    contratos: window.Screens.Contratos,
+    documentos: window.Screens.Documentos,
+    insights: window.Screens.LegalInsights,
+    legalbi: window.Screens.LegalBI,
+    notificacoes: window.Inicio,
+    conta: window.Inicio,
+    novidades: window.Inicio,
+    politicas: window.Inicio,
+    utilizadores: window.Inicio,
+    organizacao: window.Inicio,
+  }[t.screen] || window.Inicio;
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: theme.bg, color: theme.ink, fontFamily: theme.sans }}>
+      <window.Shell.Sidebar theme={theme} active={t.screen} setActive={(s) => setKey('screen', s)}
+        collapsed={collapsed} setCollapsed={(c) => setKey('collapsed', c)}/>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <window.Shell.Topbar theme={theme} client="Grupo Aurora, SGPS"/>
+        <main><Screen theme={theme}/></main>
+      </div>
+      {editMode && <TweaksPanel theme={theme} t={t} setKey={setKey}/>}
+    </div>
+  );
+};
+
+const TweaksPanel = ({ theme, t, setKey }) => {
+  const themes = Object.values(window.THEMES);
+  const screens = [
+    { id: 'inicio', label: 'Início' },
+    { id: 'legalbi', label: 'LegalBI' },
+    { id: 'contratos', label: 'Contratos' },
+    { id: 'documentos', label: 'Documentos' },
+    { id: 'insights', label: 'Insights' },
+  ];
+  return (
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24, zIndex: 1000, width: 280,
+      background: '#0E0E10', color: '#ECE6D9', border: '1px solid #28272A',
+      borderRadius: 10, padding: 18, fontFamily: 'Inter Tight, sans-serif',
+      boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+    }}>
+      <div style={{ fontSize: 10, letterSpacing: '0.24em', textTransform: 'uppercase', color: '#D4B77A', fontWeight: 500, marginBottom: 14 }}>Tweaks</div>
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 11, color: '#B5B0A5', marginBottom: 8 }}>Direção visual</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {themes.map(th => (
+            <button key={th.id} onClick={() => setKey('theme', th.id)} style={{
+              padding: '10px 12px', textAlign: 'left', cursor: 'pointer',
+              background: t.theme === th.id ? '#D4B77A' : 'transparent',
+              color: t.theme === th.id ? '#0E0E10' : '#ECE6D9',
+              border: `1px solid ${t.theme === th.id ? '#D4B77A' : '#28272A'}`,
+              borderRadius: 6, fontFamily: 'inherit', fontSize: 12,
+              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
+            }}>
+              <span style={{ fontWeight: 600, fontSize: 13 }}>{th.name}</span>
+              <span style={{ opacity: 0.7, fontSize: 10.5 }}>{th.tagline}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div style={{ fontSize: 11, color: '#B5B0A5', marginBottom: 8 }}>Ecrã</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+          {screens.map(s => (
+            <button key={s.id} onClick={() => setKey('screen', s.id)} style={{
+              padding: '8px 10px', cursor: 'pointer',
+              background: t.screen === s.id ? '#D4B77A' : 'transparent',
+              color: t.screen === s.id ? '#0E0E10' : '#ECE6D9',
+              border: `1px solid ${t.screen === s.id ? '#D4B77A' : '#28272A'}`,
+              borderRadius: 6, fontFamily: 'inherit', fontSize: 11, fontWeight: 500,
+            }}>{s.label}</button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+
+
+</script>
+</body>
+</html>

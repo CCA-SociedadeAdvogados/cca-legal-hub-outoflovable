@@ -4,3 +4,4 @@ src/integrations/supabase/types.ts
 src/components/ui/
 *.min.js
 *.min.css
+design_handoff_cca_legal_hub/

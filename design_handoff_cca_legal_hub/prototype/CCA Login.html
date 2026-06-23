@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=1440"/>
+<title>CCA Legal Hub — Acesso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#FAF7F1; --ink:#121010; --ink-soft:#4A4540; --ink-mute:#8B857D;
+  --line:#E2DACB; --line-soft:#EDE7D9; --surface:#FFFFFF;
+  --accent:#BD4E18; --accent-strong:#9F3F12; --accent-soft:#BD4E1810;
+  --dark:#12100C; --dark-ink:#F3ECDD; --dark-mute:#B9B09B; --dark-soft:#D8CFBC;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter Tight',system-ui,sans-serif;
+  background:var(--bg); color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+.page{ display:grid; grid-template-columns:1.05fr 1fr; min-height:100vh; }
+
+/* ============ LEFT ============ */
+.left{
+  position:relative; background:var(--dark); color:var(--dark-ink);
+  padding:48px 56px; display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.left::before{
+  content:""; position:absolute; inset:0;
+  background:
+    radial-gradient(820px 620px at 18% -5%, rgba(214,90,30,0.30), transparent 62%),
+    radial-gradient(640px 520px at 105% 105%, rgba(189,78,24,0.16), transparent 60%);
+  pointer-events:none;
+}
+.left::after{
+  content:""; position:absolute; right:-220px; top:50%; transform:translateY(-50%);
+  width:560px; height:560px; border-radius:50%;
+  border:1px solid rgba(237,230,215,0.05);
+  box-shadow:
+    inset 0 0 0 80px rgba(237,230,215,0.02),
+    0 0 0 80px rgba(237,230,215,0.025),
+    0 0 0 160px rgba(237,230,215,0.018);
+  pointer-events:none;
+}
+.brand{ display:flex; align-items:center; gap:14px; position:relative; z-index:2; }
+.brand-mark{
+  width:44px; height:44px; background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Fraunces',serif; font-weight:500; font-size:14px;
+  letter-spacing:0.04em; border-radius:3px;
+}
+.brand-name{ font-family:'Fraunces',serif; font-size:22px; font-weight:500; letter-spacing:-0.005em; }
+.brand-sub{ display:block; font-family:'Inter Tight',sans-serif; font-size:10px; letter-spacing:0.22em; text-transform:uppercase; color:var(--dark-soft); margin-top:2px; }
+
+.left-body{
+  flex:1; display:flex; flex-direction:column; justify-content:center;
+  position:relative; z-index:2; max-width:540px;
+}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:10px;
+  font-size:10px; letter-spacing:0.24em; text-transform:uppercase;
+  color:var(--accent); font-weight:500; margin-bottom:22px;
+}
+.eyebrow::before{ content:""; width:18px; height:1px; background:var(--accent); }
+
+.headline{
+  font-family:'Fraunces',serif; font-size:44px; font-weight:400;
+  line-height:1.08; letter-spacing:-0.02em; color:var(--dark-ink);
+  margin-bottom:18px;
+}
+.headline em{ font-style:italic; color:var(--accent); }
+
+.sub{ font-family:'Fraunces',serif; font-style:italic; font-size:18px; color:var(--dark-soft); line-height:1.55; max-width:480px; }
+
+.quote-card{
+  margin-top:48px; padding:26px 28px;
+  background:rgba(243,236,221,0.07); border:1px solid rgba(243,236,221,0.14);
+  border-radius:6px; backdrop-filter:blur(2px);
+  position:relative;
+}
+.quote-mark{
+  position:absolute; top:14px; right:20px;
+  font-family:'Fraunces',serif; font-size:60px; color:var(--accent);
+  opacity:0.35; line-height:1; font-style:italic;
+}
+.quote-body{
+  font-family:'Fraunces',serif; font-style:italic; font-size:17px;
+  color:var(--dark-ink); line-height:1.5; max-width:430px;
+}
+.quote-attr{
+  margin-top:18px; padding-top:14px; border-top:1px solid rgba(237,230,215,0.08);
+  display:flex; align-items:center; gap:12px;
+}
+.attr-avatar{
+  width:36px; height:36px; border-radius:50%;
+  background:var(--accent); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Fraunces',serif; font-weight:500; font-size:13px;
+}
+.attr-text{ line-height:1.3; }
+.attr-name{ font-size:12.5px; color:var(--dark-ink); font-weight:500; }
+.attr-role{ font-size:11px; color:var(--dark-soft); margin-top:2px; }
+
+.left-foot{
+  position:relative; z-index:2;
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; color:var(--dark-mute); letter-spacing:0.06em;
+}
+.foot-links{ display:flex; gap:22px; }
+.foot-links a{ color:var(--dark-mute); text-decoration:none; }
+.foot-links a:hover{ color:var(--dark-ink); }
+
+/* ============ RIGHT ============ */
+.right{
+  background:var(--bg);
+  padding:48px 56px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  position:relative;
+}
+.lang{
+  position:absolute; top:32px; right:40px;
+  display:flex; gap:2px; align-items:center;
+  border:1px solid var(--line); border-radius:3px; padding:3px;
+  background:var(--surface);
+}
+.lang button{
+  font-family:inherit; font-size:11px; font-weight:500; letter-spacing:0.08em;
+  padding:5px 10px; background:transparent; border:none; cursor:pointer;
+  color:var(--ink-mute); border-radius:2px;
+}
+.lang button.on{ background:var(--ink); color:var(--bg); }
+
+.card{
+  width:100%; max-width:440px;
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:6px; padding:40px 40px 36px;
+  box-shadow:0 1px 2px rgba(13,11,9,0.04);
+}
+.card-head{ margin-bottom:28px; }
+.card-eyebrow{
+  font-size:10px; letter-spacing:0.24em; text-transform:uppercase;
+  color:var(--ink-mute); font-weight:500; margin-bottom:10px;
+  display:inline-flex; align-items:center; gap:10px;
+}
+.card-eyebrow::before{ content:""; width:14px; height:1px; background:var(--accent); }
+.card h2{
+  font-family:'Fraunces',serif; font-size:30px; font-weight:500;
+  letter-spacing:-0.015em; color:var(--ink); line-height:1.1;
+}
+.card h2 em{ font-style:italic; color:var(--accent); }
+.card-sub{ margin-top:10px; font-size:13.5px; color:var(--ink-soft); line-height:1.5; }
+
+/* SSO */
+.btn-primary{
+  width:100%; padding:13px 18px;
+  background:var(--ink); color:var(--bg);
+  border:1px solid var(--ink); border-radius:3px;
+  font-family:inherit; font-size:13px; font-weight:500; letter-spacing:0.04em;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
+  transition:background 160ms;
+}
+.btn-primary:hover{ background:#1f1b18; }
+.btn-primary.accent{ background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-primary.accent:hover{ background:var(--accent-strong); border-color:var(--accent-strong); }
+.btn-primary .arrow{ margin-left:2px; }
+
+.sso-note{
+  text-align:center; font-size:11.5px; color:var(--ink-mute);
+  margin-top:10px; letter-spacing:0.02em;
+}
+
+.divider{
+  display:flex; align-items:center; gap:14px;
+  margin:26px 0 22px;
+  font-size:10px; letter-spacing:0.22em; text-transform:uppercase;
+  color:var(--ink-mute); font-weight:500;
+}
+.divider::before, .divider::after{
+  content:""; flex:1; height:1px; background:var(--line);
+}
+
+.field{ margin-bottom:18px; }
+.field label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-size:11.5px; color:var(--ink-soft); font-weight:500;
+  margin-bottom:7px; letter-spacing:0.04em;
+}
+.field label a{
+  font-size:11px; color:var(--ink-mute); text-decoration:none;
+  letter-spacing:0.04em; transition:color 160ms;
+}
+.field label a:hover{ color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+
+.input-wrap{
+  position:relative; display:flex; align-items:center;
+  border:1px solid var(--line); border-radius:3px;
+  background:var(--surface); transition:border-color 160ms, box-shadow 160ms;
+}
+.input-wrap:focus-within{ border-color:var(--ink); box-shadow:0 0 0 3px rgba(13,11,9,0.06); }
+.input-wrap svg{
+  position:absolute; left:13px; width:15px; height:15px;
+  stroke:var(--ink-mute); fill:none; stroke-width:1.4;
+  stroke-linecap:round; stroke-linejoin:round; pointer-events:none;
+}
+.input-wrap input{
+  width:100%; padding:12px 14px 12px 38px;
+  border:none; outline:none; background:transparent;
+  font-family:inherit; font-size:13.5px; color:var(--ink);
+}
+.input-wrap input::placeholder{ color:var(--ink-mute); }
+/* defeat the gross blue autofill */
+.input-wrap input:-webkit-autofill,
+.input-wrap input:-webkit-autofill:hover,
+.input-wrap input:-webkit-autofill:focus{
+  -webkit-text-fill-color:var(--ink);
+  -webkit-box-shadow:0 0 0 100px var(--surface) inset;
+  caret-color:var(--ink);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.remember{
+  display:flex; align-items:center; gap:9px;
+  font-size:12px; color:var(--ink-soft);
+  margin:6px 0 22px; cursor:pointer; user-select:none;
+}
+.remember input{ appearance:none; width:14px; height:14px; border:1px solid var(--line); border-radius:2px; background:var(--surface); cursor:pointer; position:relative; transition:all 160ms;}
+.remember input:checked{ background:var(--ink); border-color:var(--ink); }
+.remember input:checked::after{ content:""; position:absolute; left:3px; top:0px; width:6px; height:9px; border:solid var(--bg); border-width:0 1.5px 1.5px 0; transform:rotate(45deg); }
+
+.notice{
+  margin-top:28px; padding:14px 16px;
+  background:var(--accent-soft);
+  border:1px solid rgba(189,78,24,0.18);
+  border-radius:4px;
+  font-size:12px; color:var(--ink-soft); line-height:1.5;
+  text-align:center;
+}
+.notice strong{ color:var(--accent); font-weight:500; }
+
+.legal{
+  margin-top:28px; text-align:center;
+  font-size:11px; color:var(--ink-mute); letter-spacing:0.04em;
+}
+.legal a{ color:var(--ink-mute); text-decoration:underline; text-underline-offset:3px; margin:0 4px; }
+.legal a:hover{ color:var(--accent); }
+
+@media (max-width:1024px){
+  .page{ grid-template-columns:1fr; }
+  .left{ display:none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- LEFT — institutional panel -->
+  <aside class="left">
+    <div class="brand">
+      <div class="brand-mark">CCA</div>
+      <div>
+        <div class="brand-name">Legal Hub</div>
+        <span class="brand-sub">by CCA</span>
+      </div>
+    </div>
+
+    <div class="left-body">
+      <div class="eyebrow">Área reservada</div>
+      <h1 class="headline">Gestão jurídica<br/><em>com a precisão</em><br/>de um escritório.</h1>
+      <p class="sub">Contratos, documentos, obrigações fiscais e legislação aplicável — tudo organizado e ao seu alcance.</p>
+
+      <div class="quote-card">
+        <span class="quote-mark">"</span>
+        <p class="quote-body">A plataforma que nos permite antecipar riscos regulatórios e manter os nossos contratos sempre em conformidade.</p>
+        <div class="quote-attr">
+          <div class="attr-avatar">SP</div>
+          <div class="attr-text">
+            <div class="attr-name">Sofia Pereira</div>
+            <div class="attr-role">Head of Legal · Grupo Aurora · Cliente desde 2024</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="left-foot">
+      <div>© 2026 CCA · Sociedade de Advogados, R.L.</div>
+      <div class="foot-links">
+        <a href="#">Privacidade</a>
+        <a href="#">Termos</a>
+        <a href="#">Suporte</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT — sign-in form -->
+  <section class="right">
+    <div class="lang">
+      <button class="on">PT</button>
+      <button>EN</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-eyebrow">Acesso à plataforma</div>
+        <h2>Iniciar <em>sessão</em></h2>
+        <p class="card-sub">Escolha o método de autenticação para aceder à sua área reservada.</p>
+      </div>
+
+      <!-- SSO secondary (dark, not orange — orange reserved for the actual submit) -->
+      <button class="btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-9.6 9.6M15.5 7.5L21 2M7 17a4 4 0 1 1 4-4M11 13l2 2"/></svg>
+        Entrar com CCA SSO
+      </button>
+      <p class="sso-note">Para utilizadores com conta de domínio <strong style="color:var(--ink)">@cca.law</strong></p>
+
+      <div class="divider">ou continue com e-mail</div>
+
+      <div class="field">
+        <label for="email">E-mail</label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24"><path d="M3 7l9 6 9-6M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7M3 7l2-2h14l2 2"/></svg>
+          <input id="email" type="email" placeholder="nome@empresa.pt"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="pw">Palavra-passe <a href="#">Esqueceu?</a></label>
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24"><path d="M6 11h12v9a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-9zM8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <input id="pw" type="password" placeholder="••••••••••"/>
+        </div>
+      </div>
+
+      <label class="remember"><input type="checkbox" checked/> Manter sessão iniciada neste dispositivo</label>
+
+      <button class="btn-primary accent">
+        Entrar <span class="arrow">→</span>
+      </button>
+
+      <div class="notice">
+        Não tem conta? <strong>Contacte o administrador</strong> da sua organização para obter acesso.
+      </div>
+
+      <div class="legal">
+        Ao continuar, aceita os
+        <a href="#">Termos de Uso</a> e a
+        <a href="#">Política de Privacidade</a>.
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

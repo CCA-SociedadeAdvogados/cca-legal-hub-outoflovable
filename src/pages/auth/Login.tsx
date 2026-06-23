@@ -21,6 +21,12 @@ import { z } from 'zod';
 
 const emailSchema = z.string().email('Por favor, introduza um e-mail válido');
 
+// Links institucionais (pré-autenticação) — apontam para o site público da CCA.
+const CCA_SITE = 'https://www.cca.law';
+const CCA_PRIVACY_URL = `${CCA_SITE}/privacidade`;
+const CCA_TERMS_URL = `${CCA_SITE}/termos`;
+const CCA_SUPPORT_EMAIL = 'mailto:suporte@cca.law';
+
 export default function Login() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -257,7 +263,7 @@ export default function Login() {
               className="absolute right-5 top-3 font-serif text-[60px] italic leading-none opacity-35"
               style={{ color: 'hsl(var(--accent-brand))' }}
             >
-              "
+              &ldquo;
             </span>
             <p className="max-w-[430px] font-serif text-[17px] italic leading-[1.5] text-sidebar-ink">
               A plataforma que nos permite antecipar riscos regulatórios e manter os nossos
@@ -287,13 +293,23 @@ export default function Login() {
         <div className="relative z-10 flex items-center justify-between text-[11px] tracking-wider text-sidebar-ink-mute">
           <div>© 2026 CCA · Sociedade de Advogados, R.L.</div>
           <div className="flex gap-5">
-            <a href="#" className="transition-colors hover:text-sidebar-ink">
+            <a
+              href={CCA_PRIVACY_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-sidebar-ink"
+            >
               Privacidade
             </a>
-            <a href="#" className="transition-colors hover:text-sidebar-ink">
+            <a
+              href={CCA_TERMS_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-sidebar-ink"
+            >
               Termos
             </a>
-            <a href="#" className="transition-colors hover:text-sidebar-ink">
+            <a href={CCA_SUPPORT_EMAIL} className="transition-colors hover:text-sidebar-ink">
               Suporte
             </a>
           </div>
@@ -469,11 +485,21 @@ export default function Login() {
             {/* Legal */}
             <div className="mt-7 text-center text-[11px] tracking-wide text-ink-mute">
               Ao continuar, aceita os{' '}
-              <a href="#" className="underline underline-offset-[3px] hover:text-brand">
+              <a
+                href={CCA_TERMS_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-[3px] hover:text-brand"
+              >
                 Termos de Uso
               </a>{' '}
               e a{' '}
-              <a href="#" className="underline underline-offset-[3px] hover:text-brand">
+              <a
+                href={CCA_PRIVACY_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-[3px] hover:text-brand"
+              >
                 Política de Privacidade
               </a>
               .
