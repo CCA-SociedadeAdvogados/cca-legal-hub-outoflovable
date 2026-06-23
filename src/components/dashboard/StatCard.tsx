@@ -15,34 +15,44 @@ interface StatCardProps {
   variant?: 'default' | 'primary' | 'accent' | 'warning' | 'danger';
 }
 
-export function StatCard({ title, value, subtitle, icon: Icon, trend, variant = 'default' }: StatCardProps) {
-  const iconContainerClasses = cn(
-    'flex h-12 w-12 items-center justify-center rounded-lg',
-    {
-      'bg-muted': variant === 'default',
-      'bg-primary/10 text-primary': variant === 'primary',
-      'bg-accent/10 text-accent': variant === 'accent',
-      'bg-risk-medium/10 text-risk-medium': variant === 'warning',
-      'bg-risk-high/10 text-risk-high': variant === 'danger',
-    }
-  );
+export function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  trend,
+  variant = 'default',
+}: StatCardProps) {
+  const iconContainerClasses = cn('flex h-12 w-12 items-center justify-center rounded-lg', {
+    'bg-muted': variant === 'default',
+    'bg-primary/10 text-primary': variant === 'primary',
+    'bg-accent/10 text-accent': variant === 'accent',
+    'bg-risk-medium/10 text-risk-medium': variant === 'warning',
+    'bg-risk-high/10 text-risk-high': variant === 'danger',
+  });
 
   return (
-    <Card variant="elevated" className="overflow-hidden">
+    <Card
+      variant="elevated"
+      className="group relative overflow-hidden transition-transform duration-200 hover:-translate-y-[3px]"
+    >
+      {/* Filete de acento no topo — cresce no hover */}
+      <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-0 bg-brand transition-all duration-300 group-hover:w-full" />
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
             <p className="text-3xl font-bold font-serif tracking-tight">{value}</p>
-            {subtitle && (
-              <p className="text-sm text-muted-foreground">{subtitle}</p>
-            )}
+            {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
             {trend && (
-              <p className={cn(
-                'text-sm font-medium',
-                trend.positive ? 'text-risk-low' : 'text-risk-high'
-              )}>
-                {trend.positive ? '+' : ''}{trend.value}% {trend.label}
+              <p
+                className={cn(
+                  'text-sm font-medium',
+                  trend.positive ? 'text-risk-low' : 'text-risk-high',
+                )}
+              >
+                {trend.positive ? '+' : ''}
+                {trend.value}% {trend.label}
               </p>
             )}
           </div>
