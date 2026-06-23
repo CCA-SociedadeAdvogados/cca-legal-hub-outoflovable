@@ -157,5 +157,11 @@ export function WidgetRenderer({ widget, organizationId }: WidgetRendererProps) 
     }
   };
 
-  return <Suspense fallback={<WidgetSkeleton />}>{renderWidget()}</Suspense>;
+  return (
+    <div className="group relative rounded-card transition-all duration-200 hover:-translate-y-[3px] hover:shadow-elevated">
+      {/* Filete de acento no topo — cresce no hover (B2 do handoff) */}
+      <span className="pointer-events-none absolute left-0 top-0 z-10 h-0.5 w-0 rounded-tl-card bg-brand transition-all duration-300 group-hover:w-full" />
+      <Suspense fallback={<WidgetSkeleton />}>{renderWidget()}</Suspense>
+    </div>
+  );
 }
