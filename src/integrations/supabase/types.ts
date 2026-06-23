@@ -200,6 +200,7 @@ export type Database = {
           estado: string
           id: string
           organization_id: string
+          pedido_origem_id: string | null
           referencia: string | null
           responsavel_id: string | null
           tipo: string
@@ -217,6 +218,7 @@ export type Database = {
           estado?: string
           id?: string
           organization_id: string
+          pedido_origem_id?: string | null
           referencia?: string | null
           responsavel_id?: string | null
           tipo?: string
@@ -234,6 +236,7 @@ export type Database = {
           estado?: string
           id?: string
           organization_id?: string
+          pedido_origem_id?: string | null
           referencia?: string | null
           responsavel_id?: string | null
           tipo?: string
@@ -262,6 +265,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vw_client_finance_home_by_organization"
             referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "assuntos_pedido_origem_id_fkey"
+            columns: ["pedido_origem_id"]
+            isOneToOne: false
+            referencedRelation: "on_demand_requests"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "assuntos_responsavel_id_fkey"
@@ -362,6 +372,433 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      bc_accounts: {
+        Row: {
+          account_category: string | null
+          account_number: string | null
+          account_sub_category: string | null
+          account_type: string | null
+          balance: number | null
+          bc_id: string
+          blocked: boolean | null
+          config_id: string
+          created_at: string | null
+          display_name: string
+          id: string
+          organization_id: string
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_category?: string | null
+          account_number?: string | null
+          account_sub_category?: string | null
+          account_type?: string | null
+          balance?: number | null
+          bc_id: string
+          blocked?: boolean | null
+          config_id: string
+          created_at?: string | null
+          display_name: string
+          id?: string
+          organization_id: string
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_category?: string | null
+          account_number?: string | null
+          account_sub_category?: string | null
+          account_type?: string | null
+          balance?: number | null
+          bc_id?: string
+          blocked?: boolean | null
+          config_id?: string
+          created_at?: string | null
+          display_name?: string
+          id?: string
+          organization_id?: string
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bc_accounts_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "bc_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "bc_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      bc_config: {
+        Row: {
+          bc_url: string
+          company_guid: string
+          company_name: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          last_sync_error: string | null
+          last_sync_status: string | null
+          organization_id: string
+          sync_interval_minutes: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          bc_url: string
+          company_guid: string
+          company_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          organization_id: string
+          sync_interval_minutes?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          bc_url?: string
+          company_guid?: string
+          company_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          last_sync_status?: string | null
+          organization_id?: string
+          sync_interval_minutes?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bc_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "bc_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      bc_customers: {
+        Row: {
+          address: string | null
+          balance: number | null
+          bc_id: string
+          bc_last_modified: string | null
+          bc_number: string | null
+          city: string | null
+          config_id: string
+          country: string | null
+          created_at: string | null
+          credit_limit: number | null
+          currency_code: string | null
+          customer_posting_group: string | null
+          display_name: string
+          email: string | null
+          id: string
+          is_deleted: boolean | null
+          nif: string | null
+          organization_id: string
+          payment_terms_code: string | null
+          phone: string | null
+          post_code: string | null
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          balance?: number | null
+          bc_id: string
+          bc_last_modified?: string | null
+          bc_number?: string | null
+          city?: string | null
+          config_id: string
+          country?: string | null
+          created_at?: string | null
+          credit_limit?: number | null
+          currency_code?: string | null
+          customer_posting_group?: string | null
+          display_name: string
+          email?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          nif?: string | null
+          organization_id: string
+          payment_terms_code?: string | null
+          phone?: string | null
+          post_code?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          balance?: number | null
+          bc_id?: string
+          bc_last_modified?: string | null
+          bc_number?: string | null
+          city?: string | null
+          config_id?: string
+          country?: string | null
+          created_at?: string | null
+          credit_limit?: number | null
+          currency_code?: string | null
+          customer_posting_group?: string | null
+          display_name?: string
+          email?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          nif?: string | null
+          organization_id?: string
+          payment_terms_code?: string | null
+          phone?: string | null
+          post_code?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bc_customers_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "bc_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "bc_customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      bc_ledger: {
+        Row: {
+          amount: number | null
+          bc_entry_number: number | null
+          config_id: string
+          created_at: string | null
+          currency_code: string | null
+          customer_bc_id: string | null
+          customer_number: string | null
+          description: string | null
+          document_number: string | null
+          document_type: string | null
+          due_date: string | null
+          id: string
+          is_open: boolean | null
+          organization_id: string
+          posting_date: string | null
+          posting_group: string | null
+          remaining_amount: number | null
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          bc_entry_number?: number | null
+          config_id: string
+          created_at?: string | null
+          currency_code?: string | null
+          customer_bc_id?: string | null
+          customer_number?: string | null
+          description?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          due_date?: string | null
+          id?: string
+          is_open?: boolean | null
+          organization_id: string
+          posting_date?: string | null
+          posting_group?: string | null
+          remaining_amount?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          bc_entry_number?: number | null
+          config_id?: string
+          created_at?: string | null
+          currency_code?: string | null
+          customer_bc_id?: string | null
+          customer_number?: string | null
+          description?: string | null
+          document_number?: string | null
+          document_type?: string | null
+          due_date?: string | null
+          id?: string
+          is_open?: boolean | null
+          organization_id?: string
+          posting_date?: string | null
+          posting_group?: string | null
+          remaining_amount?: number | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bc_ledger_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "bc_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_ledger_customer_bc_id_fkey"
+            columns: ["customer_bc_id"]
+            isOneToOne: false
+            referencedRelation: "bc_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "bc_ledger_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      bc_sync_logs: {
+        Row: {
+          accounts_synced: number | null
+          completed_at: string | null
+          config_id: string
+          customers_synced: number | null
+          error_message: string | null
+          id: string
+          ledger_entries_synced: number | null
+          organization_id: string
+          started_at: string | null
+          status: string | null
+        }
+        Insert: {
+          accounts_synced?: number | null
+          completed_at?: string | null
+          config_id: string
+          customers_synced?: number | null
+          error_message?: string | null
+          id?: string
+          ledger_entries_synced?: number | null
+          organization_id: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          accounts_synced?: number | null
+          completed_at?: string | null
+          config_id?: string
+          customers_synced?: number | null
+          error_message?: string | null
+          id?: string
+          ledger_entries_synced?: number | null
+          organization_id?: string
+          started_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bc_sync_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "bc_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bc_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "bc_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
       }
       cca_internal_users: {
         Row: {
@@ -1003,105 +1440,6 @@ export type Database = {
             columns: ["created_by_id"]
             isOneToOne: false
             referencedRelation: "profiles_safe"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contract_triage_analyses: {
-        Row: {
-          ai_model_used: string | null
-          analises_clausulas: Json | null
-          analysis_id: string
-          analyzed_at: string
-          analyzed_by_id: string | null
-          clausulas_alto_risco: number | null
-          clausulas_conformes: number | null
-          clausulas_criticas: number | null
-          contrato_id: string
-          created_at: string
-          file_name: string | null
-          id: string
-          nivel_risco_global: string
-          organization_id: string | null
-          proximos_passos: string[] | null
-          raw_response: Json | null
-          recomendacoes_globais: string[] | null
-          red_flags_prioritarios: Json | null
-          resumo_executivo: string | null
-          score_global: number
-          text_length: number
-          text_source: string
-          tipo_contrato: string | null
-          total_clausulas_analisadas: number | null
-          updated_at: string
-        }
-        Insert: {
-          ai_model_used?: string | null
-          analises_clausulas?: Json | null
-          analysis_id: string
-          analyzed_at?: string
-          analyzed_by_id?: string | null
-          clausulas_alto_risco?: number | null
-          clausulas_conformes?: number | null
-          clausulas_criticas?: number | null
-          contrato_id: string
-          created_at?: string
-          file_name?: string | null
-          id?: string
-          nivel_risco_global?: string
-          organization_id?: string | null
-          proximos_passos?: string[] | null
-          raw_response?: Json | null
-          recomendacoes_globais?: string[] | null
-          red_flags_prioritarios?: Json | null
-          resumo_executivo?: string | null
-          score_global?: number
-          text_length?: number
-          text_source?: string
-          tipo_contrato?: string | null
-          total_clausulas_analisadas?: number | null
-          updated_at?: string
-        }
-        Update: {
-          ai_model_used?: string | null
-          analises_clausulas?: Json | null
-          analysis_id?: string
-          analyzed_at?: string
-          analyzed_by_id?: string | null
-          clausulas_alto_risco?: number | null
-          clausulas_conformes?: number | null
-          clausulas_criticas?: number | null
-          contrato_id?: string
-          created_at?: string
-          file_name?: string | null
-          id?: string
-          nivel_risco_global?: string
-          organization_id?: string | null
-          proximos_passos?: string[] | null
-          raw_response?: Json | null
-          recomendacoes_globais?: string[] | null
-          red_flags_prioritarios?: Json | null
-          resumo_executivo?: string | null
-          score_global?: number
-          text_length?: number
-          text_source?: string
-          tipo_contrato?: string | null
-          total_clausulas_analisadas?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contract_triage_analyses_contrato_id_fkey"
-            columns: ["contrato_id"]
-            isOneToOne: true
-            referencedRelation: "contratos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contract_triage_analyses_contrato_id_fkey"
-            columns: ["contrato_id"]
-            isOneToOne: true
-            referencedRelation: "contratos_safe"
             referencedColumns: ["id"]
           },
         ]

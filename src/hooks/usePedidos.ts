@@ -144,7 +144,7 @@ export function usePedidos(organizationId: string | null | undefined) {
     mutationFn: async (pedido: Pedido) => {
       if (!user) throw new Error('Utilizador não autenticado');
       if (!orgId) throw new Error('Organização não definida');
-      const payload = {
+      const payload: TablesInsert<'assuntos'> = {
         organization_id: orgId,
         titulo: pedido.titulo,
         descricao: pedido.descricao ?? null,
@@ -155,7 +155,7 @@ export function usePedidos(organizationId: string | null | undefined) {
         pedido_origem_id: pedido.id,
         created_by_id: user.id,
         updated_by_id: user.id,
-      } as unknown as TablesInsert<'assuntos'>;
+      };
 
       const { data, error } = await supabase.from('assuntos').insert(payload).select('id').single();
       if (error) throw error;
