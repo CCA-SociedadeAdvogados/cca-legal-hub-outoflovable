@@ -121,18 +121,7 @@ export function useBusinessCentralConfig() {
     queryFn: async (): Promise<BCConfig | null> => {
       if (!orgId) return null;
 
-      const { data, error } = await (
-        supabase as unknown as {
-          from: (t: string) => {
-            select: (s: string) => {
-              eq: (
-                c: string,
-                v: string,
-              ) => { maybeSingle: () => Promise<{ data: BCConfig | null; error: unknown }> };
-            };
-          };
-        }
-      )
+      const { data, error } = await supabase
         .from('bc_config')
         .select('*')
         .eq('organization_id', orgId)
@@ -376,18 +365,7 @@ export function useBusinessCentralConfigByOrgId(orgId: string | null) {
     queryFn: async (): Promise<BCConfig | null> => {
       if (!orgId) return null;
 
-      const { data, error } = await (
-        supabase as unknown as {
-          from: (t: string) => {
-            select: (s: string) => {
-              eq: (
-                c: string,
-                v: string,
-              ) => { maybeSingle: () => Promise<{ data: BCConfig | null; error: unknown }> };
-            };
-          };
-        }
-      )
+      const { data, error } = await supabase
         .from('bc_config')
         .select('*')
         .eq('organization_id', orgId)
