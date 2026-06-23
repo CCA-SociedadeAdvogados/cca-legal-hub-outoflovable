@@ -751,7 +751,10 @@
       "legislation": "Normativos",
       "noLinksConfigured": "Nenhum atalho configurado."
     },
-    "widgetLoadError": "Não foi possível carregar este widget."
+    "widgetLoadError": "Não foi possível carregar este widget.",
+    "greetingMorning": "Bom dia",
+    "greetingAfternoon": "Boa tarde",
+    "greetingEvening": "Boa noite"
   },
   "legislation": {
     "title": "Normativos Legais",

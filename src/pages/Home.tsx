@@ -14,7 +14,24 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Eyebrow } from '@/components/cca';
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Saudação consciente da hora + data por extenso (locale-aware).
+  const greeting = () => {
+    const h = new Date().getHours();
+    if (h < 13) return t('home.greetingMorning');
+    if (h < 20) return t('home.greetingAfternoon');
+    return t('home.greetingEvening');
+  };
+  const dateLong = () => {
+    const s = new Date().toLocaleDateString(i18n.language, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
   const { effectiveOrganizationId, isImpersonating } = useEffectiveOrganization();
   const { primarySector } = useEffectiveIndustrySectors();
   const {
@@ -109,16 +126,16 @@ export default function Home() {
           </>
         )}
 
-        {/* Page header — eyebrow + display H1 italic accent + serif italic subtitle */}
+        {/* Page header — eyebrow (data por extenso) + saudação consciente da hora */}
         <header className="space-y-3">
-          <Eyebrow>{t('home.title')}</Eyebrow>
+          <Eyebrow>{dateLong()}</Eyebrow>
           <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
             {firstName ? (
               <>
-                Bem-vindo, <span className="italic text-brand">{firstName}</span>.
+                {greeting()}, <span className="italic text-brand">{firstName}</span>.
               </>
             ) : (
-              t('home.title')
+              greeting()
             )}
           </h1>
           <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
@@ -127,7 +144,7 @@ export default function Home() {
         </header>
 
         {/* Widgets grid */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="dash-enter grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {layout.widgets
             .filter((w) => w.visible)
             .sort((a, b) => a.order - b.order)
