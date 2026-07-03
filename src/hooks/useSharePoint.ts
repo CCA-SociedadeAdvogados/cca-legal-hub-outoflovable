@@ -1,12 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/hooks/useProfile';
+import { useCliente } from '@/contexts/ClienteContext';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
+// Para utilizadores CCA internos (SSO), o cliente em visualização
+// (ClienteContext.viewingOrganizationId) tem prioridade sobre a organização
+// do próprio perfil — sem isto, um advogado CCA a ver o cliente X listava e
+// carregava ficheiros para a org CCA em vez do cliente (cross-tenant).
+// Para clientes externos, viewingOrganizationId é sempre null e o fallback
+// para current_organization_id mantém o comportamento correcto.
 function useEffectiveOrganizationId(overrideOrgId?: string) {
   const { profile } = useProfile();
-  return overrideOrgId || profile?.current_organization_id || null;
+  const { viewingOrganizationId } = useCliente();
+  return overrideOrgId || viewingOrganizationId || profile?.current_organization_id || null;
 }
 
 export interface SharePointConfig {
@@ -270,7 +278,14 @@ export function useSyncSharePoint(overrideOrgId?: string) {
         throw new Error(error.message);
       }
 
-      return data as SyncResult;
+      // A edge function devolve HTTP 200 com { success: false, error } em caso
+      // de falha — sem isto o utilizador não recebia qualquer feedback.
+      const result = data as SyncResult;
+      if (!result?.success) {
+        throw new Error(result?.error || 'Sync failed');
+      }
+
+      return result;
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['sharepoint-documents', organizationId] });
@@ -304,7 +319,7 @@ export function useSyncSharePoint(overrideOrgId?: string) {
 // Hook para fazer upload de ficheiros para o SharePoint
 export function useUploadToSharePoint(overrideOrgId?: string) {
   const queryClient = useQueryClient();
-  const { profile } = useProfile();
+  const effectiveOrgId = useEffectiveOrganizationId(overrideOrgId);
   const { t } = useTranslation();
 
   return useMutation({
@@ -318,7 +333,7 @@ export function useUploadToSharePoint(overrideOrgId?: string) {
       /** Nome final do ficheiro (com extensão). Por omissão usa file.name. */
       fileName?: string;
     }) => {
-      const organizationId = overrideOrgId || profile?.current_organization_id;
+      const organizationId = effectiveOrgId;
       if (!organizationId) {
         throw new Error('Organization not found');
       }
@@ -459,7 +474,7 @@ export function useSharePointFolders(overrideOrgId?: string) {
 // Mover um documento (ou pasta) para outra pasta de destino.
 export function useMoveSharePointItem(overrideOrgId?: string) {
   const queryClient = useQueryClient();
-  const { profile } = useProfile();
+  const effectiveOrgId = useEffectiveOrganizationId(overrideOrgId);
   const { t } = useTranslation();
 
   return useMutation({
@@ -468,7 +483,7 @@ export function useMoveSharePointItem(overrideOrgId?: string) {
       destination_path: string;
       new_name?: string;
     }) => {
-      const organizationId = overrideOrgId || profile?.current_organization_id;
+      const organizationId = effectiveOrgId;
       if (!organizationId) throw new Error('Organization not found');
 
       const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
@@ -506,7 +521,7 @@ export interface DocumentClassification {
 
 // Classifica um documento com IA (nome + tipo + pasta recomendada). Não grava nada.
 export function useClassifyDocument(overrideOrgId?: string) {
-  const { profile } = useProfile();
+  const effectiveOrgId = useEffectiveOrganizationId(overrideOrgId);
 
   return useMutation({
     mutationFn: async ({
@@ -516,7 +531,7 @@ export function useClassifyDocument(overrideOrgId?: string) {
       file: File;
       existingFolders: string[];
     }): Promise<DocumentClassification> => {
-      const organizationId = overrideOrgId || profile?.current_organization_id;
+      const organizationId = effectiveOrgId;
       if (!organizationId) throw new Error('Organization not found');
 
       const arrayBuffer = await file.arrayBuffer();
@@ -570,14 +585,14 @@ export function useCreateContractFolders() {
 }
 
 // Hook para upload de ficheiros grandes (>4MB) via upload session
-export function useUploadLargeToSharePoint() {
+export function useUploadLargeToSharePoint(overrideOrgId?: string) {
   const queryClient = useQueryClient();
-  const { profile } = useProfile();
+  const effectiveOrgId = useEffectiveOrganizationId(overrideOrgId);
   const { t } = useTranslation();
 
   return useMutation({
     mutationFn: async ({ file, folderPath }: { file: File; folderPath: string }) => {
-      if (!profile?.current_organization_id) {
+      if (!effectiveOrgId) {
         throw new Error('Organization not found');
       }
 
@@ -593,7 +608,7 @@ export function useUploadLargeToSharePoint() {
       const { data, error } = await supabase.functions.invoke('sync-sharepoint', {
         body: {
           action: 'upload_large_file',
-          organization_id: profile.current_organization_id,
+          organization_id: effectiveOrgId,
           file_base64: base64,
           file_name: file.name,
           folder_path: folderPath,

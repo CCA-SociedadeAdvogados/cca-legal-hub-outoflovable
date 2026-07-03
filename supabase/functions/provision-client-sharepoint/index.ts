@@ -70,6 +70,25 @@ async function createFolder(
     }),
   });
 
+  if (res.status === 409) {
+    // Corrida entre o GET 404 e este POST (provisionamentos concorrentes):
+    // a pasta já existe — resolver e reutilizar em vez de falhar.
+    await res.text();
+    const listUrl = parentId === "root"
+      ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$select=id,name,folder,webUrl&$top=999`
+      : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children?$select=id,name,folder,webUrl&$top=999`;
+    const listRes = await fetch(listUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const match = (listData.value || []).find(
+        (c: { name: string; folder?: unknown }) =>
+          c.name.toLowerCase() === folderName.toLowerCase() && c.folder !== undefined,
+      );
+      if (match) return { id: match.id, webUrl: match.webUrl };
+    }
+    throw new Error(`Erro a resolver pasta "${folderName}" após conflito 409`);
+  }
+
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Erro a criar pasta "${folderName}": ${res.status} — ${err.slice(0, 300)}`);

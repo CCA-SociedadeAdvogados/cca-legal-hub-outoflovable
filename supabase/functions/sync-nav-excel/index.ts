@@ -79,6 +79,30 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
 
 // ── SharePoint folder helpers (usados no auto-provisioning) ─────
 
+// Procura uma pasta pelo nome nos filhos de um item (case-insensitive).
+async function findChildFolder(
+  accessToken: string,
+  driveId: string,
+  parentId: string,
+  name: string,
+): Promise<{ id: string; webUrl: string } | null> {
+  const url = parentId === "root"
+    ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$select=id,name,folder,webUrl&$top=999`
+    : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children?$select=id,name,folder,webUrl&$top=999`;
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const match = (data.value || []).find(
+    (c: { name: string; folder?: unknown }) =>
+      c.name.toLowerCase() === name.toLowerCase() && c.folder !== undefined,
+  );
+  return match ? { id: match.id, webUrl: match.webUrl } : null;
+}
+
+// Idempotente: verifica a existência antes de criar e usa conflictBehavior
+// "fail" com resolução de 409. Com "rename" (comportamento anterior), o Graph
+// criava silenciosamente "Contratos 1", "Financeiro 1", … em re-provisionamentos
+// ou syncs concorrentes — a causa das pastas duplicadas no SharePoint.
 async function ensureSharePointFolder(
   accessToken: string,
   driveId: string,
@@ -93,23 +117,40 @@ async function ensureSharePointFolder(
     const item = await getRes.json();
     return { id: item.id, webUrl: item.webUrl };
   }
-  // Criar hierarquia de pastas
+  // Criar hierarquia de pastas segmento a segmento
   const parts = folderPath.replace(/^\//, "").split("/").filter(Boolean);
   let currentId = "root";
   let currentWebUrl = "";
   for (const part of parts) {
+    const existing = await findChildFolder(accessToken, driveId, currentId, part);
+    if (existing) {
+      currentId = existing.id;
+      currentWebUrl = existing.webUrl;
+      continue;
+    }
+
     const url = currentId === "root"
       ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
       : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${currentId}/children`;
     const res = await fetch(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ name: part, folder: {}, "@microsoft.graph.conflictBehavior": "rename" }),
+      body: JSON.stringify({ name: part, folder: {}, "@microsoft.graph.conflictBehavior": "fail" }),
     });
-    if (!res.ok) throw new Error(`Erro a criar pasta "${part}": ${res.status}`);
-    const created = await res.json();
-    currentId = created.id;
-    currentWebUrl = created.webUrl;
+    if (res.ok) {
+      const created = await res.json();
+      currentId = created.id;
+      currentWebUrl = created.webUrl;
+    } else if (res.status === 409) {
+      // Criada entre a verificação e o POST (corrida) — resolver de novo
+      await res.text();
+      const resolved = await findChildFolder(accessToken, driveId, currentId, part);
+      if (!resolved) throw new Error(`Erro a resolver pasta "${part}" após conflito 409`);
+      currentId = resolved.id;
+      currentWebUrl = resolved.webUrl;
+    } else {
+      throw new Error(`Erro a criar pasta "${part}": ${res.status}`);
+    }
   }
   return { id: currentId, webUrl: currentWebUrl };
 }
@@ -120,11 +161,14 @@ async function createSharePointSubfolder(
   parentId: string,
   name: string,
 ): Promise<void> {
+  const existing = await findChildFolder(accessToken, driveId, parentId, name);
+  if (existing) return;
+
   const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
   const res = await fetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ name, folder: {}, "@microsoft.graph.conflictBehavior": "rename" }),
+    body: JSON.stringify({ name, folder: {}, "@microsoft.graph.conflictBehavior": "fail" }),
   });
   if (!res.ok && res.status !== 409) {
     console.warn(`[sharepoint] Subfolder "${name}" create failed: ${res.status}`);

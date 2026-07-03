@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from "../_shared/cors.ts";
-import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
+import { isAuthorizedForOrg, isPlatformAdminOrService } from "../_shared/orgAuth.ts";
 
 interface SharePointConfig {
   id: string;
@@ -39,6 +39,21 @@ interface GraphDriveItem {
   };
   eTag?: string;
   deleted?: { state: string };
+}
+
+// Escapa um valor para uso em $filter OData (aspas simples duplicadas)
+function odataQuote(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+// Remove caracteres inválidos em nomes de ficheiro/pasta SharePoint
+// (" * : < > ? / \ |) e pontos/espaços nas extremidades, que o Graph rejeita.
+function sanitizeSharePointName(name: string): string {
+  const cleaned = name
+    .replace(/[<>:"/\\|?*]/g, "_")
+    .replace(/^[\s.]+|[\s.]+$/g, "")
+    .trim();
+  return cleaned || "ficheiro";
 }
 
 // Get Microsoft Graph access token using client credentials flow
@@ -243,6 +258,7 @@ async function resolveFolderPathToId(
         const errText = await createResp.text();
         throw new Error(`Failed to auto-create folder "${segment}": ${createResp.status} - ${errText}`);
       }
+      continue;
     }
 
     currentId = match.id;
@@ -290,7 +306,7 @@ async function ensureFolderPath(
       // Already exists — resolve its ID
       await createResp.text(); // consume body
       const listResp = await fetch(
-        childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder`,
+        childrenUrl + `?$filter=name eq '${encodeURIComponent(odataQuote(segment))}'&$select=id,name,folder`,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (listResp.ok) {
@@ -490,9 +506,21 @@ async function fetchDeltaItems(
   return { items: allItems, newDeltaToken };
 }
 
+// O Graph pode devolver parentReference.path percent-encoded (espaços %20,
+// acentos %C3%AA…), enquanto root_folder_path é guardado descodificado.
+// Descodificar antes de comparar/relativizar, senão pastas com espaços ou
+// acentos (ex.: "Correspondência") nunca casam com o root configurado.
+function safeDecodePath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
 // Extract folder path from parent reference
 function extractFolderPath(item: GraphDriveItem, driveId: string): string {
-  const parentPath = item.parentReference?.path || "";
+  const parentPath = safeDecodePath(item.parentReference?.path || "");
   const rootPrefix = `/drives/${driveId}/root:`;
 
   if (parentPath.startsWith(rootPrefix)) {
@@ -540,6 +568,18 @@ serve(async (req) => {
 
     // ============ SAVE CONFIG ACTION ============
     if (action === "save_config") {
+      // Gerir a configuração (apontar para outro site/drive) é operação
+      // privilegiada — pertencer à organização não basta (alinhado com
+      // fetch-business-central). Sem isto, qualquer membro podia repontar a
+      // sync para um site arbitrário do tenant e enumerá-lo com as
+      // credenciais partilhadas da aplicação.
+      if (!(await isPlatformAdminOrService(req, supabase))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: apenas administradores podem gerir a configuração" }),
+          { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
       if (!configPayload?.site_id) {
         throw new Error("site_id is required");
       }
@@ -612,6 +652,13 @@ serve(async (req) => {
 
     // ============ DELETE CONFIG ACTION ============
     if (action === "delete_config") {
+      if (!(await isPlatformAdminOrService(req, supabase))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: apenas administradores podem gerir a configuração" }),
+          { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
       const { data: configToDelete } = await supabase
         .from("sharepoint_config")
         .select("id")
@@ -710,16 +757,22 @@ serve(async (req) => {
         throw new Error(`Browse failed: ${browseResp.status} - ${errText}`);
       }
       const browseData = await browseResp.json();
-      const folders = (browseData.value || []).map((item: { name: string; folder?: { childCount?: number }; size?: number; webUrl?: string }) => ({
+      const items = (browseData.value || []).map((item: { name: string; folder?: { childCount?: number }; size?: number; webUrl?: string }) => ({
         name: item.name,
+        // Caminho absoluto do item, para o selector de pastas do frontend
+        path: browsePath === "/" ? `/${item.name}` : `${browsePath}/${item.name}`,
         isFolder: !!item.folder,
         childCount: item.folder?.childCount ?? null,
         size: item.size,
         webUrl: item.webUrl,
       }));
 
+      // O frontend (useBrowseSharePointFolders) lê `folders`; manter `items`
+      // para compatibilidade com outros consumidores.
+      const folders = items.filter((i: { isFolder: boolean }) => i.isFolder);
+
       return new Response(
-        JSON.stringify({ success: true, path: browsePath, items: folders }),
+        JSON.stringify({ success: true, path: browsePath, items, folders }),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
@@ -769,7 +822,7 @@ serve(async (req) => {
           ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
           : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
 
-        const existsResp = await fetch(childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder,webUrl`, {
+        const existsResp = await fetch(childrenUrl + `?$filter=name eq '${encodeURIComponent(odataQuote(segment))}'&$select=id,name,folder,webUrl`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
@@ -810,7 +863,7 @@ serve(async (req) => {
           // 409 = already exists (race condition) — try to resolve it
           if (createResp.status === 409) {
             console.warn(`Folder "${segment}" conflict (409), resolving...`);
-            const retryResp = await fetch(childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder,webUrl`, {
+            const retryResp = await fetch(childrenUrl + `?$filter=name eq '${encodeURIComponent(odataQuote(segment))}'&$select=id,name,folder,webUrl`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
             if (retryResp.ok) {
@@ -1072,10 +1125,11 @@ serve(async (req) => {
 
     // ============ UPLOAD LARGE FILE ACTION (>4MB via upload session) ============
     if (action === "upload_large_file") {
-      const { file_base64, file_name, folder_path: uploadLargeFolderPath } = body;
-      if (!file_base64 || !file_name) {
+      const { file_base64, file_name: rawLargeFileName, folder_path: uploadLargeFolderPath } = body;
+      if (!file_base64 || !rawLargeFileName) {
         throw new Error("file_base64 and file_name are required");
       }
+      const file_name = sanitizeSharePointName(String(rawLargeFileName));
 
       const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
       const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
@@ -1224,10 +1278,11 @@ serve(async (req) => {
 
     // ============ UPLOAD FILE ACTION ============
     if (action === "upload_file") {
-      const { file_base64, file_name, folder_path: uploadFolderPath } = body;
-      if (!file_base64 || !file_name) {
+      const { file_base64, file_name: rawFileName, folder_path: uploadFolderPath } = body;
+      if (!file_base64 || !rawFileName) {
         throw new Error("file_base64 and file_name are required");
       }
+      const file_name = sanitizeSharePointName(String(rawFileName));
 
       const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
       const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
@@ -1397,6 +1452,7 @@ serve(async (req) => {
 
       const rootPath = spConfig.root_folder_path || "/";
       const useRecursiveListing = force_full_sync || !spConfig.last_delta_token;
+      const syncStartedAt = new Date().toISOString();
 
       let items: GraphDriveItem[];
       let newDeltaToken = "";
@@ -1404,13 +1460,11 @@ serve(async (req) => {
 
       if (useRecursiveListing) {
         // ===== FULL SYNC: Use recursive children listing =====
+        // Nota: não apagamos os documentos antes — se o listing do Graph
+        // falhar ou a função for terminada a meio, a organização ficava sem
+        // documentos. Em vez disso, upsert de tudo e, no fim, marcar como
+        // eliminados os registos que não foram tocados nesta sincronização.
         console.log(`Full sync: listing contents recursively from path: ${rootPath}`);
-
-        // Clear existing documents for a clean sync
-        await supabase
-          .from("sharepoint_documents")
-          .delete()
-          .eq("config_id", spConfig.id);
 
         items = await fetchFolderContentsRecursive(accessToken, driveId, rootPath);
         needsFiltering = false; // Already scoped to root_folder_path
@@ -1437,7 +1491,7 @@ serve(async (req) => {
       if (needsFiltering && rootPath !== "/") {
         filteredItems = items.filter((item) => {
           if (item.deleted) return true;
-          const parentPath = item.parentReference?.path || "";
+          const parentPath = safeDecodePath(item.parentReference?.path || "");
           const rootPrefix = `/drives/${driveId}/root:`;
           const fullParentPath = parentPath.startsWith(rootPrefix)
             ? parentPath.substring(rootPrefix.length)
@@ -1521,6 +1575,19 @@ serve(async (req) => {
           await supabase.from("sharepoint_documents").insert(documentData);
           itemsAdded++;
         }
+      }
+
+      // Full sync: marcar como eliminados os documentos que já não existem
+      // no SharePoint (não foram tocados nesta sincronização).
+      if (useRecursiveListing) {
+        const { data: staleRows } = await supabase
+          .from("sharepoint_documents")
+          .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+          .eq("config_id", spConfig.id)
+          .eq("is_deleted", false)
+          .lt("synced_at", syncStartedAt)
+          .select("id");
+        itemsDeleted += staleRows?.length ?? 0;
       }
 
       await supabase
