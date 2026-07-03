@@ -18,6 +18,7 @@ import {
   useSharePointConfig,
   useSyncSharePoint,
   useUploadToSharePoint,
+  useUploadLargeToSharePoint,
 } from '@/hooks/useSharePoint';
 import {
   Folder,
@@ -89,7 +90,12 @@ export function SharePointDocumentsBrowser({
     overrideOrgId,
   );
   const syncSharePoint = useSyncSharePoint(overrideOrgId);
-  const uploadToSharePoint = useUploadToSharePoint();
+  const uploadToSharePoint = useUploadToSharePoint(overrideOrgId);
+  // Ficheiros >4MB seguem por upload session (o PUT directo do Graph está
+  // limitado a 4MB); o limite global de 15MB vem do tamanho máximo de
+  // pedido aceite pela edge function (base64 inflaciona ~33%).
+  const uploadLargeToSharePoint = useUploadLargeToSharePoint(overrideOrgId);
+  const isUploading = uploadToSharePoint.isPending || uploadLargeToSharePoint.isPending;
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -282,9 +288,9 @@ export function SharePointDocumentsBrowser({
                 size="sm"
                 className="shrink-0"
                 onClick={() => setShowUploadDialog(true)}
-                disabled={uploadToSharePoint.isPending}
+                disabled={isUploading}
               >
-                {uploadToSharePoint.isPending ? (
+                {isUploading ? (
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                 ) : (
                   <Upload className="mr-1 h-4 w-4" />
@@ -457,7 +463,7 @@ export function SharePointDocumentsBrowser({
                 },
               )}
               {' · '}
-              {t('sharepoint.upload.sizeLimit', 'Limite: 4MB')}
+              {t('sharepoint.upload.sizeLimit15', 'Limite: 15MB')}
             </DialogDescription>
           </DialogHeader>
 
@@ -494,10 +500,10 @@ export function SharePointDocumentsBrowser({
               )}
             </div>
 
-            {selectedFile && selectedFile.size > 4 * 1024 * 1024 && (
+            {selectedFile && selectedFile.size > 15 * 1024 * 1024 && (
               <p className="flex items-center gap-1 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4" />
-                {t('sharepoint.upload.tooLarge', 'Ficheiro demasiado grande. Limite: 4MB')}
+                {t('sharepoint.upload.tooLarge15', 'Ficheiro demasiado grande. Limite: 15MB')}
               </p>
             )}
           </div>
@@ -516,7 +522,12 @@ export function SharePointDocumentsBrowser({
             <Button
               onClick={() => {
                 if (!selectedFile) return;
-                uploadToSharePoint.mutate(
+                // >4MB: PUT directo do Graph não suporta — usar upload session
+                const mutation =
+                  selectedFile.size > 4 * 1024 * 1024
+                    ? uploadLargeToSharePoint
+                    : uploadToSharePoint;
+                mutation.mutate(
                   { file: selectedFile, folderPath: currentPath },
                   {
                     onSuccess: () => {
@@ -526,11 +537,9 @@ export function SharePointDocumentsBrowser({
                   },
                 );
               }}
-              disabled={
-                !selectedFile || selectedFile.size > 4 * 1024 * 1024 || uploadToSharePoint.isPending
-              }
+              disabled={!selectedFile || selectedFile.size > 15 * 1024 * 1024 || isUploading}
             >
-              {uploadToSharePoint.isPending ? (
+              {isUploading ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
               ) : (
                 <Upload className="mr-1 h-4 w-4" />

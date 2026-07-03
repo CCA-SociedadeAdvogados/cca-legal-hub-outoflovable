@@ -596,6 +596,14 @@ export function useUploadLargeToSharePoint(overrideOrgId?: string) {
         throw new Error('Organization not found');
       }
 
+      // O ficheiro segue em base64 num único pedido à edge function; acima
+      // de ~15MB o pedido excede o limite aceite pelo runtime.
+      if (file.size > 15 * 1024 * 1024) {
+        throw new Error(
+          t('sharepoint.upload.tooLarge15', 'Ficheiro demasiado grande. Limite: 15MB'),
+        );
+      }
+
       // Convert file to base64
       const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);

@@ -1276,10 +1276,12 @@
       "dropzone": "Click to select a file",
       "error": "Error uploading file: {{message}}",
       "sizeLimit": "Limit: 4MB",
+      "sizeLimit15": "Limit: 15MB",
       "submit": "Upload",
       "success": "File uploaded successfully",
       "title": "Upload file to SharePoint",
-      "tooLarge": "File too large. Limit: 4MB"
+      "tooLarge": "File too large. Limit: 4MB",
+      "tooLarge15": "File too large. Limit: 15MB"
     }
   },
   "organizations": {
