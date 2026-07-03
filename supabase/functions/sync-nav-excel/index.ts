@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import * as XLSX from "https://esm.sh/xlsx@0.18.5";
 import { corsHeaders } from "../_shared/cors.ts";
+import { graphFetch } from "../_shared/graph.ts";
 
 // ── Utility: column name normalization ──────────────────────────
 
@@ -61,7 +62,7 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
     grant_type: "client_credentials",
   });
 
-  const response = await fetch(tokenUrl, {
+  const response = await graphFetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
@@ -79,13 +80,37 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
 
 // ── SharePoint folder helpers (usados no auto-provisioning) ─────
 
+// Procura uma pasta pelo nome nos filhos de um item (case-insensitive).
+async function findChildFolder(
+  accessToken: string,
+  driveId: string,
+  parentId: string,
+  name: string,
+): Promise<{ id: string; webUrl: string } | null> {
+  const url = parentId === "root"
+    ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$select=id,name,folder,webUrl&$top=999`
+    : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children?$select=id,name,folder,webUrl&$top=999`;
+  const res = await graphFetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const match = (data.value || []).find(
+    (c: { name: string; folder?: unknown }) =>
+      c.name.toLowerCase() === name.toLowerCase() && c.folder !== undefined,
+  );
+  return match ? { id: match.id, webUrl: match.webUrl } : null;
+}
+
+// Idempotente: verifica a existência antes de criar e usa conflictBehavior
+// "fail" com resolução de 409. Com "rename" (comportamento anterior), o Graph
+// criava silenciosamente "Contratos 1", "Financeiro 1", … em re-provisionamentos
+// ou syncs concorrentes — a causa das pastas duplicadas no SharePoint.
 async function ensureSharePointFolder(
   accessToken: string,
   driveId: string,
   folderPath: string,
 ): Promise<{ id: string; webUrl: string }> {
   const encodedPath = encodeURIComponent(folderPath).replace(/%2F/g, "/");
-  const getRes = await fetch(
+  const getRes = await graphFetch(
     `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`,
     { headers: { Authorization: `Bearer ${accessToken}` } },
   );
@@ -93,23 +118,40 @@ async function ensureSharePointFolder(
     const item = await getRes.json();
     return { id: item.id, webUrl: item.webUrl };
   }
-  // Criar hierarquia de pastas
+  // Criar hierarquia de pastas segmento a segmento
   const parts = folderPath.replace(/^\//, "").split("/").filter(Boolean);
   let currentId = "root";
   let currentWebUrl = "";
   for (const part of parts) {
+    const existing = await findChildFolder(accessToken, driveId, currentId, part);
+    if (existing) {
+      currentId = existing.id;
+      currentWebUrl = existing.webUrl;
+      continue;
+    }
+
     const url = currentId === "root"
       ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
       : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${currentId}/children`;
-    const res = await fetch(url, {
+    const res = await graphFetch(url, {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ name: part, folder: {}, "@microsoft.graph.conflictBehavior": "rename" }),
+      body: JSON.stringify({ name: part, folder: {}, "@microsoft.graph.conflictBehavior": "fail" }),
     });
-    if (!res.ok) throw new Error(`Erro a criar pasta "${part}": ${res.status}`);
-    const created = await res.json();
-    currentId = created.id;
-    currentWebUrl = created.webUrl;
+    if (res.ok) {
+      const created = await res.json();
+      currentId = created.id;
+      currentWebUrl = created.webUrl;
+    } else if (res.status === 409) {
+      // Criada entre a verificação e o POST (corrida) — resolver de novo
+      await res.text();
+      const resolved = await findChildFolder(accessToken, driveId, currentId, part);
+      if (!resolved) throw new Error(`Erro a resolver pasta "${part}" após conflito 409`);
+      currentId = resolved.id;
+      currentWebUrl = resolved.webUrl;
+    } else {
+      throw new Error(`Erro a criar pasta "${part}": ${res.status}`);
+    }
   }
   return { id: currentId, webUrl: currentWebUrl };
 }
@@ -120,11 +162,14 @@ async function createSharePointSubfolder(
   parentId: string,
   name: string,
 ): Promise<void> {
+  const existing = await findChildFolder(accessToken, driveId, parentId, name);
+  if (existing) return;
+
   const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
-  const res = await fetch(url, {
+  const res = await graphFetch(url, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ name, folder: {}, "@microsoft.graph.conflictBehavior": "rename" }),
+    body: JSON.stringify({ name, folder: {}, "@microsoft.graph.conflictBehavior": "fail" }),
   });
   if (!res.ok && res.status !== 409) {
     console.warn(`[sharepoint] Subfolder "${name}" create failed: ${res.status}`);
@@ -132,7 +177,7 @@ async function createSharePointSubfolder(
 }
 
 async function getDriveId(accessToken: string, siteId: string): Promise<string> {
-  const response = await fetch(
+  const response = await graphFetch(
     `https://graph.microsoft.com/v1.0/sites/${siteId}/drive`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
@@ -147,7 +192,7 @@ async function getDriveId(accessToken: string, siteId: string): Promise<string> 
 
 // List all drives (document libraries) for a SharePoint site
 async function listAllDrives(accessToken: string, siteId: string): Promise<Array<{ id: string; name: string }>> {
-  const response = await fetch(
+  const response = await graphFetch(
     `https://graph.microsoft.com/v1.0/sites/${siteId}/drives`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
@@ -170,7 +215,7 @@ async function searchBaseNavInDrive(
   const searchUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/search(q='Base Nav')`;
   console.log(`Searching for Base Nav file in drive ${driveId}: ${searchUrl}`);
 
-  const response = await fetch(searchUrl, {
+  const response = await graphFetch(searchUrl, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -183,7 +228,7 @@ async function searchBaseNavInDrive(
     console.warn(`Search API failed for drive ${driveId}, trying children listing...`);
     // Fallback: list root children directly
     const childrenUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`;
-    const childrenResp = await fetch(childrenUrl, {
+    const childrenResp = await graphFetch(childrenUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (childrenResp.ok) {
@@ -248,7 +293,7 @@ async function downloadFileContent(accessToken: string, driveId: string, fileId:
   const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${fileId}/content`;
   console.log(`Downloading file content: ${url}`);
 
-  const response = await fetch(url, {
+  const response = await graphFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 

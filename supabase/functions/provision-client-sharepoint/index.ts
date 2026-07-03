@@ -20,6 +20,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
+import { graphFetch } from "../_shared/graph.ts";
 
 async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
@@ -30,7 +31,7 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
     grant_type: "client_credentials",
   });
 
-  const response = await fetch(tokenUrl, {
+  const response = await graphFetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
@@ -56,7 +57,7 @@ async function createFolder(
     ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
     : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
 
-  const res = await fetch(url, {
+  const res = await graphFetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -69,6 +70,25 @@ async function createFolder(
       "@microsoft.graph.conflictBehavior": "fail",
     }),
   });
+
+  if (res.status === 409) {
+    // Corrida entre o GET 404 e este POST (provisionamentos concorrentes):
+    // a pasta já existe — resolver e reutilizar em vez de falhar.
+    await res.text();
+    const listUrl = parentId === "root"
+      ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children?$select=id,name,folder,webUrl&$top=999`
+      : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children?$select=id,name,folder,webUrl&$top=999`;
+    const listRes = await graphFetch(listUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+    if (listRes.ok) {
+      const listData = await listRes.json();
+      const match = (listData.value || []).find(
+        (c: { name: string; folder?: unknown }) =>
+          c.name.toLowerCase() === folderName.toLowerCase() && c.folder !== undefined,
+      );
+      if (match) return { id: match.id, webUrl: match.webUrl };
+    }
+    throw new Error(`Erro a resolver pasta "${folderName}" após conflito 409`);
+  }
 
   if (!res.ok) {
     const err = await res.text();
@@ -99,7 +119,7 @@ async function ensureFolder(
     const encodedPath = encodeURIComponent(pathSoFar).replace(/%2F/g, "/");
     const getUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`;
 
-    const getRes = await fetch(getUrl, {
+    const getRes = await graphFetch(getUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 

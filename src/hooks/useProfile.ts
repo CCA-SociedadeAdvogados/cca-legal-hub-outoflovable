@@ -48,6 +48,11 @@ export const useProfile = () => {
       // If profile doesn't exist, create it (self-healing)
       if (!data) {
         console.log('Profile not found, creating...');
+        // Preservar o método de autenticação vindo dos metadados (a função
+        // sso-cca grava user_metadata.auth_method='sso_cca'). Sem isto, um
+        // utilizador SSO cujo perfil ainda não exista era criado como conta
+        // local e encaminhado para o portal de clientes em vez do cockpit.
+        const metaAuthMethod = user.user_metadata?.auth_method;
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -55,6 +60,7 @@ export const useProfile = () => {
             email: user.email,
             nome_completo: user.user_metadata?.nome_completo || user.email,
             onboarding_completed: false,
+            ...(metaAuthMethod ? { auth_method: metaAuthMethod } : {}),
           })
           .select()
           .single();

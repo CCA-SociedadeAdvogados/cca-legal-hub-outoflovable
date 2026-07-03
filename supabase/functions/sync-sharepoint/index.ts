@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { corsHeaders } from "../_shared/cors.ts";
-import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
+import { isAuthorizedForOrg, isPlatformAdminOrService } from "../_shared/orgAuth.ts";
+import { graphFetch } from "../_shared/graph.ts";
 
 interface SharePointConfig {
   id: string;
@@ -41,6 +42,21 @@ interface GraphDriveItem {
   deleted?: { state: string };
 }
 
+// Escapa um valor para uso em $filter OData (aspas simples duplicadas)
+function odataQuote(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
+// Remove caracteres inválidos em nomes de ficheiro/pasta SharePoint
+// (" * : < > ? / \ |) e pontos/espaços nas extremidades, que o Graph rejeita.
+function sanitizeSharePointName(name: string): string {
+  const cleaned = name
+    .replace(/[<>:"/\\|?*]/g, "_")
+    .replace(/^[\s.]+|[\s.]+$/g, "")
+    .trim();
+  return cleaned || "ficheiro";
+}
+
 // Get Microsoft Graph access token using client credentials flow
 async function getAccessToken(tenantId: string, clientId: string, clientSecret: string): Promise<string> {
   const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
@@ -52,7 +68,7 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
     grant_type: "client_credentials",
   });
 
-  const response = await fetch(tokenUrl, {
+  const response = await graphFetch(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: params.toString(),
@@ -70,7 +86,7 @@ async function getAccessToken(tenantId: string, clientId: string, clientSecret: 
 
 // Get the default document library drive ID for a site
 async function getDriveId(accessToken: string, siteId: string): Promise<string> {
-  const response = await fetch(
+  const response = await graphFetch(
     `https://graph.microsoft.com/v1.0/sites/${siteId}/drive`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -87,7 +103,7 @@ async function getDriveId(accessToken: string, siteId: string): Promise<string> 
 
 // Get site info to validate configuration
 async function getSiteInfo(accessToken: string, siteId: string): Promise<{ name: string; webUrl: string }> {
-  const response = await fetch(
+  const response = await graphFetch(
     `https://graph.microsoft.com/v1.0/sites/${siteId}`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -120,7 +136,7 @@ async function resolveFolderPathToId(
   console.log(`Resolving folder path: ${url}`);
 
   // --- Attempt 1: direct path resolution ---
-  const response = await fetch(url, {
+  const response = await graphFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -144,7 +160,7 @@ async function resolveFolderPathToId(
   // --- Attempt 2: retry after 1 s ---
   await new Promise((r) => setTimeout(r, 1000));
 
-  const response2 = await fetch(url, {
+  const response2 = await graphFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -175,7 +191,7 @@ async function resolveFolderPathToId(
 
     console.log(`Fallback: listing children of "${currentName}" to find "${segment}" …`);
 
-    const childResp = await fetch(childrenUrl, {
+    const childResp = await graphFetch(childrenUrl, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -201,7 +217,7 @@ async function resolveFolderPathToId(
         currentId === "root"
           ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
           : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${currentId}/children`;
-      const createResp = await fetch(createUrl, {
+      const createResp = await graphFetch(createUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -222,7 +238,7 @@ async function resolveFolderPathToId(
       } else if (createResp.status === 409) {
         // Race condition: created between list and create — re-list
         await createResp.text();
-        const relistResp = await fetch(childrenUrl, {
+        const relistResp = await graphFetch(childrenUrl, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (relistResp.ok) {
@@ -243,6 +259,7 @@ async function resolveFolderPathToId(
         const errText = await createResp.text();
         throw new Error(`Failed to auto-create folder "${segment}": ${createResp.status} - ${errText}`);
       }
+      continue;
     }
 
     currentId = match.id;
@@ -270,7 +287,7 @@ async function ensureFolderPath(
       : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
 
     // Try to create the folder (fastest path)
-    const createResp = await fetch(childrenUrl, {
+    const createResp = await graphFetch(childrenUrl, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -289,8 +306,8 @@ async function ensureFolderPath(
     } else if (createResp.status === 409) {
       // Already exists — resolve its ID
       await createResp.text(); // consume body
-      const listResp = await fetch(
-        childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder`,
+      const listResp = await graphFetch(
+        childrenUrl + `?$filter=name eq '${encodeURIComponent(odataQuote(segment))}'&$select=id,name,folder`,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
       if (listResp.ok) {
@@ -305,7 +322,7 @@ async function ensureFolderPath(
       }
       // Fallback: get by path
       const encodedPath = segments.slice(0, segments.indexOf(segment) + 1).map(s => encodeURIComponent(s)).join("/");
-      const getResp = await fetch(
+      const getResp = await graphFetch(
         `https://graph.microsoft.com/v1.0/drives/${driveId}/root:/${encodedPath}`,
         { headers: { Authorization: `Bearer ${accessToken}` } },
       );
@@ -338,7 +355,7 @@ async function fetchFolderChildrenById(
   const allItems: GraphDriveItem[] = [];
 
   while (url) {
-    const response = await fetch(url, {
+    const response = await graphFetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -374,7 +391,7 @@ async function fetchFolderContentsRecursive(
     // For root, use drive root children directly
     const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`;
     console.log(`Fetching root children from: ${url}`);
-    const response = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
+    const response = await graphFetch(url, { headers: { Authorization: `Bearer ${accessToken}` } });
     if (!response.ok) {
       const error = await response.text();
       throw new Error(`Root children query failed: ${response.status} - ${error}`);
@@ -434,7 +451,7 @@ async function getLatestDeltaToken(accessToken: string, driveId: string): Promis
   const url = `https://graph.microsoft.com/v1.0/drives/${driveId}/root/delta?token=latest`;
   console.log(`Getting latest delta token from: ${url}`);
 
-  const response = await fetch(url, {
+  const response = await graphFetch(url, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 
@@ -462,7 +479,7 @@ async function fetchDeltaItems(
   let newDeltaToken = "";
 
   while (url) {
-    const response = await fetch(url, {
+    const response = await graphFetch(url, {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
 
@@ -490,9 +507,21 @@ async function fetchDeltaItems(
   return { items: allItems, newDeltaToken };
 }
 
+// O Graph pode devolver parentReference.path percent-encoded (espaços %20,
+// acentos %C3%AA…), enquanto root_folder_path é guardado descodificado.
+// Descodificar antes de comparar/relativizar, senão pastas com espaços ou
+// acentos (ex.: "Correspondência") nunca casam com o root configurado.
+function safeDecodePath(path: string): string {
+  try {
+    return decodeURIComponent(path);
+  } catch {
+    return path;
+  }
+}
+
 // Extract folder path from parent reference
 function extractFolderPath(item: GraphDriveItem, driveId: string): string {
-  const parentPath = item.parentReference?.path || "";
+  const parentPath = safeDecodePath(item.parentReference?.path || "");
   const rootPrefix = `/drives/${driveId}/root:`;
 
   if (parentPath.startsWith(rootPrefix)) {
@@ -540,6 +569,18 @@ serve(async (req) => {
 
     // ============ SAVE CONFIG ACTION ============
     if (action === "save_config") {
+      // Gerir a configuração (apontar para outro site/drive) é operação
+      // privilegiada — pertencer à organização não basta (alinhado com
+      // fetch-business-central). Sem isto, qualquer membro podia repontar a
+      // sync para um site arbitrário do tenant e enumerá-lo com as
+      // credenciais partilhadas da aplicação.
+      if (!(await isPlatformAdminOrService(req, supabase))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: apenas administradores podem gerir a configuração" }),
+          { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
       if (!configPayload?.site_id) {
         throw new Error("site_id is required");
       }
@@ -612,6 +653,13 @@ serve(async (req) => {
 
     // ============ DELETE CONFIG ACTION ============
     if (action === "delete_config") {
+      if (!(await isPlatformAdminOrService(req, supabase))) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: apenas administradores podem gerir a configuração" }),
+          { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+
       const { data: configToDelete } = await supabase
         .from("sharepoint_config")
         .select("id")
@@ -656,7 +704,7 @@ serve(async (req) => {
       if (!spCfg) throw new Error("No SharePoint config found");
 
       const accessToken = await getAccessToken(tenantId, clientId, clientSecret);
-      const drivesResp = await fetch(`https://graph.microsoft.com/v1.0/sites/${spCfg.site_id}/drives`, {
+      const drivesResp = await graphFetch(`https://graph.microsoft.com/v1.0/sites/${spCfg.site_id}/drives`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!drivesResp.ok) throw new Error(`Drives query failed: ${drivesResp.status}`);
@@ -704,22 +752,28 @@ serve(async (req) => {
       }
 
       console.log(`Browse URL: ${browseUrl}`);
-      const browseResp = await fetch(browseUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
+      const browseResp = await graphFetch(browseUrl, { headers: { Authorization: `Bearer ${accessToken}` } });
       if (!browseResp.ok) {
         const errText = await browseResp.text();
         throw new Error(`Browse failed: ${browseResp.status} - ${errText}`);
       }
       const browseData = await browseResp.json();
-      const folders = (browseData.value || []).map((item: { name: string; folder?: { childCount?: number }; size?: number; webUrl?: string }) => ({
+      const items = (browseData.value || []).map((item: { name: string; folder?: { childCount?: number }; size?: number; webUrl?: string }) => ({
         name: item.name,
+        // Caminho absoluto do item, para o selector de pastas do frontend
+        path: browsePath === "/" ? `/${item.name}` : `${browsePath}/${item.name}`,
         isFolder: !!item.folder,
         childCount: item.folder?.childCount ?? null,
         size: item.size,
         webUrl: item.webUrl,
       }));
 
+      // O frontend (useBrowseSharePointFolders) lê `folders`; manter `items`
+      // para compatibilidade com outros consumidores.
+      const folders = items.filter((i: { isFolder: boolean }) => i.isFolder);
+
       return new Response(
-        JSON.stringify({ success: true, path: browsePath, items: folders }),
+        JSON.stringify({ success: true, path: browsePath, items, folders }),
         { headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
       );
     }
@@ -769,7 +823,7 @@ serve(async (req) => {
           ? `https://graph.microsoft.com/v1.0/drives/${driveId}/root/children`
           : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
 
-        const existsResp = await fetch(childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder,webUrl`, {
+        const existsResp = await graphFetch(childrenUrl + `?$filter=name eq '${encodeURIComponent(odataQuote(segment))}'&$select=id,name,folder,webUrl`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
 
@@ -792,7 +846,7 @@ serve(async (req) => {
           : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
 
         console.log(`Creating folder "${segment}" under ${parentId}`);
-        const createResp = await fetch(createUrl, {
+        const createResp = await graphFetch(createUrl, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -810,7 +864,7 @@ serve(async (req) => {
           // 409 = already exists (race condition) — try to resolve it
           if (createResp.status === 409) {
             console.warn(`Folder "${segment}" conflict (409), resolving...`);
-            const retryResp = await fetch(childrenUrl + `?$filter=name eq '${segment}'&$select=id,name,folder,webUrl`, {
+            const retryResp = await graphFetch(childrenUrl + `?$filter=name eq '${encodeURIComponent(odataQuote(segment))}'&$select=id,name,folder,webUrl`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
             if (retryResp.ok) {
@@ -914,7 +968,7 @@ serve(async (req) => {
       }
       if (new_name) patchBody.name = new_name;
 
-      const patchResp = await fetch(
+      const patchResp = await graphFetch(
         `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${sharepoint_item_id}`,
         {
           method: "PATCH",
@@ -1003,7 +1057,7 @@ serve(async (req) => {
             : `https://graph.microsoft.com/v1.0/drives/${driveId}/items/${parentId}/children`;
 
           // Try to create directly (faster than check-then-create)
-          const createResp = await fetch(childrenUrl, {
+          const createResp = await graphFetch(childrenUrl, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -1025,7 +1079,7 @@ serve(async (req) => {
           } else if (createResp.status === 409) {
             // Already exists — resolve ID
             await createResp.text(); // consume body
-            const listResp = await fetch(childrenUrl + `?$select=id,name,folder,webUrl`, {
+            const listResp = await graphFetch(childrenUrl + `?$select=id,name,folder,webUrl`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
             if (listResp.ok) {
@@ -1072,10 +1126,11 @@ serve(async (req) => {
 
     // ============ UPLOAD LARGE FILE ACTION (>4MB via upload session) ============
     if (action === "upload_large_file") {
-      const { file_base64, file_name, folder_path: uploadLargeFolderPath } = body;
-      if (!file_base64 || !file_name) {
+      const { file_base64, file_name: rawLargeFileName, folder_path: uploadLargeFolderPath } = body;
+      if (!file_base64 || !rawLargeFileName) {
         throw new Error("file_base64 and file_name are required");
       }
+      const file_name = sanitizeSharePointName(String(rawLargeFileName));
 
       const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
       const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
@@ -1132,7 +1187,7 @@ serve(async (req) => {
       const encodedPath = fullPath.split("/").map((s: string) => s ? encodeURIComponent(s) : "").join("/");
       const sessionUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${encodedPath}:/createUploadSession`;
 
-      const sessionResp = await fetch(sessionUrl, {
+      const sessionResp = await graphFetch(sessionUrl, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -1163,7 +1218,7 @@ serve(async (req) => {
         const end = Math.min(offset + CHUNK_SIZE, fileSize);
         const chunk = fileBytes.slice(offset, end);
 
-        const chunkResp = await fetch(uploadUrl, {
+        const chunkResp = await graphFetch(uploadUrl, {
           method: "PUT",
           headers: {
             "Content-Length": String(chunk.length),
@@ -1224,10 +1279,11 @@ serve(async (req) => {
 
     // ============ UPLOAD FILE ACTION ============
     if (action === "upload_file") {
-      const { file_base64, file_name, folder_path: uploadFolderPath } = body;
-      if (!file_base64 || !file_name) {
+      const { file_base64, file_name: rawFileName, folder_path: uploadFolderPath } = body;
+      if (!file_base64 || !rawFileName) {
         throw new Error("file_base64 and file_name are required");
       }
+      const file_name = sanitizeSharePointName(String(rawFileName));
 
       const clientId = Deno.env.get("SHAREPOINT_CLIENT_ID");
       const clientSecret = Deno.env.get("SHAREPOINT_CLIENT_SECRET");
@@ -1282,7 +1338,7 @@ serve(async (req) => {
       const uploadUrl = `https://graph.microsoft.com/v1.0/drives/${driveId}/root:${encodedPath}:/content`;
       console.log(`Uploading file to: ${uploadUrl}`);
 
-      const uploadResp = await fetch(uploadUrl, {
+      const uploadResp = await graphFetch(uploadUrl, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -1364,6 +1420,21 @@ serve(async (req) => {
 
     const spConfig: SharePointConfig = configs[0];
 
+    // Watchdog: uma função terminada à força (timeout/limite de CPU) nunca
+    // corre o catch, deixando o log preso em "running" (spinner eterno na UI).
+    // Antes de cada sync, fechar como erro os logs "running" com mais de 15 min.
+    const staleCutoff = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    await supabase
+      .from("sharepoint_sync_logs")
+      .update({
+        status: "error",
+        completed_at: new Date().toISOString(),
+        error_message: "Sincronização interrompida (timeout da função) — fechada pelo watchdog",
+      })
+      .eq("config_id", spConfig.id)
+      .eq("status", "running")
+      .lt("started_at", staleCutoff);
+
     const { data: syncLog } = await supabase
       .from("sharepoint_sync_logs")
       .insert({
@@ -1397,6 +1468,7 @@ serve(async (req) => {
 
       const rootPath = spConfig.root_folder_path || "/";
       const useRecursiveListing = force_full_sync || !spConfig.last_delta_token;
+      const syncStartedAt = new Date().toISOString();
 
       let items: GraphDriveItem[];
       let newDeltaToken = "";
@@ -1404,13 +1476,11 @@ serve(async (req) => {
 
       if (useRecursiveListing) {
         // ===== FULL SYNC: Use recursive children listing =====
+        // Nota: não apagamos os documentos antes — se o listing do Graph
+        // falhar ou a função for terminada a meio, a organização ficava sem
+        // documentos. Em vez disso, upsert de tudo e, no fim, marcar como
+        // eliminados os registos que não foram tocados nesta sincronização.
         console.log(`Full sync: listing contents recursively from path: ${rootPath}`);
-
-        // Clear existing documents for a clean sync
-        await supabase
-          .from("sharepoint_documents")
-          .delete()
-          .eq("config_id", spConfig.id);
 
         items = await fetchFolderContentsRecursive(accessToken, driveId, rootPath);
         needsFiltering = false; // Already scoped to root_folder_path
@@ -1437,7 +1507,7 @@ serve(async (req) => {
       if (needsFiltering && rootPath !== "/") {
         filteredItems = items.filter((item) => {
           if (item.deleted) return true;
-          const parentPath = item.parentReference?.path || "";
+          const parentPath = safeDecodePath(item.parentReference?.path || "");
           const rootPrefix = `/drives/${driveId}/root:`;
           const fullParentPath = parentPath.startsWith(rootPrefix)
             ? parentPath.substring(rootPrefix.length)
@@ -1521,6 +1591,19 @@ serve(async (req) => {
           await supabase.from("sharepoint_documents").insert(documentData);
           itemsAdded++;
         }
+      }
+
+      // Full sync: marcar como eliminados os documentos que já não existem
+      // no SharePoint (não foram tocados nesta sincronização).
+      if (useRecursiveListing) {
+        const { data: staleRows } = await supabase
+          .from("sharepoint_documents")
+          .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+          .eq("config_id", spConfig.id)
+          .eq("is_deleted", false)
+          .lt("synced_at", syncStartedAt)
+          .select("id");
+        itemsDeleted += staleRows?.length ?? 0;
       }
 
       await supabase

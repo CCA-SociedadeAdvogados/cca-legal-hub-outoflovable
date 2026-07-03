@@ -1276,10 +1276,12 @@
       "dropzone": "Click to select a file",
       "error": "Error uploading file: {{message}}",
       "sizeLimit": "Limit: 4MB",
+      "sizeLimit15": "Limit: 15MB",
       "submit": "Upload",
       "success": "File uploaded successfully",
       "title": "Upload file to SharePoint",
-      "tooLarge": "File too large. Limit: 4MB"
+      "tooLarge": "File too large. Limit: 4MB",
+      "tooLarge15": "File too large. Limit: 15MB"
     }
   },
   "organizations": {
@@ -1673,6 +1675,8 @@
     "aiSuggestion": "AI Suggestion",
     "complete": "complete",
     "fileTooLarge": "File too large for AI analysis",
+    "noUploadTarget": "Upload unavailable",
+    "noUploadTargetDesc": "Could not determine the SharePoint destination folder. Please try again later.",
     "replaceFile": "Click to replace: {{name}}",
     "required": "Required",
     "selectFile": "Click to select the file",

@@ -72,13 +72,25 @@ async function callAIWithFallback(
         requestBody.system = systemMsg.content;
       }
 
+      // Blocos "document" (PDF base64) exigem o beta header — sem ele a API
+      // rejeita o pedido (as funções irmãs parse-contract/scan-document-date
+      // já o enviam).
+      const hasDocumentBlock = anthropicMessages.some(
+        (m) => Array.isArray(m.content) && m.content.some((b) => (b as { type?: string }).type === "document"),
+      );
+
+      const headers: Record<string, string> = {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "Content-Type": "application/json",
+      };
+      if (hasDocumentBlock) {
+        headers["anthropic-beta"] = "pdfs-2024-09-25";
+      }
+
       const response = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify(requestBody),
       });
 
@@ -147,13 +159,25 @@ serve(async (req) => {
 
     // If file content is provided, handle based on type
     if (data.fileContent && !data.textContent) {
+      // Limite de 15 MB (descodificado), alinhado com parse-contract
+      const approxBytes = Math.floor(data.fileContent.length * 3 / 4);
+      if (approxBytes > 15 * 1024 * 1024) {
+        const errorMsg = language === 'en'
+          ? "File too large. Maximum size: 15MB."
+          : "Ficheiro demasiado grande. Tamanho máximo: 15MB.";
+        return new Response(
+          JSON.stringify({ error: errorMsg }),
+          { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+        );
+      }
+
       const isPdf = data.mimeType === 'application/pdf' || data.fileName?.endsWith('.pdf');
       const isDocx = data.fileName?.endsWith('.docx');
       const isLegacyDoc = data.fileName?.endsWith('.doc') && !data.fileName?.endsWith('.docx');
       const isWord = data.mimeType?.includes('word') || isDocx || isLegacyDoc;
 
       if (isPdf) {
-        console.log(`Sending PDF directly to Gemini for analysis: ${data.fileName}`);
+        console.log(`Sending PDF directly to the model for analysis: ${data.fileName}`);
         const pdfPrompt = language === 'en' 
           ? "Analyze this PDF document and extract all relevant information as requested."
           : "Analise este documento PDF e extraia todas as informações relevantes conforme solicitado.";

@@ -56,7 +56,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { exportContratosToCSV } from '@/lib/exportUtils';
 import { getContratoDeadlines } from '@/portal/lib/contrato';
-import { VALID_STATE_TRANSITIONS } from '@/lib/contractStateMachine';
+import { VALID_STATE_TRANSITIONS, canTransitionTo } from '@/lib/contractStateMachine';
 import { estadoBadgeClass } from '@/lib/contractEstado';
 import { useContrato } from '@/hooks/useContratos';
 import { useCCAStatus } from '@/hooks/useCCAStatus';
@@ -173,6 +173,11 @@ export default function ContratoDetalhe() {
 
   const changeState = useMutation({
     mutationFn: async (newState: EstadoContrato) => {
+      // Guarda defensiva: a UI só oferece transições válidas, mas um estado
+      // desactualizado no ecrã não pode persistir uma transição ilegal.
+      if (contrato && !canTransitionTo(contrato.estado_contrato, newState)) {
+        throw new Error(`Transição de estado inválida: ${contrato.estado_contrato} → ${newState}`);
+      }
       const { error } = await supabase
         .from('contratos')
         .update({ estado_contrato: newState, updated_by_id: user?.id })

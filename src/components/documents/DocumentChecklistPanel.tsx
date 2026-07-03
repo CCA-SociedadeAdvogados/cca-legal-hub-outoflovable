@@ -202,7 +202,20 @@ export function DocumentChecklistPanel({
     let fileReference: string | null = editItem.entry?.file_reference ?? null;
 
     // Upload file to SharePoint first if one was selected
-    if (selectedFile && uploadFolderPath) {
+    if (selectedFile) {
+      if (!uploadFolderPath) {
+        // Sem destino de upload disponível, gravar marcaria o documento como
+        // "Carregado" descartando silenciosamente o ficheiro escolhido.
+        toast({
+          title: t('docChecklist.noUploadTarget', 'Upload indisponível'),
+          description: t(
+            'docChecklist.noUploadTargetDesc',
+            'Não foi possível determinar a pasta de destino no SharePoint. Tente novamente mais tarde.',
+          ),
+          variant: 'destructive',
+        });
+        return;
+      }
       try {
         await uploadToSharePoint.mutateAsync({ file: selectedFile, folderPath: uploadFolderPath });
         fileReference = selectedFile.name;

@@ -1276,10 +1276,12 @@
       "dropzone": "Clique para selecionar um ficheiro",
       "error": "Erro ao carregar ficheiro: {{message}}",
       "sizeLimit": "Limite: 4MB",
+      "sizeLimit15": "Limite: 15MB",
       "submit": "Carregar",
       "success": "Ficheiro carregado com sucesso",
       "title": "Carregar ficheiro para SharePoint",
-      "tooLarge": "Ficheiro demasiado grande. Limite: 4MB"
+      "tooLarge": "Ficheiro demasiado grande. Limite: 4MB",
+      "tooLarge15": "Ficheiro demasiado grande. Limite: 15MB"
     }
   },
   "organizations": {
@@ -1673,6 +1675,8 @@
     "aiSuggestion": "Sugestão IA",
     "complete": "completos",
     "fileTooLarge": "Ficheiro demasiado grande para análise IA",
+    "noUploadTarget": "Upload indisponível",
+    "noUploadTargetDesc": "Não foi possível determinar a pasta de destino no SharePoint. Tente novamente mais tarde.",
     "replaceFile": "Clique para substituir: {{name}}",
     "required": "Obrigatório",
     "selectFile": "Clique para selecionar o ficheiro",
