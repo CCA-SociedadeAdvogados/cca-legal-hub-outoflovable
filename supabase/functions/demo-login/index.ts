@@ -8,6 +8,15 @@ function isDemoEnabled(): boolean {
   return /^(true|1|yes|on)$/i.test(raw);
 }
 
+// Security: por omissão a conta demo NÃO é platform admin — qualquer visitante
+// obtém esta sessão, e um superadmin de plataforma vê todas as organizações.
+// Para demos internas que precisem do PlatformAdmin, definir
+// DEMO_GRANT_PLATFORM_ADMIN=true explicitamente.
+function isDemoPlatformAdminEnabled(): boolean {
+  const raw = (Deno.env.get("DEMO_GRANT_PLATFORM_ADMIN") ?? "").trim();
+  return /^(true|1|yes|on)$/i.test(raw);
+}
+
 function getDemoCredentials(): { email: string; password: string } {
   return {
     email: (Deno.env.get("DEMO_USER_EMAIL") ?? "").trim(),
@@ -120,7 +129,7 @@ async function ensureDemoTenant(
     console.log(`[Demo-Login] User already has membership in demo organization`);
   }
 
-  // 5) Ensure demo user is a platform admin (superadmin)
+  // 5) Platform admin apenas com opt-in explícito (DEMO_GRANT_PLATFORM_ADMIN)
   const { data: existingPlatformAdmin, error: platformAdminSelectError } = await supabaseAdmin
     .from("platform_admins")
     .select("id")
@@ -129,15 +138,27 @@ async function ensureDemoTenant(
 
   if (platformAdminSelectError) throw platformAdminSelectError;
 
-  if (!existingPlatformAdmin) {
-    console.log(`[Demo-Login] Adding user as platform admin (superadmin)`);
-    const { error: platformAdminInsertError } = await supabaseAdmin
-      .from("platform_admins")
-      .insert({ user_id: userId, notes: "Demo superadmin account" });
+  if (isDemoPlatformAdminEnabled()) {
+    if (!existingPlatformAdmin) {
+      console.log(`[Demo-Login] Adding user as platform admin (superadmin) — DEMO_GRANT_PLATFORM_ADMIN=true`);
+      const { error: platformAdminInsertError } = await supabaseAdmin
+        .from("platform_admins")
+        .insert({ user_id: userId, notes: "Demo superadmin account" });
 
-    if (platformAdminInsertError) throw platformAdminInsertError;
-  } else {
-    console.log(`[Demo-Login] User is already a platform admin`);
+      if (platformAdminInsertError) throw platformAdminInsertError;
+    }
+  } else if (existingPlatformAdmin) {
+    // Revogar um grant antigo para que sessões demo futuras não continuem
+    // com privilégios de superadmin depois de o opt-in ser desligado.
+    console.log(`[Demo-Login] Revoking stale platform admin grant from demo user`);
+    const { error: platformAdminDeleteError } = await supabaseAdmin
+      .from("platform_admins")
+      .delete()
+      .eq("id", existingPlatformAdmin.id);
+
+    if (platformAdminDeleteError) {
+      console.log(`[Demo-Login] Warning: could not revoke platform admin: ${platformAdminDeleteError.message}`);
+    }
   }
 
   console.log(`[Demo-Login] ensureDemoTenant completed successfully`);
