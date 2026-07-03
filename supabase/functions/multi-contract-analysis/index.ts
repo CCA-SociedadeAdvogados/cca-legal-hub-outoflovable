@@ -12,6 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const CLAUDE_SONNET = "claude-sonnet-4-6";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 async function callClaude(apiKey: string, system: string, user: string, maxTokens = 2048): Promise<string> {
@@ -39,6 +40,15 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Autorização: o chamador tem de pertencer à organização
+    // (ou ser CCA/admin/service role). Impede fuga cross-tenant via service role.
+    if (!(await isAuthorizedForOrg(req, supabase, organization_id))) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: sem acesso a esta organização" }),
+        { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
 
     // Obter todos os contratos activos da organização (sumários para controlar custo)
     const { data: contratos, error } = await supabase

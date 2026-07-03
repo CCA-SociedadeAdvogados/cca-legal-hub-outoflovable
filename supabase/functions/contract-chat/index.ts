@@ -22,6 +22,7 @@ const COMPLEX_LEGAL_KEYWORDS = [
 ];
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 function routeModel(question: string): string {
@@ -60,6 +61,28 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Autorização: o chamador tem de pertencer à organização do contrato
+    // (ou ser CCA/admin/service role). Impede fuga cross-tenant via service role.
+    const { data: contratoOrg } = await supabase
+      .from("contratos")
+      .select("organization_id")
+      .eq("id", contract_id)
+      .maybeSingle();
+
+    if (!contratoOrg) {
+      return new Response(
+        JSON.stringify({ error: "Contrato não encontrado" }),
+        { status: 404, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!(await isAuthorizedForOrg(req, supabase, contratoOrg.organization_id))) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: sem acesso a este contrato" }),
+        { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
 
     // Obter dados do contrato se não foram passados no contexto
     let contractInfo = contract_context;

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
     // Fetch contract details
     const { data: contrato, error: contratoError } = await supabase
       .from('contratos')
-      .select('id, titulo_contrato, tipo_contrato, objeto_resumido, areas_direito_aplicaveis, tratamento_dados_pessoais, transferencia_internacional')
+      .select('id, organization_id, titulo_contrato, tipo_contrato, objeto_resumido, areas_direito_aplicaveis, tratamento_dados_pessoais, transferencia_internacional')
       .eq('id', contrato_id)
       .single();
 
@@ -43,6 +44,15 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Contract not found' }),
         { status: 404, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Autorização: o chamador tem de pertencer à organização do contrato
+    // (ou ser CCA/admin/service role). Impede operar sobre contratos de outra org.
+    if (!(await isAuthorizedForOrg(req, supabase, contrato.organization_id))) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: sem acesso a este contrato' }),
+        { status: 403, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       );
     }
 

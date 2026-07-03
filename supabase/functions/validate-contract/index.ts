@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 // AI: Claude Sonnet 4.6 — segunda passagem de validação e correcção de campos críticos
@@ -91,6 +92,8 @@ serve(async (req) => {
   const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  let contractIdForStatus: string | null = null;
+
   try {
     const { contract_id, extraction_draft } = await req.json();
 
@@ -100,6 +103,30 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
       );
     }
+
+    // Autorização: o chamador tem de pertencer à organização do contrato
+    // (ou ser CCA/admin/service role). Impede escrita cross-tenant via service role.
+    const { data: contratoOrg } = await supabase
+      .from("contratos")
+      .select("organization_id")
+      .eq("id", contract_id)
+      .maybeSingle();
+
+    if (!contratoOrg) {
+      return new Response(
+        JSON.stringify({ error: "Contrato não encontrado" }),
+        { status: 404, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!(await isAuthorizedForOrg(req, supabase, contratoOrg.organization_id))) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: sem acesso a este contrato" }),
+        { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    contractIdForStatus = contract_id;
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
     if (!ANTHROPIC_API_KEY) {
@@ -266,6 +293,18 @@ Por favor valide a consistência e corrija quaisquer erros nos campos críticos.
     );
   } catch (error) {
     console.error("[validate-contract] Unhandled error:", error);
+
+    // Não deixar o contrato preso em "validating" quando a validação falha
+    if (contractIdForStatus) {
+      await supabase
+        .from("contratos")
+        .update({ validation_status: "failed" })
+        .eq("id", contractIdForStatus)
+        .then(({ error: statusErr }: { error: { message: string } | null }) => {
+          if (statusErr) console.error("[validate-contract] Failed to reset validation_status:", statusErr.message);
+        });
+    }
+
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },

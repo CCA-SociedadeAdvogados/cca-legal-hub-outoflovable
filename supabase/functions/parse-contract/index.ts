@@ -122,6 +122,38 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
         );
       }
+
+      // Exigir chamador autenticado e, quando o caminho está scoped a um
+      // utilizador (temp/<userId>/…, fluxo de upload em massa), garantir que
+      // pertence ao próprio — senão um utilizador autenticado podia ler os
+      // ficheiros em trânsito de outro.
+      const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+        );
+      }
+      if (token !== serviceKey) {
+        const { createClient: createAuthClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        const authClient = createAuthClient(Deno.env.get("SUPABASE_URL")!, serviceKey!);
+        const { data: { user: caller } } = await authClient.auth.getUser(token);
+        if (!caller) {
+          return new Response(
+            JSON.stringify({ error: "Unauthorized" }),
+            { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+          );
+        }
+        const firstSegment = storagePath.split("/")[1] ?? "";
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (UUID_RE.test(firstSegment) && firstSegment !== caller.id) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden: sem acesso a este ficheiro" }),
+            { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+          );
+        }
+      }
     }
 
     const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");

@@ -14,6 +14,22 @@ serve(async (req) => {
       throw new Error("ANTHROPIC_API_KEY is not configured");
     }
 
+    // Validar input: sem isto, um body malformado rebentava com TypeError
+    // (texts.map) e não havia limite de tamanho (custo/abuso).
+    if (!Array.isArray(texts) || texts.some((t) => t !== null && t !== undefined && typeof t !== "string")) {
+      return new Response(JSON.stringify({ error: "texts must be an array of strings" }), {
+        status: 400,
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
+      });
+    }
+    const totalChars = texts.reduce((acc: number, t: string | null) => acc + (t?.length ?? 0), 0);
+    if (texts.length > 200 || totalChars > 100_000) {
+      return new Response(JSON.stringify({ error: "Payload too large (max 200 texts / 100k chars)" }), {
+        status: 400,
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' }
+      });
+    }
+
     // Filter empty texts and track their indices
     interface TextEntry { text: string; index: number; isEmpty: boolean; }
     const textEntries: TextEntry[] = texts.map((t: string, i: number) => ({ text: t, index: i, isEmpty: !t?.trim() }));

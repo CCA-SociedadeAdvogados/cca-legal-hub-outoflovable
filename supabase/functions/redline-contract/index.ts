@@ -12,6 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const CLAUDE_SONNET = "claude-sonnet-4-6";
 
 import { corsHeaders } from "../_shared/cors.ts";
+import { isAuthorizedForOrg } from "../_shared/orgAuth.ts";
 import { callClaude as anthropicMessage } from "../_shared/callAI.ts";
 
 async function callClaude(apiKey: string, system: string, user: string, maxTokens = 4096): Promise<string> {
@@ -71,6 +72,28 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Autorização: o chamador tem de pertencer à organização do contrato
+    // (ou ser CCA/admin/service role). Impede fuga cross-tenant via service role.
+    const { data: contratoOrg } = await supabase
+      .from("contratos")
+      .select("organization_id")
+      .eq("id", contract_id)
+      .maybeSingle();
+
+    if (!contratoOrg) {
+      return new Response(
+        JSON.stringify({ error: "Contrato não encontrado" }),
+        { status: 404, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
+
+    if (!(await isAuthorizedForOrg(req, supabase, contratoOrg.organization_id))) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: sem acesso a este contrato" }),
+        { status: 403, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+      );
+    }
 
     // Verificar cache
     if (!force_regenerate) {
@@ -157,7 +180,7 @@ Classificações:
     }
 
     // Guardar em cache
-    await supabase.from("contract_extractions").upsert({
+    const { error: cacheError } = await supabase.from("contract_extractions").upsert({
       contrato_id: contract_id,
       source: "redline",
       status: "success",
@@ -165,6 +188,10 @@ Classificações:
       job_started_at: new Date().toISOString(),
       job_completed_at: new Date().toISOString(),
     }, { onConflict: "contrato_id,source" });
+    if (cacheError) {
+      // Não bloquear a resposta, mas sem cache cada abertura repete a chamada paga
+      console.error("[redline-contract] Cache upsert failed:", cacheError.message);
+    }
 
     return new Response(
       JSON.stringify({ success: true, data: redlineData, cached: false }),

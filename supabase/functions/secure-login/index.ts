@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { isPlatformAdminOrService } from "../_shared/orgAuth.ts";
 
 // Configuration
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -281,7 +282,20 @@ Deno.serve(async (req) => {
       }
 
       case "reset_lockout": {
-        // Admin action to reset lockout - don't reveal if user exists
+        // Acção de administração — exige platform admin ou service role.
+        // Sem esta verificação, qualquer chamador anónimo podia limpar o
+        // lockout de qualquer conta e anular a protecção contra brute-force.
+        if (!(await isPlatformAdminOrService(req, supabase))) {
+          return new Response(
+            JSON.stringify({ error: "forbidden" }),
+            {
+              status: 403,
+              headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        // Don't reveal if user exists
         if (profile) {
           await supabase
             .from("profiles")

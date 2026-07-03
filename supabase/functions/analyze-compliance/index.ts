@@ -56,6 +56,43 @@ function truncateForAI(text: string): string {
   return text.substring(0, MAX_CHARS_AI) + "\n\n[Nota: texto truncado após 100 000 caracteres]";
 }
 
+// Resolve o acesso do chamador: service role/admin/CCA vêem tudo; membros de
+// organizações só vêem as suas orgs; anónimos são rejeitados.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getCallerAccess(req: Request, supabase: any): Promise<
+  { authorized: false } | { authorized: true; unrestricted: boolean; orgIds: string[] }
+> {
+  const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
+  if (!token) return { authorized: false };
+
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceKey && token === serviceKey) return { authorized: true, unrestricted: true, orgIds: [] };
+
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return { authorized: false };
+
+  const { data: pa } = await supabase
+    .from("platform_admins")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (pa) return { authorized: true, unrestricted: true, orgIds: [] };
+
+  const { data: prof } = await supabase
+    .from("profiles")
+    .select("auth_method")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (prof?.auth_method === "sso_cca") return { authorized: true, unrestricted: true, orgIds: [] };
+
+  const { data: mems } = await supabase
+    .from("organization_members")
+    .select("organization_id")
+    .eq("user_id", user.id);
+  const orgIds = (mems ?? []).map((m: { organization_id: string }) => m.organization_id);
+  return { authorized: true, unrestricted: false, orgIds };
+}
+
 interface AnalysisRequest {
   type: typeof VALID_TYPES[number];
   data: {
@@ -211,6 +248,16 @@ Deno.serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Autorização: rejeitar chamadas anónimas e scopar leituras de contratos
+    // às organizações do chamador (CCA/admin/service role vêem tudo).
+    const access = await getCallerAccess(req, supabase);
+    if (!access.authorized) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
     let systemPrompt = "";
     let userPrompt = "";
 
@@ -241,7 +288,7 @@ Deno.serve(async (req) => {
         throw new Error("Evento legislativo não encontrado");
       }
 
-      const { data: contratos, error: contratosError } = await supabase
+      let contratosQuery = supabase
         .from("contratos")
         .select(`
           id,
@@ -257,6 +304,12 @@ Deno.serve(async (req) => {
           valor_total_estimado
         `)
         .eq("estado_contrato", "activo");
+
+      if (!access.unrestricted) {
+        contratosQuery = contratosQuery.in("organization_id", access.orgIds);
+      }
+
+      const { data: contratos, error: contratosError } = await contratosQuery;
 
       if (contratosError) {
         throw new Error("Erro ao buscar contratos");
@@ -278,10 +331,16 @@ Deno.serve(async (req) => {
         .eq("id", request.data.eventoId)
         .single();
 
-      const { data: contratos } = await supabase
+      let complianceContratosQuery = supabase
         .from("contratos")
         .select("*")
         .in("id", request.data.contratoIds || []);
+
+      if (!access.unrestricted) {
+        complianceContratosQuery = complianceContratosQuery.in("organization_id", access.orgIds);
+      }
+
+      const { data: contratos } = await complianceContratosQuery;
 
       systemPrompt = getComplianceCheckPrompt();
       userPrompt = truncateForAI(buildComplianceCheckPrompt(evento, contratos || []));
