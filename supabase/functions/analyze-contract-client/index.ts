@@ -127,7 +127,7 @@ ${JSON.stringify(contrato, null, 2)}`;
       throw new Error("Erro ao processar a análise da IA");
     }
 
-    await supabase.from("contract_extractions").upsert(
+    const { error: cacheError } = await supabase.from("contract_extractions").upsert(
       {
         contrato_id: contract_id,
         source: "client_analysis",
@@ -138,6 +138,10 @@ ${JSON.stringify(contrato, null, 2)}`;
       },
       { onConflict: "contrato_id,source" },
     );
+    if (cacheError) {
+      // Não bloquear a resposta, mas sem cache cada abertura repete a chamada paga
+      console.error("[analyze-contract-client] Cache upsert failed:", cacheError.message);
+    }
 
     return new Response(JSON.stringify({ success: true, data: analysis, cached: false }), {
       headers: { ...corsHeaders(req), "Content-Type": "application/json" },
