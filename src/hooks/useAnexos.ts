@@ -73,7 +73,15 @@ export const useAnexos = (contratoId: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Remoção compensatória: sem isto o ficheiro ficava órfão no bucket
+        // sempre que o insert falhasse (RLS, constraint, rede)
+        await supabase.storage
+          .from('contratos')
+          .remove([fileName])
+          .catch(() => {});
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {

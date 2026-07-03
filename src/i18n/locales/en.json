@@ -1673,6 +1673,8 @@
     "aiSuggestion": "AI Suggestion",
     "complete": "complete",
     "fileTooLarge": "File too large for AI analysis",
+    "noUploadTarget": "Upload unavailable",
+    "noUploadTargetDesc": "Could not determine the SharePoint destination folder. Please try again later.",
     "replaceFile": "Click to replace: {{name}}",
     "required": "Required",
     "selectFile": "Click to select the file",

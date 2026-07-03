@@ -1673,6 +1673,8 @@
     "aiSuggestion": "Sugestão IA",
     "complete": "completos",
     "fileTooLarge": "Ficheiro demasiado grande para análise IA",
+    "noUploadTarget": "Upload indisponível",
+    "noUploadTargetDesc": "Não foi possível determinar a pasta de destino no SharePoint. Tente novamente mais tarde.",
     "replaceFile": "Clique para substituir: {{name}}",
     "required": "Obrigatório",
     "selectFile": "Clique para selecionar o ficheiro",

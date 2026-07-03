@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useProfile } from '@/hooks/useProfile';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -14,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { safeFileName } from '@/lib/utils';
 import type { TablesInsert } from '@/integrations/supabase/types';
 
 const BUCKET = 'contratos';
@@ -61,9 +63,8 @@ function uid() {
   return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-function safeFileName(name: string) {
-  return name.replace(/[^\w.-]+/g, '_');
-}
+// Extensões aceites (fallback quando o browser não reporta MIME type)
+const ACCEPTED_EXT = /\.(pdf|docx?|txt)$/i;
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -113,7 +114,12 @@ export default function ContratosUploadMassa() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { viewingOrganizationId } = useCliente();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  // Mesmo padrão do useContratos: para utilizadores CCA internos, os contratos
+  // são criados no cliente em visualização — nunca na org da própria CCA.
+  const organizationId =
+    viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
   const [items, setItems] = useState<FileUploadItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
@@ -162,7 +168,11 @@ export default function ContratosUploadMassa() {
 
         const mapped: FileUploadItem[] = picked.map((file) => {
           const tooBig = file.size > MAX_FILE_SIZE_MB * 1024 * 1024;
-          const invalidMime = file.type && !ACCEPTED_MIME.has(file.type);
+          // Alguns browsers/OS reportam type vazio (ex.: .docx renomeados) —
+          // nesse caso validar pela extensão em vez de aceitar tudo.
+          const invalidMime = file.type
+            ? !ACCEPTED_MIME.has(file.type)
+            : !ACCEPTED_EXT.test(file.name);
 
           if (tooBig) {
             return {
@@ -360,7 +370,7 @@ export default function ContratosUploadMassa() {
   };
 
   const createSelected = async () => {
-    if (!profile?.current_organization_id) {
+    if (!organizationId) {
       setGlobalError(t('bulkUpload.errors.noOrganization'));
       return;
     }
@@ -387,7 +397,7 @@ export default function ContratosUploadMassa() {
         parte_b_nome_legal: item.draft.parte_b_nome_legal || 'A definir',
         data_inicio_vigencia: item.draft.data_inicio_vigencia || null,
         data_termo: item.draft.data_termo || null,
-        organization_id: profile.current_organization_id,
+        organization_id: organizationId,
         created_by_id: user?.id,
         updated_by_id: user?.id,
         tipo_contrato: 'outro',
@@ -402,8 +412,48 @@ export default function ContratosUploadMassa() {
         validation_status: 'draft_only',
       }));
 
-      const { error } = await supabase.from('contratos').insert(payload);
+      const { data: created, error } = await supabase
+        .from('contratos')
+        .insert(payload)
+        .select('id');
       if (error) throw error;
+
+      // Mover os ficheiros de temp/ para a pasta definitiva do contrato.
+      // O caminho temp/<userId>/… só é acessível ao uploader (RLS) e pode ser
+      // limpo por rotinas de manutenção — sem este passo, os restantes membros
+      // da organização não conseguiam descarregar o documento.
+      await Promise.all(
+        (created ?? []).map(async (row, index) => {
+          const item = toCreate[index];
+          if (!item?.storagePath || !row?.id) return;
+
+          const fileName = item.storagePath.split('/').pop() || safeFileName(item.file.name);
+          const finalPath = `${row.id}/${fileName}`;
+
+          const { error: moveError } = await supabase.storage
+            .from(BUCKET)
+            .move(item.storagePath, finalPath);
+
+          if (moveError) {
+            // Não bloquear a criação — o caminho temp continua a funcionar
+            // para o uploader; fica registado para diagnóstico.
+            console.error(
+              '[bulkUpload] Falha ao mover ficheiro para pasta do contrato:',
+              moveError,
+            );
+            return;
+          }
+
+          const { error: updateError } = await supabase
+            .from('contratos')
+            .update({ arquivo_storage_path: finalPath, updated_by_id: user?.id })
+            .eq('id', row.id);
+
+          if (updateError) {
+            console.error('[bulkUpload] Falha ao actualizar caminho do ficheiro:', updateError);
+          }
+        }),
+      );
 
       toCreate.forEach((it) => {
         updateItem(it.id, { status: 'completed', progress: 100 });
