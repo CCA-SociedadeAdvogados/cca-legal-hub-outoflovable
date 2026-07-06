@@ -150,7 +150,10 @@
       "pendingTreatError": "Could not take on the request",
       "pendingLater": "Later",
       "pendingOpenPage": "Open Requests to CCA",
-      "policyBadge": "Policy"
+      "policyBadge": "Policy",
+      "responsible": "Assigned lawyer",
+      "me": "Myself",
+      "pendingAssignedTo": "Request assigned to {{name}}"
     }
   },
   "matters": {

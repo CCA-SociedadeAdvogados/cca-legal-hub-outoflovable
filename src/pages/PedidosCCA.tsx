@@ -34,7 +34,9 @@ import {
 import { MessageSquarePlus, Loader2, Briefcase, Paperclip } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCCALawyers } from '@/hooks/useCCALawyers';
 import { useCliente } from '@/contexts/ClienteContext';
 import { usePedidos, type Pedido, type PedidoEstado } from '@/hooks/usePedidos';
 import { useAssuntos } from '@/hooks/useAssuntos';
@@ -64,8 +66,10 @@ function parseDescricao(
 
 export default function PedidosCCA() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
   const { viewingOrganizationId } = useCliente();
+  const { data: lawyers = [] } = useCCALawyers();
 
   const organizationId =
     viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
@@ -81,12 +85,31 @@ export default function PedidosCCA() {
   const [editing, setEditing] = useState<Pedido | null>(null);
   const [resposta, setResposta] = useState('');
   const [estado, setEstado] = useState<PedidoEstado>('em_analise');
+  const [responsavelId, setResponsavelId] = useState<string>('');
   const [promoting, setPromoting] = useState<Pedido | null>(null);
+
+  // Garantir que o responsável actual (ou o próprio) aparece como opção,
+  // mesmo que não conste da lista de advogados SSO.
+  const lawyerOptions = (() => {
+    const opts = [...lawyers];
+    for (const id of [editing?.responsavel_id, user?.id]) {
+      if (id && !opts.some((l) => l.id === id)) {
+        opts.unshift({
+          id,
+          nome_completo: id === user?.id ? t('requests.cca.me') : t('requests.cca.responsible'),
+          email: null,
+          avatar_url: null,
+        });
+      }
+    }
+    return opts;
+  })();
 
   const openRespond = (p: Pedido) => {
     setEditing(p);
     setResposta(p.resposta ?? '');
     setEstado((p.estado as PedidoEstado) ?? 'em_analise');
+    setResponsavelId(p.responsavel_id ?? user?.id ?? '');
   };
 
   const openAttachment = async (path: string) => {
@@ -105,6 +128,7 @@ export default function PedidosCCA() {
       id: editing.id,
       resposta: resposta.trim() || undefined,
       estado,
+      responsavel_id: responsavelId || undefined,
     });
     setEditing(null);
   };
@@ -219,20 +243,37 @@ export default function PedidosCCA() {
             <DialogTitle>{editing?.titulo}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>{t('requests.cca.state')}</Label>
-              <Select value={estado} onValueChange={(v) => setEstado(v as PedidoEstado)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ESTADOS.map((e) => (
-                    <SelectItem key={e} value={e}>
-                      {t(`portal.requests.estados.${e}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>{t('requests.cca.state')}</Label>
+                <Select value={estado} onValueChange={(v) => setEstado(v as PedidoEstado)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESTADOS.map((e) => (
+                      <SelectItem key={e} value={e}>
+                        {t(`portal.requests.estados.${e}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t('requests.cca.responsible')}</Label>
+                <Select value={responsavelId} onValueChange={setResponsavelId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('requests.cca.responsible')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {lawyerOptions.map((l) => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.nome_completo || l.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="resposta">{t('portal.requests.response')}</Label>

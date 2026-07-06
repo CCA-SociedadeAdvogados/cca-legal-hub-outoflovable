@@ -119,19 +119,22 @@ export function usePedidos(organizationId: string | null | undefined) {
     },
   });
 
-  // CCA: responder / mudar estado
+  // CCA: responder / mudar estado / atribuir responsável
   const respondPedido = useMutation({
     mutationFn: async ({
       id,
       resposta,
       estado,
+      responsavel_id,
     }: {
       id: string;
       resposta?: string;
       estado: PedidoEstado;
+      /** Advogado responsável; por omissão, quem responde. */
+      responsavel_id?: string;
     }) => {
       if (!user) throw new Error('Utilizador não autenticado');
-      const patch: Partial<Pedido> = { estado, responsavel_id: user.id };
+      const patch: Partial<Pedido> = { estado, responsavel_id: responsavel_id ?? user.id };
       if (resposta !== undefined) patch.resposta = resposta;
       const { error } = await supabase.from('on_demand_requests').update(patch).eq('id', id);
       if (error) throw error;
