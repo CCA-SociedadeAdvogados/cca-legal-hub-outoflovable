@@ -288,6 +288,23 @@ export function usePlatformAdmin() {
     },
   });
 
+  // Atribuir/remover o advogado responsável pela carteira do cliente.
+  // Com lawyer_user_id definido, as notificações de pedidos novos vão só
+  // ao advogado responsável (ver trigger notify_on_demand_request_change).
+  const updateOrgLawyer = useMutation({
+    mutationFn: async ({ orgId, lawyerUserId }: { orgId: string; lawyerUserId: string | null }) => {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ lawyer_user_id: lawyerUserId })
+        .eq('id', orgId);
+      if (error) throw error;
+    },
+    onSuccess: (_data, { orgId }) => {
+      queryClient.invalidateQueries({ queryKey: ['allOrganizations'] });
+      queryClient.invalidateQueries({ queryKey: ['lawyer-profile', orgId] });
+    },
+  });
+
   // Hook para obter membros de uma organização específica
   const useOrganizationMembers = (orgId: string | null) => {
     return useQuery({
@@ -457,6 +474,7 @@ export function usePlatformAdmin() {
     createOrganization,
     updateOrganization,
     deleteOrganization,
+    updateOrgLawyer,
     // Novas funcionalidades para gestão de membros por organização
     useOrganizationMembers,
     updateMemberRole,

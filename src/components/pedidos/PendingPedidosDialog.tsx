@@ -14,9 +14,17 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCCALawyers } from '@/hooks/useCCALawyers';
 import { toast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
 
@@ -54,6 +62,19 @@ export function PendingPedidosDialog() {
 
   const [open, setOpen] = useState(false);
   const [treatingId, setTreatingId] = useState<string | null>(null);
+  // Responsável escolhido por pedido; sem escolha explícita, é o próprio.
+  const [assignees, setAssignees] = useState<Record<string, string>>({});
+
+  const { data: lawyers = [] } = useCCALawyers();
+  // Garantir que o próprio utilizador aparece como opção, mesmo que o seu
+  // perfil não conste da lista (ex.: conta local/admin).
+  const lawyerOptions =
+    user && !lawyers.some((l) => l.id === user.id)
+      ? [
+          { id: user.id, nome_completo: t('requests.cca.me'), email: null, avatar_url: null },
+          ...lawyers,
+        ]
+      : lawyers;
 
   const { data: pendentes = [] } = useQuery({
     queryKey: ['pending-pedidos-dialog'],
@@ -104,11 +125,17 @@ export function PendingPedidosDialog() {
   };
 
   const treat = useMutation({
-    mutationFn: async (pedido: PendingPedido) => {
+    mutationFn: async ({
+      pedido,
+      responsavelId,
+    }: {
+      pedido: PendingPedido;
+      responsavelId: string;
+    }) => {
       if (!user) throw new Error('Utilizador não autenticado');
       const { error } = await supabase
         .from('on_demand_requests')
-        .update({ estado: 'em_analise', responsavel_id: user.id })
+        .update({ estado: 'em_analise', responsavel_id: responsavelId })
         .eq('id', pedido.id);
       if (error) throw error;
 
@@ -121,8 +148,14 @@ export function PendingPedidosDialog() {
         .eq('read', false)
         .then(() => {});
     },
-    onSuccess: () => {
-      toast({ title: t('requests.cca.pendingTreated') });
+    onSuccess: (_data, { responsavelId }) => {
+      const assignedToSelf = responsavelId === user?.id;
+      const lawyerName = lawyerOptions.find((l) => l.id === responsavelId)?.nome_completo ?? '';
+      toast({
+        title: assignedToSelf
+          ? t('requests.cca.pendingTreated')
+          : t('requests.cca.pendingAssignedTo', { name: lawyerName }),
+      });
       queryClient.invalidateQueries({ queryKey: ['pending-pedidos-dialog'] });
       queryClient.invalidateQueries({ queryKey: ['pending-pedidos-badge'] });
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -193,7 +226,7 @@ export function PendingPedidosDialog() {
                 </p>
               )}
 
-              <div className="mt-2.5 flex items-center justify-between gap-2">
+              <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
                 {p.anexo_path ? (
                   <Button
                     size="sm"
@@ -207,22 +240,41 @@ export function PendingPedidosDialog() {
                 ) : (
                   <span />
                 )}
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  disabled={treat.isPending}
-                  onClick={() => {
-                    setTreatingId(p.id);
-                    treat.mutate(p);
-                  }}
-                >
-                  {treat.isPending && treatingId === p.id ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  )}
-                  {t('requests.cca.pendingTreat')}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={assignees[p.id] ?? user?.id ?? ''}
+                    onValueChange={(v) => setAssignees((prev) => ({ ...prev, [p.id]: v }))}
+                  >
+                    <SelectTrigger className="h-8 w-[180px] text-xs">
+                      <SelectValue placeholder={t('requests.cca.responsible')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {lawyerOptions.map((l) => (
+                        <SelectItem key={l.id} value={l.id}>
+                          {l.nome_completo || l.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    disabled={treat.isPending}
+                    onClick={() => {
+                      const responsavelId = assignees[p.id] ?? user?.id;
+                      if (!responsavelId) return;
+                      setTreatingId(p.id);
+                      treat.mutate({ pedido: p, responsavelId });
+                    }}
+                  >
+                    {treat.isPending && treatingId === p.id ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    )}
+                    {t('requests.cca.pendingTreat')}
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

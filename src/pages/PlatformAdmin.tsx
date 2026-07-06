@@ -60,6 +60,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { IndustrySectorSelect } from '@/components/organizations/IndustrySectorSelect';
 import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
 import { ClientOnboardingTab } from '@/components/admin/ClientOnboardingTab';
+import { useCCALawyers } from '@/hooks/useCCALawyers';
 import { OrgSharePointConfig } from '@/components/admin/OrgSharePointConfig';
 import { OrgLegalBiConfig } from '@/components/admin/OrgLegalBiConfig';
 import { OrgJvrisIdConfig } from '@/components/admin/OrgJvrisIdConfig';
@@ -206,6 +207,7 @@ export default function PlatformAdmin() {
     removePlatformAdmin,
     updateOrganization,
     deleteOrganization,
+    updateOrgLawyer,
     useOrganizationMembers,
     updateMemberRole,
     removeMember,
@@ -215,6 +217,30 @@ export default function PlatformAdmin() {
   } = usePlatformAdmin();
 
   const { provision: provisionSharePoint } = useProvisionSharePoint();
+  const { data: ccaLawyers = [] } = useCCALawyers();
+
+  const handleAssignLawyer = (orgId: string, orgName: string, lawyerUserId: string | null) => {
+    updateOrgLawyer.mutate(
+      { orgId, lawyerUserId },
+      {
+        onSuccess: () => {
+          const lawyerName = ccaLawyers.find((l) => l.id === lawyerUserId)?.nome_completo;
+          toast({
+            title: lawyerUserId
+              ? `Advogado responsável de ${orgName}: ${lawyerName ?? '—'}`
+              : `Atribuição removida de ${orgName}`,
+          });
+        },
+        onError: (e: Error) => {
+          toast({
+            title: 'Erro ao atribuir advogado',
+            description: e.message,
+            variant: 'destructive',
+          });
+        },
+      },
+    );
+  };
 
   // Query para métricas globais de utilizadores
   const {
@@ -929,7 +955,16 @@ export default function PlatformAdmin() {
               <CardHeader>
                 <CardTitle>{t('admin.organizations', 'Organizações')}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Pesquisar organização..."
+                    value={orgSearch}
+                    onChange={(e) => setOrgSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
                 {isLoadingOrgs ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -941,12 +976,13 @@ export default function PlatformAdmin() {
                         <TableHead>{t('common.name', 'Nome')}</TableHead>
                         <TableHead>Identificador único</TableHead>
                         <TableHead>Áreas de Atuação</TableHead>
+                        <TableHead>Advogado responsável</TableHead>
                         <TableHead>{t('common.createdAt', 'Criado em')}</TableHead>
                         <TableHead className="w-[100px]">{t('common.actions', 'Ações')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {allOrganizations?.map((org) => {
+                      {filteredOrganizations?.map((org) => {
                         const sectors =
                           (org as { industry_sectors?: string[] | null }).industry_sectors || [];
                         return (
@@ -966,6 +1002,30 @@ export default function PlatformAdmin() {
                               ) : (
                                 <span className="text-sm text-muted-foreground">-</span>
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={
+                                  (org as { lawyer_user_id?: string | null }).lawyer_user_id ??
+                                  'none'
+                                }
+                                onValueChange={(v) =>
+                                  handleAssignLawyer(org.id, org.name, v === 'none' ? null : v)
+                                }
+                                disabled={updateOrgLawyer.isPending}
+                              >
+                                <SelectTrigger className="h-8 w-[190px] text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">— Sem atribuição</SelectItem>
+                                  {ccaLawyers.map((l) => (
+                                    <SelectItem key={l.id} value={l.id}>
+                                      {l.nome_completo || l.email}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell>
                               {format(new Date(org.created_at), 'dd MMM yyyy', {
@@ -1037,9 +1097,9 @@ export default function PlatformAdmin() {
                           </TableRow>
                         );
                       })}
-                      {(!allOrganizations || allOrganizations.length === 0) && (
+                      {(!filteredOrganizations || filteredOrganizations.length === 0) && (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground">
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
                             Nenhuma organização encontrada
                           </TableCell>
                         </TableRow>

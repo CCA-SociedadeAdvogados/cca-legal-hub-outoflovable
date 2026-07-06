@@ -150,7 +150,10 @@
       "pendingTreatError": "Não foi possível assumir o pedido",
       "pendingLater": "Mais tarde",
       "pendingOpenPage": "Abrir Pedidos à CCA",
-      "policyBadge": "Política"
+      "policyBadge": "Política",
+      "responsible": "Responsável",
+      "me": "Eu próprio",
+      "pendingAssignedTo": "Pedido atribuído a {{name}}"
     }
   },
   "matters": {
