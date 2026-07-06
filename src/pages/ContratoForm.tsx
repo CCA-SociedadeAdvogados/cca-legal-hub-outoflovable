@@ -384,6 +384,18 @@ export default function ContratoForm() {
       if (data.clausulas_especiais.protecao_dados) form.setValue('tratamento_dados_pessoais', true);
     }
 
+    // RGPD — campos extraídos directamente pela IA
+    if (data.tratamento_dados_pessoais) form.setValue('tratamento_dados_pessoais', true);
+    if (data.existe_dpa_anexo_rgpd) form.setValue('existe_dpa_anexo_rgpd', true);
+    if (data.transferencia_internacional) form.setValue('transferencia_internacional', true);
+    if (data.categorias_dados_pessoais)
+      form.setValue('categorias_dados_pessoais', data.categorias_dados_pessoais);
+    // A IA pode devolver "responsavel" (versões antigas do prompt) — normalizar para o enum da BD
+    const papelEntidade =
+      data.papel_entidade === 'responsavel' ? 'responsavel_tratamento' : data.papel_entidade;
+    if (papelEntidade && papelEntidade in PAPEL_ENTIDADE_LABELS)
+      form.setValue('papel_entidade', papelEntidade);
+
     // Avança para o formulário após extracção
     setShowUploadStep(false);
   };

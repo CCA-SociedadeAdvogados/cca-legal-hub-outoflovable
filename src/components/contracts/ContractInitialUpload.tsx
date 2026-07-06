@@ -54,6 +54,11 @@ interface ExtractedContractData {
   recomendacoes?: string[];
   foro_competente?: string;
   lei_aplicavel?: string;
+  tratamento_dados_pessoais?: boolean;
+  existe_dpa_anexo_rgpd?: boolean;
+  transferencia_internacional?: boolean;
+  papel_entidade?: string;
+  categorias_dados_pessoais?: string;
   sumario_executivo?: string;
   confianca?: number;
 }
