@@ -23,6 +23,17 @@ async function callClaude(
   return anthropicMessage({ apiKey, model: CLAUDE_SONNET, system, user, maxTokens });
 }
 
+// Converte bytes em base64 por blocos — String.fromCharCode(...bytes) rebenta a
+// stack de argumentos para ficheiros grandes (até 15 MB).
+function bytesToBase64(bytes: Uint8Array): string {
+  const CHUNK = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+}
+
 function parseJSONResponse(content: string): unknown {
   let jsonStr = content.trim();
 
@@ -163,6 +174,10 @@ Deno.serve(async (req) => {
 
     let contractText = textContent as string | undefined;
     let isScannedPDF = false;
+    // PDF digitalizado: base64 do ficheiro para OCR nativo do Claude (bloco document).
+    // Preenchido em ambos os fluxos (storagePath e fileContent) — sem isto, o
+    // fallback de OCR nunca corria no fluxo principal, que envia storagePath.
+    let pdfBase64: string | null = null;
 
     // ── 1. Obter conteúdo do ficheiro ──────────────────────────────────────
     if (!contractText) {
@@ -225,6 +240,9 @@ Deno.serve(async (req) => {
           const extracted = await extractTextFromPDF(fileBytes);
           contractText = extracted.text;
           isScannedPDF = extracted.isScanned;
+          if (extracted.isScanned) {
+            pdfBase64 = typeof fileContent === "string" ? fileContent : bytesToBase64(fileBytes);
+          }
         } else if (
           resolvedMime?.includes("word") ||
           resolvedName?.endsWith(".docx") ||
@@ -320,7 +338,7 @@ O JSON deve ter esta estrutura exata:
   "tratamento_dados_pessoais": "boolean - o contrato envolve tratamento de dados pessoais",
   "existe_dpa_anexo_rgpd": "boolean - existe DPA ou anexo de proteção de dados",
   "transferencia_internacional": "boolean - há transferência internacional de dados pessoais",
-  "papel_entidade": "string ou null - responsavel, subcontratante, corresponsavel (papel da parte A no tratamento de dados)",
+  "papel_entidade": "string ou null - responsavel_tratamento, subcontratante, corresponsavel (papel da parte A no tratamento de dados)",
   "categorias_dados_pessoais": "string ou null - categorias de dados pessoais tratados",
 
   "riscos_identificados": ["array de strings - potenciais riscos, lacunas ou pontos de atenção para revisão jurídica"],
@@ -354,12 +372,8 @@ INSTRUÇÕES IMPORTANTES:
 
     // PDF digitalizado (sem texto extraível): enviar o próprio PDF ao Claude
     // como bloco `document` para OCR nativo, em vez do texto vazio.
-    const isPdf =
-      (typeof mimeType === "string" && mimeType.includes("pdf")) ||
-      (typeof fileName === "string" && (fileName as string).toLowerCase().endsWith(".pdf"));
-
     let content: string;
-    if (isScannedPDF && isPdf && fileContent) {
+    if (isScannedPDF && pdfBase64) {
       console.log("[parse-contract] Scanned PDF — OCR via Claude document block");
       content = await anthropicMessage({
         apiKey: ANTHROPIC_API_KEY,
@@ -376,7 +390,7 @@ INSTRUÇÕES IMPORTANTES:
                 source: {
                   type: "base64",
                   media_type: "application/pdf",
-                  data: fileContent as string,
+                  data: pdfBase64,
                 },
               },
               {

@@ -41,6 +41,10 @@ import {
   FileText,
   Paperclip,
   Tags,
+  Sparkles,
+  AlertTriangle,
+  Lightbulb,
+  X,
 } from 'lucide-react';
 import { ContractAttachments } from '@/components/contracts/ContractAttachments';
 import { ContractComplianceAnalyzer } from '@/components/contracts/ContractComplianceAnalyzer';
@@ -176,6 +180,15 @@ export default function ContratoForm() {
   const [showUploadStep, setShowUploadStep] = useState(true);
   const [_uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [extractedContractText, setExtractedContractText] = useState<string>('');
+
+  // Resultado da análise IA para o painel pós-extracção (dispensável pelo utilizador)
+  const [extractionSummary, setExtractionSummary] = useState<{
+    sumario_executivo?: string;
+    riscos_identificados?: string[];
+    recomendacoes?: string[];
+    confianca?: number;
+    isScannedPDF: boolean;
+  } | null>(null);
 
   const [classifiedAreas, setClassifiedAreas] = useState<string[]>(
     existingContrato?.areas_direito_aplicaveis || [],
@@ -332,9 +345,23 @@ export default function ContratoForm() {
 
   // Handle data extracted from AI
 
-  const handleDataExtracted = (data: any, file: File, extractedText: string) => {
+  const handleDataExtracted = (
+    data: any,
+    file: File,
+    extractedText: string,
+    meta?: { isScannedPDF?: boolean },
+  ) => {
     setUploadedFile(file);
     setExtractedContractText(extractedText);
+    setExtractionSummary({
+      sumario_executivo: data.sumario_executivo || undefined,
+      riscos_identificados: Array.isArray(data.riscos_identificados)
+        ? data.riscos_identificados
+        : [],
+      recomendacoes: Array.isArray(data.recomendacoes) ? data.recomendacoes : [],
+      confianca: typeof data.confianca === 'number' ? data.confianca : undefined,
+      isScannedPDF: meta?.isScannedPDF ?? false,
+    });
 
     // Pre-fill the form with extracted data - Identificação
     if (data.titulo_contrato) form.setValue('titulo_contrato', data.titulo_contrato);
@@ -383,6 +410,18 @@ export default function ContratoForm() {
       if (data.clausulas_especiais.subcontratacao) form.setValue('flag_direito_subcontratar', true);
       if (data.clausulas_especiais.protecao_dados) form.setValue('tratamento_dados_pessoais', true);
     }
+
+    // RGPD — campos extraídos directamente pela IA
+    if (data.tratamento_dados_pessoais) form.setValue('tratamento_dados_pessoais', true);
+    if (data.existe_dpa_anexo_rgpd) form.setValue('existe_dpa_anexo_rgpd', true);
+    if (data.transferencia_internacional) form.setValue('transferencia_internacional', true);
+    if (data.categorias_dados_pessoais)
+      form.setValue('categorias_dados_pessoais', data.categorias_dados_pessoais);
+    // A IA pode devolver "responsavel" (versões antigas do prompt) — normalizar para o enum da BD
+    const papelEntidade =
+      data.papel_entidade === 'responsavel' ? 'responsavel_tratamento' : data.papel_entidade;
+    if (papelEntidade && papelEntidade in PAPEL_ENTIDADE_LABELS)
+      form.setValue('papel_entidade', papelEntidade);
 
     // Avança para o formulário após extracção
     setShowUploadStep(false);
@@ -645,6 +684,88 @@ export default function ContratoForm() {
             )}
           </Button>
         </div>
+
+        {/* Painel pós-extracção: o que a IA encontrou (e com que confiança) */}
+        {extractionSummary && (
+          <Card className="border-primary/30 bg-primary/[0.03]">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  Análise do documento
+                  {extractionSummary.confianca !== undefined && (
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-xs font-medium',
+                        extractionSummary.confianca >= 70
+                          ? 'bg-positive/15 text-positive'
+                          : extractionSummary.confianca >= 40
+                            ? 'bg-warn/15 text-warn'
+                            : 'bg-danger/15 text-danger',
+                      )}
+                    >
+                      Confiança: {extractionSummary.confianca}%
+                    </span>
+                  )}
+                </CardTitle>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => setExtractionSummary(null)}
+                  aria-label="Fechar análise"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              {extractionSummary.isScannedPDF && (
+                <div className="flex items-start gap-2 rounded-md border border-warn/40 bg-warn/10 p-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
+                  <p>
+                    Este documento parece ser digitalizado. Os dados foram extraídos por OCR —
+                    reveja cada campo com particular atenção antes de guardar.
+                  </p>
+                </div>
+              )}
+              {extractionSummary.sumario_executivo && (
+                <p className="text-muted-foreground">{extractionSummary.sumario_executivo}</p>
+              )}
+              {(extractionSummary.riscos_identificados?.length ?? 0) > 0 && (
+                <div>
+                  <p className="mb-1 flex items-center gap-1.5 font-medium">
+                    <AlertTriangle className="h-3.5 w-3.5 text-warn" />
+                    Pontos de atenção
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                    {extractionSummary.riscos_identificados!.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {(extractionSummary.recomendacoes?.length ?? 0) > 0 && (
+                <div>
+                  <p className="mb-1 flex items-center gap-1.5 font-medium">
+                    <Lightbulb className="h-3.5 w-3.5 text-primary" />
+                    Recomendações
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                    {extractionSummary.recomendacoes!.map((r, i) => (
+                      <li key={i}>{r}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Análise automática de apoio à revisão — a validação jurídica é feita pela equipa
+                CCA.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>

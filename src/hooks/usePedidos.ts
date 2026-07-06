@@ -79,6 +79,13 @@ export function usePedidos(organizationId: string | null | undefined) {
         .select()
         .single();
       if (error) throw error;
+
+      // Email imediato à equipa CCA — fire-and-forget, nunca bloqueia o pedido.
+      // A notificação in-app é criada por trigger na BD (trg_odr_notify).
+      supabase.functions
+        .invoke('notify-pedido-email', { body: { pedido_id: data.id } })
+        .catch((e) => console.warn('[pedidos] envio de email falhou (não bloqueante):', e));
+
       return data;
     },
     onSuccess: () => {

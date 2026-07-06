@@ -54,12 +54,22 @@ interface ExtractedContractData {
   recomendacoes?: string[];
   foro_competente?: string;
   lei_aplicavel?: string;
+  tratamento_dados_pessoais?: boolean;
+  existe_dpa_anexo_rgpd?: boolean;
+  transferencia_internacional?: boolean;
+  papel_entidade?: string;
+  categorias_dados_pessoais?: string;
   sumario_executivo?: string;
   confianca?: number;
 }
 
 interface ContractInitialUploadProps {
-  onDataExtracted: (data: ExtractedContractData, file: File, extractedText: string) => void;
+  onDataExtracted: (
+    data: ExtractedContractData,
+    file: File,
+    extractedText: string,
+    meta?: { isScannedPDF?: boolean },
+  ) => void;
   onSkip: () => void;
 }
 
@@ -159,7 +169,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         const extractedData = parseData?.data;
         if (!extractedData) throw new Error('Não foi possível extrair dados do contrato');
 
-        await finishExtraction(extractedData, parseData?.extractedText ?? textContent, file);
+        await finishExtraction(extractedData, parseData?.extractedText ?? textContent, file, false);
       } else {
         // ── PDF / Word: upload para storage temp, depois edge function ────
         // Evita enviar ficheiros grandes no corpo JSON (limite edge function)
@@ -216,7 +226,12 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
         const extractedData = parseData?.data;
         if (!extractedData) throw new Error('Não foi possível extrair dados do contrato');
 
-        await finishExtraction(extractedData, parseData?.extractedText ?? '', file);
+        await finishExtraction(
+          extractedData,
+          parseData?.extractedText ?? '',
+          file,
+          parseData?.isScannedPDF === true,
+        );
       }
     } catch (err: any) {
       console.error('Error processing file:', err);
@@ -234,6 +249,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
     extractedData: ExtractedContractData,
     extractedText: string,
     file: File,
+    isScannedPDF: boolean,
   ) => {
     setProcessingStep('complete');
     setProgress(100);
@@ -241,11 +257,13 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
     const confidenceDisplay = extractedData.confianca ? `${extractedData.confianca}%` : 'N/A';
     toast({
       title: 'Extracção completa',
-      description: `Confiança: ${confidenceDisplay} — A análise de risco será feita pela nossa equipa.`,
+      description: isScannedPDF
+        ? `Documento digitalizado (OCR) — Confiança: ${confidenceDisplay}. Reveja os dados com atenção.`
+        : `Confiança: ${confidenceDisplay} — A análise de risco será feita pela nossa equipa.`,
     });
 
     await new Promise((resolve) => setTimeout(resolve, 500));
-    onDataExtracted(extractedData, file, extractedText);
+    onDataExtracted(extractedData, file, extractedText, { isScannedPDF });
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
