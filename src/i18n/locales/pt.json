@@ -140,7 +140,9 @@
       "promote": "Promover a assunto",
       "promoted": "Promovido a assunto",
       "promoteConfirmTitle": "Promover este pedido a assunto?",
-      "promoteConfirmDesc": "É criado um assunto com o título e a descrição deste pedido, ligado a ele. O pedido passa a “Em análise” e o acompanhamento continua no assunto."
+      "promoteConfirmDesc": "É criado um assunto com o título e a descrição deste pedido, ligado a ele. O pedido passa a “Em análise” e o acompanhamento continua no assunto.",
+      "attachment": "Ficheiro anexo",
+      "attachmentError": "Não foi possível abrir o ficheiro"
     }
   },
   "matters": {
@@ -1858,13 +1860,6 @@
     "news": {
       "empty": "Ainda não há novidades publicadas."
     },
-    "radar": {
-      "empty": "Sem alertas legislativos. Quando surgir legislação que afete os seus contratos, aparecerá aqui.",
-      "affectsContract": "Afeta o contrato",
-      "officialSource": "Fonte oficial",
-      "inForce": "em vigor",
-      "unknownEvent": "Alteração legislativa"
-    },
     "summary": {
       "heading": "Resumo executivo",
       "ctaTitle": "Resumo executivo em 1 clique",
@@ -1928,24 +1923,6 @@
       },
       "becameMatter": "Tornou-se um assunto · ver acompanhamento"
     },
-    "assistant": {
-      "eyebrow": "Assistente",
-      "title": "Pergunte sobre os seus contratos",
-      "introTitle": "Olá! Sou o assistente do seu portal.",
-      "introBody": "Pergunte-me em linguagem natural sobre a sua carteira de contratos com a CCA — prazos, renovações, riscos, valores ou cláusulas.",
-      "placeholder": "Escreva a sua pergunta...",
-      "send": "Enviar",
-      "thinking": "A analisar os seus contratos...",
-      "error": "Não foi possível obter resposta",
-      "errorReply": "Lamento, ocorreu um erro ao processar a sua pergunta. Tente novamente.",
-      "disclaimer": "Respostas geradas por IA com base nos seus contratos. Confirme com a CCA antes de decisões importantes.",
-      "suggestions": [
-        "Que contratos expiram nos próximos 90 dias?",
-        "Quais têm cláusula de exclusividade?",
-        "Que riscos de RGPD devo ter em atenção?",
-        "Qual o valor total da minha carteira?"
-      ]
-    },
     "profile": {
       "account": "Conta",
       "name": "Nome",
@@ -2004,12 +1981,10 @@
     },
     "nav": {
       "home": "Início",
-      "assistant": "Assistente",
       "contracts": "Os meus contratos",
       "matters": "Os meus assuntos",
       "documents": "Documentos",
       "deadlines": "Prazos",
-      "radar": "Radar legislativo",
       "financial": "Conta corrente",
       "requests": "Pedidos à CCA",
       "news": "Novidades CCA",
@@ -2021,7 +1996,35 @@
       "version": "Versão {{n}}",
       "read": "Ler",
       "download": "Descarregar",
-      "downloadError": "Não foi possível descarregar o ficheiro"
+      "downloadError": "Não foi possível descarregar o ficheiro",
+      "submitCta": "Enviar política para análise",
+      "submitHint": "Envie uma política da sua organização — protecção de dados, compliance, códigos de conduta, regulamentos internos — e a nossa equipa jurídica analisa-a.",
+      "howTitle": "Como funciona",
+      "step1Title": "Envia a política",
+      "step1Desc": "Carregue o documento e diga-nos o que quer validar.",
+      "step2Title": "A CCA é notificada de imediato",
+      "step2Desc": "O pedido chega à equipa jurídica no momento do envio.",
+      "step3Title": "Recebe a análise",
+      "step3Desc": "Acompanhe o estado e a resposta dos nossos advogados aqui ou em Pedidos à CCA.",
+      "fields": {
+        "title": "Nome da política",
+        "titlePlaceholder": "Ex.: Política de Protecção de Dados",
+        "notes": "O que gostaria que analisássemos?",
+        "notesPlaceholder": "Contexto, dúvidas ou pontos específicos a validar (opcional)",
+        "file": "Documento da política"
+      },
+      "fileHint": "PDF, Word (.docx) ou TXT — máx. 10 MB",
+      "fileRequired": "Seleccione o ficheiro da política",
+      "fileTooLarge": "O ficheiro excede 10 MB",
+      "fileInvalidType": "Formato não suportado. Use PDF, Word (.docx) ou TXT.",
+      "uploadError": "Não foi possível carregar o ficheiro",
+      "submit": "Enviar para análise",
+      "submitted": "Política enviada para análise",
+      "submittedDesc": "A equipa CCA foi notificada. Acompanhe o estado nesta página ou em Pedidos à CCA.",
+      "mySubmissions": "Análises em curso",
+      "submissionsHint": "Estado das políticas que enviou para análise pela CCA.",
+      "viewInRequests": "Ver em Pedidos à CCA",
+      "published": "Políticas publicadas pela CCA"
     },
     "lifecycle": {
       "inForce": "Em vigor",
@@ -2072,7 +2075,7 @@
       "policies": {
         "eyebrow": "Políticas",
         "title": "Políticas",
-        "description": "Políticas e documentos normativos disponibilizados pela CCA para a sua organização."
+        "description": "Envie as políticas da sua organização para análise pela equipa jurídica da CCA e consulte as políticas publicadas para a sua organização."
       },
       "requests": {
         "eyebrow": "Pedidos",
@@ -2110,11 +2113,6 @@
           "Pré-visualização e download",
           "Organização por pastas"
         ]
-      },
-      "radar": {
-        "eyebrow": "Legislação",
-        "title": "Radar legislativo",
-        "description": "Alterações legislativas que afetam os seus contratos, com o nível de risco identificado pela CCA."
       },
       "deadlines": {
         "eyebrow": "Prazos",

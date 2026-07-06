@@ -1,8 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { PortalLayout } from './components/PortalLayout';
 import PortalHome from './pages/PortalHome';
-import PortalAssistente from './pages/PortalAssistente';
-import PortalImpactos from './pages/PortalImpactos';
 import PortalContratos from './pages/PortalContratos';
 import PortalAssuntos from './pages/PortalAssuntos';
 import PortalDocumentos from './pages/PortalDocumentos';
@@ -24,12 +22,10 @@ export default function PortalRoutes() {
     <PortalLayout>
       <Routes>
         <Route index element={<PortalHome />} />
-        <Route path="assistente" element={<PortalAssistente />} />
         <Route path="contratos" element={<PortalContratos />} />
         <Route path="assuntos" element={<PortalAssuntos />} />
         <Route path="documentos" element={<PortalDocumentos />} />
         <Route path="prazos" element={<PortalPrazos />} />
-        <Route path="radar" element={<PortalImpactos />} />
         <Route path="financeiro" element={<PortalFinanceiro />} />
         <Route path="pedidos" element={<PortalPedidos />} />
         <Route path="novidades" element={<PortalNovidades />} />

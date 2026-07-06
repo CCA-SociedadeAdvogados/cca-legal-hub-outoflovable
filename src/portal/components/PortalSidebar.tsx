@@ -8,12 +8,10 @@ import ccaLogo from '@/assets/cca-logo.png';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Home,
-  Sparkles,
   Briefcase,
   FileText,
   FolderOpen,
   CalendarClock,
-  Scale,
   Wallet,
   MessageSquarePlus,
   Newspaper,
@@ -154,13 +152,6 @@ export function PortalSidebar() {
           isCollapsed={isCollapsed}
         />
         <NavItem
-          to="/portal/assistente"
-          icon={Sparkles}
-          label={t('portal.nav.assistant')}
-          isActive={isActive('/portal/assistente')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
           to="/portal/contratos"
           icon={FileText}
           label={t('portal.nav.contracts')}
@@ -189,10 +180,10 @@ export function PortalSidebar() {
           isCollapsed={isCollapsed}
         />
         <NavItem
-          to="/portal/radar"
-          icon={Scale}
-          label={t('portal.nav.radar')}
-          isActive={isActive('/portal/radar')}
+          to="/portal/politicas"
+          icon={ShieldCheck}
+          label={t('portal.nav.policies')}
+          isActive={isActive('/portal/politicas')}
           isCollapsed={isCollapsed}
         />
         <NavItem
@@ -217,13 +208,6 @@ export function PortalSidebar() {
           icon={Newspaper}
           label={t('portal.nav.news')}
           isActive={isActive('/portal/novidades')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/politicas"
-          icon={ShieldCheck}
-          label={t('portal.nav.policies')}
-          isActive={isActive('/portal/politicas')}
           isCollapsed={isCollapsed}
         />
       </nav>
