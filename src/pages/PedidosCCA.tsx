@@ -48,18 +48,18 @@ const ESTADO_TONE: Record<PedidoEstado, string> = {
 
 const ESTADOS: PedidoEstado[] = ['pendente', 'em_analise', 'concluido', 'cancelado'];
 
-// Submissões de políticas do Portal anexam o ficheiro no bucket 'politicas' e
-// referenciam-no na descrição com esta linha (ver PortalPoliticas).
-const ATTACHMENT_RE = /(?:^|\n)Ficheiro anexo: (\S+)/;
+// O anexo vive na coluna anexo_path; o parsing da linha "Ficheiro anexo: …"
+// na descrição cobre apenas registos criados antes da migração 20260706120000.
+const LEGACY_ATTACHMENT_RE = /(?:^|\n)Ficheiro anexo: (\S+)/;
 
-function parseDescricao(descricao: string | null): {
-  text: string | null;
-  attachment: string | null;
-} {
-  if (!descricao) return { text: null, attachment: null };
-  const m = descricao.match(ATTACHMENT_RE);
-  if (!m) return { text: descricao, attachment: null };
-  return { text: descricao.replace(m[0], '').trim() || null, attachment: m[1] };
+function parseDescricao(
+  descricao: string | null,
+  anexoPath: string | null,
+): { text: string | null; attachment: string | null } {
+  if (!descricao) return { text: null, attachment: anexoPath };
+  const m = descricao.match(LEGACY_ATTACHMENT_RE);
+  if (!m) return { text: descricao, attachment: anexoPath };
+  return { text: descricao.replace(m[0], '').trim() || null, attachment: anexoPath ?? m[1] };
 }
 
 export default function PedidosCCA() {
@@ -140,7 +140,7 @@ export default function PedidosCCA() {
           <div className="space-y-3">
             {pedidos.map((p) => {
               const est = (p.estado as PedidoEstado) ?? 'pendente';
-              const { text: descricaoText, attachment } = parseDescricao(p.descricao);
+              const { text: descricaoText, attachment } = parseDescricao(p.descricao, p.anexo_path);
               return (
                 <Card key={p.id}>
                   <CardHeader className="pb-3">

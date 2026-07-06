@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { ImpersonationBanner } from './ImpersonationBanner';
+import { PendingPedidosDialog } from '@/components/pedidos/PendingPedidosDialog';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useCliente } from '@/contexts/ClienteContext';
@@ -19,6 +20,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-background">
       <ImpersonationBanner />
+      <PendingPedidosDialog />
       <Sidebar clientName={cliente?.nome} />
 
       <div
