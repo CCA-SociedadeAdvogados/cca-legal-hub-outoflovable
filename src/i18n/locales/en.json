@@ -1853,7 +1853,10 @@
       "folders": "Folders",
       "files": "Files",
       "searchPlaceholder": "Search in this folder…",
-      "noResults": "No results for “{{query}}”."
+      "noResults": "No results for “{{query}}”.",
+      "fileCount_one": "{{count}} file",
+      "fileCount_other": "{{count}} files",
+      "emptyShort": "Empty"
     },
     "home": {
       "greeting": "Welcome, {{name}}",

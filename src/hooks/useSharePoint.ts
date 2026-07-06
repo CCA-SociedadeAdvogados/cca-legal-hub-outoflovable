@@ -170,6 +170,37 @@ export function useSharePointDocuments(folderPath: string = '/', overrideOrgId?:
   });
 }
 
+// Caminhos de pasta de todos os ficheiros da organização — permite mostrar
+// contagens por pasta (incluindo subpastas) na grelha de documentos sem uma
+// query por pasta. Devolve apenas folder_path, um valor por ficheiro.
+export function useSharePointFilePaths(overrideOrgId?: string) {
+  const organizationId = useEffectiveOrganizationId(overrideOrgId);
+
+  return useQuery({
+    queryKey: ['sharepoint-file-paths', organizationId],
+    staleTime: 60 * 1000,
+    queryFn: async (): Promise<string[]> => {
+      if (!organizationId) return [];
+
+      const { data, error } = await supabase
+        .from('sharepoint_documents')
+        .select('folder_path')
+        .eq('organization_id', organizationId)
+        .eq('is_folder', false)
+        .eq('is_deleted', false)
+        .limit(10000);
+
+      if (error) {
+        console.error('Error fetching SharePoint file paths:', error);
+        return [];
+      }
+
+      return (data ?? []).map((d) => d.folder_path);
+    },
+    enabled: !!organizationId,
+  });
+}
+
 // Hook para obter logs de sincronização
 export function useSharePointSyncLogs(limit: number = 10, overrideOrgId?: string) {
   const organizationId = useEffectiveOrganizationId(overrideOrgId);
