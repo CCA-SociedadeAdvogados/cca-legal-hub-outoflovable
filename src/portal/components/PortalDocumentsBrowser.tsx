@@ -24,6 +24,7 @@ import {
   useSharePointConfig,
   useSharePointDocuments,
   useSharePointFolders,
+  useSharePointFilePaths,
   useUploadToSharePoint,
   useCreateSharePointFolder,
   useMoveSharePointItem,
@@ -57,7 +58,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 import { dateFnsLocale } from '@/portal/lib/contrato';
 
 const FILE_ICONS: Record<string, React.ElementType> = {
@@ -113,6 +113,7 @@ export function PortalDocumentsBrowser() {
   const { data: config, isLoading: isLoadingConfig } = useSharePointConfig();
   const { data: documents, isLoading: isLoadingDocs } = useSharePointDocuments(currentPath);
   const { data: folders = [] } = useSharePointFolders();
+  const { data: filePaths = [] } = useSharePointFilePaths();
   const { provision } = useProvisionSharePoint();
   const uploadToSharePoint = useUploadToSharePoint();
   const createFolder = useCreateSharePointFolder();
@@ -259,102 +260,106 @@ export function PortalDocumentsBrowser() {
   const folderDocs = filteredDocs.filter((d) => d.is_folder).sort(byName);
   const fileDocs = filteredDocs.filter((d) => !d.is_folder).sort(byName);
 
-  const renderRow = (doc: SharePointDocument) => {
-    const FileIcon = doc.is_folder ? Folder : getFileIcon(doc.file_extension);
+  // Nº de ficheiros dentro de uma pasta, incluindo subpastas.
+  const countFilesIn = (folderFullPath: string) =>
+    filePaths.filter((p) => p === folderFullPath || p.startsWith(`${folderFullPath}/`)).length;
+
+  const renderFolderCard = (doc: SharePointDocument) => {
+    const targetPath = currentPath === '/' ? `/${doc.name}` : `${currentPath}/${doc.name}`;
+    const count = countFilesIn(targetPath);
+    return (
+      <button
+        type="button"
+        key={doc.id}
+        onClick={() => navigateToFolder(targetPath)}
+        className="group flex min-w-0 items-center gap-3 rounded-card border border-line bg-surface p-3 text-left transition-all hover:border-brand/40 hover:shadow-sm"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-warn/10 text-warn">
+          <Folder className="h-[18px] w-[18px]" strokeWidth={1.75} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-[13.5px] font-medium leading-tight text-ink">
+            {doc.name}
+          </p>
+          <p className="mt-0.5 truncate text-[11.5px] text-ink-mute">
+            {count === 0
+              ? t('portal.documents.emptyShort')
+              : t('portal.documents.fileCount', { count })}
+          </p>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-ink-mute opacity-0 transition-opacity group-hover:opacity-100" />
+      </button>
+    );
+  };
+
+  const renderFileRow = (doc: SharePointDocument) => {
+    const FileIcon = getFileIcon(doc.file_extension);
     return (
       <div
         key={doc.id}
-        role={doc.is_folder ? 'button' : undefined}
-        tabIndex={doc.is_folder ? 0 : undefined}
-        className={cn(
-          'flex min-w-0 items-center justify-between gap-3 px-3 py-3 transition-colors hover:bg-bg-alt',
-          doc.is_folder && 'cursor-pointer',
-        )}
-        onClick={() => {
-          if (doc.is_folder) {
-            const targetPath = currentPath === '/' ? `/${doc.name}` : `${currentPath}/${doc.name}`;
-            navigateToFolder(targetPath);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (doc.is_folder && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            const targetPath = currentPath === '/' ? `/${doc.name}` : `${currentPath}/${doc.name}`;
-            navigateToFolder(targetPath);
-          }
-        }}
+        className="flex min-w-0 items-center gap-3 px-3 py-2 transition-colors hover:bg-bg-alt/60"
       >
-        <div className="flex min-w-0 items-center gap-3">
-          <div
-            className={cn(
-              'flex h-10 w-10 shrink-0 items-center justify-center rounded-control border',
-              doc.is_folder
-                ? 'border-warn/30 bg-warn/10 text-warn'
-                : 'border-brand/30 bg-brand/[0.08] text-brand',
-            )}
-          >
-            <FileIcon className="h-5 w-5" strokeWidth={1.5} />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate font-display text-[14px] font-medium leading-tight text-ink">
-              {doc.name}
-            </p>
-            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-2 font-mono text-[11px] text-ink-mute">
-              {!doc.is_folder && doc.size_bytes && (
-                <span className="shrink-0">{formatFileSize(doc.size_bytes)}</span>
-              )}
-              {doc.sharepoint_modified_at && (
-                <span className="shrink-0">
-                  {formatDistanceToNow(new Date(doc.sharepoint_modified_at), {
-                    addSuffix: true,
-                    locale,
-                  })}
-                </span>
-              )}
-            </div>
-          </div>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-control bg-brand/[0.08] text-brand">
+          <FileIcon className="h-4 w-4" strokeWidth={1.5} />
+        </div>
+        <p className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink">{doc.name}</p>
+
+        <div className="hidden shrink-0 items-center gap-3 sm:flex">
+          {doc.file_extension && (
+            <Badge
+              variant="outline"
+              className="w-14 justify-center text-[10px] uppercase tracking-wide text-ink-mute"
+            >
+              {doc.file_extension}
+            </Badge>
+          )}
+          <span className="w-16 text-right text-[11.5px] tabular-nums text-ink-mute">
+            {formatFileSize(doc.size_bytes)}
+          </span>
+          {doc.sharepoint_modified_at && (
+            <span className="w-28 truncate text-right text-[11.5px] text-ink-mute">
+              {formatDistanceToNow(new Date(doc.sharepoint_modified_at), {
+                addSuffix: true,
+                locale,
+              })}
+            </span>
+          )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1">
-          {!doc.is_folder && doc.web_url && (
+        <div className="flex shrink-0 items-center gap-0.5">
+          {doc.web_url && (
             <a
               href={doc.web_url}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
               aria-label={t('portal.documents.open')}
               className="flex h-8 w-8 items-center justify-center rounded-control text-ink-mute transition-colors hover:text-brand"
             >
               <ExternalLink className="h-4 w-4" />
             </a>
           )}
-          {!doc.is_folder && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  onClick={(e) => e.stopPropagation()}
-                  aria-label={t('portal.documents.actions')}
-                  className="flex h-8 w-8 items-center justify-center rounded-control text-ink-mute transition-colors hover:text-ink"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMoveDoc(doc);
-                    setMoveDest('/');
-                  }}
-                >
-                  <FolderInput className="mr-2 h-4 w-4" />
-                  {t('portal.documents.move')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          {doc.is_folder && <ChevronRight className="h-4 w-4 text-ink-mute" />}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('portal.documents.actions')}
+                className="flex h-8 w-8 items-center justify-center rounded-control text-ink-mute transition-colors hover:text-ink"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoveDoc(doc);
+                  setMoveDest('/');
+                }}
+              >
+                <FolderInput className="mr-2 h-4 w-4" />
+                {t('portal.documents.move')}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     );
@@ -464,44 +469,44 @@ export function PortalDocumentsBrowser() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-line">
-        {isLoadingDocs ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-ink-mute" />
-          </div>
-        ) : !documents || documents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <Folder className="mb-2 h-9 w-9 text-ink-mute" strokeWidth={1.5} />
-            <p className="text-[13px] text-ink-mute">{t('portal.documents.empty')}</p>
-            <p className="mt-1 text-[12px] text-ink-mute">{t('portal.documents.uploadHint')}</p>
-          </div>
-        ) : folderDocs.length === 0 && fileDocs.length === 0 ? (
-          <p className="py-12 text-center text-[13px] text-ink-mute">
-            {t('portal.documents.noResults', { query })}
-          </p>
-        ) : (
-          <div className="divide-y divide-line">
-            {folderDocs.length > 0 && (
-              <div>
-                <h4 className="flex items-center gap-2 bg-bg-alt/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
-                  {t('portal.documents.folders')}
-                  <span className="font-mono">{folderDocs.length}</span>
-                </h4>
-                <div className="divide-y divide-line">{folderDocs.map(renderRow)}</div>
+      {isLoadingDocs ? (
+        <div className="flex items-center justify-center rounded-lg border border-line py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-ink-mute" />
+        </div>
+      ) : !documents || documents.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-line py-12 text-center">
+          <Folder className="mb-2 h-9 w-9 text-ink-mute" strokeWidth={1.5} />
+          <p className="text-[13px] text-ink-mute">{t('portal.documents.empty')}</p>
+          <p className="mt-1 text-[12px] text-ink-mute">{t('portal.documents.uploadHint')}</p>
+        </div>
+      ) : folderDocs.length === 0 && fileDocs.length === 0 ? (
+        <p className="rounded-lg border border-line py-12 text-center text-[13px] text-ink-mute">
+          {t('portal.documents.noResults', { query })}
+        </p>
+      ) : (
+        <div className="space-y-5">
+          {folderDocs.length > 0 && (
+            <section>
+              <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
+                {t('portal.documents.folders')} · {folderDocs.length}
+              </h4>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                {folderDocs.map(renderFolderCard)}
               </div>
-            )}
-            {fileDocs.length > 0 && (
-              <div>
-                <h4 className="flex items-center gap-2 bg-bg-alt/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
-                  {t('portal.documents.files')}
-                  <span className="font-mono">{fileDocs.length}</span>
-                </h4>
-                <div className="divide-y divide-line">{fileDocs.map(renderRow)}</div>
+            </section>
+          )}
+          {fileDocs.length > 0 && (
+            <section>
+              <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-mute">
+                {t('portal.documents.files')} · {fileDocs.length}
+              </h4>
+              <div className="divide-y divide-line overflow-hidden rounded-lg border border-line bg-surface">
+                {fileDocs.map(renderFileRow)}
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </section>
+          )}
+        </div>
+      )}
 
       {/* ── Dialog: nova pasta ─────────────────────────────────────────────── */}
       <Dialog open={newFolderOpen} onOpenChange={setNewFolderOpen}>

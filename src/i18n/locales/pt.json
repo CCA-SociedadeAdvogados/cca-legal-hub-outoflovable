@@ -1853,7 +1853,10 @@
       "folders": "Pastas",
       "files": "Ficheiros",
       "searchPlaceholder": "Pesquisar nesta pasta…",
-      "noResults": "Sem resultados para “{{query}}”."
+      "noResults": "Sem resultados para “{{query}}”.",
+      "fileCount_one": "{{count}} ficheiro",
+      "fileCount_other": "{{count}} ficheiros",
+      "emptyShort": "Vazia"
     },
     "home": {
       "greeting": "Bem-vindo, {{name}}",
