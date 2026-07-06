@@ -26,6 +26,8 @@ export interface NovoPedido {
   tipo_analise: PedidoTipo;
   prioridade: PedidoPrioridade;
   contrato_id?: string | null;
+  /** Suprime o toast genérico — o chamador mostra o seu próprio feedback. */
+  silent?: boolean;
 }
 
 /**
@@ -88,9 +90,9 @@ export function usePedidos(organizationId: string | null | undefined) {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       invalidate();
-      toast({ title: 'Pedido enviado à CCA' });
+      if (!variables.silent) toast({ title: 'Pedido enviado à CCA' });
     },
     onError: (e: Error) => {
       toast({ title: 'Erro ao enviar o pedido', description: e.message, variant: 'destructive' });

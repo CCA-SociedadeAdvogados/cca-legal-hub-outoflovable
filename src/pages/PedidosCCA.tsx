@@ -31,7 +31,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { MessageSquarePlus, Loader2, Briefcase } from 'lucide-react';
+import { MessageSquarePlus, Loader2, Briefcase, Paperclip } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import { usePedidos, type Pedido, type PedidoEstado } from '@/hooks/usePedidos';
@@ -45,6 +47,20 @@ const ESTADO_TONE: Record<PedidoEstado, string> = {
 };
 
 const ESTADOS: PedidoEstado[] = ['pendente', 'em_analise', 'concluido', 'cancelado'];
+
+// Submissões de políticas do Portal anexam o ficheiro no bucket 'politicas' e
+// referenciam-no na descrição com esta linha (ver PortalPoliticas).
+const ATTACHMENT_RE = /(?:^|\n)Ficheiro anexo: (\S+)/;
+
+function parseDescricao(descricao: string | null): {
+  text: string | null;
+  attachment: string | null;
+} {
+  if (!descricao) return { text: null, attachment: null };
+  const m = descricao.match(ATTACHMENT_RE);
+  if (!m) return { text: descricao, attachment: null };
+  return { text: descricao.replace(m[0], '').trim() || null, attachment: m[1] };
+}
 
 export default function PedidosCCA() {
   const { t } = useTranslation();
@@ -71,6 +87,16 @@ export default function PedidosCCA() {
     setEditing(p);
     setResposta(p.resposta ?? '');
     setEstado((p.estado as PedidoEstado) ?? 'em_analise');
+  };
+
+  const openAttachment = async (path: string) => {
+    try {
+      const { data, error } = await supabase.storage.from('politicas').createSignedUrl(path, 600);
+      if (error || !data?.signedUrl) throw error ?? new Error('no url');
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    } catch {
+      toast({ title: t('requests.cca.attachmentError'), variant: 'destructive' });
+    }
   };
 
   const save = async () => {
@@ -114,6 +140,7 @@ export default function PedidosCCA() {
           <div className="space-y-3">
             {pedidos.map((p) => {
               const est = (p.estado as PedidoEstado) ?? 'pendente';
+              const { text: descricaoText, attachment } = parseDescricao(p.descricao);
               return (
                 <Card key={p.id}>
                   <CardHeader className="pb-3">
@@ -131,10 +158,21 @@ export default function PedidosCCA() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {p.descricao && (
+                    {descricaoText && (
                       <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                        {p.descricao}
+                        {descricaoText}
                       </p>
+                    )}
+                    {attachment && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={() => openAttachment(attachment)}
+                      >
+                        <Paperclip className="h-3.5 w-3.5" />
+                        {t('requests.cca.attachment')}
+                      </Button>
                     )}
                     {p.resposta && (
                       <div className="rounded-md border bg-muted/40 p-3">
