@@ -20,12 +20,17 @@ const PEDIDO_TO_ASSUNTO_TIPO: Record<PedidoTipo, AssuntoTipo> = {
   outro: 'consultoria',
 };
 
+export type PedidoOrigem = 'geral' | 'politica';
+
 export interface NovoPedido {
   titulo: string;
   descricao?: string | null;
   tipo_analise: PedidoTipo;
   prioridade: PedidoPrioridade;
   contrato_id?: string | null;
+  origem?: PedidoOrigem;
+  /** Caminho no bucket 'politicas' do ficheiro submetido, quando exista. */
+  anexo_path?: string | null;
   /** Suprime o toast genérico — o chamador mostra o seu próprio feedback. */
   silent?: boolean;
 }
@@ -76,18 +81,15 @@ export function usePedidos(organizationId: string | null | undefined) {
           tipo_analise: input.tipo_analise,
           prioridade: input.prioridade,
           contrato_id: input.contrato_id ?? null,
+          origem: input.origem ?? 'geral',
+          anexo_path: input.anexo_path ?? null,
           estado: 'pendente',
         })
         .select()
         .single();
       if (error) throw error;
-
-      // Email imediato à equipa CCA — fire-and-forget, nunca bloqueia o pedido.
-      // A notificação in-app é criada por trigger na BD (trg_odr_notify).
-      supabase.functions
-        .invoke('notify-pedido-email', { body: { pedido_id: data.id } })
-        .catch((e) => console.warn('[pedidos] envio de email falhou (não bloqueante):', e));
-
+      // A equipa CCA é notificada por trigger na BD (trg_odr_notify) e pelo
+      // popup de pendentes no cockpit — nada a fazer no cliente.
       return data;
     },
     onSuccess: (_data, variables) => {

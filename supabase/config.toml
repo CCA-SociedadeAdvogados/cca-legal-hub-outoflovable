@@ -104,6 +104,3 @@ verify_jwt = false
 
 [functions.fetch-business-central]
 verify_jwt = true
-
-[functions.notify-pedido-email]
-verify_jwt = true

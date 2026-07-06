@@ -142,7 +142,15 @@
       "promoteConfirmTitle": "Promote this request to a matter?",
       "promoteConfirmDesc": "A matter is created with this request’s title and description, linked to it. The request moves to “In review” and follow-up continues in the matter.",
       "attachment": "Attached file",
-      "attachmentError": "Could not open the file"
+      "attachmentError": "Could not open the file",
+      "pendingTitle": "Requests awaiting action ({{count}})",
+      "pendingDesc": "These client requests await the CCA team. \"Handle\" takes the request on and moves it to In review; closing only postpones — the alert will reappear.",
+      "pendingTreat": "Handle request",
+      "pendingTreated": "Request taken on — now In review",
+      "pendingTreatError": "Could not take on the request",
+      "pendingLater": "Later",
+      "pendingOpenPage": "Open Requests to CCA",
+      "policyBadge": "Policy"
     }
   },
   "matters": {

@@ -13,6 +13,8 @@ const CLAUDE_SONNET = "claude-sonnet-4-6";
 const MAX_CHARS = 150000;
 // Limite de tamanho do ficheiro (descarregado do storage ou enviado em base64).
 const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
+// Imagens vão inteiras para a API da Anthropic, que aceita no máx. 5 MB/imagem.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 async function callClaude(
   apiKey: string,
@@ -178,6 +180,9 @@ Deno.serve(async (req) => {
     // Preenchido em ambos os fluxos (storagePath e fileContent) — sem isto, o
     // fallback de OCR nunca corria no fluxo principal, que envia storagePath.
     let pdfBase64: string | null = null;
+    // Fotografias/prints de contratos (PNG/JPG): OCR via bloco image do Claude.
+    let imageBase64: string | null = null;
+    let imageMediaType: string | null = null;
 
     // ── 1. Obter conteúdo do ficheiro ──────────────────────────────────────
     if (!contractText) {
@@ -216,6 +221,8 @@ Deno.serve(async (req) => {
           else if (lower.endsWith(".docx")) resolvedMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
           else if (lower.endsWith(".doc")) resolvedMime = "application/msword";
           else if (lower.endsWith(".txt")) resolvedMime = "text/plain";
+          else if (lower.endsWith(".png")) resolvedMime = "image/png";
+          else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) resolvedMime = "image/jpeg";
         }
         if (!resolvedName) {
           resolvedName = storagePath.split("/").pop() ?? "document";
@@ -251,9 +258,25 @@ Deno.serve(async (req) => {
           contractText = await extractTextFromWord(fileBytes, resolvedName ?? "document.docx");
         } else if (resolvedMime === "text/plain" || resolvedName?.endsWith(".txt")) {
           contractText = new TextDecoder().decode(fileBytes);
+        } else if (
+          resolvedMime === "image/png" ||
+          resolvedMime === "image/jpeg" ||
+          /\.(png|jpe?g)$/i.test(resolvedName ?? "")
+        ) {
+          if (fileBytes.length > MAX_IMAGE_BYTES) {
+            return new Response(
+              JSON.stringify({ error: "Imagem demasiado grande (máx. 5 MB)" }),
+              { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
+            );
+          }
+          imageMediaType = resolvedMime === "image/png" ? "image/png" : "image/jpeg";
+          imageBase64 = typeof fileContent === "string" ? fileContent : bytesToBase64(fileBytes);
+          // Sentinela: o texto real vem do OCR do Claude sobre a imagem.
+          contractText = "[imagem de contrato — OCR via IA]";
+          isScannedPDF = true;
         } else {
           return new Response(
-            JSON.stringify({ error: "Formato de ficheiro não suportado. Use PDF, Word ou TXT." }),
+            JSON.stringify({ error: "Formato de ficheiro não suportado. Use PDF, Word, TXT ou imagem (PNG/JPG)." }),
             { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } },
           );
         }
@@ -372,8 +395,38 @@ INSTRUÇÕES IMPORTANTES:
 
     // PDF digitalizado (sem texto extraível): enviar o próprio PDF ao Claude
     // como bloco `document` para OCR nativo, em vez do texto vazio.
+    // Imagens (fotografias/prints de contratos) seguem o mesmo caminho com
+    // um bloco `image`.
     let content: string;
-    if (isScannedPDF && pdfBase64) {
+    if (imageBase64 && imageMediaType) {
+      console.log("[parse-contract] Image — OCR via Claude image block");
+      content = await anthropicMessage({
+        apiKey: ANTHROPIC_API_KEY,
+        model: CLAUDE_SONNET,
+        system: systemPrompt,
+        maxTokens: 16384,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image",
+                source: {
+                  type: "base64",
+                  media_type: imageMediaType,
+                  data: imageBase64,
+                },
+              },
+              {
+                type: "text",
+                text:
+                  "Esta é uma fotografia/print de um contrato. Faz OCR de todo o texto visível e extrai TODAS as informações disponíveis para o JSON pedido.",
+              },
+            ],
+          },
+        ],
+      });
+    } else if (isScannedPDF && pdfBase64) {
       console.log("[parse-contract] Scanned PDF — OCR via Claude document block");
       content = await anthropicMessage({
         apiKey: ANTHROPIC_API_KEY,

@@ -77,7 +77,10 @@ export default function PortalPoliticas() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { pedidos, createPedido } = usePedidos(orgId);
-  const submissions = pedidos.filter((p) => p.titulo.startsWith(POLICY_REQUEST_PREFIX));
+  // origem é a fonte de verdade; o prefixo no título cobre registos antigos.
+  const submissions = pedidos.filter(
+    (p) => p.origem === 'politica' || p.titulo.startsWith(POLICY_REQUEST_PREFIX),
+  );
 
   // ── Formulário de submissão ────────────────────────────────────────────
   const [open, setOpen] = useState(false);
@@ -126,12 +129,13 @@ export default function PortalPoliticas() {
         throw new Error(`${t('portal.policies.uploadError')}: ${uploadError.message}`);
       }
 
-      const descricao = [notas.trim(), `Ficheiro anexo: ${path}`].filter(Boolean).join('\n\n');
       await createPedido.mutateAsync({
         titulo: `${POLICY_REQUEST_PREFIX} ${titulo.trim()}`,
-        descricao,
+        descricao: notas.trim() || null,
         tipo_analise: 'conformidade',
         prioridade: 'normal',
+        origem: 'politica',
+        anexo_path: path,
         silent: true,
       });
 

@@ -2910,12 +2910,14 @@ export type Database = {
       }
       on_demand_requests: {
         Row: {
+          anexo_path: string | null
           contrato_id: string | null
           created_at: string
           descricao: string | null
           estado: string
           id: string
           organization_id: string
+          origem: string
           prazo_resposta: string | null
           prioridade: string
           responsavel_id: string | null
@@ -2926,12 +2928,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          anexo_path?: string | null
           contrato_id?: string | null
           created_at?: string
           descricao?: string | null
           estado?: string
           id?: string
           organization_id: string
+          origem?: string
           prazo_resposta?: string | null
           prioridade?: string
           responsavel_id?: string | null
@@ -2942,12 +2946,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          anexo_path?: string | null
           contrato_id?: string | null
           created_at?: string
           descricao?: string | null
           estado?: string
           id?: string
           organization_id?: string
+          origem?: string
           prazo_resposta?: string | null
           prioridade?: string
           responsavel_id?: string | null

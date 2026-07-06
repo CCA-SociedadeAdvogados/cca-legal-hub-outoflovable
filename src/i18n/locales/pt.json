@@ -142,7 +142,15 @@
       "promoteConfirmTitle": "Promover este pedido a assunto?",
       "promoteConfirmDesc": "É criado um assunto com o título e a descrição deste pedido, ligado a ele. O pedido passa a “Em análise” e o acompanhamento continua no assunto.",
       "attachment": "Ficheiro anexo",
-      "attachmentError": "Não foi possível abrir o ficheiro"
+      "attachmentError": "Não foi possível abrir o ficheiro",
+      "pendingTitle": "Pedidos por tratar ({{count}})",
+      "pendingDesc": "Estes pedidos de clientes aguardam a equipa CCA. \"Tratar\" assume o pedido e passa-o a Em análise; fechar apenas adia — o aviso volta a aparecer.",
+      "pendingTreat": "Tratar pedido",
+      "pendingTreated": "Pedido assumido — passou a Em análise",
+      "pendingTreatError": "Não foi possível assumir o pedido",
+      "pendingLater": "Mais tarde",
+      "pendingOpenPage": "Abrir Pedidos à CCA",
+      "policyBadge": "Política"
     }
   },
   "matters": {

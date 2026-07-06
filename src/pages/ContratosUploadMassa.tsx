@@ -16,6 +16,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from '@/hooks/use-toast';
 import { Upload, X, FileText, CheckCircle2, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { safeFileName } from '@/lib/utils';
+import { mapExtractedToContrato } from '@/lib/contractExtraction';
 import type { TablesInsert } from '@/integrations/supabase/types';
 
 const BUCKET = 'contratos';
@@ -391,6 +392,8 @@ export default function ContratosUploadMassa() {
       });
 
       const payload: TablesInsert<'contratos'>[] = toCreate.map((item, index) => ({
+        // Campos RGPD/financeiro/cláusulas extraídos pela IA (validados).
+        ...mapExtractedToContrato(item.extractedData),
         id_interno: `BULK-${Date.now()}-${index}`,
         titulo_contrato: item.draft.titulo_contrato || item.file.name,
         parte_a_nome_legal: item.draft.parte_a_nome_legal || 'A definir',

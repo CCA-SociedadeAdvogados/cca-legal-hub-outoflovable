@@ -60,6 +60,7 @@ import {
   TIPO_RENOVACAO_LABELS,
   PAPEL_ENTIDADE_LABELS,
   TIPO_GARANTIA_LABELS,
+  PERIODICIDADE_FATURACAO_LABELS,
 } from '@/types/contracts';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { CheckCircle2, XCircle, Globe } from 'lucide-react';
@@ -123,6 +124,12 @@ const formSchema = z.object({
   referencia_dpa: z.string().optional(),
   dpia_realizada: z.boolean().default(false),
   referencia_dpia: z.string().optional(),
+
+  // Financeiro
+  valor_total_estimado: z.number().optional().nullable(),
+  moeda: z.string().default('EUR'),
+  prazo_pagamento_dias: z.number().optional().nullable(),
+  periodicidade_faturacao: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -263,6 +270,10 @@ export default function ContratoForm() {
           referencia_dpa: existingContrato.referencia_dpa || '',
           dpia_realizada: existingContrato.dpia_realizada || false,
           referencia_dpia: existingContrato.referencia_dpia || '',
+          valor_total_estimado: existingContrato.valor_total_estimado,
+          moeda: existingContrato.moeda || 'EUR',
+          prazo_pagamento_dias: existingContrato.prazo_pagamento_dias,
+          periodicidade_faturacao: existingContrato.periodicidade_faturacao || '',
         }
       : {
           titulo_contrato: '',
@@ -275,6 +286,7 @@ export default function ContratoForm() {
           tipo_duracao: 'prazo_determinado',
           tipo_renovacao: 'sem_renovacao_automatica',
           aviso_previo_nao_renovacao_dias: 30,
+          moeda: 'EUR',
         },
   });
 
@@ -337,6 +349,10 @@ export default function ContratoForm() {
         referencia_dpa: existingContrato.referencia_dpa || '',
         dpia_realizada: existingContrato.dpia_realizada || false,
         referencia_dpia: existingContrato.referencia_dpia || '',
+        valor_total_estimado: existingContrato.valor_total_estimado,
+        moeda: existingContrato.moeda || 'EUR',
+        prazo_pagamento_dias: existingContrato.prazo_pagamento_dias,
+        periodicidade_faturacao: existingContrato.periodicidade_faturacao || '',
       });
       setClassifiedAreas(existingContrato?.areas_direito_aplicaveis || []);
     }
@@ -423,6 +439,19 @@ export default function ContratoForm() {
     if (papelEntidade && papelEntidade in PAPEL_ENTIDADE_LABELS)
       form.setValue('papel_entidade', papelEntidade);
 
+    // Financeiro
+    if (typeof data.valor_total_estimado === 'number')
+      form.setValue('valor_total_estimado', data.valor_total_estimado);
+    if (typeof data.moeda === 'string' && /^[A-Z]{3}$/.test(data.moeda))
+      form.setValue('moeda', data.moeda);
+    if (typeof data.prazo_pagamento_dias === 'number')
+      form.setValue('prazo_pagamento_dias', data.prazo_pagamento_dias);
+    if (
+      data.periodicidade_faturacao &&
+      data.periodicidade_faturacao in PERIODICIDADE_FATURACAO_LABELS
+    )
+      form.setValue('periodicidade_faturacao', data.periodicidade_faturacao);
+
     // Avança para o formulário após extracção
     setShowUploadStep(false);
   };
@@ -486,6 +515,10 @@ export default function ContratoForm() {
       referencia_dpa: data.referencia_dpa || null,
       dpia_realizada: data.dpia_realizada,
       referencia_dpia: data.referencia_dpia || null,
+      valor_total_estimado: data.valor_total_estimado ?? null,
+      moeda: data.moeda || 'EUR',
+      prazo_pagamento_dias: data.prazo_pagamento_dias ?? null,
+      periodicidade_faturacao: (data.periodicidade_faturacao as any) || null,
     };
 
     if (isEditing && id) {
@@ -898,6 +931,109 @@ export default function ContratoForm() {
                               placeholder="Descrição resumida do objecto do contrato"
                               rows={3}
                               {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Valores e Facturação</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="valor_total_estimado"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor Total Estimado</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="0.00"
+                              value={field.value ?? ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === '' ? null : Number(e.target.value),
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="moeda"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Moeda</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {['EUR', 'USD', 'GBP', 'CHF', 'BRL'].map((m) => (
+                                <SelectItem key={m} value={m}>
+                                  {m}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="periodicidade_faturacao"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Periodicidade de Facturação</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ''}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Seleccione" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(PERIODICIDADE_FATURACAO_LABELS).map(([v, label]) => (
+                                <SelectItem key={v} value={v}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="prazo_pagamento_dias"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prazo de Pagamento (dias)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="Ex.: 30"
+                              value={field.value ?? ''}
+                              onChange={(e) =>
+                                field.onChange(
+                                  e.target.value === '' ? null : Number(e.target.value),
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
