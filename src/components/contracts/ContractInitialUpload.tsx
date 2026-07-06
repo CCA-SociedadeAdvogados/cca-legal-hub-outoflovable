@@ -80,7 +80,15 @@ const ACCEPTED_MIME_TYPES = [
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'text/plain',
+  'image/png',
+  'image/jpeg',
 ];
+
+// A API da Anthropic aceita imagens até 5 MB — validar antes do upload.
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+const isImageFile = (file: File) =>
+  file.type.startsWith('image/') || /\.(png|jpe?g)$/i.test(file.name);
 
 export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractInitialUploadProps) {
   const { toast } = useToast();
@@ -93,11 +101,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
 
   const isValidFile = (file: File) => {
     const byMime = ACCEPTED_MIME_TYPES.includes(file.type);
-    const byExt =
-      file.name.endsWith('.pdf') ||
-      file.name.endsWith('.doc') ||
-      file.name.endsWith('.docx') ||
-      file.name.endsWith('.txt');
+    const byExt = /\.(pdf|docx?|txt|png|jpe?g)$/i.test(file.name);
     return byMime || byExt;
   };
 
@@ -120,12 +124,19 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
 
   const processFile = async (file: File) => {
     if (!isValidFile(file)) {
-      setError('Formato de ficheiro não suportado. Use PDF, Word (.docx) ou TXT.');
+      setError(
+        'Formato de ficheiro não suportado. Use PDF, Word (.docx), TXT ou imagem (PNG/JPG).',
+      );
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
       setError('O ficheiro é demasiado grande. Máximo 10 MB.');
+      return;
+    }
+
+    if (isImageFile(file) && file.size > MAX_IMAGE_BYTES) {
+      setError('A imagem é demasiado grande. Máximo 5 MB — reduza a resolução ou use PDF.');
       return;
     }
 
@@ -318,7 +329,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
           type="file"
           ref={fileInputRef}
           onChange={handleFileSelect}
-          accept=".pdf,.doc,.docx,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,image/png,image/jpeg"
           className="hidden"
         />
 
@@ -389,7 +400,7 @@ export function ContractInitialUpload({ onDataExtracted, onSkip }: ContractIniti
                     : 'Arraste o contrato ou clique para selecionar'}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  PDF, Word (.docx) ou TXT (máx. 10 MB)
+                  PDF, Word (.docx), TXT ou imagem PNG/JPG (máx. 10 MB; imagens 5 MB)
                 </p>
               </div>
             </div>
