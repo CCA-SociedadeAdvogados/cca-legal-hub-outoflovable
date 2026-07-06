@@ -321,6 +321,7 @@ export function Sidebar({ clientName }: SidebarProps) {
           label={t('nav.requests')}
           isActive={location.pathname === '/pedidos'}
           isCollapsed={isCollapsed}
+          badge={badges.pedidos}
         />
         <NavItem
           to="/assuntos"
