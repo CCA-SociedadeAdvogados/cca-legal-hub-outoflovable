@@ -140,7 +140,9 @@
       "promote": "Promote to matter",
       "promoted": "Promoted to matter",
       "promoteConfirmTitle": "Promote this request to a matter?",
-      "promoteConfirmDesc": "A matter is created with this request’s title and description, linked to it. The request moves to “In review” and follow-up continues in the matter."
+      "promoteConfirmDesc": "A matter is created with this request’s title and description, linked to it. The request moves to “In review” and follow-up continues in the matter.",
+      "attachment": "Attached file",
+      "attachmentError": "Could not open the file"
     }
   },
   "matters": {
@@ -1858,13 +1860,6 @@
     "news": {
       "empty": "No news published yet."
     },
-    "radar": {
-      "empty": "No legislative alerts. When legislation affecting your contracts arises, it will appear here.",
-      "affectsContract": "Affects contract",
-      "officialSource": "Official source",
-      "inForce": "in force",
-      "unknownEvent": "Legislative change"
-    },
     "summary": {
       "heading": "Executive summary",
       "ctaTitle": "1-click executive summary",
@@ -1928,24 +1923,6 @@
       },
       "becameMatter": "Became a matter · view progress"
     },
-    "assistant": {
-      "eyebrow": "Assistant",
-      "title": "Ask about your contracts",
-      "introTitle": "Hi! I'm your portal assistant.",
-      "introBody": "Ask me in natural language about your contract portfolio with CCA — deadlines, renewals, risks, values or clauses.",
-      "placeholder": "Type your question...",
-      "send": "Send",
-      "thinking": "Analysing your contracts...",
-      "error": "Could not get a response",
-      "errorReply": "Sorry, an error occurred while processing your question. Please try again.",
-      "disclaimer": "AI-generated answers based on your contracts. Confirm with CCA before important decisions.",
-      "suggestions": [
-        "Which contracts expire in the next 90 days?",
-        "Which ones have an exclusivity clause?",
-        "What GDPR risks should I watch out for?",
-        "What is the total value of my portfolio?"
-      ]
-    },
     "profile": {
       "account": "Account",
       "name": "Name",
@@ -2004,12 +1981,10 @@
     },
     "nav": {
       "home": "Home",
-      "assistant": "Assistant",
       "contracts": "My contracts",
       "matters": "My matters",
       "documents": "Documents",
       "deadlines": "Deadlines",
-      "radar": "Legislative radar",
       "financial": "Account statement",
       "requests": "Requests to CCA",
       "news": "CCA News",
@@ -2021,7 +1996,35 @@
       "version": "Version {{n}}",
       "read": "Read",
       "download": "Download",
-      "downloadError": "Could not download the file"
+      "downloadError": "Could not download the file",
+      "submitCta": "Send a policy for review",
+      "submitHint": "Send one of your organization’s policies — data protection, compliance, codes of conduct, internal regulations — and our legal team will review it.",
+      "howTitle": "How it works",
+      "step1Title": "Send the policy",
+      "step1Desc": "Upload the document and tell us what you want validated.",
+      "step2Title": "CCA is notified immediately",
+      "step2Desc": "The request reaches the legal team the moment you submit.",
+      "step3Title": "Receive the review",
+      "step3Desc": "Track the status and our lawyers’ response here or in Requests to CCA.",
+      "fields": {
+        "title": "Policy name",
+        "titlePlaceholder": "E.g.: Data Protection Policy",
+        "notes": "What would you like us to review?",
+        "notesPlaceholder": "Context, questions or specific points to validate (optional)",
+        "file": "Policy document"
+      },
+      "fileHint": "PDF, Word (.docx) or TXT — max. 10 MB",
+      "fileRequired": "Select the policy file",
+      "fileTooLarge": "The file exceeds 10 MB",
+      "fileInvalidType": "Unsupported format. Use PDF, Word (.docx) or TXT.",
+      "uploadError": "Could not upload the file",
+      "submit": "Send for review",
+      "submitted": "Policy sent for review",
+      "submittedDesc": "The CCA team has been notified. Track the status on this page or in Requests to CCA.",
+      "mySubmissions": "Reviews in progress",
+      "submissionsHint": "Status of the policies you sent for CCA review.",
+      "viewInRequests": "View in Requests to CCA",
+      "published": "Policies published by CCA"
     },
     "lifecycle": {
       "inForce": "In force",
@@ -2072,7 +2075,7 @@
       "policies": {
         "eyebrow": "Policies",
         "title": "Policies",
-        "description": "Policies and normative documents made available by CCA for your organization."
+        "description": "Send your organization's policies for review by CCA's legal team and browse the policies published for your organization."
       },
       "requests": {
         "eyebrow": "Requests",
@@ -2106,11 +2109,6 @@
         "title": "Documents",
         "description": "Access documents shared between your organization and CCA.",
         "upcoming": ["Your organization's documents", "Preview and download", "Folder organization"]
-      },
-      "radar": {
-        "eyebrow": "Legislation",
-        "title": "Legislative radar",
-        "description": "Legislative changes affecting your contracts, with the risk level identified by CCA."
       },
       "deadlines": {
         "eyebrow": "Deadlines",
