@@ -27,12 +27,13 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import {
   useAssuntos,
-  useAssuntoEventos,
   type Assunto,
   type AssuntoEstado,
   type AssuntoTipo,
   type EventoTipo,
 } from '@/hooks/useAssuntos';
+import { useHubEventos, useUpdateHubEvento, hubEstadoEvento } from '@/hooks/useHub';
+import { Switch } from '@/components/ui/switch';
 
 const ESTADOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente', 'concluido', 'suspenso'];
 const TIPOS: AssuntoTipo[] = [
@@ -127,6 +128,7 @@ export default function Assuntos() {
                 assunto={a}
                 organizationId={organizationId}
                 onEstado={(estado) => updateAssunto.mutate({ id: a.id, estado })}
+                onPatch={(patch) => updateAssunto.mutate({ id: a.id, ...patch })}
                 addEvento={addEvento}
               />
             ))}
@@ -188,15 +190,18 @@ function CockpitAssuntoCard({
   assunto,
   organizationId,
   onEstado,
+  onPatch,
   addEvento,
 }: {
   assunto: Assunto;
   organizationId: string;
   onEstado: (estado: AssuntoEstado) => void;
+  onPatch: (patch: Partial<Assunto>) => void;
   addEvento: ReturnType<typeof useAssuntos>['addEvento'];
 }) {
   const { t } = useTranslation();
-  const { data: eventos = [] } = useAssuntoEventos(assunto.id);
+  const { data: eventos = [] } = useHubEventos(organizationId, assunto.id);
+  const updateEvento = useUpdateHubEvento(organizationId);
   const estado = (assunto.estado as AssuntoEstado) ?? 'aberto';
 
   const [open, setOpen] = useState(false);
@@ -266,24 +271,74 @@ function CockpitAssuntoCard({
             <MessageSquarePlus className="h-3.5 w-3.5" />
             {t('matters.cca.addUpdate')}
           </Button>
+          {/* F2: publicação opt-in — nada é publicado por defeito */}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{t('hub.publishedInPortal')}</span>
+            <Switch
+              checked={assunto.publicado}
+              onCheckedChange={(v) => onPatch({ publicado: v })}
+            />
+          </div>
+        </div>
+
+        {/* F2: ponto de situação cliente-friendly (texto curado) */}
+        <div className="flex items-center gap-2">
+          <Input
+            defaultValue={assunto.status_cliente ?? ''}
+            placeholder={t('hub.statusClientePlaceholder')}
+            className="h-8 text-sm"
+            onBlur={(e) => {
+              const v = e.target.value.trim() || null;
+              if (v !== (assunto.status_cliente ?? null)) onPatch({ status_cliente: v });
+            }}
+          />
         </div>
 
         {eventos.length > 0 && (
           <ol className="space-y-2 border-t pt-3">
-            {eventos.map((e) => (
-              <li key={e.id} className="text-sm">
-                <span className="font-mono text-xs text-muted-foreground">
-                  {new Date(e.data).toLocaleDateString('pt-PT')}
-                </span>{' '}
-                <span className="font-medium">{e.titulo}</span>
-                {!e.visivel_cliente && (
-                  <Badge variant="outline" className="ml-2 text-[10px]">
-                    {t('matters.cca.internal')}
-                  </Badge>
-                )}
-                {e.descricao && <p className="text-muted-foreground">{e.descricao}</p>}
-              </li>
-            ))}
+            {eventos.map((e) => {
+              const estadoEv = hubEstadoEvento(e.data_evento, e.concluido);
+              return (
+                <li key={e.id} className="flex items-start justify-between gap-3 text-sm">
+                  <div className="min-w-0">
+                    <span className="font-mono text-xs text-muted-foreground">
+                      {new Date(e.data_evento).toLocaleDateString('pt-PT')}
+                    </span>{' '}
+                    <span className="font-medium">{e.titulo_cliente}</span>
+                    <Badge variant="outline" className="ml-2 text-[10px]">
+                      {t(`hub.tipos.${e.tipo}`)}
+                    </Badge>
+                    {estadoEv === 'vencido' && (
+                      <Badge className="ml-1.5 bg-risk-high/20 text-[10px] text-risk-high">
+                        {t('hub.estados.vencido')}
+                      </Badge>
+                    )}
+                    {!e.publicado && (
+                      <Badge variant="outline" className="ml-1.5 text-[10px]">
+                        {t('matters.cca.internal')}
+                      </Badge>
+                    )}
+                    {(e.descricao_cliente || e.descricao_interna) && (
+                      <p className="text-muted-foreground">
+                        {e.descricao_cliente ?? e.descricao_interna}
+                      </p>
+                    )}
+                  </div>
+                  {/* Curadoria inline: publicar/ocultar (eventos internos nunca são publicáveis) */}
+                  {!e.interno && (
+                    <div
+                      className="flex shrink-0 items-center gap-1.5"
+                      title={t('hub.publishToggle')}
+                    >
+                      <Switch
+                        checked={e.publicado}
+                        onCheckedChange={(v) => updateEvento.mutate({ id: e.id, publicado: v })}
+                      />
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ol>
         )}
       </CardContent>
