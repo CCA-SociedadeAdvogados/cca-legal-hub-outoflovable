@@ -23,19 +23,20 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Plus, Scale, Edit, Trash2, Link2, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Eyebrow, KPI, GoldButton } from '@/components/cca';
 
 const estadoColors: Record<string, string> = {
-  pendente: 'bg-risk-medium/20 text-risk-medium',
-  em_curso: 'bg-primary/20 text-primary',
-  cumprido: 'bg-risk-low/20 text-risk-low',
-  nao_aplicavel: 'bg-muted text-muted-foreground',
+  pendente: 'bg-warn/10 text-warn border-warn/30',
+  em_curso: 'bg-brand/10 text-brand border-brand/30',
+  cumprido: 'bg-positive/10 text-positive border-positive/30',
+  nao_aplicavel: 'bg-bg-alt text-ink-mute border-line',
 };
 
 const criticidadeColors: Record<string, string> = {
-  baixo: 'bg-risk-low/20 text-risk-low',
-  medio: 'bg-risk-medium/20 text-risk-medium',
-  alto: 'bg-risk-medium/30 text-risk-medium',
-  critico: 'bg-destructive/20 text-destructive',
+  baixo: 'bg-risk-low/10 text-risk-low border-risk-low/30',
+  medio: 'bg-risk-medium/10 text-risk-medium border-risk-medium/30',
+  alto: 'bg-risk-high/10 text-risk-high border-risk-high/30',
+  critico: 'bg-danger/10 text-danger border-danger/30',
 };
 
 export default function Requisitos() {
@@ -171,17 +172,22 @@ export default function Requisitos() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('requirements.title')}</h1>
-            <p className="text-muted-foreground">{t('requirements.subtitle')}</p>
-          </div>
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('requirements.title')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('requirements.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('requirements.subtitle')}
+            </p>
+          </header>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={handleNew}>
-                <Plus className="h-4 w-4 mr-2" />
+              <GoldButton onClick={handleNew}>
+                <Plus className="h-4 w-4" />
                 {t('requirements.newRequirement')}
-              </Button>
+              </GoldButton>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
@@ -313,56 +319,10 @@ export default function Requisitos() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{t('common.total')}</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
-                </div>
-                <Scale className="h-8 w-8 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {t('requirements.status.pending')}
-                  </p>
-                  <p className="text-2xl font-bold text-risk-medium">{stats.pendentes}</p>
-                </div>
-                <Clock className="h-8 w-8 text-risk-medium" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {t('requirements.criticality.critical')}
-                  </p>
-                  <p className="text-2xl font-bold text-destructive">{stats.criticos}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-destructive" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">
-                    {t('requirements.status.fulfilled')}
-                  </p>
-                  <p className="text-2xl font-bold text-risk-low">{stats.cumpridos}</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-risk-low" />
-              </div>
-            </CardContent>
-          </Card>
+          <KPI label={t('common.total')} value={stats.total} />
+          <KPI label={t('requirements.status.pending')} value={stats.pendentes} />
+          <KPI label={t('requirements.criticality.critical')} value={stats.criticos} />
+          <KPI label={t('requirements.status.fulfilled')} value={stats.cumpridos} />
         </div>
 
         <div className="flex gap-4">
@@ -401,25 +361,30 @@ export default function Requisitos() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+          <div className="text-center py-8 text-ink-mute">{t('common.loading')}</div>
         ) : filteredRequisitos.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Scale className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t('requirements.noRequirements')}</h3>
-              <p className="text-muted-foreground mb-4">
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center py-16 text-center">
+              <Scale className="h-12 w-12 text-ink-mute mb-4" strokeWidth={1.5} />
+              <h3 className="text-lg font-medium text-ink mb-2">
+                {t('requirements.noRequirements')}
+              </h3>
+              <p className="text-sm text-ink-soft mb-4">
                 {t('requirements.noRequirementsDescription')}
               </p>
-              <Button onClick={handleNew}>
-                <Plus className="h-4 w-4 mr-2" />
+              <GoldButton onClick={handleNew}>
+                <Plus className="h-4 w-4" />
                 {t('requirements.createRequirement')}
-              </Button>
+              </GoldButton>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
             {filteredRequisitos.map((requisito) => (
-              <Card key={requisito.id}>
+              <Card
+                key={requisito.id}
+                className="rounded-card border-line bg-surface transition-colors hover:border-brand/40"
+              >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
@@ -433,8 +398,8 @@ export default function Requisitos() {
                         )}
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{requisito.titulo}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">{requisito.descricao}</p>
+                        <CardTitle className="text-lg text-ink">{requisito.titulo}</CardTitle>
+                        <p className="text-sm text-ink-soft mt-1">{requisito.descricao}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -450,7 +415,7 @@ export default function Requisitos() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-ink-soft">
                       {requisito.fonte_legal && (
                         <span className="flex items-center gap-1">
                           <Link2 className="h-4 w-4" />

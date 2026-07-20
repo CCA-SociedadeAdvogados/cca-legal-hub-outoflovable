@@ -674,11 +674,11 @@ export default function ContratoForm() {
       case 'alto':
         return 'bg-warn text-white';
       case 'médio':
-        return 'bg-warn text-black';
+        return 'bg-warn text-ink';
       case 'baixo':
         return 'bg-positive text-white';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-bg-alt0 text-white';
     }
   };
 

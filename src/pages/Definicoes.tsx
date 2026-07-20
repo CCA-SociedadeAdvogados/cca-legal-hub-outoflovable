@@ -181,7 +181,7 @@ export default function Definicoes() {
 
           {/* General Settings */}
           <TabsContent value="general" className="space-y-6">
-            {/* Aspecto visual — Âmbar / Terracota / Cobre */}
+            {/* Aspecto visual — Índigo / Ardósia / Ameixa */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -287,7 +287,7 @@ export default function Definicoes() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-card border border-line p-4">
                   <div className="space-y-0.5">
                     <Label>{t('settings.upload.autoAnalysis')}</Label>
                     <p className="text-sm text-muted-foreground">
@@ -354,7 +354,7 @@ export default function Definicoes() {
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center justify-between rounded-card border border-line p-4">
                     <div className="space-y-0.5">
                       <Label>{t('settings.ai.autoAnalysis')}</Label>
                       <p className="text-sm text-muted-foreground">
@@ -369,7 +369,7 @@ export default function Definicoes() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center justify-between rounded-card border border-line p-4">
                     <div className="space-y-0.5">
                       <Label>{t('settings.ai.notifyImpacts')}</Label>
                       <p className="text-sm text-muted-foreground">
@@ -438,7 +438,7 @@ export default function Definicoes() {
                 <CardDescription>{t('settings.notifications.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-card border border-line p-4">
                   <div className="space-y-0.5">
                     <Label>{t('settings.notifications.emailAlerts')}</Label>
                     <p className="text-sm text-muted-foreground">
@@ -456,7 +456,7 @@ export default function Definicoes() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-card border border-line p-4">
                   <div className="space-y-0.5">
                     <Label>{t('settings.notifications.renewalAlerts')}</Label>
                     <p className="text-sm text-muted-foreground">
@@ -474,7 +474,7 @@ export default function Definicoes() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between rounded-lg border p-4">
+                <div className="flex items-center justify-between rounded-card border border-line p-4">
                   <div className="space-y-0.5">
                     <Label>{t('settings.notifications.impactAlerts')}</Label>
                     <p className="text-sm text-muted-foreground">

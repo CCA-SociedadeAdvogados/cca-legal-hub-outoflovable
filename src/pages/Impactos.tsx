@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
+import { Eyebrow, KPI, GoldButton } from '@/components/cca';
 
 export default function Impactos() {
   const { t } = useTranslation();
@@ -111,7 +112,7 @@ export default function Impactos() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
         </div>
       </AppLayout>
     );
@@ -119,18 +120,23 @@ export default function Impactos() {
 
   return (
     <AppLayout>
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-serif">{t('impacts.title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('impacts.subtitle')}</p>
-          </div>
+      <div className="space-y-7 animate-fade-in">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('impacts.title')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('impacts.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('impacts.subtitle')}
+            </p>
+          </header>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={resetForm}>
-                <Plus className="mr-2 h-4 w-4" />
+              <GoldButton onClick={resetForm}>
+                <Plus className="h-4 w-4" />
                 {t('impacts.newImpact')}
-              </Button>
+              </GoldButton>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
@@ -250,56 +256,42 @@ export default function Impactos() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('common.total')}</div>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-risk-high/30">
-            <CardContent className="p-4">
-              <div className="text-sm text-risk-high">{t('impacts.highRisk')}</div>
-              <div className="text-2xl font-bold text-risk-high">{stats.alto}</div>
-            </CardContent>
-          </Card>
-          <Card className="border-risk-medium/30">
-            <CardContent className="p-4">
-              <div className="text-sm text-risk-medium">{t('impacts.mediumRisk')}</div>
-              <div className="text-2xl font-bold text-risk-medium">{stats.medio}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="text-sm text-muted-foreground">{t('common.pending')}</div>
-              <div className="text-2xl font-bold">{stats.pendentes}</div>
-            </CardContent>
-          </Card>
+          <KPI label={t('common.total')} value={stats.total} />
+          <KPI label={t('impacts.highRisk')} value={stats.alto} className="border-risk-high/30" />
+          <KPI
+            label={t('impacts.mediumRisk')}
+            value={stats.medio}
+            className="border-risk-medium/30"
+          />
+          <KPI label={t('common.pending')} value={stats.pendentes} />
         </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t('impacts.searchImpacts')}
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-mute" />
+          <Input
+            placeholder={t('impacts.searchImpacts')}
+            className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
         <div className="space-y-4">
           {filteredImpactos.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                {searchTerm ? t('impacts.noImpacts') : t('impacts.noImpactsRegistered')}
+            <Card className="rounded-card border-line bg-surface">
+              <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+                <AlertTriangle className="h-12 w-12 text-ink-mute" strokeWidth={1.5} />
+                <p className="text-sm text-ink-soft">
+                  {searchTerm ? t('impacts.noImpacts') : t('impacts.noImpactsRegistered')}
+                </p>
               </CardContent>
             </Card>
           ) : (
             filteredImpactos.map((impacto) => (
-              <Card key={impacto.id} className="hover:bg-muted/30 transition-colors group">
+              <Card
+                key={impacto.id}
+                className="rounded-card border-line bg-surface transition-colors hover:border-brand/40 group"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
@@ -353,8 +345,8 @@ export default function Impactos() {
 
                         {impacto.eventos_legislativos && (
                           <div className="flex items-center gap-2 mb-2">
-                            <Scale className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm font-medium">
+                            <Scale className="h-4 w-4 text-ink-mute" />
+                            <span className="text-sm font-medium text-ink">
                               {impacto.eventos_legislativos.titulo}
                             </span>
                             {impacto.eventos_legislativos.referencia_legal && (
@@ -367,10 +359,10 @@ export default function Impactos() {
 
                         {impacto.contratos && (
                           <div className="flex items-center gap-2 mb-2">
-                            <FileCheck className="h-4 w-4 text-muted-foreground" />
+                            <FileCheck className="h-4 w-4 text-ink-mute" />
                             <Link
                               to={`/contratos/${impacto.contratos.id}`}
-                              className="text-sm hover:underline"
+                              className="text-sm text-ink-soft hover:text-brand hover:underline"
                             >
                               {t('contracts.contract')}: {impacto.contratos.id_interno} -{' '}
                               {impacto.contratos.titulo_contrato}
@@ -379,13 +371,11 @@ export default function Impactos() {
                         )}
 
                         {impacto.descricao && (
-                          <p className="text-sm text-muted-foreground mt-2">{impacto.descricao}</p>
+                          <p className="text-sm text-ink-soft mt-2">{impacto.descricao}</p>
                         )}
 
                         {impacto.observacoes && (
-                          <p className="text-sm text-muted-foreground/70 mt-1 italic">
-                            {impacto.observacoes}
-                          </p>
+                          <p className="text-sm text-ink-mute mt-1 italic">{impacto.observacoes}</p>
                         )}
                       </div>
                     </div>

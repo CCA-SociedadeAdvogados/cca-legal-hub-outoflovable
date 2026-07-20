@@ -170,7 +170,7 @@ export default function PortalFinanceiro() {
                         {t(`portal.financial.itemStatus.${item.estado}`)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="py-3 text-right font-mono text-sm text-ink">
+                    <TableCell className="py-3 text-right text-sm font-semibold tracking-[-0.03em] text-ink font-display [font-variant-numeric:tabular-nums]">
                       {formatCurrency(item.valor, lang)}
                     </TableCell>
                   </TableRow>

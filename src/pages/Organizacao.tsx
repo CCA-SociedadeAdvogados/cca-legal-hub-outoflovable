@@ -46,6 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Eyebrow } from '@/components/cca';
 
 const roleIcons = {
   owner: Crown,
@@ -124,9 +125,11 @@ export default function Organizacao() {
       return (
         <AppLayout>
           <div className="max-w-lg mx-auto py-12">
-            <Card>
+            <Card className="rounded-card border-line bg-surface">
               <CardHeader className="text-center">
-                <Building2 className="h-12 w-12 mx-auto text-primary mb-4" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card border border-line bg-brand/[0.08] text-brand">
+                  <Building2 className="h-6 w-6" />
+                </div>
                 <CardTitle>
                   {t('organization.selectOrganization', 'Selecione a sua Organização')}
                 </CardTitle>
@@ -143,11 +146,11 @@ export default function Organizacao() {
                   return (
                     <div
                       key={membership.organization_id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                      className="flex items-center justify-between rounded-card border border-line p-4 transition-colors hover:bg-bg-alt"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Building2 className="h-5 w-5 text-primary" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-control bg-brand/[0.08] text-brand">
+                          <Building2 className="h-5 w-5" />
                         </div>
                         <div>
                           <p className="font-medium">{membership.organizations.name}</p>
@@ -181,9 +184,11 @@ export default function Organizacao() {
     return (
       <AppLayout>
         <div className="max-w-lg mx-auto py-12">
-          <Card>
+          <Card className="rounded-card border-line bg-surface">
             <CardHeader className="text-center">
-              <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card border border-line bg-bg-alt text-ink-mute">
+                <AlertCircle className="h-6 w-6" />
+              </div>
               <CardTitle>{t('organization.noOrganization', 'Sem Organização')}</CardTitle>
               <CardDescription>
                 {t(
@@ -210,11 +215,16 @@ export default function Organizacao() {
     <AppLayout>
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-serif">{t('organization.title')}</h1>
-            <p className="text-muted-foreground mt-1">{t('organization.subtitle')}</p>
-          </div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.organization', 'Organização')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('organization.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('organization.subtitle')}
+            </p>
+          </header>
 
           {/* Organization Switcher */}
           {organizations && organizations.length > 1 && (
@@ -315,7 +325,7 @@ export default function Organizacao() {
                 return (
                   <div
                     key={member.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between rounded-card border border-line p-4 transition-colors hover:bg-bg-alt"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar>

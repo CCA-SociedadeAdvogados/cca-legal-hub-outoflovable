@@ -67,6 +67,14 @@
     "success": "Sucesso",
     "user": "Utilizador"
   },
+  "command": {
+    "placeholder": "Pesquisar ou saltar para…",
+    "empty": "Sem resultados.",
+    "navigate": "Navegar",
+    "manage": "Gestão",
+    "actions": "Ações",
+    "toggleTheme": "Alternar tema claro/escuro"
+  },
   "department": {
     "label": "Departamento",
     "placeholder": "Selecione o departamento",
@@ -238,6 +246,7 @@
     "statusClientePlaceholder": "Ponto de situação para o cliente (texto curado)…"
   },
   "consola": {
+    "eyebrow": "Hub",
     "title": "Consola de gestão",
     "description": "Decida, por cliente, que abas existem no portal, que funcionalidades estão ativas e que conteúdo está publicado",
     "selectClient": "Selecione um cliente para gerir a configuração do portal.",

@@ -29,36 +29,36 @@ import { getContractPhase } from '@/lib/contractEstado';
 import { cn } from '@/lib/utils';
 
 const ESTADO_ICON_BG: Record<string, string> = {
-  rascunho: 'bg-gray-100 dark:bg-gray-800',
+  rascunho: 'bg-bg-alt dark:bg-bg-alt',
   em_revisao: 'bg-warn/10',
   em_aprovacao: 'bg-brand/10',
   enviado_para_assinatura: 'bg-brand/10',
   activo: 'bg-positive/10',
   expirado: 'bg-danger/10',
   denunciado: 'bg-danger/10',
-  rescindido: 'bg-gray-100 dark:bg-gray-800',
+  rescindido: 'bg-bg-alt dark:bg-bg-alt',
 };
 
 const ESTADO_ICON_COLOR: Record<string, string> = {
-  rascunho: 'text-gray-500',
+  rascunho: 'text-ink-mute',
   em_revisao: 'text-warn',
   em_aprovacao: 'text-brand',
   enviado_para_assinatura: 'text-brand',
   activo: 'text-positive',
   expirado: 'text-danger',
   denunciado: 'text-danger',
-  rescindido: 'text-gray-400',
+  rescindido: 'text-ink-mute',
 };
 
 const ESTADO_BADGE_CLASS: Record<string, string> = {
-  rascunho: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+  rascunho: 'bg-bg-alt text-ink-mute dark:bg-bg-alt dark:text-ink-soft',
   em_revisao: 'bg-warn/10 text-warn',
   em_aprovacao: 'bg-brand/10 text-brand',
   enviado_para_assinatura: 'bg-brand/10 text-brand',
   activo: 'bg-positive/10 text-positive',
   expirado: 'bg-danger/10 text-danger',
   denunciado: 'bg-danger/10 text-danger',
-  rescindido: 'bg-gray-100 text-gray-500 dark:bg-gray-800',
+  rescindido: 'bg-bg-alt text-ink-mute dark:bg-bg-alt',
 };
 
 export default function Dashboard() {
@@ -186,13 +186,11 @@ export default function Dashboard() {
             ))}
           </svg>
           <div className="relative z-10 max-w-2xl">
-            <div className="eyebrow mb-2.5" style={{ color: 'hsl(var(--accent-brand))' }}>
-              ✦ {t('home.summary.eyebrow')}
-            </div>
+            <div className="eyebrow mb-2.5 text-brand">✦ {t('home.summary.eyebrow')}</div>
             {stats.contratosExpirar90Dias > 0 ? (
               <>
-                <h2 className="font-serif text-[24px] font-normal leading-tight tracking-tight text-ink">
-                  <span style={{ color: 'hsl(var(--accent-brand))' }}>
+                <h2 className="font-display text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink">
+                  <span className="text-brand [font-variant-numeric:tabular-nums]">
                     {stats.contratosExpirar90Dias}
                   </span>{' '}
                   {t('home.summary.expiring', { count: stats.contratosExpirar90Dias })}
@@ -201,7 +199,7 @@ export default function Dashboard() {
               </>
             ) : (
               <>
-                <h2 className="font-serif text-[24px] font-normal leading-tight tracking-tight text-ink">
+                <h2 className="font-display text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink">
                   {t('home.summary.allClear')}
                 </h2>
                 <p className="mt-1 text-[13.5px] text-ink-soft">{t('home.summary.allClearSub')}</p>
@@ -254,7 +252,7 @@ export default function Dashboard() {
                       </p>
                       <p
                         className={cn(
-                          'text-3xl font-bold font-serif tracking-tight',
+                          'font-display text-3xl font-semibold tracking-[-0.03em] [font-variant-numeric:tabular-nums]',
                           docStats.percent < 50 && 'text-danger',
                         )}
                       >
@@ -275,7 +273,7 @@ export default function Dashboard() {
                         'flex h-10 w-10 items-center justify-center rounded-lg',
                         docStats.percent < 50
                           ? 'bg-danger/10 text-danger'
-                          : 'bg-primary/10 text-primary',
+                          : 'bg-brand/10 text-brand',
                       )}
                     >
                       <AlertTriangle className="h-5 w-5" />
@@ -289,7 +287,7 @@ export default function Dashboard() {
                       docStats.percent >= 100
                         ? 'bg-positive'
                         : docStats.percent >= 50
-                          ? 'bg-primary'
+                          ? 'bg-brand'
                           : 'bg-danger',
                     )}
                     style={{ width: `${docStats.percent}%` }}

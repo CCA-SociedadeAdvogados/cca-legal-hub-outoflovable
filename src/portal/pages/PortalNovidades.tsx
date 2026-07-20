@@ -61,7 +61,7 @@ export default function PortalNovidades() {
                 key={n.id}
                 type="button"
                 onClick={() => setSelected(n)}
-                className="block w-full rounded-card border border-line bg-surface px-5 py-4 text-left transition-colors hover:bg-bg-alt"
+                className="block w-full rounded-card border border-line bg-surface px-5 py-4 text-left transition-colors hover:border-brand/30 hover:bg-bg-alt"
               >
                 <div className="flex items-center gap-2">
                   <p className="font-mono text-[11px] text-ink-mute">

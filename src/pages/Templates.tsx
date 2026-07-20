@@ -25,13 +25,14 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Plus, FileCode, Edit, Trash2, Copy, Eye, Sparkles } from 'lucide-react';
 import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
+import { Eyebrow, GoldButton, GhostButton } from '@/components/cca';
 
 const tipoColors: Record<string, string> = {
-  contrato: 'bg-primary/20 text-primary',
-  adenda: 'bg-primary/15 text-primary',
-  politica: 'bg-risk-low/20 text-risk-low',
-  comunicacao: 'bg-risk-medium/20 text-risk-medium',
-  outro: 'bg-muted text-muted-foreground',
+  contrato: 'bg-brand/10 text-brand border-brand/30',
+  adenda: 'bg-brand/[0.08] text-brand border-brand/20',
+  politica: 'bg-positive/10 text-positive border-positive/30',
+  comunicacao: 'bg-warn/10 text-warn border-warn/30',
+  outro: 'bg-bg-alt text-ink-mute border-line',
 };
 
 const defaultPlaceholders = [
@@ -136,22 +137,27 @@ export default function Templates() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('templates.title')}</h1>
-            <p className="text-muted-foreground">{t('templates.subtitle')}</p>
-          </div>
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('templates.title')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('templates.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('templates.subtitle')}
+            </p>
+          </header>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleGenerateWithAI}>
-              <Sparkles className="h-4 w-4 mr-2" />
+            <GhostButton onClick={handleGenerateWithAI}>
+              <Sparkles className="h-4 w-4" />
               {t('templates.generateWithAI')}
-            </Button>
+            </GhostButton>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleNew}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <GoldButton onClick={handleNew}>
+                  <Plus className="h-4 w-4" />
                   {t('templates.newTemplate')}
-                </Button>
+                </GoldButton>
               </DialogTrigger>
               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
@@ -202,12 +208,12 @@ export default function Templates() {
                   </div>
                   <div className="space-y-2">
                     <Label>{t('templates.availablePlaceholders')}</Label>
-                    <div className="flex flex-wrap gap-2 p-3 bg-muted/50 rounded-lg">
+                    <div className="flex flex-wrap gap-2 p-3 bg-bg-alt border border-line rounded-card">
                       {defaultPlaceholders.map((placeholder) => (
                         <Badge
                           key={placeholder}
                           variant="outline"
-                          className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                          className="cursor-pointer border-line text-ink-soft hover:border-brand hover:bg-brand/10 hover:text-brand transition-colors"
                           onClick={() => insertPlaceholder(placeholder)}
                         >
                           {placeholder}
@@ -215,9 +221,7 @@ export default function Templates() {
                         </Badge>
                       ))}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t('templates.placeholderHint')}
-                    </p>
+                    <p className="text-xs text-ink-mute">{t('templates.placeholderHint')}</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="conteudo">{t('templates.templateContent')}</Label>
@@ -272,28 +276,33 @@ export default function Templates() {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+          <div className="text-center py-8 text-ink-mute">{t('common.loading')}</div>
         ) : filteredTemplates.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileCode className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t('templates.noTemplates')}</h3>
-              <p className="text-muted-foreground mb-4">{t('templates.noTemplatesDescription')}</p>
-              <Button onClick={handleNew}>
-                <Plus className="h-4 w-4 mr-2" />
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center py-16 text-center">
+              <FileCode className="h-12 w-12 text-ink-mute mb-4" strokeWidth={1.5} />
+              <h3 className="text-lg font-medium text-ink mb-2">{t('templates.noTemplates')}</h3>
+              <p className="text-sm text-ink-soft mb-4">{t('templates.noTemplatesDescription')}</p>
+              <GoldButton onClick={handleNew}>
+                <Plus className="h-4 w-4" />
                 {t('templates.createTemplate')}
-              </Button>
+              </GoldButton>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredTemplates.map((template) => (
-              <Card key={template.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={template.id}
+                className="rounded-card border-line bg-surface transition-colors hover:border-brand/40"
+              >
                 <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <CardTitle className="text-lg">{template.nome}</CardTitle>
-                      <CardDescription className="mt-1">{template.descricao}</CardDescription>
+                      <CardTitle className="text-lg text-ink">{template.nome}</CardTitle>
+                      <CardDescription className="mt-1 text-ink-soft">
+                        {template.descricao}
+                      </CardDescription>
                     </div>
                     <Badge className={tipoColors[template.tipo]}>
                       {getTipoLabel(template.tipo)}
@@ -304,12 +313,16 @@ export default function Templates() {
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-1">
                       {(template.placeholders || []).slice(0, 4).map((p) => (
-                        <Badge key={p} variant="outline" className="text-xs">
+                        <Badge
+                          key={p}
+                          variant="outline"
+                          className="text-xs border-line text-ink-soft"
+                        >
                           {p}
                         </Badge>
                       ))}
                       {(template.placeholders || []).length > 4 && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="outline" className="text-xs border-line text-ink-soft">
                           +{(template.placeholders || []).length - 4}
                         </Badge>
                       )}

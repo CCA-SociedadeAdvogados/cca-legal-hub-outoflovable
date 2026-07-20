@@ -83,6 +83,7 @@ import { ContractFAQ } from '@/components/contracts/ContractFAQ';
 import { useLegalHubProfile } from '@/hooks/useLegalHubProfile';
 import { useCliente } from '@/contexts/ClienteContext';
 import { useOrganizations } from '@/hooks/useOrganizations';
+import { Eyebrow } from '@/components/cca';
 import { CheckCircle2, XCircle, Globe } from 'lucide-react';
 
 function InfoRow({
@@ -97,10 +98,10 @@ function InfoRow({
   if (value === undefined || value === null || value === '') return null;
   return (
     <div className="flex items-start gap-3 py-2">
-      {Icon && <Icon className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />}
+      {Icon && <Icon className="h-4 w-4 mt-0.5 text-ink-mute shrink-0" />}
       <div className="flex-1 min-w-0">
-        <span className="text-sm text-muted-foreground">{label}</span>
-        <p className="font-medium">{value}</p>
+        <span className="text-sm text-ink-mute">{label}</span>
+        <p className="font-medium text-ink [font-variant-numeric:tabular-nums]">{value}</p>
       </div>
     </div>
   );
@@ -228,9 +229,15 @@ export default function ContratoDetalhe() {
   if (!contrato) {
     return (
       <AppLayout>
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold">Contrato não encontrado</h2>
-          <Button asChild className="mt-4">
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <FileText className="h-12 w-12 text-ink-mute" strokeWidth={1.4} />
+          <h2 className="mt-4 font-display text-[22px] font-normal tracking-[-0.02em] text-ink">
+            Contrato não encontrado
+          </h2>
+          <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
+            O contrato que procura não existe ou já não está disponível.
+          </p>
+          <Button asChild variant="outline" className="mt-5">
             <Link to="/contratos">Voltar à lista</Link>
           </Button>
         </div>
@@ -241,12 +248,15 @@ export default function ContratoDetalhe() {
   if (!isCCAInternalAuthorized && contrato.organization_id !== effectiveOrgId) {
     return (
       <AppLayout>
-        <div className="text-center py-12">
-          <h2 className="text-xl font-semibold">Acesso não autorizado</h2>
-          <p className="mt-2 text-muted-foreground">
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <Shield className="h-12 w-12 text-ink-mute" strokeWidth={1.4} />
+          <h2 className="mt-4 font-display text-[22px] font-normal tracking-[-0.02em] text-ink">
+            Acesso não autorizado
+          </h2>
+          <p className="mt-1.5 max-w-sm text-sm text-ink-soft">
             Este contrato não pertence à sua organização.
           </p>
-          <Button asChild className="mt-4">
+          <Button asChild variant="outline" className="mt-5">
             <Link to="/contratos">Voltar à lista</Link>
           </Button>
         </div>
@@ -294,7 +304,10 @@ export default function ContratoDetalhe() {
               </Link>
             </Button>
             <div>
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <div className="mb-2">
+                <Eyebrow>{TIPO_CONTRATO_LABELS[contrato.tipo_contrato]}</Eyebrow>
+              </div>
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 {!isLocal && (
                   <Badge variant="outline" className="font-mono">
                     {contrato.id_interno}
@@ -313,8 +326,10 @@ export default function ContratoDetalhe() {
                 )}
                 <ValidationBadge status={(contrato.validation_status ?? 'none') as any} />
               </div>
-              <h1 className="text-2xl font-bold font-serif">{contrato.titulo_contrato}</h1>
-              <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+              <h1 className="font-display text-[28px] md:text-[32px] font-normal leading-[1.1] tracking-[-0.02em] text-ink">
+                {contrato.titulo_contrato}
+              </h1>
+              <div className="flex items-center gap-2 mt-2 text-ink-soft">
                 <Building2 className="h-4 w-4" />
                 <span>{contrato.parte_b_nome_legal}</span>
               </div>
@@ -426,7 +441,9 @@ export default function ContratoDetalhe() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Identificação</CardTitle>
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                    Identificação
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   <InfoRow
@@ -454,7 +471,9 @@ export default function ContratoDetalhe() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Datas e Duração</CardTitle>
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                    Datas e Duração
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-1">
                   {!isLocal && (
@@ -513,7 +532,9 @@ export default function ContratoDetalhe() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Parte A (Organização)</CardTitle>
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                    Parte A (Organização)
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <InfoRow
@@ -528,7 +549,9 @@ export default function ContratoDetalhe() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Parte B (Contraparte)</CardTitle>
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                    Parte B (Contraparte)
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <InfoRow
@@ -545,7 +568,9 @@ export default function ContratoDetalhe() {
             </div>
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Contactos</CardTitle>
+                <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                  Contactos
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2">
@@ -579,7 +604,9 @@ export default function ContratoDetalhe() {
               <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Valores</CardTitle>
+                    <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                      Valores
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <InfoRow
@@ -599,7 +626,9 @@ export default function ContratoDetalhe() {
                 </Card>
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Facturação</CardTitle>
+                    <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                      Facturação
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <InfoRow
@@ -631,7 +660,7 @@ export default function ContratoDetalhe() {
               /* Client view: simplified read-only RGPD indicators */
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em] flex items-center gap-2">
                     <Shield className="h-5 w-5" />
                     RGPD e Protecção de Dados
                   </CardTitle>
@@ -641,7 +670,7 @@ export default function ContratoDetalhe() {
                     Indicadores detetados automaticamente após análise do documento.
                   </p>
                   <div className="grid gap-4 md:grid-cols-3">
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">
                       {contrato.tratamento_dados_pessoais ? (
                         <CheckCircle2 className="h-5 w-5 text-positive shrink-0" />
                       ) : (
@@ -654,7 +683,7 @@ export default function ContratoDetalhe() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">
                       {contrato.existe_dpa_anexo_rgpd ? (
                         <CheckCircle2 className="h-5 w-5 text-positive shrink-0" />
                       ) : (
@@ -667,7 +696,7 @@ export default function ContratoDetalhe() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 rounded-lg border p-4">
+                    <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-4">
                       {contrato.transferencia_internacional ? (
                         <Globe className="h-5 w-5 text-warn shrink-0" />
                       ) : (
@@ -689,7 +718,9 @@ export default function ContratoDetalhe() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Cláusulas e Garantias</CardTitle>
+                      <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                        Cláusulas e Garantias
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-wrap mb-4">
@@ -722,7 +753,7 @@ export default function ContratoDetalhe() {
                   </Card>
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="font-display text-lg font-medium tracking-[-0.01em] flex items-center gap-2">
                         <Shield className="h-5 w-5" />
                         RGPD e Privacidade
                       </CardTitle>
@@ -786,7 +817,9 @@ export default function ContratoDetalhe() {
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Linha Temporal</CardTitle>
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                    Linha Temporal
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ContractTimeline
@@ -798,7 +831,9 @@ export default function ContratoDetalhe() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Anexos</CardTitle>
+                  <CardTitle className="font-display text-lg font-medium tracking-[-0.01em]">
+                    Anexos
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ContractAttachments contratoId={id || ''} canEdit />

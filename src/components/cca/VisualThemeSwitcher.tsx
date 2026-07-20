@@ -7,7 +7,7 @@ type Props = {
 };
 
 /**
- * VisualThemeSwitcher — 3-up radio grid for the Âmbar / Terracota / Cobre direções.
+ * VisualThemeSwitcher — 3-up radio grid para as direções Índigo / Ardósia / Ameixa.
  * Each option shows a colour swatch (canvas, sidebar, accent) + name + tagline.
  */
 export function VisualThemeSwitcher({ className }: Props) {

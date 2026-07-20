@@ -45,6 +45,7 @@ import {
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import type { Database } from '@/integrations/supabase/types';
+import { Eyebrow } from '@/components/cca';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -210,11 +211,16 @@ export default function Utilizadores() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('users.title')}</h1>
-            <p className="text-muted-foreground">{t('users.subtitle')}</p>
-          </div>
+        <div className="flex items-start justify-between gap-4">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.users', 'Utilizadores')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('users.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('users.subtitle')}
+            </p>
+          </header>
           {canManageUsers && (
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
               <DialogTrigger asChild>
@@ -287,7 +293,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('common.total')}</p>
-                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
+                    {stats.total}
+                  </p>
                 </div>
                 <Users className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -298,7 +306,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('users.roles.admin')}</p>
-                  <p className="text-2xl font-bold text-primary">{stats.admins}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-primary [font-variant-numeric:tabular-nums]">
+                    {stats.admins}
+                  </p>
                 </div>
                 <Shield className="h-8 w-8 text-primary" />
               </div>
@@ -309,7 +319,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('users.roles.editor')}</p>
-                  <p className="text-2xl font-bold text-primary">{stats.editors}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-primary [font-variant-numeric:tabular-nums]">
+                    {stats.editors}
+                  </p>
                 </div>
                 <Pencil className="h-8 w-8 text-primary" />
               </div>
@@ -320,7 +332,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('users.roles.viewer')}</p>
-                  <p className="text-2xl font-bold">{stats.viewers}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
+                    {stats.viewers}
+                  </p>
                 </div>
                 <Eye className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -331,7 +345,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('users.stats.sso')}</p>
-                  <p className="text-2xl font-bold text-risk-low">{stats.ssoUsers}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-risk-low [font-variant-numeric:tabular-nums]">
+                    {stats.ssoUsers}
+                  </p>
                 </div>
                 <KeyRound className="h-8 w-8 text-risk-low" />
               </div>
@@ -342,7 +358,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('users.stats.emailPassword')}</p>
-                  <p className="text-2xl font-bold text-primary">{stats.localUsers}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-primary [font-variant-numeric:tabular-nums]">
+                    {stats.localUsers}
+                  </p>
                 </div>
                 <Lock className="h-8 w-8 text-primary" />
               </div>
@@ -353,7 +371,9 @@ export default function Utilizadores() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{t('users.stats.lockedUsers')}</p>
-                  <p className="text-2xl font-bold text-destructive">{stats.lockedUsers}</p>
+                  <p className="text-2xl font-display font-semibold tracking-[-0.03em] text-destructive [font-variant-numeric:tabular-nums]">
+                    {stats.lockedUsers}
+                  </p>
                 </div>
                 <AlertTriangle className="h-8 w-8 text-destructive" />
               </div>
@@ -487,11 +507,13 @@ export default function Utilizadores() {
         {isLoadingMembers ? (
           <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
         ) : filteredMembers.length === 0 ? (
-          <Card>
+          <Card className="rounded-card border-line bg-surface">
             <CardContent className="py-12 text-center">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t('users.noUsers')}</h3>
-              <p className="text-muted-foreground mb-4">{t('users.noUsersDescription')}</p>
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card border border-line bg-bg-alt text-ink-mute">
+                <Users className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-medium mb-2 text-ink">{t('users.noUsers')}</h3>
+              <p className="text-ink-soft mb-4">{t('users.noUsersDescription')}</p>
               {canManageUsers && (
                 <Button onClick={() => setIsInviteDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />

@@ -11,6 +11,7 @@ import { useOnboarding } from '@/hooks/useOnboarding';
 import { DepartmentGate } from '@/components/layout/DepartmentGate';
 import { translationService } from '@/lib/TranslationService';
 import { ClienteProvider } from '@/contexts/ClienteContext';
+import { CommandPaletteProvider } from '@/components/CommandPalette';
 import React, { Suspense } from 'react';
 
 // Initialize translation service (migration, cleanup)
@@ -453,7 +454,9 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
-                  <AppRoutes />
+                  <CommandPaletteProvider>
+                    <AppRoutes />
+                  </CommandPaletteProvider>
                 </BrowserRouter>
               </TooltipProvider>
             </ClienteProvider>

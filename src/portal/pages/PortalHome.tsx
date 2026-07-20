@@ -105,11 +105,14 @@ export default function PortalHome() {
     <div className="mx-auto max-w-5xl space-y-7">
       <header className="space-y-2">
         <Eyebrow>{t('portal.pages.home.eyebrow')}</Eyebrow>
-        <h1 className="font-display text-2xl font-medium tracking-[-0.01em] text-ink">
+        <h1 className="font-display text-[28px] font-medium leading-tight tracking-[-0.02em] text-ink">
           {firstName
             ? t('portal.home.greeting', { name: firstName })
             : t('portal.home.greetingNoName')}
         </h1>
+        <p className="max-w-2xl text-[13.5px] leading-relaxed text-ink-mute">
+          {t('portal.pages.home.description')}
+        </p>
       </header>
 
       {/* KPIs */}
@@ -217,9 +220,9 @@ export default function PortalHome() {
       {/* Atalho financeiro */}
       <Link
         to="/portal/financeiro"
-        className="flex items-center gap-4 rounded-card border border-line bg-surface px-5 py-4 transition-colors hover:bg-bg-alt"
+        className="group flex items-center gap-4 rounded-card border border-line bg-surface px-5 py-4 transition-colors hover:border-brand/30 hover:bg-bg-alt"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-line bg-bg-alt text-ink-mute">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-brand/20 bg-brand/[0.06] text-brand">
           <Wallet className="h-5 w-5" strokeWidth={1.5} />
         </div>
         <div className="min-w-0 flex-1">
@@ -228,7 +231,7 @@ export default function PortalHome() {
             {t(`portal.financial.status.${accountSummary.status}`)}
           </p>
         </div>
-        <ArrowRight className="h-4 w-4 shrink-0 text-ink-mute" />
+        <ArrowRight className="h-4 w-4 shrink-0 text-ink-mute transition-transform group-hover:translate-x-0.5 group-hover:text-brand" />
       </Link>
     </div>
   );

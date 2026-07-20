@@ -67,6 +67,14 @@
     "success": "Success",
     "user": "User"
   },
+  "command": {
+    "placeholder": "Search or jump to…",
+    "empty": "No results.",
+    "navigate": "Navigate",
+    "manage": "Manage",
+    "actions": "Actions",
+    "toggleTheme": "Toggle light/dark theme"
+  },
   "department": {
     "label": "Department",
     "placeholder": "Select department",
@@ -238,6 +246,7 @@
     "statusClientePlaceholder": "Client-friendly status update (curated text)…"
   },
   "consola": {
+    "eyebrow": "Hub",
     "title": "Management console",
     "description": "Decide, per client, which portal tabs exist, which features are active and what content is published",
     "selectClient": "Select a client to manage the portal configuration.",

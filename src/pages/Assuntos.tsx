@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Briefcase, Plus, Loader2, MessageSquarePlus } from 'lucide-react';
+import { Eyebrow, GoldButton } from '@/components/cca';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import {
@@ -47,11 +48,11 @@ const TIPOS: AssuntoTipo[] = [
 const EVENTO_TIPOS: EventoTipo[] = ['marco', 'atualizacao', 'documento', 'decisao', 'outro'];
 
 const ESTADO_TONE: Record<AssuntoEstado, string> = {
-  aberto: 'bg-muted text-muted-foreground',
-  em_curso: 'bg-primary/15 text-primary',
-  aguarda_cliente: 'bg-risk-medium/20 text-risk-medium',
-  concluido: 'bg-risk-low/20 text-risk-low',
-  suspenso: 'bg-muted text-muted-foreground',
+  aberto: 'border-line bg-bg-alt text-ink-soft',
+  em_curso: 'border-brand/30 bg-brand/10 text-brand',
+  aguarda_cliente: 'border-risk-medium/30 bg-risk-medium/10 text-risk-medium',
+  concluido: 'border-positive/30 bg-positive/10 text-positive',
+  suspenso: 'border-line bg-bg-alt text-ink-mute',
 };
 
 export default function Assuntos() {
@@ -87,23 +88,28 @@ export default function Assuntos() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">{t('matters.cca.title')}</h1>
-            <p className="text-sm text-muted-foreground">{t('matters.cca.description')}</p>
-          </div>
+      <div className="mx-auto max-w-4xl space-y-7 animate-fade-in">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.matters')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('matters.cca.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('matters.cca.description')}
+            </p>
+          </header>
           {organizationId && (
-            <Button className="gap-2" onClick={() => setNovoOpen(true)}>
+            <GoldButton onClick={() => setNovoOpen(true)}>
               <Plus className="h-4 w-4" />
               {t('matters.cca.new')}
-            </Button>
+            </GoldButton>
           )}
-        </header>
+        </div>
 
         {!organizationId ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="py-10 text-center text-sm text-ink-soft">
               {t('matters.cca.selectClient')}
             </CardContent>
           </Card>
@@ -114,10 +120,10 @@ export default function Assuntos() {
             ))}
           </div>
         ) : assuntos.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
-              <Briefcase className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-sm">{t('matters.cca.empty')}</span>
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center gap-2 py-14 text-center">
+              <Briefcase className="h-10 w-10 text-ink-mute" strokeWidth={1.5} />
+              <span className="text-sm text-ink-soft">{t('matters.cca.empty')}</span>
             </CardContent>
           </Card>
         ) : (
@@ -228,11 +234,11 @@ function CockpitAssuntoCard({
   };
 
   return (
-    <Card>
+    <Card className="rounded-card border-line bg-surface">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <CardTitle className="text-base">{assunto.titulo}</CardTitle>
+            <CardTitle className="font-display text-base text-ink">{assunto.titulo}</CardTitle>
             <CardDescription className="mt-0.5">
               {t(`portal.matters.tipos.${assunto.tipo}`)}
               {assunto.referencia ? ` · ${assunto.referencia}` : ''}
@@ -249,7 +255,7 @@ function CockpitAssuntoCard({
       </CardHeader>
       <CardContent className="space-y-3">
         {assunto.descricao && (
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">{assunto.descricao}</p>
+          <p className="whitespace-pre-wrap text-sm text-ink-soft">{assunto.descricao}</p>
         )}
 
         <div className="flex flex-wrap items-center gap-2">
@@ -273,7 +279,7 @@ function CockpitAssuntoCard({
           </Button>
           {/* F2: publicação opt-in — nada é publicado por defeito */}
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{t('hub.publishedInPortal')}</span>
+            <span className="text-xs text-ink-mute">{t('hub.publishedInPortal')}</span>
             <Switch
               checked={assunto.publicado}
               onCheckedChange={(v) => onPatch({ publicado: v })}
@@ -295,21 +301,21 @@ function CockpitAssuntoCard({
         </div>
 
         {eventos.length > 0 && (
-          <ol className="space-y-2 border-t pt-3">
+          <ol className="space-y-2 border-t border-line pt-3">
             {eventos.map((e) => {
               const estadoEv = hubEstadoEvento(e.data_evento, e.concluido);
               return (
                 <li key={e.id} className="flex items-start justify-between gap-3 text-sm">
                   <div className="min-w-0">
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="font-mono text-xs text-ink-mute [font-variant-numeric:tabular-nums]">
                       {new Date(e.data_evento).toLocaleDateString('pt-PT')}
                     </span>{' '}
-                    <span className="font-medium">{e.titulo_cliente}</span>
+                    <span className="font-medium text-ink">{e.titulo_cliente}</span>
                     <Badge variant="outline" className="ml-2 text-[10px]">
                       {t(`hub.tipos.${e.tipo}`)}
                     </Badge>
                     {estadoEv === 'vencido' && (
-                      <Badge className="ml-1.5 bg-risk-high/20 text-[10px] text-risk-high">
+                      <Badge className="ml-1.5 border-risk-high/30 bg-risk-high/10 text-[10px] text-risk-high">
                         {t('hub.estados.vencido')}
                       </Badge>
                     )}
@@ -319,9 +325,7 @@ function CockpitAssuntoCard({
                       </Badge>
                     )}
                     {(e.descricao_cliente || e.descricao_interna) && (
-                      <p className="text-muted-foreground">
-                        {e.descricao_cliente ?? e.descricao_interna}
-                      </p>
+                      <p className="text-ink-soft">{e.descricao_cliente ?? e.descricao_interna}</p>
                     )}
                   </div>
                   {/* Curadoria inline: publicar/ocultar (eventos internos nunca são publicáveis) */}

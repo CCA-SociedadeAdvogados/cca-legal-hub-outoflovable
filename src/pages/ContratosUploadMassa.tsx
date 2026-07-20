@@ -492,10 +492,10 @@ export default function ContratosUploadMassa() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold font-serif">{t('bulkUpload.title')}</h1>
-            <p className="text-muted-foreground mt-1">
-              {t('bulkUpload.subtitle', { count: MAX_FILES })}
-            </p>
+            <h1 className="font-display text-3xl font-semibold tracking-[-0.02em] text-ink">
+              {t('bulkUpload.title')}
+            </h1>
+            <p className="mt-1 text-ink-mute">{t('bulkUpload.subtitle', { count: MAX_FILES })}</p>
           </div>
         </div>
 

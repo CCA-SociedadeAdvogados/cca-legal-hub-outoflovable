@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
+import { Eyebrow } from '@/components/cca';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,9 +81,12 @@ export default function Consola() {
   return (
     <AppLayout>
       <div className="mx-auto max-w-5xl space-y-6">
-        <header>
-          <h1 className="text-2xl font-bold">{t('consola.title')}</h1>
-          <p className="text-sm text-muted-foreground">
+        <header className="space-y-2">
+          <Eyebrow>{t('consola.eyebrow', 'Hub')}</Eyebrow>
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink">
+            {t('consola.title')}
+          </h1>
+          <p className="max-w-2xl text-sm text-ink-mute">
             {t('consola.description')}
             {cliente ? ` — ${cliente.nome}` : ''}
           </p>

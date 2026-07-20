@@ -195,7 +195,7 @@ export default function Eventos() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
         </div>
       </AppLayout>
     );
@@ -411,10 +411,10 @@ export default function Eventos() {
           </Dialog>
         </div>
 
-        <Card>
+        <Card className="rounded-card border-line bg-surface">
           <CardContent className="p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-mute" />
               <Input
                 placeholder={t('events.searchEvents')}
                 className="pl-10"
@@ -427,19 +427,25 @@ export default function Eventos() {
 
         <div className="space-y-4">
           {filteredEventos.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center text-muted-foreground">
-                {searchTerm ? t('events.noEvents') : t('events.noEventsRegistered')}
+            <Card className="rounded-card border-line bg-surface">
+              <CardContent className="flex flex-col items-center gap-2 py-14 text-center">
+                <Scale className="h-10 w-10 text-ink-mute" strokeWidth={1.5} />
+                <span className="text-sm text-ink-soft">
+                  {searchTerm ? t('events.noEvents') : t('events.noEventsRegistered')}
+                </span>
               </CardContent>
             </Card>
           ) : (
             filteredEventos.map((evento) => (
-              <Card key={evento.id} className="hover:bg-muted/30 transition-colors group">
+              <Card
+                key={evento.id}
+                className="group rounded-card border-line bg-surface transition-colors hover:border-brand/40 hover:bg-bg-alt"
+              >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-4 flex-1">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                        <Scale className="h-6 w-6 text-primary" />
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-brand/10">
+                        <Scale className="h-6 w-6 text-brand" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -459,20 +465,18 @@ export default function Eventos() {
                           </Badge>
                           <Badge variant="outline">{JURISDICAO_LABELS[evento.jurisdicao]}</Badge>
                         </div>
-                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                        <h3 className="font-display font-semibold text-lg mb-1 text-ink transition-colors group-hover:text-brand">
                           {evento.titulo}
                         </h3>
                         {evento.referencia_legal && (
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {evento.referencia_legal}
-                          </p>
+                          <p className="text-sm text-ink-soft mb-2">{evento.referencia_legal}</p>
                         )}
                         {evento.descricao_resumo && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
+                          <p className="text-sm text-ink-soft line-clamp-2">
                             {evento.descricao_resumo}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground flex-wrap">
+                        <div className="flex items-center gap-4 mt-4 text-sm text-ink-mute flex-wrap [font-variant-numeric:tabular-nums]">
                           {evento.data_publicacao && (
                             <div className="flex items-center gap-1">
                               <Calendar className="h-4 w-4" />
@@ -496,7 +500,7 @@ export default function Eventos() {
                               href={evento.link_oficial}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="flex items-center gap-1 text-accent hover:underline"
+                              className="flex items-center gap-1 text-brand hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <ExternalLink className="h-4 w-4" />
@@ -516,13 +520,13 @@ export default function Eventos() {
                           setImpactDialogOpen(true);
                         }}
                       >
-                        <Sparkles className="h-4 w-4 text-primary" />
+                        <Sparkles className="h-4 w-4 text-brand" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(evento)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" onClick={() => setDeleteId(evento.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4 text-danger" />
                       </Button>
                     </div>
                   </div>
@@ -545,10 +549,7 @@ export default function Eventos() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-danger text-white">
               {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>

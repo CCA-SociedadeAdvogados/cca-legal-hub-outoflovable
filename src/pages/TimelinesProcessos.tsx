@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ChevronDown, ChevronRight, ListChecks, Loader2, Plus } from 'lucide-react';
+import { Eyebrow, GoldButton, Pill } from '@/components/cca';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useCliente } from '@/contexts/ClienteContext';
 import {
@@ -69,23 +69,28 @@ export default function TimelinesProcessos() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-4xl space-y-6">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">{t('timelines.cca.title')}</h1>
-            <p className="text-sm text-muted-foreground">{t('timelines.cca.description')}</p>
-          </div>
+      <div className="mx-auto max-w-4xl space-y-7 animate-fade-in">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.timelines')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('timelines.cca.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('timelines.cca.description')}
+            </p>
+          </header>
           {organizationId && (
-            <Button className="gap-2" onClick={() => setNovoOpen(true)}>
+            <GoldButton onClick={() => setNovoOpen(true)}>
               <Plus className="h-4 w-4" />
               {t('timelines.cca.new')}
-            </Button>
+            </GoldButton>
           )}
-        </header>
+        </div>
 
         {!organizationId ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="py-10 text-center text-sm text-ink-soft">
               {t('timelines.cca.selectClient')}
             </CardContent>
           </Card>
@@ -96,10 +101,10 @@ export default function TimelinesProcessos() {
             ))}
           </div>
         ) : instances.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center py-12 text-center">
-              <ListChecks className="mb-3 h-10 w-10 text-muted-foreground" strokeWidth={1.5} />
-              <p className="text-sm text-muted-foreground">{t('timelines.cca.empty')}</p>
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center py-14 text-center">
+              <ListChecks className="mb-3 h-10 w-10 text-ink-mute" strokeWidth={1.5} />
+              <p className="text-sm text-ink-soft">{t('timelines.cca.empty')}</p>
             </CardContent>
           </Card>
         ) : (
@@ -149,7 +154,7 @@ export default function TimelinesProcessos() {
                 value={gatilhoData}
                 onChange={(e) => setGatilhoData(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">{t('timelines.cca.gatilhoHint')}</p>
+              <p className="text-xs text-ink-mute">{t('timelines.cca.gatilhoHint')}</p>
             </div>
           </div>
           <DialogFooter>
@@ -176,7 +181,7 @@ function InstanceCard({ instance }: { instance: TlInstance }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Card>
+    <Card className="rounded-card border-line bg-surface transition-colors hover:border-brand/40">
       <CardContent className="p-5">
         <button
           type="button"
@@ -186,20 +191,20 @@ function InstanceCard({ instance }: { instance: TlInstance }) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               {open ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 shrink-0 text-ink-mute" />
               ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-ink-mute" />
               )}
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-ink">
                 {instance.matter_ref || t('timelines.cca.noRef')}
               </span>
               {instance.urgente && (
-                <Badge variant="outline" className="border-risk-high/40 text-[10px] text-risk-high">
+                <Pill tone="danger" className="text-[10px]">
                   {t('timelines.urgent')}
-                </Badge>
+                </Pill>
               )}
             </div>
-            <p className="ml-6 mt-0.5 text-xs text-muted-foreground">
+            <p className="ml-6 mt-0.5 text-xs text-ink-soft [font-variant-numeric:tabular-nums]">
               {instance.tl_templates?.title ?? instance.template_id}
               {instance.gatilho_data
                 ? ` · ${t('timelines.cca.gatilhoData')}: ${new Date(
@@ -211,7 +216,7 @@ function InstanceCard({ instance }: { instance: TlInstance }) {
         </button>
 
         {open && (
-          <div className="ml-6 mt-4 border-t pt-4">
+          <div className="ml-6 mt-4 border-t border-line pt-4">
             <LawyerTimeline instanceId={instance.id} />
           </div>
         )}

@@ -200,7 +200,7 @@ export default function PortalContratos() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="py-3 text-right font-mono text-sm text-ink">
+                    <TableCell className="py-3 text-right text-sm font-semibold tracking-[-0.03em] text-ink font-display [font-variant-numeric:tabular-nums]">
                       {formatCurrency(c.valor_total_estimado, i18n.language, c.moeda)}
                     </TableCell>
                   </TableRow>

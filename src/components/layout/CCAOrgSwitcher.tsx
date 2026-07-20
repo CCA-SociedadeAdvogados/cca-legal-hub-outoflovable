@@ -38,26 +38,26 @@ export default function CCAOrgSwitcher({ className }: Props) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-left shadow-sm"
+        className="flex w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-line bg-white px-3 py-2 text-left shadow-sm"
       >
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-medium text-gray-900">
+          <div className="truncate text-sm font-medium text-ink">
             {cliente?.nome ?? 'Seleccionar cliente'}
           </div>
-          <div className="truncate text-xs text-gray-500">
+          <div className="truncate text-xs text-ink-mute">
             {cliente
               ? `${cliente.clientCode}${cliente.groupCode ? ` · ${cliente.groupCode}` : ''}`
               : 'Sem cliente seleccionado'}
           </div>
         </div>
-        <ChevronsUpDown className="h-4 w-4 shrink-0 text-gray-500" />
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-ink-mute" />
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-2 w-full min-w-0 rounded-lg border border-gray-200 bg-white shadow-lg">
-          <div className="border-b border-gray-100 p-2">
-            <div className="flex items-center gap-2 rounded-md border border-gray-200 px-2 py-2">
-              <Search className="h-4 w-4 shrink-0 text-gray-400" />
+        <div className="absolute z-50 mt-2 w-full min-w-0 rounded-lg border border-line bg-white shadow-lg">
+          <div className="border-b border-line p-2">
+            <div className="flex items-center gap-2 rounded-md border border-line px-2 py-2">
+              <Search className="h-4 w-4 shrink-0 text-ink-mute" />
               <input
                 autoFocus
                 value={inputValue}
@@ -66,22 +66,20 @@ export default function CCAOrgSwitcher({ className }: Props) {
                 className="w-full min-w-0 border-0 bg-transparent text-sm outline-none"
               />
               {isFetching && (
-                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-gray-400" />
+                <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-ink-mute" />
               )}
             </div>
           </div>
 
           <div className="max-h-80 overflow-y-auto overflow-x-hidden p-1">
             {!debouncedSearch.trim() ? (
-              <div className="px-3 py-4 text-center text-sm text-gray-400">
+              <div className="px-3 py-4 text-center text-sm text-ink-mute">
                 Escreva para pesquisar clientes
               </div>
             ) : isFetching && resultados.length === 0 ? (
-              <div className="px-3 py-4 text-center text-sm text-gray-400">
-                A pesquisar...
-              </div>
+              <div className="px-3 py-4 text-center text-sm text-ink-mute">A pesquisar...</div>
             ) : resultados.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-500">Sem resultados.</div>
+              <div className="px-3 py-2 text-sm text-ink-mute">Sem resultados.</div>
             ) : (
               resultados.map((client) => {
                 const active = client.organization_id === cliente?.organizationId;
@@ -96,29 +94,29 @@ export default function CCAOrgSwitcher({ className }: Props) {
                       setInputValue('');
                     }}
                     className={cn(
-                      'flex w-full min-w-0 items-start gap-2 rounded-md px-3 py-2 text-left hover:bg-gray-50',
-                      active && 'bg-gray-50',
+                      'flex w-full min-w-0 items-start gap-2 rounded-md px-3 py-2 text-left hover:bg-bg-alt',
+                      active && 'bg-bg-alt',
                     )}
                   >
                     <Check
                       className={cn(
                         'mt-0.5 h-4 w-4 shrink-0',
-                        active ? 'opacity-100 text-gray-900' : 'opacity-0',
+                        active ? 'opacity-100 text-ink' : 'opacity-0',
                       )}
                     />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-gray-900">
+                      <div className="truncate text-sm font-medium text-ink">
                         {client.client_name ?? client.client_code}
                       </div>
                       {client.client_name && (
-                        <div className="truncate text-xs text-gray-500">
+                        <div className="truncate text-xs text-ink-mute">
                           {client.client_code}
                           {client.group_code ? ` · Grupo ${client.group_code}` : ''}
                           {client.responsible ? ` · Resp. ${client.responsible}` : ''}
                         </div>
                       )}
                       {!client.client_name && (client.group_code || client.responsible) && (
-                        <div className="truncate text-xs text-gray-500">
+                        <div className="truncate text-xs text-ink-mute">
                           {client.group_code ? `Grupo ${client.group_code}` : ''}
                           {client.responsible ? ` · Resp. ${client.responsible}` : ''}
                         </div>
