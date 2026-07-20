@@ -1,28 +1,28 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type VisualTheme = 'ambar' | 'terracota' | 'cobre';
+export type VisualTheme = 'indigo' | 'ardosia' | 'ameixa';
 
 const STORAGE_KEY = 'cca-visual-theme';
-const DEFAULT: VisualTheme = 'ambar';
+const DEFAULT: VisualTheme = 'indigo';
 
 export const VISUAL_THEMES = [
   {
-    id: 'ambar' as const,
-    name: 'Âmbar',
-    tagline: 'Marfim · preto · laranja em acentos',
-    swatch: { bg: '#FAF7F1', sidebar: '#0D0B09', accent: '#BD4E18' },
+    id: 'indigo' as const,
+    name: 'Índigo & Argila',
+    tagline: 'Índigo profundo · porcelana · terracota-coral',
+    swatch: { bg: '#F4F5F7', sidebar: '#161B2B', accent: '#C75B45' },
   },
   {
-    id: 'terracota' as const,
-    name: 'Terracota',
-    tagline: 'Creme quente · laranja queimado',
-    swatch: { bg: '#F6F0E6', sidebar: '#1F1612', accent: '#B85022' },
+    id: 'ardosia' as const,
+    name: 'Ardósia & Sálvia',
+    tagline: 'Ardósia · papel quente · verde-sálvia',
+    swatch: { bg: '#F6F5F1', sidebar: '#1C2529', accent: '#4F7A69' },
   },
   {
-    id: 'cobre' as const,
-    name: 'Cobre',
-    tagline: 'Monocromia quente',
-    swatch: { bg: '#FBF4EA', sidebar: '#2A160B', accent: '#B85018' },
+    id: 'ameixa' as const,
+    name: 'Ameixa & Névoa',
+    tagline: 'Ameixa · névoa · violeta sóbrio',
+    swatch: { bg: '#F3F2F4', sidebar: '#241A2E', accent: '#6E5AA6' },
   },
 ];
 
@@ -30,7 +30,7 @@ function readStored(): VisualTheme {
   if (typeof window === 'undefined') return DEFAULT;
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === 'terracota' || v === 'cobre' ? v : DEFAULT;
+    return v === 'ardosia' || v === 'ameixa' ? v : DEFAULT;
   } catch {
     return DEFAULT;
   }

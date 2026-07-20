@@ -67,6 +67,14 @@
     "success": "Success",
     "user": "User"
   },
+  "command": {
+    "placeholder": "Search or jump to…",
+    "empty": "No results.",
+    "navigate": "Navigate",
+    "manage": "Manage",
+    "actions": "Actions",
+    "toggleTheme": "Toggle light/dark theme"
+  },
   "department": {
     "label": "Department",
     "placeholder": "Select department",

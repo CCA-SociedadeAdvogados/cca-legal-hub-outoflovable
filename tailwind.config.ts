@@ -31,10 +31,10 @@ export default {
         'mono-sm': ['11px', { lineHeight: '1.3' }],
         'mono-base': ['12px', { lineHeight: '1.3' }],
         // Display
-        'display-kpi': ['40px', { lineHeight: '1', letterSpacing: '-0.02em', fontWeight: '400' }],
-        'display-h1': ['40px', { lineHeight: '1.05', letterSpacing: '-0.02em', fontWeight: '400' }],
-        'display-h2': ['26px', { lineHeight: '1.15', letterSpacing: '-0.005em', fontWeight: '500' }],
-        'display-h3': ['19px', { lineHeight: '1.25', letterSpacing: '-0.005em', fontWeight: '500' }],
+        'display-kpi': ['40px', { lineHeight: '1', letterSpacing: '-0.03em', fontWeight: '600' }],
+        'display-h1': ['40px', { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '600' }],
+        'display-h2': ['26px', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'display-h3': ['19px', { lineHeight: '1.25', letterSpacing: '-0.015em', fontWeight: '600' }],
       },
       letterSpacing: {
         'eyebrow': '0.22em',

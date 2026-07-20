@@ -27,6 +27,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useProfile } from '@/hooks/useProfile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useCommandPalette } from '@/components/CommandPalette';
 
 function formatTimeAgo(
   dateString: string,
@@ -70,6 +71,7 @@ export function Header() {
   const { profile } = useProfile();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { open: openCommandPalette } = useCommandPalette();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const handleSignOut = async () => {
@@ -99,19 +101,19 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-[60px] min-w-0 items-center gap-4 border-b border-line bg-bg/95 px-7 backdrop-blur supports-[backdrop-filter]:bg-bg/85">
-      {/* Search */}
+      {/* Search → abre o command palette (⌘K) */}
       <div className="flex min-w-0 flex-1 items-center">
-        <div className="group relative w-full max-w-[440px] min-w-0">
+        <button
+          type="button"
+          onClick={openCommandPalette}
+          className="group relative flex h-9 w-full max-w-[440px] min-w-0 items-center rounded-control border border-line bg-surface pl-9 pr-2.5 text-left text-[12.5px] text-ink-mute transition-colors hover:border-brand/50"
+        >
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-mute" />
-          <input
-            type="search"
-            placeholder={t('common.search')}
-            className="h-9 w-full min-w-0 rounded-control border border-line bg-surface pl-9 pr-12 text-[12.5px] text-ink placeholder:text-ink-mute focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/40"
-          />
-          <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 select-none items-center gap-0.5 rounded-control border border-line bg-bg-alt px-1.5 py-0.5 font-mono text-[10px] font-medium text-ink-mute md:inline-flex">
+          <span className="truncate">{t('command.placeholder', 'Pesquisar ou saltar para…')}</span>
+          <kbd className="pointer-events-none ml-auto hidden select-none items-center gap-0.5 rounded-control border border-line bg-bg-alt px-1.5 py-0.5 font-mono text-[10px] font-medium text-ink-mute md:inline-flex">
             ⌘K
           </kbd>
-        </div>
+        </button>
       </div>
 
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto">

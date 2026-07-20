@@ -181,7 +181,7 @@ export default function Definicoes() {
 
           {/* General Settings */}
           <TabsContent value="general" className="space-y-6">
-            {/* Aspecto visual — Âmbar / Terracota / Cobre */}
+            {/* Aspecto visual — Índigo / Ardósia / Ameixa */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

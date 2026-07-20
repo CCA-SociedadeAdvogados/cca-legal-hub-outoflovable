@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Inter+Tight:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Unbounded:wght@400;500;600;700&family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Gambetta:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,41 +7,43 @@
 @layer base {
   :root {
     /* =========================================================
-       CCA Legal Hub — Tema Âmbar (default)
-       Premium / luxo jurídico: marfim + preto profundo + laranja CCA em acentos.
+       CCA Legal Hub — Índigo & Argila (default)
+       Identidade contemporânea: tinta índigo profunda (nunca preto) sobre
+       porcelana fria, acento terracota-coral quente. Tipografia Schibsted
+       Grotesk (títulos) + Inter Tight (texto) + Fraunces (serifa).
        Cores hex de referência mantidas como comentários.
        ========================================================= */
 
-    /* --- Surfaces & ink (paleta nova, nomeada) --- */
-    --bg: 40 47% 96%; /* #FAF7F1 — canvas principal */
-    --bg-alt: 41 38% 92%; /* #F2EDE2 — hover de linha, fundo subtil */
+    /* --- Surfaces & ink --- */
+    --bg: 220 20% 96%; /* #F4F5F7 — porcelana, canvas principal */
+    --bg-alt: 222 22% 92%; /* #E8EBF0 — hover de linha, fundo subtil */
     --surface: 0 0% 100%; /* #FFFFFF — cards */
-    --ink: 0 6% 7%; /* #121010 — texto principal */
-    --ink-soft: 31 7% 27%; /* #4A4540 — texto secundário */
-    --ink-mute: 35 6% 52%; /* #8B857D — meta/labels */
-    --line: 39 28% 84%; /* #E2DACB — divisórias */
-    --line-soft: 42 36% 89%; /* #EDE7D9 */
+    --ink: 223 26% 19%; /* #232A3D — índigo-tinta (não-preto) */
+    --ink-soft: 222 15% 35%; /* #4C5567 — texto secundário */
+    --ink-mute: 221 11% 54%; /* #7E8698 — meta/labels */
+    --line: 222 20% 90%; /* #E1E4EB — divisórias */
+    --line-soft: 220 24% 94%; /* #EDEFF3 */
 
-    /* --- Acento de marca (CCA) --- */
-    --accent-brand: 20 77% 42%; /* #BD4E18 — links, números, destaques */
-    --accent-brand-soft: 20 77% 42% / 0.0627; /* accent @ 10/255 = ~6.3% alpha */
-    --accent-brand-strong: 19 80% 35%; /* #9F3F12 */
+    /* --- Acento de marca (terracota-coral) --- */
+    --accent-brand: 11 55% 53%; /* #C75B45 — links, números, destaques */
+    --accent-brand-soft: 11 55% 53% / 0.07;
+    --accent-brand-strong: 10 54% 44%; /* #AD4634 */
 
-    /* --- Semânticos --- */
-    --positive: 96 27% 33%; /* #4F6B3D */
-    --warn: 30 67% 47%; /* #C87828 */
-    --danger: 11 61% 37%; /* #9A3B25 */
+    /* --- Semânticos (harmonizados com o índigo) --- */
+    --positive: 165 42% 34%; /* #328472 — verde-teal sóbrio */
+    --warn: 32 74% 48%; /* #D5842A */
+    --danger: 4 60% 51%; /* #CE4640 */
 
-    /* --- Sidebar --- */
-    --sidebar-ink: 41 38% 89%; /* #EDE6D7 */
-    --sidebar-ink-mute: 38 9% 50%; /* #8A8274 */
-    --sidebar-active: 21 74% 45%; /* #C9591E — CCA orange item activo */
-    --sidebar-active-ink: 30 19% 4%; /* #0D0B09 */
+    /* --- Sidebar (índigo profundo, não-preto) --- */
+    --sidebar-ink: 220 30% 88%; /* #D7DDE9 */
+    --sidebar-ink-mute: 221 14% 62%; /* #929AAD */
+    --sidebar-active: 11 60% 58%; /* #D06450 — item activo terracota */
+    --sidebar-active-ink: 224 33% 13%; /* #161B2B */
 
-    /* --- Radii --- */
-    --radius: 0.375rem; /* 6px — cards (rounded-lg) */
-    --radius-card: 0.375rem; /* 6px */
-    --radius-control: 0.1875rem; /* 3px — botões/inputs (rounded-md via calc) */
+    /* --- Radii (mais moderno: cantos suaves generosos) --- */
+    --radius: 0.75rem; /* 12px — cards */
+    --radius-card: 0.75rem; /* 12px */
+    --radius-control: 0.5rem; /* 8px — botões/inputs */
 
     /* =========================================================
        Aliases shadcn — mapeados para o token nomeado equivalente
@@ -89,26 +91,26 @@
     --status-completed: var(--positive);
     --status-expired: var(--danger);
 
-    /* Sidebar — sidebar preto profundo, item activo laranja */
-    --sidebar-background: 30 19% 4%; /* #0D0B09 */
+    /* Sidebar — índigo profundo (não-preto), item activo terracota */
+    --sidebar-background: 224 33% 13%; /* #161B2B */
     --sidebar-foreground: var(--sidebar-ink);
     --sidebar-primary: var(--sidebar-active);
     --sidebar-primary-foreground: var(--sidebar-active-ink);
-    --sidebar-accent: 38 9% 50%; /* hover row */
+    --sidebar-accent: 221 14% 62%; /* hover row */
     --sidebar-accent-foreground: var(--sidebar-ink);
-    --sidebar-border: 30 15% 10%;
+    --sidebar-border: 223 26% 20%;
     --sidebar-ring: var(--sidebar-active);
 
     /* =========================================================
        Typography stacks (CSS vars — overridable por tema)
        ========================================================= */
-    --font-display: 'Fraunces', Georgia, serif;
+    --font-display: 'Schibsted Grotesk', 'Inter Tight', system-ui, sans-serif;
     --font-serif: 'Fraunces', Georgia, serif;
     --font-sans: 'Inter Tight', 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
     /* Eyebrow letter-spacing/case helper */
-    --eyebrow-tracking: 0.22em;
+    --eyebrow-tracking: 0.18em;
 
     /* =========================================================
        Gradients & shadows
@@ -118,7 +120,7 @@
     --gradient-sidebar: linear-gradient(
       180deg,
       hsl(var(--sidebar-background)) 0%,
-      hsl(30 19% 6%) 100%
+      hsl(225 34% 10%) 100%
     );
 
     --shadow-sm: 0 1px 2px 0 hsl(var(--ink) / 0.04);
@@ -134,67 +136,75 @@
   }
 
   /* =========================================================
-     Tema Terracota — creme quente + laranja queimado
+     Ardósia & Sálvia — calmo, editorial (verde-sálvia sóbrio)
      ========================================================= */
-  [data-theme='terracota'] {
-    --bg: 36 49% 93%; /* #F6F0E6 */
-    --bg-alt: 35 42% 89%; /* #EFE7D8 */
-    --surface: 41 64% 96%; /* #FCF7EC */
-    --ink: 28 33% 8%; /* #1B1510 */
-    --ink-soft: 27 21% 30%; /* #5A4A3C */
-    --ink-mute: 32 12% 50%; /* #8F8271 */
-    --line: 39 36% 76%; /* #D8CBB0 */
-    --line-soft: 38 30% 86%;
+  [data-theme='ardosia'] {
+    --bg: 40 20% 96%; /* #F6F5F1 — papel quente */
+    --bg-alt: 45 16% 92%; /* #ECEAE3 */
+    --surface: 0 0% 100%;
+    --ink: 194 15% 16%; /* #232B2E — ardósia */
+    --ink-soft: 197 10% 33%; /* #4C585C */
+    --ink-mute: 200 8% 53%; /* #7E8A8E */
+    --line: 45 14% 87%; /* #E3E1D9 */
+    --line-soft: 44 16% 92%;
 
-    --accent-brand: 17 70% 43%; /* #B85022 */
-    --accent-brand-soft: 17 70% 43% / 0.0627;
-    --accent-brand-strong: 17 71% 36%; /* #A0421A */
+    --accent-brand: 162 25% 40%; /* #4F7A69 — sálvia */
+    --accent-brand-soft: 162 25% 40% / 0.08;
+    --accent-brand-strong: 163 28% 32%; /* #3C6353 */
 
-    --sidebar-background: 21 31% 9%; /* #1F1612 */
-    --sidebar-ink: 39 53% 88%; /* #F2E7D2 */
-    --sidebar-ink-mute: 32 12% 50%;
-    --sidebar-active: 19 70% 45%; /* #C25A22 */
-    --sidebar-active-ink: 21 31% 9%;
+    --positive: 162 30% 36%;
+    --warn: 32 62% 46%;
+    --danger: 6 52% 48%;
 
-    --radius: 0.25rem; /* 4px cards */
-    --radius-card: 0.25rem;
-    --radius-control: 0.125rem; /* 2px buttons */
+    --sidebar-background: 194 22% 14%; /* #1C2529 */
+    --sidebar-ink: 180 14% 86%;
+    --sidebar-ink-mute: 195 9% 58%;
+    --sidebar-active: 162 30% 46%; /* sálvia activo */
+    --sidebar-active-ink: 194 22% 12%;
 
-    --font-display: 'Fraunces', Georgia, serif;
-    --font-serif: 'EB Garamond', Georgia, serif;
-    --font-sans: 'Inter Tight', 'Inter', system-ui, sans-serif;
+    --radius: 0.75rem;
+    --radius-card: 0.75rem;
+    --radius-control: 0.5rem;
+
+    --font-display: 'Bricolage Grotesque', 'Inter Tight', sans-serif;
+    --font-serif: 'Newsreader', Georgia, serif;
+    --font-sans: 'Hanken Grotesk', 'Inter Tight', system-ui, sans-serif;
   }
 
   /* =========================================================
-     Tema Cobre — monocromia quente
+     Ameixa & Névoa — disruptivo, memorável (violeta sóbrio)
      ========================================================= */
-  [data-theme='cobre'] {
-    --bg: 35 73% 95%; /* #FBF4EA */
-    --bg-alt: 36 65% 90%; /* #F3E8D6 */
-    --surface: 39 86% 96%; /* #FEF9EF */
-    --ink: 22 58% 11%; /* #2A160B */
-    --ink-soft: 25 35% 31%; /* #6B4C35 */
-    --ink-mute: 28 22% 50%; /* #9A7C63 */
-    --line: 36 56% 78%; /* #E3CEA8 */
-    --line-soft: 36 50% 86%;
+  [data-theme='ameixa'] {
+    --bg: 280 12% 95%; /* #F3F2F4 — névoa */
+    --bg-alt: 282 14% 91%; /* #E9E6EC */
+    --surface: 0 0% 100%;
+    --ink: 268 21% 17%; /* #2C2333 — ameixa */
+    --ink-soft: 265 13% 35%; /* #4F4560 */
+    --ink-mute: 262 9% 55%; /* #857E92 */
+    --line: 280 14% 90%; /* #E4E1E7 */
+    --line-soft: 282 16% 94%;
 
-    --accent-brand: 20 78% 41%; /* #B85018 */
-    --accent-brand-soft: 20 78% 41% / 0.0627;
-    --accent-brand-strong: 19 80% 31%; /* #8F3C10 */
+    --accent-brand: 255 33% 50%; /* #6E5AA6 — violeta sóbrio */
+    --accent-brand-soft: 255 33% 50% / 0.08;
+    --accent-brand-strong: 256 34% 42%; /* #574A8C */
 
-    --sidebar-background: 22 58% 11%; /* #2A160B */
-    --sidebar-ink: 36 79% 88%; /* #F6E4CC */
-    --sidebar-ink-mute: 28 22% 50%;
-    --sidebar-active: 24 74% 47%; /* #D0661F */
-    --sidebar-active-ink: 22 58% 11%;
+    --positive: 165 40% 36%;
+    --warn: 32 70% 48%;
+    --danger: 344 52% 50%;
 
-    --radius: 0.1875rem; /* 3px cards */
-    --radius-card: 0.1875rem;
-    --radius-control: 0.125rem; /* 2px buttons */
+    --sidebar-background: 268 26% 15%; /* #241A2E */
+    --sidebar-ink: 280 20% 88%;
+    --sidebar-ink-mute: 262 12% 62%;
+    --sidebar-active: 255 45% 62%; /* violeta activo */
+    --sidebar-active-ink: 268 26% 13%;
 
-    --font-display: 'Instrument Serif', Georgia, serif;
-    --font-serif: 'Cormorant Garamond', Georgia, serif;
-    --font-sans: 'Inter Tight', 'Inter', system-ui, sans-serif;
+    --radius: 1rem;
+    --radius-card: 1rem;
+    --radius-control: 0.625rem;
+
+    --font-display: 'Unbounded', 'Inter Tight', sans-serif;
+    --font-serif: 'Gambetta', Georgia, serif;
+    --font-sans: 'Hanken Grotesk', 'Inter Tight', system-ui, sans-serif;
   }
 
   /* =========================================================
@@ -202,14 +212,25 @@
      (Phase 1 mantém escuro funcional; refinamento na fase de Shell.)
      ========================================================= */
   .dark {
-    --bg: 30 19% 6%;
-    --bg-alt: 30 12% 10%;
-    --surface: 30 14% 9%;
-    --ink: 40 30% 92%;
-    --ink-soft: 38 14% 72%;
-    --ink-mute: 35 8% 55%;
-    --line: 30 8% 18%;
-    --line-soft: 30 8% 14%;
+    --bg: 224 30% 9%; /* #10141F — noite índigo (não-preto) */
+    --bg-alt: 223 25% 14%; /* #1A2032 */
+    --surface: 223 27% 12%; /* #161B2A */
+    --ink: 220 26% 91%; /* #E1E5EE */
+    --ink-soft: 220 15% 72%; /* #ADB4C4 */
+    --ink-mute: 221 12% 56%; /* #808799 */
+    --line: 223 20% 20%; /* #292F3E */
+    --line-soft: 223 22% 16%;
+
+    /* Acento ligeiramente mais luminoso no escuro */
+    --accent-brand: 11 62% 60%; /* #D66A54 */
+    --accent-brand-soft: 11 62% 60% / 0.12;
+    --accent-brand-strong: 11 58% 52%;
+
+    --sidebar-background: 225 32% 8%; /* #0E121C */
+    --sidebar-ink: 220 24% 86%;
+    --sidebar-ink-mute: 221 12% 56%;
+    --sidebar-active: 11 62% 60%;
+    --sidebar-active-ink: 225 32% 8%;
 
     --background: var(--bg);
     --foreground: var(--ink);
@@ -279,8 +300,8 @@
   h6 {
     font-family: var(--font-display);
     @apply tracking-tight;
-    font-weight: 500;
-    letter-spacing: -0.01em;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 

@@ -67,6 +67,14 @@
     "success": "Sucesso",
     "user": "Utilizador"
   },
+  "command": {
+    "placeholder": "Pesquisar ou saltar para…",
+    "empty": "Sem resultados.",
+    "navigate": "Navegar",
+    "manage": "Gestão",
+    "actions": "Ações",
+    "toggleTheme": "Alternar tema claro/escuro"
+  },
   "department": {
     "label": "Departamento",
     "placeholder": "Selecione o departamento",
