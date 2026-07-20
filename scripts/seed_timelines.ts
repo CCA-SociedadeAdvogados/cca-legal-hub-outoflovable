@@ -241,7 +241,7 @@ function parsePhaseTables(md: string, file: string): PhaseRow[] {
       // Prazos: NÃO aceites como dados (ver cabeçalho). O texto vai para as
       // notas internas; prazo_dias só com --accept-prazos e padrão "N dias".
       const prazoTexto = cleanCell(raw.prazo ?? '')
-        .replace(/[⚠️]/gu, '')
+        .replace(/[\u26a0\ufe0f]/gu, '')
         .replace(/\s+/g, ' ')
         .trim();
       let prazo_dias: number | null = null;
