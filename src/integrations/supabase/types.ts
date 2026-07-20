@@ -201,8 +201,10 @@ export type Database = {
           id: string
           organization_id: string
           pedido_origem_id: string | null
+          publicado: boolean
           referencia: string | null
           responsavel_id: string | null
+          status_cliente: string | null
           tipo: string
           titulo: string
           updated_at: string
@@ -219,8 +221,10 @@ export type Database = {
           id?: string
           organization_id: string
           pedido_origem_id?: string | null
+          publicado?: boolean
           referencia?: string | null
           responsavel_id?: string | null
+          status_cliente?: string | null
           tipo?: string
           titulo: string
           updated_at?: string
@@ -237,8 +241,10 @@ export type Database = {
           id?: string
           organization_id?: string
           pedido_origem_id?: string | null
+          publicado?: boolean
           referencia?: string | null
           responsavel_id?: string | null
+          status_cliente?: string | null
           tipo?: string
           titulo?: string
           updated_at?: string
@@ -2555,6 +2561,231 @@ export type Database = {
           },
         ]
       }
+      hub_eventos: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          assunto_id: string | null
+          chave_origem: string | null
+          concluido: boolean
+          created_at: string
+          created_by_id: string | null
+          data_evento: string
+          descricao_cliente: string | null
+          descricao_interna: string | null
+          id: string
+          interno: boolean
+          organization_id: string
+          origem: string
+          publicado: boolean
+          requer_acao_cliente: boolean
+          tipo: string
+          titulo_cliente: string
+          titulo_interno: string | null
+          updated_at: string
+          updated_by_id: string | null
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          assunto_id?: string | null
+          chave_origem?: string | null
+          concluido?: boolean
+          created_at?: string
+          created_by_id?: string | null
+          data_evento: string
+          descricao_cliente?: string | null
+          descricao_interna?: string | null
+          id?: string
+          interno?: boolean
+          organization_id: string
+          origem?: string
+          publicado?: boolean
+          requer_acao_cliente?: boolean
+          tipo: string
+          titulo_cliente: string
+          titulo_interno?: string | null
+          updated_at?: string
+          updated_by_id?: string | null
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          assunto_id?: string | null
+          chave_origem?: string | null
+          concluido?: boolean
+          created_at?: string
+          created_by_id?: string | null
+          data_evento?: string
+          descricao_cliente?: string | null
+          descricao_interna?: string | null
+          id?: string
+          interno?: boolean
+          organization_id?: string
+          origem?: string
+          publicado?: boolean
+          requer_acao_cliente?: boolean
+          tipo?: string
+          titulo_cliente?: string
+          titulo_interno?: string | null
+          updated_at?: string
+          updated_by_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_eventos_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_eventos_aprovado_por_fkey"
+            columns: ["aprovado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_eventos_assunto_id_fkey"
+            columns: ["assunto_id"]
+            isOneToOne: false
+            referencedRelation: "assuntos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_eventos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_eventos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "hub_eventos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      hub_grupos: {
+        Row: {
+          created_at: string
+          created_by_id: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          created_by_id?: string | null
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          created_by_id?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      hub_portal_config: {
+        Row: {
+          abas: Json
+          funcionalidades: Json
+          organization_id: string
+          updated_at: string
+          updated_by_id: string | null
+        }
+        Insert: {
+          abas?: Json
+          funcionalidades?: Json
+          organization_id: string
+          updated_at?: string
+          updated_by_id?: string | null
+        }
+        Update: {
+          abas?: Json
+          funcionalidades?: Json
+          organization_id?: string
+          updated_at?: string
+          updated_by_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_portal_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_portal_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "hub_portal_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      hub_user_assuntos: {
+        Row: {
+          assunto_id: string
+          created_at: string
+          created_by_id: string | null
+          user_id: string
+        }
+        Insert: {
+          assunto_id: string
+          created_at?: string
+          created_by_id?: string | null
+          user_id: string
+        }
+        Update: {
+          assunto_id?: string
+          created_at?: string
+          created_by_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hub_user_assuntos_assunto_id_fkey"
+            columns: ["assunto_id"]
+            isOneToOne: false
+            referencedRelation: "assuntos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_user_assuntos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hub_user_assuntos_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       impactos: {
         Row: {
           contrato_id: string | null
@@ -3084,6 +3315,7 @@ export type Database = {
       }
       organization_members: {
         Row: {
+          acesso_restrito: boolean
           created_at: string
           id: string
           organization_id: string
@@ -3092,6 +3324,7 @@ export type Database = {
           user_type: string
         }
         Insert: {
+          acesso_restrito?: boolean
           created_at?: string
           id?: string
           organization_id: string
@@ -3100,6 +3333,7 @@ export type Database = {
           user_type?: string
         }
         Update: {
+          acesso_restrito?: boolean
           created_at?: string
           id?: string
           organization_id?: string
@@ -3278,6 +3512,7 @@ export type Database = {
           cost_center: string | null
           created_at: string
           group: string | null
+          hub_grupo_id: string | null
           id: string
           industry_sectors: string[] | null
           is_active: boolean
@@ -3288,6 +3523,7 @@ export type Database = {
           logo_url: string | null
           name: string
           org_type: string
+          portal_ativa: boolean
           prazo_pagamento_dias: number | null
           responsible: string | null
           responsible_email: string | null
@@ -3300,6 +3536,7 @@ export type Database = {
           cost_center?: string | null
           created_at?: string
           group?: string | null
+          hub_grupo_id?: string | null
           id?: string
           industry_sectors?: string[] | null
           is_active?: boolean
@@ -3310,6 +3547,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           org_type: string
+          portal_ativa?: boolean
           prazo_pagamento_dias?: number | null
           responsible?: string | null
           responsible_email?: string | null
@@ -3322,6 +3560,7 @@ export type Database = {
           cost_center?: string | null
           created_at?: string
           group?: string | null
+          hub_grupo_id?: string | null
           id?: string
           industry_sectors?: string[] | null
           is_active?: boolean
@@ -3332,6 +3571,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           org_type?: string
+          portal_ativa?: boolean
           prazo_pagamento_dias?: number | null
           responsible?: string | null
           responsible_email?: string | null
@@ -3340,6 +3580,13 @@ export type Database = {
           updated_by_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "organizations_hub_grupo_id_fkey"
+            columns: ["hub_grupo_id"]
+            isOneToOne: false
+            referencedRelation: "hub_grupos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organizations_lawyer_user_id_fkey"
             columns: ["lawyer_user_id"]
@@ -5229,6 +5476,7 @@ export type Database = {
           cost_center: string | null
           created_at: string
           group: string | null
+          hub_grupo_id: string | null
           id: string
           industry_sectors: string[] | null
           is_active: boolean
@@ -5239,6 +5487,7 @@ export type Database = {
           logo_url: string | null
           name: string
           org_type: string
+          portal_ativa: boolean
           prazo_pagamento_dias: number | null
           responsible: string | null
           responsible_email: string | null
@@ -5255,6 +5504,7 @@ export type Database = {
       }
       expire_stale_impersonation_sessions: { Args: never; Returns: number }
       fn_create_client_deadline_notifications: { Args: never; Returns: number }
+      fn_create_hub_prazo_notifications: { Args: never; Returns: number }
       fn_get_cca_default_client_org_id: { Args: never; Returns: string }
       fn_get_client_home_for_actor: {
         Args: { p_user_id: string; p_viewing_organization_id: string }
@@ -5387,6 +5637,7 @@ export type Database = {
           web_url: string
         }[]
       }
+      fn_sync_contratos_hub_eventos: { Args: never; Returns: number }
       get_cca_org_id: { Args: never; Returns: string }
       get_legal_document: {
         Args: { p_id: string }
@@ -5442,6 +5693,66 @@ export type Database = {
       }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       get_user_type: { Args: { _oid: string; _uid: string }; Returns: string }
+      hub_auditoria_list: {
+        Args: { p_limit?: number; p_org: string }
+        Returns: {
+          action: string
+          created_at: string
+          id: string
+          new_data: Json
+          record_id: string
+          table_name: string
+          user_email: string
+        }[]
+      }
+      hub_client_prazos: {
+        Args: never
+        Returns: {
+          assunto_id: string
+          assunto_titulo: string
+          data_evento: string
+          descricao: string
+          estado: string
+          evento_id: string
+          requer_acao_cliente: boolean
+          tipo: string
+          titulo: string
+        }[]
+      }
+      hub_client_timeline: {
+        Args: { p_assunto: string }
+        Returns: {
+          data_evento: string
+          descricao: string
+          estado: string
+          evento_id: string
+          requer_acao_cliente: boolean
+          tipo: string
+          titulo: string
+        }[]
+      }
+      hub_estado_evento: {
+        Args: { _concluido: boolean; _data: string }
+        Returns: string
+      }
+      hub_ingest_evento: {
+        Args: {
+          p_assunto_id?: string
+          p_chave_origem: string
+          p_data_evento: string
+          p_interno?: boolean
+          p_organization_id: string
+          p_origem: string
+          p_tipo: string
+          p_titulo_cliente?: string
+          p_titulo_interno: string
+        }
+        Returns: string
+      }
+      hub_pode_ver_assunto: {
+        Args: { _assunto_id: string; _org_id: string }
+        Returns: boolean
+      }
       is_cca_user: { Args: { _uid?: string }; Returns: boolean }
       is_platform_admin: { Args: { _user_id?: string }; Returns: boolean }
       log_audit_event: {
