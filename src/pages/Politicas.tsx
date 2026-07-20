@@ -28,12 +28,13 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Plus, FileText, Edit, Trash2, Download } from 'lucide-react';
 import { DocumentUploadWithAI } from '@/components/shared/DocumentUploadWithAI';
+import { Eyebrow, GoldButton } from '@/components/cca';
 
 const estadoColors: Record<string, string> = {
-  rascunho: 'bg-muted text-muted-foreground',
-  em_revisao: 'bg-warn/20 text-warn',
-  aprovada: 'bg-positive/20 text-positive',
-  arquivada: 'bg-destructive/20 text-destructive',
+  rascunho: 'bg-bg-alt text-ink-mute border-line',
+  em_revisao: 'bg-warn/10 text-warn border-warn/30',
+  aprovada: 'bg-positive/10 text-positive border-positive/30',
+  arquivada: 'bg-danger/10 text-danger border-danger/30',
 };
 
 export default function Politicas() {
@@ -230,18 +231,23 @@ export default function Politicas() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('policies.title')}</h1>
-            <p className="text-muted-foreground">{t('policies.subtitle')}</p>
-          </div>
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('policies.title')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('policies.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('policies.subtitle')}
+            </p>
+          </header>
           <div className="flex gap-2">
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={handleNew}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <GoldButton onClick={handleNew}>
+                  <Plus className="h-4 w-4" />
                   {t('policies.newPolicy')}
-                </Button>
+                </GoldButton>
               </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
@@ -384,42 +390,50 @@ export default function Politicas() {
 
         {/* List */}
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+          <div className="text-center py-8 text-ink-mute">{t('common.loading')}</div>
         ) : filteredPoliticas.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t('policies.noPolicies')}</h3>
-              <p className="text-muted-foreground mb-4">{t('policies.noPoliciesDescription')}</p>
-              <Button onClick={handleNew}>
-                <Plus className="h-4 w-4 mr-2" />
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center py-16 text-center">
+              <FileText className="h-12 w-12 text-ink-mute mb-4" strokeWidth={1.5} />
+              <h3 className="text-lg font-medium text-ink mb-2">{t('policies.noPolicies')}</h3>
+              <p className="text-sm text-ink-soft mb-4">{t('policies.noPoliciesDescription')}</p>
+              <GoldButton onClick={handleNew}>
+                <Plus className="h-4 w-4" />
                 {t('policies.createPolicy')}
-              </Button>
+              </GoldButton>
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
             {filteredPoliticas.map((politica) => (
-              <Card key={politica.id}>
+              <Card
+                key={politica.id}
+                className="rounded-card border-line bg-surface transition-colors hover:border-brand/40"
+              >
                 <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <CardTitle className="text-lg">{getContent(politica).titulo}</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {getContent(politica).descricao}
-                      </p>
+                      <CardTitle className="text-lg text-ink">
+                        {getContent(politica).titulo}
+                      </CardTitle>
+                      <p className="text-sm text-ink-soft mt-1">{getContent(politica).descricao}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className={estadoColors[politica.estado]}>
                         {getEstadoLabel(politica.estado)}
                       </Badge>
-                      <Badge variant="outline">v{politica.versao}</Badge>
+                      <Badge
+                        variant="outline"
+                        className="border-line text-ink-soft [font-variant-numeric:tabular-nums]"
+                      >
+                        v{politica.versao}
+                      </Badge>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-ink-soft">
                       {politica.departamento && (
                         <span>
                           {t('common.department')}:{' '}

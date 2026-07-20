@@ -266,8 +266,10 @@ export default function Contratos() {
               <div className="text-[11.5px] text-ink-mute">
                 <span className="font-mono">{summary.total}</span> contratos
                 <span className="mx-2 text-line">·</span>
-                <span className="font-mono text-ink">{summary.activeValueFormatted}</span> em valor
-                activo
+                <span className="font-display font-semibold tracking-[-0.02em] text-ink [font-variant-numeric:tabular-nums]">
+                  {summary.activeValueFormatted}
+                </span>{' '}
+                em valor activo
               </div>
             </div>
 

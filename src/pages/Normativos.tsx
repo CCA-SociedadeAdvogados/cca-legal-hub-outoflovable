@@ -34,13 +34,14 @@ import { useContentTranslation } from '@/hooks/useContentTranslation';
 import { useFeatureFlag } from '@/hooks/useFeatureFlags';
 import { format } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
+import { Eyebrow, GhostButton } from '@/components/cca';
 
 const sourceColors: Record<string, string> = {
-  dre: 'bg-primary/10 text-primary border-primary/20',
-  'eur-lex': 'bg-primary/10 text-primary border-primary/20',
-  bdp: 'bg-risk-low/10 text-risk-low border-risk-low/20',
-  asf: 'bg-primary/10 text-primary border-primary/20',
-  cmvm: 'bg-risk-medium/10 text-risk-medium border-risk-medium/20',
+  dre: 'bg-brand/10 text-brand border-brand/30',
+  'eur-lex': 'bg-brand/10 text-brand border-brand/30',
+  bdp: 'bg-risk-low/10 text-risk-low border-risk-low/30',
+  asf: 'bg-brand/10 text-brand border-brand/30',
+  cmvm: 'bg-risk-medium/10 text-risk-medium border-risk-medium/30',
 };
 
 const docTypeLabels: Record<string, string> = {
@@ -142,29 +143,38 @@ export default function Normativos() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-7 animate-fade-in">
         {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{t('legislation.title')}</h1>
-            <p className="text-muted-foreground">{t('legislation.subtitle')}</p>
-          </div>
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.normativos')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('legislation.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+              {t('legislation.subtitle')}
+            </p>
+          </header>
 
-          <Button onClick={() => triggerMirror()} disabled={isMirroring} className="gap-2">
+          <GhostButton onClick={() => triggerMirror()} disabled={isMirroring}>
             <RefreshCw className={`h-4 w-4 ${isMirroring ? 'animate-spin' : ''}`} />
             {isMirroring ? t('legislation.updating') : t('legislation.updateNow')}
-          </Button>
+          </GhostButton>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card>
+          <Card className="rounded-card border-line bg-surface">
             <CardContent className="pt-4">
               <div className="flex items-center gap-2">
-                <Database className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">{t('common.total')}</span>
+                <Database className="h-4 w-4 text-ink-mute" />
+                <span className="text-[10.5px] font-medium uppercase tracking-eyebrow text-ink-mute">
+                  {t('common.total')}
+                </span>
               </div>
-              <p className="text-2xl font-bold">{totalDocs.toLocaleString()}</p>
+              <p className="mt-1 font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
+                {totalDocs.toLocaleString()}
+              </p>
             </CardContent>
           </Card>
 
@@ -179,7 +189,7 @@ export default function Normativos() {
             sources?.map((source) => (
               <Card
                 key={source.source_key}
-                className="cursor-pointer hover:bg-accent/50 transition-colors"
+                className="cursor-pointer rounded-card border-line bg-surface transition-colors hover:border-brand/40 hover:bg-bg-alt"
                 onClick={() =>
                   setSelectedSource(selectedSource === source.source_key ? null : source.source_key)
                 }
@@ -188,10 +198,10 @@ export default function Normativos() {
                   <Badge variant="outline" className={sourceColors[source.source_key] || ''}>
                     {source.source_key.toUpperCase()}
                   </Badge>
-                  <p className="text-2xl font-bold mt-1">
+                  <p className="mt-1 font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                     {source.document_count.toLocaleString()}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">{source.name}</p>
+                  <p className="text-xs text-ink-mute truncate">{source.name}</p>
                 </CardContent>
               </Card>
             ))
@@ -199,11 +209,11 @@ export default function Normativos() {
         </div>
 
         {/* Search & Filters */}
-        <Card>
+        <Card className="rounded-card border-line bg-surface">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-mute" />
                 <Input
                   placeholder={t('legislation.searchPlaceholder')}
                   value={searchQuery}
@@ -240,10 +250,10 @@ export default function Normativos() {
         </Card>
 
         {/* Results */}
-        <Card>
+        <Card className="rounded-card border-line bg-surface">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 font-display text-ink">
+              <FileText className="h-5 w-5 text-ink-mute" />
               {t('legislation.documents')}
               {documents && (
                 <Badge variant="secondary">
@@ -260,10 +270,10 @@ export default function Normativos() {
                 ))}
               </div>
             ) : documents?.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>{t('legislation.noDocuments')}</p>
-                <p className="text-sm">{t('legislation.adjustSearch')}</p>
+              <div className="text-center py-14">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-ink-mute" strokeWidth={1.5} />
+                <p className="text-ink">{t('legislation.noDocuments')}</p>
+                <p className="text-sm text-ink-soft">{t('legislation.adjustSearch')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -273,7 +283,7 @@ export default function Normativos() {
                   return (
                     <div
                       key={doc.id}
-                      className="border rounded-lg p-4 hover:bg-accent/30 transition-colors"
+                      className="rounded-card border border-line bg-surface p-4 transition-colors hover:border-brand/40 hover:bg-bg-alt"
                     >
                       <div className="flex flex-col md:flex-row md:items-start gap-3">
                         <div className="flex-1 min-w-0">
@@ -288,16 +298,14 @@ export default function Normativos() {
 
                           <Link
                             to={`/normativos/${doc.id}`}
-                            className="text-lg font-medium hover:text-primary hover:underline line-clamp-2"
+                            className="text-lg font-medium text-ink hover:text-brand hover:underline line-clamp-2"
                           >
                             {getTitle(doc)}
                           </Link>
 
-                          <p className="text-sm text-muted-foreground truncate mt-1">
-                            {doc.canonical_url}
-                          </p>
+                          <p className="text-sm text-ink-mute truncate mt-1">{doc.canonical_url}</p>
 
-                          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 mt-2 text-xs text-ink-mute [font-variant-numeric:tabular-nums]">
                             {doc.published_at && (
                               <span className="flex items-center gap-1">
                                 <Calendar className="h-3 w-3" />

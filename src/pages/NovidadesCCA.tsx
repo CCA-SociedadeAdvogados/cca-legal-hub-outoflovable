@@ -32,11 +32,12 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt, enUS } from 'date-fns/locale';
+import { Eyebrow, KPI, GoldButton } from '@/components/cca';
 
 const estadoColors: Record<string, string> = {
-  rascunho: 'bg-muted text-muted-foreground',
-  publicado: 'bg-positive/20 text-positive',
-  arquivado: 'bg-warn/20 text-warn',
+  rascunho: 'bg-bg-alt text-ink-mute border-line',
+  publicado: 'bg-positive/10 text-positive border-positive/30',
+  arquivado: 'bg-warn/10 text-warn border-warn/30',
 };
 
 const estadoIcons: Record<string, React.ReactNode> = {
@@ -224,68 +225,31 @@ export default function NovidadesCCA() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">{t('ccaNews.title')}</h1>
-            <p className="text-muted-foreground">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('ccaNews.title')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+              {t('ccaNews.title')}
+            </h1>
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
               {isPlatformAdmin ? t('ccaNews.subtitleAdmin') : t('ccaNews.subtitle')}
             </p>
-          </div>
+          </header>
           {isPlatformAdmin && (
-            <Button onClick={handleOpenCreate}>
-              <Plus className="h-4 w-4 mr-2" />
+            <GoldButton onClick={handleOpenCreate}>
+              <Plus className="h-4 w-4" />
               {t('ccaNews.newNews')}
-            </Button>
+            </GoldButton>
           )}
         </div>
 
         {/* Stats - apenas para admin */}
         {isPlatformAdmin && (
           <div className="grid gap-4 md:grid-cols-4">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('common.total')}</p>
-                    <p className="text-2xl font-bold">{stats.total}</p>
-                  </div>
-                  <Newspaper className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('ccaNews.published')}</p>
-                    <p className="text-2xl font-bold text-positive">{stats.publicados}</p>
-                  </div>
-                  <CheckCircle className="h-8 w-8 text-positive" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('ccaNews.drafts')}</p>
-                    <p className="text-2xl font-bold">{stats.rascunhos}</p>
-                  </div>
-                  <Clock className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{t('ccaNews.archived')}</p>
-                    <p className="text-2xl font-bold text-warn">{stats.arquivados}</p>
-                  </div>
-                  <Archive className="h-8 w-8 text-warn" />
-                </div>
-              </CardContent>
-            </Card>
+            <KPI label={t('common.total')} value={stats.total} />
+            <KPI label={t('ccaNews.published')} value={stats.publicados} />
+            <KPI label={t('ccaNews.drafts')} value={stats.rascunhos} />
+            <KPI label={t('ccaNews.archived')} value={stats.arquivados} />
           </div>
         )}
 
@@ -395,7 +359,7 @@ export default function NovidadesCCA() {
               <DialogTitle className="flex items-center gap-2">
                 <Newspaper className="h-5 w-5" />
                 {selectedNews && getContent(selectedNews).titulo}
-                {needsTranslation && <Languages className="h-4 w-4 text-muted-foreground" />}
+                {needsTranslation && <Languages className="h-4 w-4 text-ink-mute" />}
               </DialogTitle>
             </DialogHeader>
             {selectedNews && (
@@ -406,7 +370,7 @@ export default function NovidadesCCA() {
                     <span className="ml-1">{getEstadoLabel(selectedNews.estado)}</span>
                   </Badge>
                   {selectedNews.data_publicacao && (
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                    <span className="text-sm text-ink-soft flex items-center gap-1 [font-variant-numeric:tabular-nums]">
                       <Calendar className="h-4 w-4" />
                       {format(
                         new Date(selectedNews.data_publicacao),
@@ -418,7 +382,7 @@ export default function NovidadesCCA() {
                 </div>
 
                 {getContent(selectedNews).resumo && (
-                  <p className="text-muted-foreground italic">{getContent(selectedNews).resumo}</p>
+                  <p className="text-ink-soft italic">{getContent(selectedNews).resumo}</p>
                 )}
 
                 <div className="prose prose-sm max-w-none">
@@ -431,27 +395,30 @@ export default function NovidadesCCA() {
 
         {/* Lista de novidades */}
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
+          <div className="text-center py-8 text-ink-mute">{t('common.loading')}</div>
         ) : filteredNews.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Newspaper className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">{t('ccaNews.noNews')}</h3>
-              <p className="text-muted-foreground mb-4">
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center py-16 text-center">
+              <Newspaper className="h-12 w-12 text-ink-mute mb-4" strokeWidth={1.5} />
+              <h3 className="text-lg font-medium text-ink mb-2">{t('ccaNews.noNews')}</h3>
+              <p className="text-sm text-ink-soft mb-4">
                 {isPlatformAdmin ? t('ccaNews.noNewsDescription') : t('ccaNews.noNewsPublished')}
               </p>
               {isPlatformAdmin && (
-                <Button onClick={handleOpenCreate}>
-                  <Plus className="h-4 w-4 mr-2" />
+                <GoldButton onClick={handleOpenCreate}>
+                  <Plus className="h-4 w-4" />
                   {t('ccaNews.newNews')}
-                </Button>
+                </GoldButton>
               )}
             </CardContent>
           </Card>
         ) : (
           <div className="grid gap-4">
             {filteredNews.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={item.id}
+                className="rounded-card border-line bg-surface transition-colors hover:border-brand/40"
+              >
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -461,19 +428,19 @@ export default function NovidadesCCA() {
                           <span className="ml-1">{getEstadoLabel(item.estado)}</span>
                         </Badge>
                         {item.data_publicacao && item.estado === 'publicado' && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-ink-mute [font-variant-numeric:tabular-nums]">
                             {format(new Date(item.data_publicacao), 'dd/MM/yyyy')}
                           </span>
                         )}
                       </div>
-                      <CardTitle className="text-lg flex items-center gap-2">
+                      <CardTitle className="text-lg text-ink flex items-center gap-2">
                         {getContent(item).titulo}
                         {needsTranslation && isTranslating && (
-                          <span className="text-xs text-muted-foreground">...</span>
+                          <span className="text-xs text-ink-mute">...</span>
                         )}
                       </CardTitle>
                       {getContent(item).resumo && (
-                        <CardDescription className="mt-1">
+                        <CardDescription className="mt-1 text-ink-soft">
                           {getContent(item).resumo}
                         </CardDescription>
                       )}
@@ -481,11 +448,11 @@ export default function NovidadesCCA() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                  <p className="text-sm text-ink-soft line-clamp-2 mb-4">
                     {getContent(item).conteudo}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-ink-mute [font-variant-numeric:tabular-nums]">
                       {t('ccaNews.createdAt')}{' '}
                       {format(
                         new Date(item.created_at),
@@ -521,7 +488,7 @@ export default function NovidadesCCA() {
                             </Button>
                           )}
                           <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="h-4 w-4 text-danger" />
                           </Button>
                         </>
                       )}

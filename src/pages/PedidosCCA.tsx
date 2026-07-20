@@ -40,12 +40,13 @@ import { useCCALawyers } from '@/hooks/useCCALawyers';
 import { useCliente } from '@/contexts/ClienteContext';
 import { usePedidos, type Pedido, type PedidoEstado } from '@/hooks/usePedidos';
 import { useAssuntos } from '@/hooks/useAssuntos';
+import { Eyebrow } from '@/components/cca';
 
 const ESTADO_TONE: Record<PedidoEstado, string> = {
-  pendente: 'bg-muted text-muted-foreground',
-  em_analise: 'bg-risk-medium/20 text-risk-medium',
-  concluido: 'bg-risk-low/20 text-risk-low',
-  cancelado: 'bg-muted text-muted-foreground',
+  pendente: 'bg-bg-alt text-ink-mute border-line',
+  em_analise: 'bg-warn/10 text-warn border-warn/30',
+  concluido: 'bg-positive/10 text-positive border-positive/30',
+  cancelado: 'bg-bg-alt text-ink-mute border-line',
 };
 
 const ESTADOS: PedidoEstado[] = ['pendente', 'em_analise', 'concluido', 'cancelado'];
@@ -136,14 +137,19 @@ export default function PedidosCCA() {
   return (
     <AppLayout>
       <div className="mx-auto max-w-4xl space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-bold">{t('requests.cca.title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('requests.cca.description')}</p>
+        <header className="space-y-3">
+          <Eyebrow>{t('requests.cca.title')}</Eyebrow>
+          <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+            {t('requests.cca.title')}
+          </h1>
+          <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+            {t('requests.cca.description')}
+          </p>
         </header>
 
         {!organizationId ? (
-          <Card>
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="py-12 text-center text-sm text-ink-soft">
               {t('requests.cca.selectClient')}
             </CardContent>
           </Card>
@@ -154,10 +160,10 @@ export default function PedidosCCA() {
             ))}
           </div>
         ) : pedidos.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground">
-              <MessageSquarePlus className="h-8 w-8" strokeWidth={1.5} />
-              <span className="text-sm">{t('requests.cca.empty')}</span>
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+              <MessageSquarePlus className="h-12 w-12 text-ink-mute" strokeWidth={1.5} />
+              <span className="text-sm text-ink-soft">{t('requests.cca.empty')}</span>
             </CardContent>
           </Card>
         ) : (
@@ -166,12 +172,15 @@ export default function PedidosCCA() {
               const est = (p.estado as PedidoEstado) ?? 'pendente';
               const { text: descricaoText, attachment } = parseDescricao(p.descricao, p.anexo_path);
               return (
-                <Card key={p.id}>
+                <Card
+                  key={p.id}
+                  className="rounded-card border-line bg-surface transition-colors hover:border-brand/40"
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <CardTitle className="text-base">{p.titulo}</CardTitle>
-                        <CardDescription className="mt-0.5">
+                        <CardTitle className="text-base text-ink">{p.titulo}</CardTitle>
+                        <CardDescription className="mt-0.5 text-ink-soft">
                           {t(`portal.requests.types.${p.tipo_analise}`)} ·{' '}
                           {t(`portal.requests.priorities.${p.prioridade}`)}
                         </CardDescription>
@@ -183,9 +192,7 @@ export default function PedidosCCA() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {descricaoText && (
-                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                        {descricaoText}
-                      </p>
+                      <p className="whitespace-pre-wrap text-sm text-ink-soft">{descricaoText}</p>
                     )}
                     {attachment && (
                       <Button
@@ -199,11 +206,13 @@ export default function PedidosCCA() {
                       </Button>
                     )}
                     {p.resposta && (
-                      <div className="rounded-md border bg-muted/40 p-3">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <div className="rounded-card border border-line bg-bg-alt p-3">
+                        <p className="text-xs font-medium uppercase tracking-wide text-ink-mute">
                           {t('portal.requests.response')}
                         </p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm">{p.resposta}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-ink-soft">
+                          {p.resposta}
+                        </p>
                       </div>
                     )}
                     <div className="flex items-center justify-end gap-2">

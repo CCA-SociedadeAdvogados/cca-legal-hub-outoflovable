@@ -17,6 +17,7 @@ import {
 import { useLegalDocument, getStorageUrl } from '@/hooks/useLegalMirror';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { Eyebrow } from '@/components/cca';
 
 const sourceColors: Record<string, string> = {
   dre: 'bg-brand/10 text-brand border-brand/30',
@@ -56,10 +57,12 @@ export default function NormativoDetalhe() {
   if (error || !doc) {
     return (
       <AppLayout>
-        <div className="text-center py-12">
-          <FileText className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <h2 className="text-xl font-semibold mb-2">Documento não encontrado</h2>
-          <p className="text-muted-foreground mb-4">
+        <div className="flex flex-col items-center py-16 text-center">
+          <FileText className="h-16 w-16 mb-4 text-ink-mute" strokeWidth={1.5} />
+          <h2 className="font-display text-xl font-medium text-ink mb-2">
+            Documento não encontrado
+          </h2>
+          <p className="text-sm text-ink-soft mb-4">
             O documento solicitado não existe ou foi removido.
           </p>
           <Button asChild>
@@ -85,10 +88,11 @@ export default function NormativoDetalhe() {
         </Button>
 
         {/* Header Card */}
-        <Card>
+        <Card className="rounded-card border-line bg-surface">
           <CardHeader>
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="space-y-2">
+                <Eyebrow>{sourceNames[doc.source_key] || doc.source_key}</Eyebrow>
                 <div className="flex items-center gap-2">
                   <Badge variant="outline" className={sourceColors[doc.source_key] || ''}>
                     {doc.source_key.toUpperCase()}
@@ -96,9 +100,11 @@ export default function NormativoDetalhe() {
                   <Badge variant="secondary">{doc.doc_type.toUpperCase()}</Badge>
                 </div>
 
-                <CardTitle className="text-2xl">{doc.title || 'Documento sem título'}</CardTitle>
+                <CardTitle className="font-display text-[26px] font-medium leading-tight tracking-[-0.02em] text-ink">
+                  {doc.title || 'Documento sem título'}
+                </CardTitle>
 
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-ink-soft">
                   Fonte: {sourceNames[doc.source_key] || doc.source_key}
                 </p>
               </div>
@@ -127,10 +133,10 @@ export default function NormativoDetalhe() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {doc.published_at && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="h-4 w-4 text-ink-mute" />
                   <div>
-                    <p className="text-muted-foreground">Publicado</p>
-                    <p className="font-medium">
+                    <p className="text-ink-mute">Publicado</p>
+                    <p className="font-medium text-ink [font-variant-numeric:tabular-nums]">
                       {format(new Date(doc.published_at), 'dd MMMM yyyy', { locale: pt })}
                     </p>
                   </div>
@@ -138,28 +144,28 @@ export default function NormativoDetalhe() {
               )}
 
               <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-4 w-4 text-ink-mute" />
                 <div>
-                  <p className="text-muted-foreground">Indexado</p>
-                  <p className="font-medium">
+                  <p className="text-ink-mute">Indexado</p>
+                  <p className="font-medium text-ink [font-variant-numeric:tabular-nums]">
                     {format(new Date(doc.fetched_at), 'dd/MM/yyyy HH:mm', { locale: pt })}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <FileText className="h-4 w-4 text-ink-mute" />
                 <div>
-                  <p className="text-muted-foreground">Tipo</p>
-                  <p className="font-medium">{doc.mime_type || doc.doc_type}</p>
+                  <p className="text-ink-mute">Tipo</p>
+                  <p className="font-medium text-ink">{doc.mime_type || doc.doc_type}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-4 w-4 text-ink-mute" />
                 <div>
-                  <p className="text-muted-foreground">Última verificação</p>
-                  <p className="font-medium">
+                  <p className="text-ink-mute">Última verificação</p>
+                  <p className="font-medium text-ink [font-variant-numeric:tabular-nums]">
                     {format(new Date(doc.last_seen_at), 'dd/MM/yyyy HH:mm', { locale: pt })}
                   </p>
                 </div>
@@ -169,10 +175,10 @@ export default function NormativoDetalhe() {
         </Card>
 
         {/* URL Card */}
-        <Card>
+        <Card className="rounded-card border-line bg-surface">
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <LinkIcon className="h-5 w-5" />
+            <CardTitle className="font-display text-lg font-medium text-ink flex items-center gap-2">
+              <LinkIcon className="h-5 w-5 text-brand" />
               URL Original
             </CardTitle>
           </CardHeader>
@@ -181,7 +187,7 @@ export default function NormativoDetalhe() {
               href={doc.canonical_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary hover:underline break-all"
+              className="text-brand hover:underline break-all"
             >
               {doc.canonical_url}
             </a>
@@ -190,26 +196,30 @@ export default function NormativoDetalhe() {
 
         {/* PDF Preview or Content */}
         {doc.doc_type === 'pdf' && storageUrl ? (
-          <Card>
+          <Card className="rounded-card border-line bg-surface">
             <CardHeader>
-              <CardTitle className="text-lg">Pré-visualização</CardTitle>
+              <CardTitle className="font-display text-lg font-medium text-ink">
+                Pré-visualização
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <iframe
                 src={storageUrl}
-                className="w-full h-[800px] rounded-lg border"
+                className="w-full h-[800px] rounded-card border border-line"
                 title={doc.title || 'PDF Preview'}
               />
             </CardContent>
           </Card>
         ) : doc.content_text ? (
-          <Card>
+          <Card className="rounded-card border-line bg-surface">
             <CardHeader>
-              <CardTitle className="text-lg">Conteúdo Extraído</CardTitle>
+              <CardTitle className="font-display text-lg font-medium text-ink">
+                Conteúdo Extraído
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="prose prose-sm max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap text-sm font-sans bg-muted/50 p-4 rounded-lg overflow-auto max-h-[600px]">
+                <pre className="whitespace-pre-wrap text-sm font-sans bg-bg-alt border border-line text-ink-soft p-4 rounded-card overflow-auto max-h-[600px]">
                   {doc.content_text}
                 </pre>
               </div>
@@ -219,12 +229,12 @@ export default function NormativoDetalhe() {
 
         {/* Metadata */}
         {doc.meta && Object.keys(doc.meta).length > 0 && (
-          <Card>
+          <Card className="rounded-card border-line bg-surface">
             <CardHeader>
-              <CardTitle className="text-lg">Metadados</CardTitle>
+              <CardTitle className="font-display text-lg font-medium text-ink">Metadados</CardTitle>
             </CardHeader>
             <CardContent>
-              <pre className="text-xs bg-muted/50 p-4 rounded-lg overflow-auto">
+              <pre className="text-xs bg-bg-alt border border-line text-ink-soft p-4 rounded-card overflow-auto">
                 {JSON.stringify(doc.meta, null, 2)}
               </pre>
             </CardContent>

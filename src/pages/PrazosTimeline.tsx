@@ -8,8 +8,6 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useContratos } from '@/hooks/useContratos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CalendarClock,
@@ -17,11 +15,11 @@ import {
   AlertTriangle,
   Clock,
   Loader2,
-  Calendar,
   Download,
   ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Eyebrow, KPI, Pill, GhostButton } from '@/components/cca';
 
 interface TimelineEvent {
   id: string;
@@ -195,7 +193,7 @@ export default function PrazosTimeline() {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
         </div>
       </AppLayout>
     );
@@ -203,79 +201,88 @@ export default function PrazosTimeline() {
 
   return (
     <AppLayout>
-      <div className="space-y-6 animate-fade-in">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold font-serif flex items-center gap-3">
-              <Calendar className="h-8 w-8 text-primary" />
+      <div className="space-y-7 animate-fade-in">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <header className="space-y-3">
+            <Eyebrow>{t('nav.deadlines')}</Eyebrow>
+            <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
               {t('prazos.title', 'Prazos e Datas Críticas')}
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
               {t('prazos.subtitle', 'Todas as datas importantes numa vista cronológica')}
             </p>
-          </div>
-          <Button
-            variant="outline"
+          </header>
+          <GhostButton
             onClick={() => downloadICS(filteredEvents)}
             disabled={filteredEvents.length === 0}
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="h-4 w-4" />
             {t('prazos.exportICS', 'Exportar .ics')}
-          </Button>
+          </GhostButton>
         </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">
-                {t('prazos.totalEvents', 'Total Datas')}
-              </p>
-              <p className="text-2xl font-bold">{events.length}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">
-                {t('prazos.next30', 'Próximos 30 dias')}
-              </p>
-              <p className="text-2xl font-bold text-danger">{next30}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('prazos.critical', 'Críticos')}</p>
-              <p className="text-2xl font-bold text-danger">{criticalCount}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground">{t('prazos.warnings', 'Atenção')}</p>
-              <p className="text-2xl font-bold text-warn">{warningCount}</p>
-            </CardContent>
-          </Card>
+          <KPI label={t('prazos.totalEvents', 'Total Datas')} value={events.length} />
+          <KPI
+            label={t('prazos.next30', 'Próximos 30 dias')}
+            value={<span className="text-danger">{next30}</span>}
+          />
+          <KPI
+            label={t('prazos.critical', 'Críticos')}
+            value={<span className="text-danger">{criticalCount}</span>}
+          />
+          <KPI
+            label={t('prazos.warnings', 'Atenção')}
+            value={<span className="text-warn">{warningCount}</span>}
+          />
         </div>
 
         {/* Tabs by type */}
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
-            <TabsTrigger value="all">
+          <TabsList className="h-auto flex-wrap gap-1 rounded-control border border-line bg-bg-alt/60 p-1">
+            <TabsTrigger
+              value="all"
+              className="rounded-control text-[12.5px] data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-none"
+            >
               {t('prazos.all', 'Todos')} ({events.length})
             </TabsTrigger>
-            <TabsTrigger value="expiration">{t('prazos.expirations', 'Expirações')}</TabsTrigger>
-            <TabsTrigger value="renewal_deadline">{t('prazos.renewals', 'Renovações')}</TabsTrigger>
-            <TabsTrigger value="financial">{t('prazos.financialTab', 'Financeiro')}</TabsTrigger>
-            <TabsTrigger value="guarantee">{t('prazos.guarantees', 'Garantias')}</TabsTrigger>
+            <TabsTrigger
+              value="expiration"
+              className="rounded-control text-[12.5px] data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-none"
+            >
+              {t('prazos.expirations', 'Expirações')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="renewal_deadline"
+              className="rounded-control text-[12.5px] data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-none"
+            >
+              {t('prazos.renewals', 'Renovações')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="financial"
+              className="rounded-control text-[12.5px] data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-none"
+            >
+              {t('prazos.financialTab', 'Financeiro')}
+            </TabsTrigger>
+            <TabsTrigger
+              value="guarantee"
+              className="rounded-control text-[12.5px] data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-none"
+            >
+              {t('prazos.guarantees', 'Garantias')}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Timeline */}
         {filteredEvents.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <CalendarClock className="h-12 w-12 text-positive mb-4" />
-              <p className="text-lg font-medium">{t('prazos.noDates', 'Sem datas pendentes')}</p>
-              <p className="text-sm text-muted-foreground">
+          <Card className="rounded-card border-line bg-surface">
+            <CardContent className="flex flex-col items-center justify-center py-14 text-center">
+              <CalendarClock className="mb-4 h-12 w-12 text-ink-mute" strokeWidth={1.5} />
+              <p className="font-display text-lg font-medium text-ink">
+                {t('prazos.noDates', 'Sem datas pendentes')}
+              </p>
+              <p className="mt-1 text-sm text-ink-soft">
                 {t('prazos.noEventsDesc', 'Não existem prazos relevantes no período')}
               </p>
             </CardContent>
@@ -309,8 +316,8 @@ export default function PrazosTimeline() {
                       : undefined
                   }
                   className={cn(
-                    'transition-colors',
-                    actionable && 'cursor-pointer hover:bg-muted/40 hover:border-primary/30',
+                    'rounded-card border-line bg-surface transition-colors',
+                    actionable && 'cursor-pointer hover:border-brand/40 hover:bg-bg-alt',
                     event.urgency === 'critical' && 'border-danger/30',
                     event.urgency === 'warning' && 'border-warn/30',
                   )}
@@ -323,7 +330,7 @@ export default function PrazosTimeline() {
                           ? 'bg-danger/10 text-danger'
                           : event.urgency === 'warning'
                             ? 'bg-warn/10 text-warn'
-                            : 'bg-muted text-muted-foreground',
+                            : 'bg-bg-alt text-ink-mute',
                       )}
                     >
                       {typeIcon(event.type)}
@@ -331,39 +338,37 @@ export default function PrazosTimeline() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium truncate">{event.title}</span>
-                        <Badge variant="outline" className="text-xs shrink-0">
+                        <span className="font-medium text-ink truncate">{event.title}</span>
+                        <Pill tone="default" className="shrink-0">
                           {typeLabel(event.type)}
-                        </Badge>
+                        </Pill>
                       </div>
                       {event.subtitle && (
-                        <p className="text-sm text-muted-foreground truncate">{event.subtitle}</p>
+                        <p className="text-sm text-ink-soft truncate">{event.subtitle}</p>
                       )}
                     </div>
 
                     <div className="text-right shrink-0">
-                      <p className="text-sm font-medium">
+                      <p className="text-sm font-display font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                         {format(event.date, 'd MMM yyyy', { locale: pt })}
                       </p>
-                      <Badge
-                        variant={
+                      <Pill
+                        tone={
                           event.urgency === 'critical'
-                            ? 'destructive'
+                            ? 'danger'
                             : event.urgency === 'warning'
-                              ? 'default'
-                              : 'secondary'
+                              ? 'warn'
+                              : 'default'
                         }
-                        className="text-xs"
+                        className="mt-1 [font-variant-numeric:tabular-nums]"
                       >
                         {event.daysUntil <= 0
                           ? t('prazos.overdue', 'Vencido')
                           : `${event.daysUntil}d`}
-                      </Badge>
+                      </Pill>
                     </div>
 
-                    {actionable && (
-                      <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                    )}
+                    {actionable && <ChevronRight className="h-4 w-4 text-ink-mute shrink-0" />}
                   </CardContent>
                 </Card>
               );

@@ -97,6 +97,7 @@ import { pt } from 'date-fns/locale';
 import type { Database } from '@/integrations/supabase/types';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
+import { Eyebrow } from '@/components/cca';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -701,14 +702,15 @@ export default function PlatformAdmin() {
     <AppLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold font-serif">
+        <header className="space-y-3">
+          <Eyebrow>{t('admin.eyebrow', 'Plataforma')}</Eyebrow>
+          <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
             {t('admin.title', 'Administração da Plataforma')}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
             {t('admin.subtitle', 'Gestão global de organizações e contratos')}
           </p>
-        </div>
+        </header>
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
@@ -720,7 +722,7 @@ export default function PlatformAdmin() {
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                 {isLoadingStats ? '...' : globalStats?.totalOrganizations}
               </div>
             </CardContent>
@@ -733,7 +735,7 @@ export default function PlatformAdmin() {
               <FileCheck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                 {isLoadingStats ? '...' : globalStats?.totalContracts}
               </div>
             </CardContent>
@@ -746,7 +748,7 @@ export default function PlatformAdmin() {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                 {isLoadingStats ? '...' : globalStats?.totalUsers}
               </div>
             </CardContent>
@@ -759,7 +761,7 @@ export default function PlatformAdmin() {
               <Shield className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                 {isLoadingAdmins ? '...' : platformAdmins?.length}
               </div>
             </CardContent>

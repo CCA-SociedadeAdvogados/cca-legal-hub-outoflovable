@@ -22,6 +22,7 @@ import { pt, enUS } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { Eyebrow } from '@/components/cca';
 
 type Departamento =
   | 'comercial'
@@ -231,10 +232,15 @@ export default function Perfil() {
     <AppLayout>
       <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
         {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold font-serif">{t('profile.title')}</h1>
-          <p className="text-muted-foreground mt-1">{t('profile.subtitle')}</p>
-        </div>
+        <header className="space-y-3">
+          <Eyebrow>{t('nav.profile', 'Perfil')}</Eyebrow>
+          <h1 className="font-display text-[40px] font-normal leading-[1.05] tracking-[-0.02em] text-ink">
+            {t('profile.title')}
+          </h1>
+          <p className="font-serif text-[17px] italic leading-[1.55] text-ink-soft">
+            {t('profile.subtitle')}
+          </p>
+        </header>
 
         {/* Avatar Section */}
         <Card>
@@ -249,7 +255,7 @@ export default function Perfil() {
                 </Avatar>
                 <button
                   onClick={handleAvatarClick}
-                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-ink/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   disabled={uploadAvatar.isPending}
                 >
                   {uploadAvatar.isPending ? (

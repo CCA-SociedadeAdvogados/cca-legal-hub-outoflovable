@@ -246,6 +246,7 @@
     "statusClientePlaceholder": "Ponto de situação para o cliente (texto curado)…"
   },
   "consola": {
+    "eyebrow": "Hub",
     "title": "Consola de gestão",
     "description": "Decida, por cliente, que abas existem no portal, que funcionalidades estão ativas e que conteúdo está publicado",
     "selectClient": "Selecione um cliente para gerir a configuração do portal.",

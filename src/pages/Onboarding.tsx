@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -231,33 +230,37 @@ export default function Onboarding() {
   const hasMemberships = userMemberships && userMemberships.length > 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-bg via-bg to-brand/5 p-4">
+      <div className="w-full max-w-2xl animate-fade-in">
         {/* Logo and Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Shield className="h-10 w-10 text-primary" />
-            <span className="text-2xl font-bold">Legal Hub</span>
+        <div className="mb-8 text-center">
+          <div className="mb-5 flex items-center justify-center gap-2.5">
+            <span className="flex h-11 w-11 items-center justify-center rounded-control bg-brand/10">
+              <Shield className="h-6 w-6 text-brand" strokeWidth={2} />
+            </span>
+            <span className="font-display text-[22px] font-medium tracking-[-0.01em] text-ink">
+              Legal Hub
+            </span>
           </div>
-          <h1 className="text-2xl font-semibold text-foreground mb-2">
-            Bem-vindo! Vamos configurar a sua conta
+          <h1 className="font-display text-[32px] font-normal leading-[1.1] tracking-[-0.02em] text-ink">
+            Bem-vindo! Vamos configurar a sua <span className="italic text-brand">conta</span>
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-3 font-serif text-[16px] italic leading-[1.55] text-ink-soft">
             Complete os passos abaixo para começar a utilizar a plataforma
           </p>
         </div>
 
         {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-2 mb-8">
+        <div className="mb-8 flex items-center justify-center gap-2">
           {STEPS.map((step, index) => (
             <div key={step.id} className="flex items-center">
               <div
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-colors ${
+                className={`flex items-center gap-2 rounded-full px-4 py-2 transition-colors ${
                   index === currentStep
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'bg-brand text-white'
                     : index < currentStep
-                      ? 'bg-primary/20 text-primary'
-                      : 'bg-muted text-muted-foreground'
+                      ? 'bg-brand/[0.12] text-brand'
+                      : 'bg-bg-alt text-ink-mute'
                 }`}
               >
                 {index < currentStep ? (
@@ -265,33 +268,33 @@ export default function Onboarding() {
                 ) : (
                   <step.icon className="h-4 w-4" />
                 )}
-                <span className="text-sm font-medium hidden sm:inline">{step.title}</span>
+                <span className="hidden text-sm font-medium sm:inline">{step.title}</span>
               </div>
               {index < STEPS.length - 1 && (
-                <div
-                  className={`w-8 h-0.5 mx-2 ${index < currentStep ? 'bg-primary' : 'bg-muted'}`}
-                />
+                <div className={`mx-2 h-0.5 w-8 ${index < currentStep ? 'bg-brand' : 'bg-line'}`} />
               )}
             </div>
           ))}
         </div>
 
         {/* Step Content */}
-        <Card className="border-border/50 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {currentStep === 0 && <User className="h-5 w-5 text-primary" />}
-              {currentStep === 1 && <Building2 className="h-5 w-5 text-primary" />}
-              {currentStep === 2 && <CreditCard className="h-5 w-5 text-primary" />}
-              {STEPS[currentStep].title}
-            </CardTitle>
-            <CardDescription>
+        <div className="rounded-card border border-line bg-surface shadow-card">
+          <div className="border-b border-line px-6 py-5">
+            <div className="flex items-center gap-2">
+              {currentStep === 0 && <User className="h-5 w-5 text-brand" />}
+              {currentStep === 1 && <Building2 className="h-5 w-5 text-brand" />}
+              {currentStep === 2 && <CreditCard className="h-5 w-5 text-brand" />}
+              <h2 className="font-display text-[19px] font-medium leading-tight tracking-[-0.005em] text-ink">
+                {STEPS[currentStep].title}
+              </h2>
+            </div>
+            <p className="mt-1.5 text-[13px] text-ink-mute">
               {currentStep === 0 && 'Introduza as suas informações pessoais'}
               {currentStep === 1 && 'Selecione a sua organização'}
               {currentStep === 2 && 'Escolha o plano ideal para a sua organização'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-6">
             {/* Step 1: Profile */}
             {currentStep === 0 && (
               <div className="space-y-4">
@@ -343,26 +346,26 @@ export default function Onboarding() {
               <div className="space-y-4">
                 {membershipsLoading && !isSSOUser ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <Loader2 className="h-8 w-8 animate-spin text-brand" />
                   </div>
                 ) : isSSOUser || profile?.current_organization_id ? (
                   // User was pre-assigned to an organization by admin
                   <>
-                    <div className="p-4 rounded-lg bg-positive/10 border border-positive/30">
-                      <div className="flex items-center gap-2 text-positive mb-2">
+                    <div className="rounded-control border border-positive/30 bg-positive/10 p-4">
+                      <div className="mb-2 flex items-center gap-2 text-positive">
                         <Check className="h-5 w-5" />
                         <span className="font-medium">Organização Atribuída</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-[13px] leading-relaxed text-ink-soft">
                         Você foi adicionado à organização pelo administrador. Clique em continuar
                         para prosseguir.
                       </p>
                     </div>
                     {userMemberships && userMemberships.length > 0 && (
-                      <div className="p-3 rounded-lg bg-muted/50 border">
+                      <div className="rounded-control border border-line bg-bg-alt/50 p-3">
                         <div className="flex items-center gap-2">
-                          <Building2 className="h-4 w-4 text-primary" />
-                          <span className="font-medium">
+                          <Building2 className="h-4 w-4 text-brand" />
+                          <span className="font-medium text-ink">
                             {userMemberships.find(
                               (m) => m.organization_id === profile.current_organization_id,
                             )?.organizations.name || 'Organização'}
@@ -398,8 +401,8 @@ export default function Onboarding() {
                       </Select>
                     </div>
                     {selectedOrganizationId && (
-                      <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                        <div className="flex items-center gap-2 text-primary">
+                      <div className="rounded-control border border-brand/20 bg-brand/[0.08] p-4">
+                        <div className="flex items-center gap-2 text-brand">
                           <Check className="h-5 w-5" />
                           <span className="font-medium">
                             Organização selecionada:{' '}
@@ -414,10 +417,15 @@ export default function Onboarding() {
                     )}
                   </>
                 ) : (
-                  <div className="text-center py-8">
-                    <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                    <h3 className="font-semibold mb-2">Sem Organização Atribuída</h3>
-                    <p className="text-muted-foreground mb-6">
+                  <div className="py-8 text-center">
+                    <AlertCircle
+                      className="mx-auto mb-4 h-12 w-12 text-ink-mute"
+                      strokeWidth={1.5}
+                    />
+                    <h3 className="font-display text-[17px] font-medium text-ink">
+                      Sem Organização Atribuída
+                    </h3>
+                    <p className="mx-auto mb-6 mt-1.5 max-w-sm text-[13px] leading-relaxed text-ink-mute">
                       Ainda não foi adicionado a nenhuma organização. Por favor contacte o
                       administrador para receber acesso.
                     </p>
@@ -441,7 +449,7 @@ export default function Onboarding() {
               <div className="space-y-4">
                 {plansLoading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <Loader2 className="h-8 w-8 animate-spin text-brand" />
                   </div>
                 ) : plans && plans.length > 0 ? (
                   <div className="grid gap-4">
@@ -449,55 +457,59 @@ export default function Onboarding() {
                       <div
                         key={plan.id}
                         onClick={() => setSelectedPlan(plan.id)}
-                        className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        className={`relative cursor-pointer rounded-card border-2 p-4 transition-all ${
                           selectedPlan === plan.id
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
+                            ? 'border-brand bg-brand/[0.05]'
+                            : 'border-line hover:border-brand/50'
                         }`}
                       >
                         {plan.slug === 'professional' && (
-                          <Badge className="absolute -top-2 right-4 bg-primary">
-                            <Sparkles className="h-3 w-3 mr-1" />
+                          <Badge className="absolute -top-2 right-4 border-brand bg-brand text-white">
+                            <Sparkles className="mr-1 h-3 w-3" />
                             Recomendado
                           </Badge>
                         )}
                         <div className="flex items-start justify-between">
                           <div>
-                            <h3 className="font-semibold text-lg">{plan.name}</h3>
-                            <p className="text-sm text-muted-foreground mb-3">{plan.description}</p>
+                            <h3 className="font-display text-lg font-medium text-ink">
+                              {plan.name}
+                            </h3>
+                            <p className="mb-3 text-[13px] text-ink-mute">{plan.description}</p>
                             <div className="flex flex-wrap gap-2">
                               {plan.features.map((feature, idx) => (
-                                <Badge key={idx} variant="secondary" className="text-xs">
-                                  <Check className="h-3 w-3 mr-1" />
+                                <Badge
+                                  key={idx}
+                                  variant="outline"
+                                  className="border-line bg-bg-alt text-xs text-ink-soft"
+                                >
+                                  <Check className="mr-1 h-3 w-3" />
                                   {feature}
                                 </Badge>
                               ))}
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="text-2xl font-bold">
+                            <div className="font-display text-2xl font-semibold tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
                               {plan.price_monthly === 0 ? (
                                 'Grátis'
                               ) : (
                                 <>
                                   €{plan.price_monthly}
-                                  <span className="text-sm font-normal text-muted-foreground">
-                                    /mês
-                                  </span>
+                                  <span className="text-sm font-normal text-ink-mute">/mês</span>
                                 </>
                               )}
                             </div>
                             {plan.price_monthly > 0 && (
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-xs text-ink-mute">
                                 €{plan.price_yearly}/ano (poupança de 2 meses)
                               </div>
                             )}
                           </div>
                         </div>
                         {selectedPlan === plan.id && (
-                          <div className="absolute top-4 left-4">
-                            <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                              <Check className="h-3 w-3 text-primary-foreground" />
+                          <div className="absolute left-4 top-4">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-brand">
+                              <Check className="h-3 w-3 text-white" />
                             </div>
                           </div>
                         )}
@@ -505,12 +517,12 @@ export default function Onboarding() {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                    <div className="flex items-center gap-2 text-muted-foreground mb-2">
+                  <div className="rounded-control border border-line bg-bg-alt/50 p-4">
+                    <div className="mb-2 flex items-center gap-2 text-ink-mute">
                       <CreditCard className="h-5 w-5" />
                       <span className="font-medium">Planos não disponíveis de momento</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-[13px] leading-relaxed text-ink-mute">
                       Pode continuar sem selecionar um plano. Poderá escolher um plano mais tarde
                       nas definições.
                     </p>
@@ -520,7 +532,7 @@ export default function Onboarding() {
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-6 pt-4 border-t">
+            <div className="mt-6 flex justify-between border-t border-line pt-4">
               <Button
                 variant="outline"
                 onClick={handleBack}
@@ -550,8 +562,8 @@ export default function Onboarding() {
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
