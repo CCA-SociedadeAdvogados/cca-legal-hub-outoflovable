@@ -54,7 +54,12 @@ export const PORTAL_ABAS = [
 ] as const;
 export type PortalAba = (typeof PORTAL_ABAS)[number];
 
-export const PORTAL_FUNCIONALIDADES = ['ics', 'upload_documentos', 'ocultar_valores'] as const;
+export const PORTAL_FUNCIONALIDADES = [
+  'ics',
+  'upload_documentos',
+  'ocultar_valores',
+  'assistente',
+] as const;
 export type PortalFuncionalidade = (typeof PORTAL_FUNCIONALIDADES)[number];
 
 const ABAS_DEFAULT: Record<PortalAba, boolean> = {
@@ -72,6 +77,7 @@ const FUNCIONALIDADES_DEFAULT: Record<PortalFuncionalidade, boolean> = {
   ics: true,
   upload_documentos: true,
   ocultar_valores: false,
+  assistente: true,
 };
 
 export interface HubClientEvento {

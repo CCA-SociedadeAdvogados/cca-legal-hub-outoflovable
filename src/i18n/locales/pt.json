@@ -260,12 +260,14 @@
       "itens": {
         "ics": "Exportação de calendário (ICS)",
         "upload_documentos": "Upload de documentos",
-        "ocultar_valores": "Ocultar valores financeiros"
+        "ocultar_valores": "Ocultar valores financeiros",
+        "assistente": "Assistente IA"
       },
       "hints": {
         "ics": "Feed/download de prazos para o calendário do cliente",
         "upload_documentos": "Envio de documentos para a pasta de receção",
-        "ocultar_valores": "Perfis não financeiros não veem montantes de faturação"
+        "ocultar_valores": "Perfis não financeiros não veem montantes de faturação",
+        "assistente": "Bolha flutuante do assistente no portal; responde só sobre os serviços contratados."
       }
     },
     "empresas": {
@@ -2165,6 +2167,24 @@
       "news": "Novidades CCA",
       "policies": "Políticas",
       "profile": "Perfil e definições"
+    },
+    "assistant": {
+      "eyebrow": "Assistente CCA",
+      "title": "Assistente do portal",
+      "introTitle": "Olá! Sou o assistente do seu portal.",
+      "introBody": "Pergunte-me sobre os serviços que contratou à CCA — contratos, assuntos em curso, documentos, prazos e renovações. Para temas fora dos serviços contratados, indico-lhe como nos contactar.",
+      "placeholder": "Escreva a sua pergunta...",
+      "send": "Enviar",
+      "thinking": "A analisar o seu dossiê...",
+      "error": "Não foi possível obter resposta",
+      "errorReply": "Lamento, ocorreu um erro ao processar a sua pergunta. Tente novamente.",
+      "disclaimer": "Respostas geradas por IA com base nos serviços que contratou à CCA. Confirme com a equipa antes de decisões importantes.",
+      "suggestions": [
+        "Que contratos expiram nos próximos 90 dias?",
+        "Qual é o ponto de situação dos meus assuntos?",
+        "Quais têm cláusula de exclusividade?",
+        "Que riscos de RGPD devo ter em atenção?"
+      ]
     },
     "policies": {
       "empty": "Ainda não há políticas publicadas pela CCA.",
