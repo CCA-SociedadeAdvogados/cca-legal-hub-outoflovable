@@ -548,7 +548,7 @@ export function DocumentChecklistPanel({
                 id="confirm-date"
                 checked={confirmed}
                 onChange={(e) => setConfirmed(e.target.checked)}
-                className="rounded border-gray-300"
+                className="rounded border-line"
               />
               <Label htmlFor="confirm-date" className="text-sm">
                 {t('docChecklist.confirmDate', 'Confirmo que a data de validade está correcta')}

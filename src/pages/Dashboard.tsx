@@ -29,36 +29,36 @@ import { getContractPhase } from '@/lib/contractEstado';
 import { cn } from '@/lib/utils';
 
 const ESTADO_ICON_BG: Record<string, string> = {
-  rascunho: 'bg-gray-100 dark:bg-gray-800',
+  rascunho: 'bg-bg-alt dark:bg-bg-alt',
   em_revisao: 'bg-warn/10',
   em_aprovacao: 'bg-brand/10',
   enviado_para_assinatura: 'bg-brand/10',
   activo: 'bg-positive/10',
   expirado: 'bg-danger/10',
   denunciado: 'bg-danger/10',
-  rescindido: 'bg-gray-100 dark:bg-gray-800',
+  rescindido: 'bg-bg-alt dark:bg-bg-alt',
 };
 
 const ESTADO_ICON_COLOR: Record<string, string> = {
-  rascunho: 'text-gray-500',
+  rascunho: 'text-ink-mute',
   em_revisao: 'text-warn',
   em_aprovacao: 'text-brand',
   enviado_para_assinatura: 'text-brand',
   activo: 'text-positive',
   expirado: 'text-danger',
   denunciado: 'text-danger',
-  rescindido: 'text-gray-400',
+  rescindido: 'text-ink-mute',
 };
 
 const ESTADO_BADGE_CLASS: Record<string, string> = {
-  rascunho: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+  rascunho: 'bg-bg-alt text-ink-mute dark:bg-bg-alt dark:text-ink-soft',
   em_revisao: 'bg-warn/10 text-warn',
   em_aprovacao: 'bg-brand/10 text-brand',
   enviado_para_assinatura: 'bg-brand/10 text-brand',
   activo: 'bg-positive/10 text-positive',
   expirado: 'bg-danger/10 text-danger',
   denunciado: 'bg-danger/10 text-danger',
-  rescindido: 'bg-gray-100 text-gray-500 dark:bg-gray-800',
+  rescindido: 'bg-bg-alt text-ink-mute dark:bg-bg-alt',
 };
 
 export default function Dashboard() {

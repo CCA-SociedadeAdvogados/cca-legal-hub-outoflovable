@@ -28,8 +28,8 @@ type Contrato = Tables<'contratos'>;
 
 const statusColors: Record<AccountStatus, string> = {
   em_dia: 'bg-risk-low/20 text-risk-low border-risk-low/30',
-  em_aberto: 'bg-gray-100 dark:bg-gray-800 text-risk-medium border-risk-medium/30',
-  em_incumprimento: 'bg-gray-100 dark:bg-gray-800 text-destructive border-destructive/30',
+  em_aberto: 'bg-risk-medium/15 text-risk-medium border-risk-medium/30',
+  em_incumprimento: 'bg-destructive/15 text-destructive border-destructive/30',
 };
 
 const statusIcons: Record<AccountStatus, ReactNode> = {

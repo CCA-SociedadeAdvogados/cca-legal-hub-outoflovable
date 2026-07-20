@@ -678,7 +678,7 @@ export default function ContratoForm() {
       case 'baixo':
         return 'bg-positive text-white';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-bg-alt0 text-white';
     }
   };
 

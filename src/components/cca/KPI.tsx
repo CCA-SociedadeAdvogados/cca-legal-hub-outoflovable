@@ -40,7 +40,7 @@ export function KPI({ label, value, delta, trend = 'flat', className }: KPIProps
           </Pill>
         )}
       </div>
-      <div className="font-display text-[38px] font-normal leading-none tracking-[-0.02em] text-ink">
+      <div className="font-display text-[38px] font-semibold leading-none tracking-[-0.03em] text-ink [font-variant-numeric:tabular-nums]">
         {value}
       </div>
     </div>

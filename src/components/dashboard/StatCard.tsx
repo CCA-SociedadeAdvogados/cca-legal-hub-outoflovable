@@ -42,7 +42,9 @@ export function StatCard({
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold font-serif tracking-tight">{value}</p>
+            <p className="font-display text-3xl font-semibold tracking-[-0.03em] [font-variant-numeric:tabular-nums]">
+              {value}
+            </p>
             {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
             {trend && (
               <p

@@ -93,7 +93,7 @@ const statusConfig: Record<
     color: 'text-muted-foreground',
     bg: 'bg-muted',
     label: 'Não Aplicável',
-    badge: 'bg-gray-100 text-gray-800',
+    badge: 'bg-bg-alt text-ink',
   },
 };
 
