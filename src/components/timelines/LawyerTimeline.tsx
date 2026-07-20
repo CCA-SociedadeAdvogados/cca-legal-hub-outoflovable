@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { AlertTriangle, CheckCircle2, Circle, CircleDot, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCheck, CheckCircle2, Circle, CircleDot, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import {
+  useActivateAllTlPhases,
   useLawyerTimeline,
   useSetTlPhase,
   type TlEstado,
@@ -42,6 +43,8 @@ export function LawyerTimeline({ instanceId }: { instanceId: string }) {
   const { t, i18n } = useTranslation();
   const { data: phases = [], isLoading } = useLawyerTimeline(instanceId);
   const setPhase = useSetTlPhase(instanceId);
+  const activateAll = useActivateAllTlPhases(instanceId);
+  const pendentes = phases.filter((p) => p.estado === 'pendente').length;
 
   const formatDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'pt-PT') : null;
@@ -61,23 +64,43 @@ export function LawyerTimeline({ instanceId }: { instanceId: string }) {
   }
 
   return (
-    <ol className="space-y-0">
-      {phases.map((phase, idx) => (
-        <LawyerPhaseRow
-          key={phase.instance_phase_id}
-          phase={phase}
-          isLast={idx === phases.length - 1}
-          formatDate={formatDate}
-          onToggle={() =>
-            setPhase.mutate({
-              instancePhaseId: phase.instance_phase_id,
-              estado: NEXT_ESTADO[phase.estado],
-            })
-          }
-          isPending={setPhase.isPending}
-        />
-      ))}
-    </ol>
+    <div className="space-y-3">
+      {pendentes > 0 && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            disabled={activateAll.isPending}
+            onClick={() => activateAll.mutate()}
+          >
+            {activateAll.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCheck className="h-3.5 w-3.5" />
+            )}
+            {t('timelines.activateAll')} ({pendentes})
+          </Button>
+        </div>
+      )}
+      <ol className="space-y-0">
+        {phases.map((phase, idx) => (
+          <LawyerPhaseRow
+            key={phase.instance_phase_id}
+            phase={phase}
+            isLast={idx === phases.length - 1}
+            formatDate={formatDate}
+            onToggle={() =>
+              setPhase.mutate({
+                instancePhaseId: phase.instance_phase_id,
+                estado: NEXT_ESTADO[phase.estado],
+              })
+            }
+            isPending={setPhase.isPending}
+          />
+        ))}
+      </ol>
+    </div>
   );
 }
 

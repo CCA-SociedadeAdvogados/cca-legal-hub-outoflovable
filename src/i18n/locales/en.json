@@ -197,6 +197,7 @@
       "noRef": "No reference"
     },
     "empty": "This timeline has no phases yet.",
+    "activateAll": "Activate all",
     "optional": "Optional",
     "confirmar": "Confirm",
     "confirmarHint": "Deadline/rule to validate before communicating.",

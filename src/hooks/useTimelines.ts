@@ -195,6 +195,30 @@ export function useSetTlPhase(instanceId: string | null) {
   });
 }
 
+/** Ativa de uma vez todas as fases pendentes da instância (só advogado).
+ *  Fases já concluídas não são tocadas. */
+export function useActivateAllTlPhases(instanceId: string | null) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<number> => {
+      if (!instanceId) throw new Error('Instância não definida');
+      const { data, error } = await supabase.rpc('tl_activate_all_phases', {
+        p_instance: instanceId,
+      });
+      if (error) throw error;
+      return data ?? 0;
+    },
+    onSuccess: (count) => {
+      if (instanceId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.timelines.lawyer(instanceId) });
+      }
+      toast({ title: count === 1 ? '1 fase ativada' : `${count} fases ativadas` });
+    },
+    onError: (e: Error) =>
+      toast({ title: 'Erro ao ativar fases', description: e.message, variant: 'destructive' }),
+  });
+}
+
 // ── Cliente (portal) ─────────────────────────────────────────
 
 export function useTlClientInstances() {

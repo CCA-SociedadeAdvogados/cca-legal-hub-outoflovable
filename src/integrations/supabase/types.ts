@@ -5476,6 +5476,7 @@ export type Database = {
           title: string
         }[]
       }
+      tl_activate_all_phases: { Args: { p_instance: string }; Returns: number }
       tl_client_instances: {
         Args: never
         Returns: {
