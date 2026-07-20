@@ -197,6 +197,7 @@
       "noRef": "Sem referência"
     },
     "empty": "Esta timeline ainda não tem fases.",
+    "activateAll": "Ativar todas",
     "optional": "Opcional",
     "confirmar": "Confirmar",
     "confirmarHint": "Prazo/regra a validar antes de comunicar.",
