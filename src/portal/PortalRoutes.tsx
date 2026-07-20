@@ -3,6 +3,7 @@ import { PortalLayout } from './components/PortalLayout';
 import PortalHome from './pages/PortalHome';
 import PortalContratos from './pages/PortalContratos';
 import PortalAssuntos from './pages/PortalAssuntos';
+import PortalTimelines from './pages/PortalTimelines';
 import PortalDocumentos from './pages/PortalDocumentos';
 import PortalPrazos from './pages/PortalPrazos';
 import PortalFinanceiro from './pages/PortalFinanceiro';
@@ -24,6 +25,7 @@ export default function PortalRoutes() {
         <Route index element={<PortalHome />} />
         <Route path="contratos" element={<PortalContratos />} />
         <Route path="assuntos" element={<PortalAssuntos />} />
+        <Route path="timelines" element={<PortalTimelines />} />
         <Route path="documentos" element={<PortalDocumentos />} />
         <Route path="prazos" element={<PortalPrazos />} />
         <Route path="financeiro" element={<PortalFinanceiro />} />

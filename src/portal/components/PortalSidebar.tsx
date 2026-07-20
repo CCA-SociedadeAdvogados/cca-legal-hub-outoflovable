@@ -12,6 +12,7 @@ import {
   FileText,
   FolderOpen,
   CalendarClock,
+  ListChecks,
   Wallet,
   MessageSquarePlus,
   Newspaper,
@@ -163,6 +164,13 @@ export function PortalSidebar() {
           icon={Briefcase}
           label={t('portal.nav.matters')}
           isActive={isActive('/portal/assuntos')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/portal/timelines"
+          icon={ListChecks}
+          label={t('portal.nav.timelines')}
+          isActive={isActive('/portal/timelines')}
           isCollapsed={isCollapsed}
         />
         <NavItem

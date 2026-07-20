@@ -184,6 +184,15 @@ export const queryKeys = {
     byAssunto: (assuntoId: string) => ['assunto-eventos', assuntoId] as const,
   },
 
+  // ── Timelines de processos ─────────────────────────────────
+  timelines: {
+    templates: () => ['tl-templates'] as const,
+    instancesByOrg: (orgId: string) => ['tl-instances', orgId] as const,
+    lawyer: (instanceId: string) => ['tl-lawyer-timeline', instanceId] as const,
+    client: (instanceId: string) => ['tl-client-timeline', instanceId] as const,
+    clientInstances: () => ['tl-client-instances'] as const,
+  },
+
   // ── Compliance & Requisitos ────────────────────────────────
   requisitos: {
     byOrg: (orgId: string) => ['requisitos', orgId] as const,

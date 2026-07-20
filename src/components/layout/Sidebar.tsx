@@ -32,6 +32,7 @@ import {
   ChevronRight,
   Lock,
   List,
+  ListChecks,
   Upload,
   CalendarClock,
 } from 'lucide-react';
@@ -328,6 +329,13 @@ export function Sidebar({ clientName }: SidebarProps) {
           icon={Briefcase}
           label={t('nav.matters')}
           isActive={location.pathname === '/assuntos'}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem
+          to="/timelines"
+          icon={ListChecks}
+          label={t('nav.timelines')}
+          isActive={location.pathname === '/timelines'}
           isCollapsed={isCollapsed}
         />
         <NavItem

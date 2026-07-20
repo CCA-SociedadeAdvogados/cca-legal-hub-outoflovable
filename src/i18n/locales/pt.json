@@ -125,6 +125,7 @@
     "financial": "Minha Conta Corrente CCA",
     "requests": "Pedidos de clientes",
     "matters": "Assuntos",
+    "timelines": "Timelines",
     "legalbi": "LegalBI",
     "deadlines": "Prazos"
   },
@@ -176,6 +177,42 @@
         "visibility": "Visibilidade"
       },
       "fromRequest": "Origem: pedido do cliente"
+    }
+  },
+  "timelines": {
+    "cca": {
+      "title": "Timelines de processos",
+      "description": "Crie timelines a partir de templates validados e ative/conclua fases — o cliente vê o progresso no portal, sem prazos.",
+      "new": "Nova timeline",
+      "newTitle": "Nova timeline de processo",
+      "selectClient": "Selecione um cliente para gerir as timelines.",
+      "empty": "Ainda não há timelines para este cliente.",
+      "template": "Template",
+      "templatePlaceholder": "Escolher template",
+      "matterRef": "Referência do processo",
+      "matterRefPlaceholder": "ex.: Proc. 123/26.4T8LSB",
+      "gatilhoData": "Data do gatilho",
+      "gatilhoHint": "Interno — nunca visível para o cliente.",
+      "create": "Criar",
+      "noRef": "Sem referência"
+    },
+    "empty": "Esta timeline ainda não tem fases.",
+    "optional": "Opcional",
+    "confirmar": "Confirmar",
+    "confirmarHint": "Prazo/regra a validar antes de comunicar.",
+    "deadline": "Prazo",
+    "completedOn": "Concluída em",
+    "urgent": "Urgente",
+    "tipos": {
+      "gatilho": "Gatilho",
+      "prazo_parte": "Prazo da parte",
+      "prazo_tribunal": "Prazo do tribunal",
+      "marco": "Marco"
+    },
+    "toggleTo": {
+      "pendente": "Repor pendente",
+      "ativa": "Ativar",
+      "concluida": "Concluir"
     }
   },
   "dashboard": {
@@ -1997,6 +2034,7 @@
       "home": "Início",
       "contracts": "Os meus contratos",
       "matters": "Os meus assuntos",
+      "timelines": "Timelines",
       "documents": "Documentos",
       "deadlines": "Prazos",
       "financial": "Conta corrente",
@@ -2080,11 +2118,24 @@
         "outro": "Outro"
       }
     },
+    "timelines": {
+      "empty": "Ainda sem fases ativas.",
+      "emptyList": "Ainda não há timelines disponíveis.",
+      "estados": {
+        "ativa": "Em curso",
+        "concluida": "Concluída"
+      }
+    },
     "pages": {
       "matters": {
         "eyebrow": "Assuntos",
         "title": "Os meus assuntos",
         "description": "Acompanhe o ponto de situação dos trabalhos que a CCA tem em curso para si."
+      },
+      "timelines": {
+        "eyebrow": "Processos",
+        "title": "Timelines dos meus processos",
+        "description": "Acompanhe as fases dos seus processos, atualizadas pela equipa CCA."
       },
       "policies": {
         "eyebrow": "Políticas",
