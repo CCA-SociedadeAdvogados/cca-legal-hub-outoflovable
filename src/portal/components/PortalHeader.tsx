@@ -1,4 +1,22 @@
-import { Bell, Search, User, LogOut, Check, Newspaper, FileText, ExternalLink } from 'lucide-react';
+import {
+  Bell,
+  Search,
+  User,
+  LogOut,
+  Check,
+  Newspaper,
+  FileText,
+  ExternalLink,
+  Building2,
+} from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +67,7 @@ export function PortalHeader() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { currentOrganization, userMemberships, switchOrganization } = useOrganizations();
 
   const handleSignOut = async () => {
     await signOut();
@@ -88,6 +107,31 @@ export function PortalHeader() {
       </div>
 
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+        {/* F1: seletor de entidade — visível quando o utilizador pertence a
+            várias empresas do grupo de acesso */}
+        {(userMemberships?.length ?? 0) > 1 && currentOrganization && (
+          <div className="shrink-0">
+            <Select
+              value={currentOrganization.id}
+              onValueChange={(orgId) => {
+                if (orgId !== currentOrganization.id) switchOrganization.mutate(orgId);
+              }}
+            >
+              <SelectTrigger className="h-9 w-auto max-w-[220px] gap-2 rounded-control border-line bg-surface text-[12.5px]">
+                <Building2 className="h-3.5 w-3.5 shrink-0 text-ink-mute" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {userMemberships?.map((m) => (
+                  <SelectItem key={m.organization_id} value={m.organization_id}>
+                    {m.organizations.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
         <div className="shrink-0">
           <LanguageSelector />
         </div>

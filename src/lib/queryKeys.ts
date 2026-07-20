@@ -184,6 +184,19 @@ export const queryKeys = {
     byAssunto: (assuntoId: string) => ['assunto-eventos', assuntoId] as const,
   },
 
+  // ── Hub (eventos, consola, grupos) ─────────────────────────
+  hub: {
+    eventos: (orgId: string, assuntoId?: string | null) =>
+      assuntoId ? (['hub-eventos', orgId, assuntoId] as const) : (['hub-eventos', orgId] as const),
+    clientTimeline: (assuntoId: string) => ['hub-client-timeline', assuntoId] as const,
+    clientPrazos: () => ['hub-client-prazos'] as const,
+    portalConfig: (orgId: string) => ['hub-portal-config', orgId] as const,
+    grupos: () => ['hub-grupos'] as const,
+    grupoEmpresas: (grupoId: string) => ['hub-grupo-empresas', grupoId] as const,
+    userAssuntos: (orgId: string) => ['hub-user-assuntos', orgId] as const,
+    auditoria: (orgId: string) => ['hub-auditoria', orgId] as const,
+  },
+
   // ── Timelines de processos ─────────────────────────────────
   timelines: {
     templates: () => ['tl-templates'] as const,

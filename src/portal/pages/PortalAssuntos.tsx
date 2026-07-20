@@ -7,13 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useOrganizations } from '@/hooks/useOrganizations';
-import {
-  useAssuntos,
-  useAssuntoEventos,
-  type Assunto,
-  type AssuntoEstado,
-} from '@/hooks/useAssuntos';
+import { useAssuntos, type Assunto, type AssuntoEstado } from '@/hooks/useAssuntos';
+import { useHubClientTimeline, type HubEstadoEvento } from '@/hooks/useHub';
 import { formatDate } from '@/portal/lib/contrato';
+
+/* Estado calculado no servidor (Secção 4.3 do blueprint): vencido nunca se
+ * mistura com "próximos" nem com concluído. */
+const EVENTO_ESTADO_TONE: Record<HubEstadoEvento, string> = {
+  concluido: 'text-risk-low',
+  em_curso: 'text-brand',
+  previsto: 'text-ink-mute',
+  vencido: 'text-danger',
+};
 
 const ESTADO_TONE: Record<AssuntoEstado, string> = {
   aberto: 'border-line bg-bg-alt text-ink-soft',
@@ -67,7 +72,7 @@ export default function PortalAssuntos() {
 function AssuntoCard({ assunto, highlight = false }: { assunto: Assunto; highlight?: boolean }) {
   const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(highlight);
-  const { data: eventos = [], isLoading } = useAssuntoEventos(open ? assunto.id : null);
+  const { data: eventos = [], isLoading } = useHubClientTimeline(open ? assunto.id : null);
   const estado = (assunto.estado as AssuntoEstado) ?? 'aberto';
   const ref = useRef<HTMLElement>(null);
 
@@ -104,6 +109,13 @@ function AssuntoCard({ assunto, highlight = false }: { assunto: Assunto; highlig
         <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{assunto.descricao}</p>
       )}
 
+      {/* F2: ponto de situação curado pela equipa CCA */}
+      {assunto.status_cliente && (
+        <p className="mt-2 rounded-control border border-brand/20 bg-brand/[0.05] px-3 py-2 text-[13px] leading-relaxed text-ink">
+          {assunto.status_cliente}
+        </p>
+      )}
+
       {assunto.data_prevista_conclusao && estado !== 'concluido' && (
         <p className="mt-2 text-[12px] text-ink-mute">
           {t('portal.matters.expected')}:{' '}
@@ -131,16 +143,36 @@ function AssuntoCard({ assunto, highlight = false }: { assunto: Assunto; highlig
           ) : (
             <ol className="space-y-3">
               {eventos.map((e) => (
-                <li key={e.id} className="flex gap-3">
+                <li key={e.evento_id} className="flex gap-3">
                   <div className="flex flex-col items-center">
-                    <Circle className="mt-1 h-2.5 w-2.5 fill-brand text-brand" />
+                    <Circle
+                      className={cn(
+                        'mt-1 h-2.5 w-2.5',
+                        e.estado === 'vencido'
+                          ? 'fill-danger text-danger'
+                          : 'fill-brand text-brand',
+                      )}
+                    />
                     <span className="mt-1 w-px flex-1 bg-line" />
                   </div>
                   <div className="min-w-0 pb-1">
                     <p className="text-[11px] font-mono text-ink-mute">
-                      {formatDate(e.data, i18n.language)}
+                      {formatDate(e.data_evento, i18n.language)}
+                      <span
+                        className={cn('ml-2 font-sans font-medium', EVENTO_ESTADO_TONE[e.estado])}
+                      >
+                        {t(`hub.estados.${e.estado}`)}
+                      </span>
                     </p>
                     <p className="text-[13px] font-medium text-ink">{e.titulo}</p>
+                    {e.requer_acao_cliente && (
+                      <Badge
+                        variant="outline"
+                        className="mt-1 border-warn/40 bg-warn/10 text-[10px] text-warn"
+                      >
+                        {t('hub.acaoCliente')}
+                      </Badge>
+                    )}
                     {e.descricao && (
                       <p className="mt-0.5 text-[12.5px] leading-relaxed text-ink-soft">
                         {e.descricao}

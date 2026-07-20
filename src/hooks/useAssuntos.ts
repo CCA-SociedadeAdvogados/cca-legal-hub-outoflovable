@@ -111,26 +111,32 @@ export function useAssuntos(organizationId: string | null | undefined) {
       toast({ title: 'Erro ao atualizar', description: e.message, variant: 'destructive' }),
   });
 
+  // Escreve na base única de eventos do hub (blueprint, Secção 4.1: marcos
+  // manuais publicam na criação quando visíveis ao cliente).
   const addEvento = useMutation({
     mutationFn: async (input: NovoEvento) => {
       if (!user) throw new Error('Utilizador não autenticado');
-      const { error } = await supabase.from('assunto_eventos').insert({
+      const data = input.data ?? new Date().toISOString().slice(0, 10);
+      const { error } = await supabase.from('hub_eventos').insert({
         assunto_id: input.assunto_id,
         organization_id: input.organization_id,
-        titulo: input.titulo,
-        descricao: input.descricao ?? null,
-        tipo: input.tipo,
-        data: input.data ?? new Date().toISOString().slice(0, 10),
-        visivel_cliente: input.visivel_cliente,
+        tipo: input.tipo === 'documento' ? 'evento_documental' : 'marco_manual',
+        titulo_cliente: input.titulo,
+        titulo_interno: input.titulo,
+        descricao_cliente: input.visivel_cliente ? (input.descricao ?? null) : null,
+        descricao_interna: input.descricao ?? null,
+        data_evento: data,
+        concluido: data <= new Date().toISOString().slice(0, 10),
+        publicado: input.visivel_cliente,
+        origem: 'manual',
         created_by_id: user.id,
+        updated_by_id: user.id,
       });
       if (error) throw error;
     },
     onSuccess: (_d, vars) => {
       invalidate();
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.assuntoEventos.byAssunto(vars.assunto_id),
-      });
+      queryClient.invalidateQueries({ queryKey: ['hub-eventos', vars.organization_id] });
       toast({ title: 'Atualização adicionada' });
     },
     onError: (e: Error) =>
@@ -144,21 +150,6 @@ export function useAssuntos(organizationId: string | null | undefined) {
   return { assuntos, isLoading, createAssunto, updateAssunto, addEvento };
 }
 
-/** Linha temporal de um assunto (eventos visíveis ao cliente são filtrados por RLS). */
-export function useAssuntoEventos(assuntoId: string | null) {
-  return useQuery({
-    queryKey: queryKeys.assuntoEventos.byAssunto(assuntoId ?? 'none'),
-    enabled: !!assuntoId,
-    staleTime: 30 * 1000,
-    queryFn: async (): Promise<AssuntoEvento[]> => {
-      const { data, error } = await supabase
-        .from('assunto_eventos')
-        .select('*')
-        .eq('assunto_id', assuntoId!)
-        .order('data', { ascending: false })
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-}
+// A linha temporal de cada assunto vive agora na base única de eventos do
+// hub: cockpit lê hub_eventos (useHubEventos), portal lê o RPC
+// hub_client_timeline (useHubClientTimeline) — ver src/hooks/useHub.ts.

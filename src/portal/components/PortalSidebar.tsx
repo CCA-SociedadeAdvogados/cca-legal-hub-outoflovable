@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserTheme } from '@/hooks/useUserTheme';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useHubPortalConfig, type PortalAba } from '@/hooks/useHub';
 import ccaLogo from '@/assets/cca-logo.png';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -97,6 +99,10 @@ export function PortalSidebar() {
   const { signOut } = useAuth();
   const { isCollapsed, toggle } = useSidebar();
   const { resolvedTheme, toggleTheme } = useUserTheme();
+  // Nível 1 do modelo de permissões: abas geridas na consola por cliente.
+  const { currentOrganization } = useOrganizations();
+  const { data: config } = useHubPortalConfig(currentOrganization?.id);
+  const aba = (nome: PortalAba) => config?.abas[nome] !== false;
 
   const isActive = (path: string) =>
     path === '/portal'
@@ -152,72 +158,90 @@ export function PortalSidebar() {
           isActive={isActive('/portal')}
           isCollapsed={isCollapsed}
         />
-        <NavItem
-          to="/portal/contratos"
-          icon={FileText}
-          label={t('portal.nav.contracts')}
-          isActive={isActive('/portal/contratos')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/assuntos"
-          icon={Briefcase}
-          label={t('portal.nav.matters')}
-          isActive={isActive('/portal/assuntos')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/timelines"
-          icon={ListChecks}
-          label={t('portal.nav.timelines')}
-          isActive={isActive('/portal/timelines')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/documentos"
-          icon={FolderOpen}
-          label={t('portal.nav.documents')}
-          isActive={isActive('/portal/documentos')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/prazos"
-          icon={CalendarClock}
-          label={t('portal.nav.deadlines')}
-          isActive={isActive('/portal/prazos')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/politicas"
-          icon={ShieldCheck}
-          label={t('portal.nav.policies')}
-          isActive={isActive('/portal/politicas')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/financeiro"
-          icon={Wallet}
-          label={t('portal.nav.financial')}
-          isActive={isActive('/portal/financeiro')}
-          isCollapsed={isCollapsed}
-        />
-        <NavItem
-          to="/portal/pedidos"
-          icon={MessageSquarePlus}
-          label={t('portal.nav.requests')}
-          isActive={isActive('/portal/pedidos')}
-          isCollapsed={isCollapsed}
-        />
+        {aba('contratos') && (
+          <NavItem
+            to="/portal/contratos"
+            icon={FileText}
+            label={t('portal.nav.contracts')}
+            isActive={isActive('/portal/contratos')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('assuntos') && (
+          <NavItem
+            to="/portal/assuntos"
+            icon={Briefcase}
+            label={t('portal.nav.matters')}
+            isActive={isActive('/portal/assuntos')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('timelines') && (
+          <NavItem
+            to="/portal/timelines"
+            icon={ListChecks}
+            label={t('portal.nav.timelines')}
+            isActive={isActive('/portal/timelines')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('documentos') && (
+          <NavItem
+            to="/portal/documentos"
+            icon={FolderOpen}
+            label={t('portal.nav.documents')}
+            isActive={isActive('/portal/documentos')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('prazos') && (
+          <NavItem
+            to="/portal/prazos"
+            icon={CalendarClock}
+            label={t('portal.nav.deadlines')}
+            isActive={isActive('/portal/prazos')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('politicas') && (
+          <NavItem
+            to="/portal/politicas"
+            icon={ShieldCheck}
+            label={t('portal.nav.policies')}
+            isActive={isActive('/portal/politicas')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('financeiro') && (
+          <NavItem
+            to="/portal/financeiro"
+            icon={Wallet}
+            label={t('portal.nav.financial')}
+            isActive={isActive('/portal/financeiro')}
+            isCollapsed={isCollapsed}
+          />
+        )}
+        {aba('pedidos') && (
+          <NavItem
+            to="/portal/pedidos"
+            icon={MessageSquarePlus}
+            label={t('portal.nav.requests')}
+            isActive={isActive('/portal/pedidos')}
+            isCollapsed={isCollapsed}
+          />
+        )}
 
         <div className="my-2 border-t border-sidebar-ink/10" />
 
-        <NavItem
-          to="/portal/novidades"
-          icon={Newspaper}
-          label={t('portal.nav.news')}
-          isActive={isActive('/portal/novidades')}
-          isCollapsed={isCollapsed}
-        />
+        {aba('novidades') && (
+          <NavItem
+            to="/portal/novidades"
+            icon={Newspaper}
+            label={t('portal.nav.news')}
+            isActive={isActive('/portal/novidades')}
+            isCollapsed={isCollapsed}
+          />
+        )}
       </nav>
 
       {/* Secondary block */}

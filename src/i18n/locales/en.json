@@ -126,6 +126,7 @@
     "requests": "Client requests",
     "matters": "Matters",
     "timelines": "Timelines",
+    "consola": "Console",
     "legalbi": "LegalBI",
     "deadlines": "Deadlines"
   },
@@ -214,6 +215,126 @@
       "pendente": "Reset to pending",
       "ativa": "Activate",
       "concluida": "Complete"
+    }
+  },
+  "hub": {
+    "tipos": {
+      "marco_fase": "Phase milestone",
+      "prazo_processual": "Procedural deadline",
+      "audiencia": "Hearing / court date",
+      "data_contratual": "Contract date",
+      "marco_manual": "Milestone",
+      "evento_documental": "Document"
+    },
+    "estados": {
+      "concluido": "Completed",
+      "em_curso": "Today",
+      "previsto": "Upcoming",
+      "vencido": "Overdue"
+    },
+    "acaoCliente": "Action required on your side",
+    "publishToggle": "Published",
+    "publishedInPortal": "Published in portal",
+    "statusClientePlaceholder": "Client-friendly status update (curated text)…"
+  },
+  "consola": {
+    "title": "Management console",
+    "description": "Decide, per client, which portal tabs exist, which features are active and what content is published",
+    "selectClient": "Select a client to manage the portal configuration.",
+    "tabs": {
+      "abas": "Portal tabs",
+      "funcionalidades": "Features",
+      "empresas": "Group companies",
+      "assuntos": "Matter publication",
+      "eventos": "Timeline",
+      "utilizadores": "Client users",
+      "auditoria": "Audit"
+    },
+    "abas": {
+      "title": "Tabs visible in the portal",
+      "description": "Disabled tabs disappear from navigation and are unreachable even by direct URL."
+    },
+    "funcionalidades": {
+      "title": "Features",
+      "description": "Fine-grained control of this client's portal features.",
+      "itens": {
+        "ics": "Calendar export (ICS)",
+        "upload_documentos": "Document upload",
+        "ocultar_valores": "Hide financial amounts"
+      },
+      "hints": {
+        "ics": "Deadline feed/download for the client's calendar",
+        "upload_documentos": "Uploads into the client intake folder",
+        "ocultar_valores": "Non-financial profiles don't see billing amounts"
+      }
+    },
+    "empresas": {
+      "title": "Access group and companies",
+      "description": "The group is born in the hub and anchors all permissions: maps N companies to one group with a shared portal.",
+      "grupo": "This company's group",
+      "semGrupo": "No group",
+      "novoGrupo": "Create new group",
+      "criar": "Create",
+      "doGrupo": "Companies of group {{nome}}",
+      "noPortal": "In portal",
+      "semGrupoInfo": "This company doesn't belong to an access group yet. Assign it to a group to enable the entity selector in the portal."
+    },
+    "assuntos": {
+      "title": "Matter publication",
+      "description": "Nothing is published by default — opt-in per matter, with a client-friendly status.",
+      "empty": "This client has no matters."
+    },
+    "eventos": {
+      "title": "Timeline and deadlines",
+      "description": "The same event base feeds each matter's timeline and the portal's Deadlines tab.",
+      "rascunhos": "{{count}} to curate",
+      "novo": "New event",
+      "novoTitle": "New event / milestone",
+      "tituloCliente": "Client-facing title",
+      "tituloInterno": "Internal title",
+      "data": "Date",
+      "assunto": "Matter",
+      "semAssunto": "No matter (organisation-level event)",
+      "publicarCriacao": "Publish immediately",
+      "criar": "Create",
+      "empty": "No events for this client yet.",
+      "interno": "Internal — never publishable",
+      "origens": {
+        "manual": "manual",
+        "clm": "contracts",
+        "jvris": "JVRIS",
+        "imanage": "iManage",
+        "timelines": "case timeline",
+        "portal": "portal"
+      }
+    },
+    "utilizadores": {
+      "title": "Client users",
+      "description": "Per-user roles; restricted access limits visibility to designated matters.",
+      "empty": "No users in this organisation.",
+      "restrito": "Restricted access",
+      "assuntosDesignados": "Designated matters",
+      "papeis": {
+        "owner": "Group admin",
+        "admin": "Group admin",
+        "editor": "Company user",
+        "viewer": "Company user"
+      }
+    },
+    "auditoria": {
+      "title": "Audit",
+      "description": "Publication, configuration and permission changes for this client.",
+      "empty": "No audit records.",
+      "quando": "When",
+      "quem": "Who",
+      "acao": "Action",
+      "objeto": "Object",
+      "tabelas": {
+        "hub_eventos": "Timeline event",
+        "hub_portal_config": "Portal configuration",
+        "hub_user_assuntos": "Designated matters",
+        "assuntos": "Matter"
+      }
     }
   },
   "dashboard": {
@@ -2016,6 +2137,7 @@
     },
     "deadlines": {
       "empty": "No deadlines identified in your contracts.",
+      "exportIcs": "Export calendar",
       "today": "Today",
       "inDays": "In {{count}} days",
       "overdueDays": "{{count}} days ago",
