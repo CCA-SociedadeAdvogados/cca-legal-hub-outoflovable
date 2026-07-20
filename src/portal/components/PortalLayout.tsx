@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { PortalSidebar } from './PortalSidebar';
 import { PortalHeader } from './PortalHeader';
+import { PortalAssistantBubble } from './PortalAssistantBubble';
 import { useSidebar } from '@/contexts/SidebarContext';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,8 @@ export function PortalLayout({ children }: PortalLayoutProps) {
         <PortalHeader />
         <main className="w-full min-w-0 overflow-x-hidden px-8 pb-16 pt-7">{children}</main>
       </div>
+      {/* Assistente IA — bolha flutuante sobre todas as páginas do portal */}
+      <PortalAssistantBubble />
     </div>
   );
 }

@@ -260,12 +260,14 @@
       "itens": {
         "ics": "Calendar export (ICS)",
         "upload_documentos": "Document upload",
-        "ocultar_valores": "Hide financial amounts"
+        "ocultar_valores": "Hide financial amounts",
+        "assistente": "AI Assistant"
       },
       "hints": {
         "ics": "Deadline feed/download for the client's calendar",
         "upload_documentos": "Uploads into the client intake folder",
-        "ocultar_valores": "Non-financial profiles don't see billing amounts"
+        "ocultar_valores": "Non-financial profiles don't see billing amounts",
+        "assistente": "Floating assistant bubble in the portal; only answers about engaged services."
       }
     },
     "empresas": {
@@ -2165,6 +2167,24 @@
       "news": "CCA News",
       "policies": "Policies",
       "profile": "Profile & settings"
+    },
+    "assistant": {
+      "eyebrow": "CCA Assistant",
+      "title": "Portal assistant",
+      "introTitle": "Hello! I'm your portal assistant.",
+      "introBody": "Ask me about the services you have engaged CCA for — contracts, ongoing matters, documents, deadlines and renewals. For topics outside your engaged services, I'll point you to how to contact us.",
+      "placeholder": "Type your question...",
+      "send": "Send",
+      "thinking": "Reviewing your files...",
+      "error": "Could not get a response",
+      "errorReply": "Sorry, an error occurred while processing your question. Please try again.",
+      "disclaimer": "AI-generated answers based on the services you engaged CCA for. Confirm with the team before important decisions.",
+      "suggestions": [
+        "Which contracts expire in the next 90 days?",
+        "What is the status of my matters?",
+        "Which ones have exclusivity clauses?",
+        "What GDPR risks should I be aware of?"
+      ]
     },
     "policies": {
       "empty": "CCA hasn't published any policies yet.",
