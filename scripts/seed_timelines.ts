@@ -60,8 +60,7 @@ if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_ROLE_KEY)) {
 }
 
 // ── Tipos ──
-const TIPOS_VALIDOS = ['gatilho', 'prazo_parte', 'prazo_tribunal', 'marco'] as const;
-type Tipo = (typeof TIPOS_VALIDOS)[number];
+type Tipo = 'gatilho' | 'prazo_parte' | 'prazo_tribunal' | 'marco';
 
 /** Normalização dos tipos livres dos documentos para o enum canónico. */
 const TIPO_MAP: Record<string, Tipo> = {
@@ -241,7 +240,7 @@ function parsePhaseTables(md: string, file: string): PhaseRow[] {
       // Prazos: NÃO aceites como dados (ver cabeçalho). O texto vai para as
       // notas internas; prazo_dias só com --accept-prazos e padrão "N dias".
       const prazoTexto = cleanCell(raw.prazo ?? '')
-        .replace(/[\u26a0\ufe0f]/gu, '')
+        .replace(/\u26a0|\ufe0f/gu, '')
         .replace(/\s+/g, ' ')
         .trim();
       let prazo_dias: number | null = null;
