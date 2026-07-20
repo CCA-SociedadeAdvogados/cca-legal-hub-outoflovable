@@ -126,6 +126,7 @@
     "requests": "Pedidos de clientes",
     "matters": "Assuntos",
     "timelines": "Timelines",
+    "consola": "Consola",
     "legalbi": "LegalBI",
     "deadlines": "Prazos"
   },
@@ -214,6 +215,126 @@
       "pendente": "Repor pendente",
       "ativa": "Ativar",
       "concluida": "Concluir"
+    }
+  },
+  "hub": {
+    "tipos": {
+      "marco_fase": "Marco de fase",
+      "prazo_processual": "Prazo processual",
+      "audiencia": "Audiência / diligência",
+      "data_contratual": "Data contratual",
+      "marco_manual": "Marco",
+      "evento_documental": "Documento"
+    },
+    "estados": {
+      "concluido": "Concluído",
+      "em_curso": "Hoje",
+      "previsto": "Previsto",
+      "vencido": "Vencido"
+    },
+    "acaoCliente": "Ação necessária da sua parte",
+    "publishToggle": "Publicado",
+    "publishedInPortal": "Publicado no portal",
+    "statusClientePlaceholder": "Ponto de situação para o cliente (texto curado)…"
+  },
+  "consola": {
+    "title": "Consola de gestão",
+    "description": "Decida, por cliente, que abas existem no portal, que funcionalidades estão ativas e que conteúdo está publicado",
+    "selectClient": "Selecione um cliente para gerir a configuração do portal.",
+    "tabs": {
+      "abas": "Abas do portal",
+      "funcionalidades": "Funcionalidades",
+      "empresas": "Empresas do grupo",
+      "assuntos": "Publicação de assuntos",
+      "eventos": "Linha temporal",
+      "utilizadores": "Utilizadores do cliente",
+      "auditoria": "Auditoria"
+    },
+    "abas": {
+      "title": "Abas visíveis no portal",
+      "description": "Abas desligadas desaparecem da navegação e ficam inacessíveis mesmo por URL direto."
+    },
+    "funcionalidades": {
+      "title": "Funcionalidades",
+      "description": "Controlo granular de funcionalidades do portal deste cliente.",
+      "itens": {
+        "ics": "Exportação de calendário (ICS)",
+        "upload_documentos": "Upload de documentos",
+        "ocultar_valores": "Ocultar valores financeiros"
+      },
+      "hints": {
+        "ics": "Feed/download de prazos para o calendário do cliente",
+        "upload_documentos": "Envio de documentos para a pasta de receção",
+        "ocultar_valores": "Perfis não financeiros não veem montantes de faturação"
+      }
+    },
+    "empresas": {
+      "title": "Grupo de acesso e empresas",
+      "description": "O grupo nasce no hub e é a âncora das permissões: mapeia N empresas para um grupo com portal partilhado.",
+      "grupo": "Grupo desta empresa",
+      "semGrupo": "Sem grupo",
+      "novoGrupo": "Criar novo grupo",
+      "criar": "Criar",
+      "doGrupo": "Empresas do grupo {{nome}}",
+      "noPortal": "No portal",
+      "semGrupoInfo": "Esta empresa não pertence a nenhum grupo de acesso. Associe-a a um grupo para ativar o seletor de entidade no portal."
+    },
+    "assuntos": {
+      "title": "Publicação de assuntos",
+      "description": "Nada é publicado por defeito — opt-in assunto a assunto, com ponto de situação cliente-friendly.",
+      "empty": "Este cliente não tem assuntos."
+    },
+    "eventos": {
+      "title": "Linha temporal e prazos",
+      "description": "A mesma base de eventos alimenta a timeline de cada assunto e a aba Prazos do portal.",
+      "rascunhos": "{{count}} por curar",
+      "novo": "Novo evento",
+      "novoTitle": "Novo evento / marco",
+      "tituloCliente": "Título para o cliente",
+      "tituloInterno": "Título interno",
+      "data": "Data",
+      "assunto": "Assunto",
+      "semAssunto": "Sem assunto (evento da organização)",
+      "publicarCriacao": "Publicar imediatamente",
+      "criar": "Criar",
+      "empty": "Ainda não há eventos para este cliente.",
+      "interno": "Interno — nunca publicável",
+      "origens": {
+        "manual": "manual",
+        "clm": "contratos",
+        "jvris": "JVRIS",
+        "imanage": "iManage",
+        "timelines": "timeline de processo",
+        "portal": "portal"
+      }
+    },
+    "utilizadores": {
+      "title": "Utilizadores do cliente",
+      "description": "Papéis por utilizador; o acesso restrito limita a visibilidade aos assuntos designados.",
+      "empty": "Sem utilizadores nesta organização.",
+      "restrito": "Acesso restrito",
+      "assuntosDesignados": "Assuntos designados",
+      "papeis": {
+        "owner": "Admin do grupo",
+        "admin": "Admin do grupo",
+        "editor": "Utilizador de empresa",
+        "viewer": "Utilizador de empresa"
+      }
+    },
+    "auditoria": {
+      "title": "Auditoria",
+      "description": "Alterações de publicação, configuração e permissões deste cliente.",
+      "empty": "Sem registos de auditoria.",
+      "quando": "Quando",
+      "quem": "Quem",
+      "acao": "Ação",
+      "objeto": "Objeto",
+      "tabelas": {
+        "hub_eventos": "Evento da linha temporal",
+        "hub_portal_config": "Configuração do portal",
+        "hub_user_assuntos": "Assuntos designados",
+        "assuntos": "Assunto"
+      }
     }
   },
   "dashboard": {
@@ -2016,6 +2137,7 @@
     },
     "deadlines": {
       "empty": "Não há prazos identificados nos seus contratos.",
+      "exportIcs": "Exportar calendário",
       "today": "Hoje",
       "inDays": "Em {{count}} dias",
       "overdueDays": "Há {{count}} dias",

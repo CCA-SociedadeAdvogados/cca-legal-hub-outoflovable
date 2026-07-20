@@ -25,6 +25,7 @@ import {
   Moon,
   Sun,
   Settings,
+  SlidersHorizontal,
   LogOut,
   Crown,
   ChevronsLeft,
@@ -152,7 +153,7 @@ export function Sidebar({ clientName }: SidebarProps) {
   const { isCollapsed, toggle } = useSidebar();
   const { resolvedTheme, toggleTheme } = useUserTheme();
   const badges = useSidebarBadges();
-  const { can, isAppAdmin, isCCAUser, isOrgManager, isOrgUser } = usePermissions();
+  const { can, isAppAdmin, isCCAManager, isCCAUser, isOrgManager, isOrgUser } = usePermissions();
 
   const isContractsRoute = location.pathname.startsWith('/contratos');
   const [contractsExpanded, setContractsExpanded] = useState(isContractsRoute);
@@ -391,6 +392,16 @@ export function Sidebar({ clientName }: SidebarProps) {
           onClick={toggleTheme}
           variant="secondary"
         />
+        {(isAppAdmin || isCCAManager) && (
+          <NavItem
+            to="/consola"
+            icon={SlidersHorizontal}
+            label={t('nav.consola')}
+            isActive={location.pathname === '/consola'}
+            isCollapsed={isCollapsed}
+            variant="secondary"
+          />
+        )}
         {isAppAdmin && (
           <NavItem
             to="/admin"
