@@ -115,6 +115,84 @@ export default function PortalHome() {
         </p>
       </header>
 
+      {/* Painel-herói — atenção da semana (índigo), coerente com o cockpit */}
+      {!isLoadingContratos && (
+        <section className="relative overflow-hidden rounded-card bg-gradient-to-br from-sidebar to-[hsl(224_30%_18%)] p-6 text-sidebar-ink lg:p-7">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 200 200"
+            className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 text-white opacity-[0.06]"
+          >
+            {[88, 66, 44, 22].map((r) => (
+              <circle
+                key={r}
+                cx="100"
+                cy="100"
+                r={r}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
+            ))}
+          </svg>
+          <div className="relative z-10">
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-ink-mute">
+              {t('portal.home.sections.deadlines')}
+            </div>
+            <div className="mt-1.5 flex items-baseline gap-3">
+              <span className="font-display text-[52px] font-bold leading-none tracking-[-0.04em] text-white [font-variant-numeric:tabular-nums]">
+                {upcoming30}
+              </span>
+              <span className="font-display text-base font-semibold text-sidebar-ink-mute">
+                {upcoming30 === 1
+                  ? t('portal.deadlines.needAttentionOne', 'a precisar de atenção')
+                  : t('portal.deadlines.needAttention', 'a precisar de atenção')}
+              </span>
+            </div>
+            {upcomingDeadlines.length > 0 && (
+              <div className="mt-4 max-w-2xl">
+                {upcomingDeadlines.slice(0, 4).map((d, idx) => {
+                  const tone =
+                    d.days < 0
+                      ? 'bg-danger/25 text-white'
+                      : d.days <= 30
+                        ? 'bg-warn/25 text-white'
+                        : 'bg-white/10 text-sidebar-ink';
+                  const daysLabel =
+                    d.days < 0
+                      ? t('portal.deadlines.overdueDays', { count: Math.abs(d.days) })
+                      : d.days === 0
+                        ? t('portal.deadlines.today')
+                        : t('portal.deadlines.inDays', { count: d.days });
+                  return (
+                    <Link
+                      key={`${d.contratoId}-${d.kind}-${idx}`}
+                      to="/portal/prazos"
+                      className="grid grid-cols-[76px_1fr_auto] items-center gap-3 border-t border-white/10 py-2.5 transition-colors hover:bg-white/[0.04]"
+                    >
+                      <span className="font-mono text-[12px] text-sidebar-ink-mute [font-variant-numeric:tabular-nums]">
+                        {formatDate(d.date.toISOString(), lang)}
+                      </span>
+                      <span className="min-w-0 truncate text-[13.5px] font-medium text-white">
+                        {d.titulo}
+                      </span>
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full px-2.5 py-0.5 text-[10.5px] font-semibold',
+                          tone,
+                        )}
+                      >
+                        {daysLabel}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* KPIs */}
       {isLoadingContratos || isLoadingFin ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
