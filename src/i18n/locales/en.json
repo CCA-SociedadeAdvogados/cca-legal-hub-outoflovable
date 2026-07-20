@@ -2163,7 +2163,9 @@
         "next30": "Next 30 days",
         "next90": "31 to 90 days",
         "later": "Later"
-      }
+      },
+      "needAttentionOne": "needs attention",
+      "needAttention": "need attention"
     },
     "nav": {
       "home": "Home",

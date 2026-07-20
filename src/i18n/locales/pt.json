@@ -2163,7 +2163,9 @@
         "next30": "Próximos 30 dias",
         "next90": "31 a 90 dias",
         "later": "Mais tarde"
-      }
+      },
+      "needAttentionOne": "a precisar de atenção",
+      "needAttention": "a precisar de atenção"
     },
     "nav": {
       "home": "Início",
