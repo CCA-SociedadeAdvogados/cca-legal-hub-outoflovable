@@ -2,7 +2,7 @@
  * Seed das timelines de processos a partir de docs/timelines/timeline-*.md
  * (fonte de verdade do conteúdo — ver docs/timelines/feature-timelines-brief.md).
  *
- * Faz parse do frontmatter YAML e da primeira tabela markdown de fases de cada
+ * Faz parse do frontmatter YAML e das tabelas markdown de fases de cada
  * ficheiro e faz upsert em tl_templates (por `key`) + tl_phases (por
  * `template_id, ordem`). Corre com service role (bypass RLS):
  *
@@ -10,24 +10,24 @@
  *   npm run seed:timelines -- --dry-run          # só parse + contagens
  *   npm run seed:timelines -- --dir <pasta>      # pasta alternativa de .md
  *
- * Formato esperado de cada timeline-*.md:
+ * ── PRAZOS NÃO SÃO ACEITES COMO DADOS ─────────────────────────────────
+ * Os documentos atuais estão em rascunho, pendentes de validação pelos
+ * advogados de cada área. Por decisão explícita, o seed NÃO carrega
+ * `prazo_dias` (fica sempre null): o texto do prazo é preservado apenas nas
+ * notas internas ("Prazo (por validar): …"), e as marcas ⚠️ do documento
+ * ativam `confirmar`. Quando as timelines forem validadas, reativar a
+ * extração com a flag `--accept-prazos`.
+ * ──────────────────────────────────────────────────────────────────────
  *
- *   ---
- *   key: civel-cpc
- *   title: Ação declarativa cível (CPC)
- *   area: civel
- *   jurisdicao: PT
- *   base_legal: CPC
- *   versao: "1.0"
- *   ---
- *   ...
- *   | # | Fase | Tipo | Base legal | Prazo | Contagem | Opcional | ⚠️ | Notas |
- *   |---|------|------|-----------|-------|----------|----------|----|-------|
- *   | 1 | Citação do réu | gatilho | art. 219.º CPC | | | | | ... |
- *
- * Cabeçalhos são identificados de forma tolerante (ordem/#, fase/label, tipo,
- * base legal, prazo, contagem, opcional, ⚠️/confirmar, notas); colunas em
- * falta ficam null/false.
+ * Formato aceite (tolerante ao formato real dos documentos):
+ *  - Frontmatter: `titulo` (ou `title`); `key` opcional — deriva do nome do
+ *    ficheiro (timeline-<key>.md); area, jurisdicao, base_legal, versao.
+ *  - Fases: TODAS as tabelas markdown com uma coluna de designação
+ *    (Fase/Marco/Evento/Obrigação) são concatenadas pela ordem do documento;
+ *    `#` é respeitado quando existe, senão continua a numeração.
+ *  - `Tipo` é normalizado para o enum canónico (gatilho, prazo_parte,
+ *    prazo_tribunal, marco); em falta ou desconhecido → marco.
+ *  - ⚠️ em qualquer célula da linha → confirmar=true.
  */
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -47,6 +47,7 @@ loadEnvFile(resolve('.env.local'));
 loadEnvFile(resolve('.env'));
 
 const DRY_RUN = process.argv.includes('--dry-run');
+const ACCEPT_PRAZOS = process.argv.includes('--accept-prazos');
 const dirFlag = process.argv.indexOf('--dir');
 const DOCS_DIR = dirFlag > -1 ? resolve(process.argv[dirFlag + 1]) : resolve('docs/timelines');
 
@@ -61,6 +62,30 @@ if (!DRY_RUN && (!SUPABASE_URL || !SERVICE_ROLE_KEY)) {
 // ── Tipos ──
 const TIPOS_VALIDOS = ['gatilho', 'prazo_parte', 'prazo_tribunal', 'marco'] as const;
 type Tipo = (typeof TIPOS_VALIDOS)[number];
+
+/** Normalização dos tipos livres dos documentos para o enum canónico. */
+const TIPO_MAP: Record<string, Tipo> = {
+  gatilho: 'gatilho',
+  evento_gatilho: 'gatilho',
+  'evento-gatilho': 'gatilho',
+  prazo_parte: 'prazo_parte',
+  prazo_de_parte: 'prazo_parte',
+  prazo_do_requerente: 'prazo_parte',
+  ato_do_requerente: 'prazo_parte',
+  ato_do_exequente: 'prazo_parte',
+  ato_do_autor: 'prazo_parte',
+  prazo_tribunal: 'prazo_tribunal',
+  prazo_do_tribunal: 'prazo_tribunal',
+  decisao_aima: 'prazo_tribunal',
+  decisao: 'prazo_tribunal',
+  marco: 'marco',
+  marco_do_tribunal: 'marco',
+  marco_aima: 'marco',
+  obrigacao_continuada: 'marco',
+  regra: 'marco',
+  despacho: 'marco',
+  recomendado: 'marco',
+};
 
 interface TemplateDoc {
   file: string;
@@ -107,19 +132,36 @@ function normHeader(h: string): string {
     .replace(/[^a-z0-9#⚠]/gu, '');
 }
 
-const HEADER_MAP: Record<string, keyof PhaseRow | 'ordem'> = {
+type Col =
+  | 'ordem'
+  | 'label'
+  | 'tipo'
+  | 'base_legal'
+  | 'prazo'
+  | 'contagem'
+  | 'anchor'
+  | 'is_optional'
+  | 'confirmar'
+  | 'notas';
+
+const HEADER_MAP: Record<string, Col> = {
   '#': 'ordem',
   n: 'ordem',
   ordem: 'ordem',
   fase: 'label',
   label: 'label',
   etapa: 'label',
+  marco: 'label',
+  evento: 'label',
+  obrigacao: 'label',
   tipo: 'tipo',
   baselegal: 'base_legal',
   base: 'base_legal',
-  prazo: 'prazo_dias',
-  prazodias: 'prazo_dias',
-  dias: 'prazo_dias',
+  prazo: 'prazo',
+  prazoregra: 'prazo',
+  prazodias: 'prazo',
+  dias: 'prazo',
+  data: 'prazo',
   contagem: 'contagem',
   anchor: 'anchor',
   ancora: 'anchor',
@@ -130,6 +172,7 @@ const HEADER_MAP: Record<string, keyof PhaseRow | 'ordem'> = {
   notas: 'notas',
   nota: 'notas',
   observacoes: 'notas',
+  output: 'notas',
 };
 
 function splitTableRow(line: string): string[] {
@@ -140,9 +183,17 @@ function splitTableRow(line: string): string[] {
     .map((c) => c.trim());
 }
 
-function parsePhaseTable(md: string, file: string): PhaseRow[] {
+/** Limpa markdown leve (ênfase) de uma célula. */
+function cleanCell(v: string): string {
+  return v.replace(/\*+/g, '').replace(/\s+/g, ' ').trim();
+}
+
+const EMPTY_CELL = /^[—–\-\s]*$/;
+
+function parsePhaseTables(md: string, file: string): PhaseRow[] {
   const lines = md.split('\n');
-  // Primeira tabela markdown cujo cabeçalho contenha uma coluna de fase/label
+  const rows: PhaseRow[] = [];
+
   for (let i = 0; i < lines.length - 1; i++) {
     if (!/^\s*\|.*\|\s*$/.test(lines[i])) continue;
     if (!/^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1])) continue;
@@ -150,66 +201,101 @@ function parsePhaseTable(md: string, file: string): PhaseRow[] {
       const n = normHeader(h);
       return HEADER_MAP[n] ?? (n.includes('⚠') ? 'confirmar' : null);
     });
-    if (!headers.includes('label')) continue;
+    // Só tabelas com coluna de designação de fase contam (exclui tabelas
+    // auxiliares como "Via de investimento" ou "Prazos legais/Item").
+    if (!headers.includes('label')) {
+      i++; // salta o separador; as linhas de dados falham o teste do cabeçalho
+      continue;
+    }
 
-    const rows: PhaseRow[] = [];
-    for (let j = i + 2; j < lines.length && /^\s*\|.*\|\s*$/.test(lines[j]); j++) {
+    let j = i + 2;
+    for (; j < lines.length && /^\s*\|.*\|\s*$/.test(lines[j]); j++) {
       const cells = splitTableRow(lines[j]);
-      const raw: Partial<Record<string, string>> = {};
+      const raw: Partial<Record<Col, string>> = {};
       headers.forEach((h, idx) => {
-        if (h && cells[idx] !== undefined) raw[h] = cells[idx];
+        const v = cells[idx];
+        if (!h || v === undefined || EMPTY_CELL.test(v)) return;
+        // Colunas duplicadas ou fundidas (ex.: Output + Notas) concatenam.
+        raw[h] = raw[h] ? `${raw[h]} · ${v}` : v;
       });
 
-      const label = (raw.label ?? '').trim();
+      const label = cleanCell(raw.label ?? '');
       if (!label) continue;
 
-      const tipoRaw = (raw.tipo ?? '')
+      const tipoNorm = (raw.tipo ?? '')
         .toLowerCase()
         .normalize('NFD')
         .replace(/[̀-ͯ]/g, '')
-        .replace(/\s+/g, '_');
-      if (!TIPOS_VALIDOS.includes(tipoRaw as Tipo)) {
-        throw new Error(
-          `${file}: tipo inválido "${raw.tipo}" na fase "${label}" (válidos: ${TIPOS_VALIDOS.join(', ')})`,
-        );
+        .replace(/[^a-z]+/g, '_')
+        .replace(/^_|_$/g, '');
+      const tipo: Tipo = TIPO_MAP[tipoNorm] ?? 'marco';
+      if (raw.tipo && !TIPO_MAP[tipoNorm]) {
+        console.warn(`⚠️  ${file}: tipo desconhecido "${raw.tipo}" na fase "${label}" → marco`);
       }
 
-      const prazoMatch = (raw.prazo_dias ?? '').match(/\d+/);
-      const truthy = (v?: string) =>
-        !!v && /⚠|sim|yes|true|x|✓|✔/iu.test(v.trim());
+      // ⚠️ em qualquer célula da linha ativa a flag de validação.
+      const confirmar =
+        cells.some((c) => c.includes('⚠')) ||
+        /sim|yes|true|x|✓|✔/i.test(cleanCell(raw.confirmar ?? ''));
+
+      // Prazos: NÃO aceites como dados (ver cabeçalho). O texto vai para as
+      // notas internas; prazo_dias só com --accept-prazos e padrão "N dias".
+      const prazoTexto = cleanCell(raw.prazo ?? '')
+        .replace(/[⚠️]/gu, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      let prazo_dias: number | null = null;
+      if (ACCEPT_PRAZOS) {
+        const m = prazoTexto.match(/^~?(\d+)\s*dias?\b/i);
+        if (m) prazo_dias = parseInt(m[1], 10);
+      }
+
+      const notasParts = [
+        cleanCell(raw.notas ?? '') || null,
+        prazoTexto && prazo_dias === null ? `Prazo (por validar): ${prazoTexto}` : null,
+      ].filter(Boolean);
 
       rows.push({
-        ordem: raw.ordem ? parseInt(raw.ordem, 10) : rows.length + 1,
+        // Ordem sequencial pela posição no documento — o `#` original não é
+        // fiável como chave (reinicia entre tabelas, ex.: "Via A"/"Via B",
+        // e admite valores como "5a"/"5b").
+        ordem: rows.length + 1,
         label,
-        tipo: tipoRaw as Tipo,
-        base_legal: raw.base_legal?.trim() || null,
-        prazo_dias: prazoMatch ? parseInt(prazoMatch[0], 10) : null,
-        contagem: raw.contagem?.trim() || null,
-        anchor: raw.anchor?.trim() || null,
-        is_optional: truthy(raw.is_optional),
-        confirmar: truthy(raw.confirmar),
-        notas: raw.notas?.trim() || null,
+        tipo,
+        base_legal: cleanCell(raw.base_legal ?? '') || null,
+        prazo_dias,
+        contagem: cleanCell(raw.contagem ?? '') || null,
+        anchor: cleanCell(raw.anchor ?? '') || null,
+        is_optional: /sim|yes|true|x|✓|✔/i.test(cleanCell(raw.is_optional ?? '')),
+        confirmar,
+        notas: notasParts.length ? notasParts.join(' · ') : null,
       });
     }
-    if (rows.length) return rows;
+    i = j - 1;
   }
-  throw new Error(`${file}: nenhuma tabela de fases encontrada (cabeçalho com coluna Fase/Label)`);
+
+  if (!rows.length) {
+    throw new Error(`${file}: nenhuma tabela de fases encontrada (coluna Fase/Marco/Evento/Obrigação)`);
+  }
+  return rows;
 }
 
 function parseDoc(path: string): TemplateDoc {
   const file = path.split('/').pop()!;
   const md = readFileSync(path, 'utf8');
   const fm = parseFrontmatter(md, file);
-  if (!fm.key || !fm.title) throw new Error(`${file}: frontmatter tem de definir "key" e "title"`);
+  const title = fm.title ?? fm.titulo;
+  const key = fm.key ?? file.replace(/^timeline-/, '').replace(/\.md$/, '');
+  if (!key || !title) throw new Error(`${file}: frontmatter tem de definir "titulo" (ou "title")`);
   return {
     file,
-    key: fm.key,
-    title: fm.title,
+    key,
+    title,
     area: fm.area ?? null,
     jurisdicao: fm.jurisdicao ?? null,
     base_legal: fm.base_legal ?? null,
     versao: fm.versao ?? null,
-    phases: parsePhaseTable(md, file),
+    phases: parsePhaseTables(md, file),
   };
 }
 
@@ -227,6 +313,10 @@ async function main() {
     process.exit(1);
   }
 
+  if (!ACCEPT_PRAZOS) {
+    console.log('ℹ️  Prazos NÃO aceites como dados (rascunhos por validar) — texto preservado nas notas internas.\n');
+  }
+
   const docs = files.map((f) => parseDoc(join(DOCS_DIR, f)));
   for (const d of docs) {
     console.log(`📄 ${d.file} → template "${d.key}" (${d.title}) com ${d.phases.length} fases`);
@@ -236,12 +326,11 @@ async function main() {
       console.table(
         d.phases.map((p) => ({
           ordem: p.ordem,
-          label: p.label,
+          label: p.label.length > 44 ? p.label.slice(0, 41) + '…' : p.label,
           tipo: p.tipo,
           prazo_dias: p.prazo_dias,
-          contagem: p.contagem,
-          opcional: p.is_optional,
           confirmar: p.confirmar,
+          notas: (p.notas ?? '').length > 48 ? p.notas!.slice(0, 45) + '…' : p.notas,
         })),
       );
     }
