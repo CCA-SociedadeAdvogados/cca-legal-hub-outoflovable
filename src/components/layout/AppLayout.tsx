@@ -4,7 +4,6 @@ import { Header } from './Header';
 import { ImpersonationBanner } from './ImpersonationBanner';
 import { PendingPedidosDialog } from '@/components/pedidos/PendingPedidosDialog';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
-import { useSidebar } from '@/contexts/SidebarContext';
 import { useCliente } from '@/contexts/ClienteContext';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +13,6 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const { isImpersonating } = useImpersonation();
-  const { isCollapsed } = useSidebar();
   const { cliente } = useCliente();
 
   return (
@@ -23,13 +21,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <PendingPedidosDialog />
       <Sidebar clientName={cliente?.nome} />
 
-      <div
-        className={cn(
-          'min-h-screen w-full min-w-0 transition-[padding] duration-[220ms]',
-          isCollapsed ? 'pl-16' : 'pl-[244px]',
-          isImpersonating && 'pt-12',
-        )}
-      >
+      <div className={cn('min-h-screen w-full min-w-0 pl-[68px]', isImpersonating && 'pt-12')}>
         <Header />
         <main className="w-full min-w-0 overflow-x-hidden px-8 pb-16 pt-7">{children}</main>
       </div>

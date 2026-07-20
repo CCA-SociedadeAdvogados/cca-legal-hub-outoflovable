@@ -947,7 +947,8 @@
       "allClearSub": "No contracts expiring in the next 90 days.",
       "reviewContracts": "Review contracts",
       "viewDeadlines": "View deadlines",
-      "sessionStarted": "Session started"
+      "sessionStarted": "Session started",
+      "inDays": "{{count}} days"
     }
   },
   "legislation": {

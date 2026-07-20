@@ -166,12 +166,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Resumo do dia — banner hero */}
-        <section className="relative overflow-hidden rounded-card border border-line bg-gradient-to-r from-secondary to-card p-6 shadow-card lg:p-7">
+        {/* Resumo do dia — painel-herói índigo com espinha de prazos críticos */}
+        <section className="relative overflow-hidden rounded-card bg-gradient-to-br from-sidebar to-[hsl(224_30%_18%)] p-6 text-sidebar-ink shadow-card lg:p-7">
           <svg
             aria-hidden="true"
             viewBox="0 0 200 200"
-            className="pointer-events-none absolute -right-8 top-1/2 h-56 w-56 -translate-y-1/2 text-ink opacity-[0.07]"
+            className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 text-white opacity-[0.06]"
           >
             {[88, 66, 44, 22].map((r) => (
               <circle
@@ -185,36 +185,87 @@ export default function Dashboard() {
               />
             ))}
           </svg>
-          <div className="relative z-10 max-w-2xl">
-            <div className="eyebrow mb-2.5 text-brand">✦ {t('home.summary.eyebrow')}</div>
+          <div className="relative z-10">
+            <div className="text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-ink-mute">
+              {t('home.summary.eyebrow')} · {t('home.summary.window')}
+            </div>
             {stats.contratosExpirar90Dias > 0 ? (
-              <>
-                <h2 className="font-display text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink">
-                  <span className="text-brand [font-variant-numeric:tabular-nums]">
-                    {stats.contratosExpirar90Dias}
-                  </span>{' '}
+              <div className="mt-1.5 flex items-baseline gap-3">
+                <span className="font-display text-[56px] font-bold leading-none tracking-[-0.04em] text-white [font-variant-numeric:tabular-nums]">
+                  {stats.contratosExpirar90Dias}
+                </span>
+                <span className="font-display text-lg font-semibold text-sidebar-ink-mute">
                   {t('home.summary.expiring', { count: stats.contratosExpirar90Dias })}
-                </h2>
-                <p className="mt-1 text-[13.5px] text-ink-soft">{t('home.summary.window')}</p>
-              </>
+                </span>
+              </div>
             ) : (
-              <>
-                <h2 className="font-display text-[26px] font-semibold leading-tight tracking-[-0.02em] text-ink">
-                  {t('home.summary.allClear')}
-                </h2>
-                <p className="mt-1 text-[13.5px] text-ink-soft">{t('home.summary.allClearSub')}</p>
-              </>
+              <h2 className="mt-1.5 font-display text-[28px] font-semibold tracking-[-0.02em] text-white">
+                {t('home.summary.allClear')}
+              </h2>
             )}
+
+            {contratosAExpirar.length > 0 && (
+              <div className="mt-4 max-w-2xl">
+                {contratosAExpirar.slice(0, 4).map((c) => {
+                  const dias = c.data_termo
+                    ? differenceInDays(new Date(c.data_termo), new Date())
+                    : null;
+                  const tone =
+                    dias !== null && dias <= 15
+                      ? 'bg-danger/25 text-white'
+                      : dias !== null && dias <= 45
+                        ? 'bg-warn/25 text-white'
+                        : 'bg-white/10 text-sidebar-ink';
+                  return (
+                    <Link
+                      key={c.id}
+                      to={`/contratos/${c.id}`}
+                      className="grid grid-cols-[76px_1fr_auto] items-center gap-3 border-t border-white/10 py-2.5 transition-colors hover:bg-white/[0.04]"
+                    >
+                      <span className="font-mono text-[12px] text-sidebar-ink-mute [font-variant-numeric:tabular-nums]">
+                        {c.data_termo
+                          ? new Date(c.data_termo).toLocaleDateString(i18n.language, {
+                              day: '2-digit',
+                              month: 'short',
+                            })
+                          : '—'}
+                      </span>
+                      <span className="min-w-0 truncate text-[13.5px] font-medium text-white">
+                        {c.titulo_contrato}
+                      </span>
+                      <span
+                        className={cn(
+                          'shrink-0 rounded-full px-2.5 py-0.5 text-[10.5px] font-semibold',
+                          tone,
+                        )}
+                      >
+                        {dias !== null ? t('home.summary.inDays', { count: dias }) : '—'}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap gap-2.5">
-              <Button asChild size="sm">
-                <Link to="/contratos">{t('home.summary.reviewContracts')}</Link>
-              </Button>
-              <Button asChild variant="ghost" size="sm">
+              <Button
+                asChild
+                size="sm"
+                className="bg-white text-sidebar-active-ink hover:bg-white/90"
+              >
                 <Link to="/prazos">
                   <Clock className="mr-2 h-4 w-4" />
                   {t('home.summary.viewDeadlines')}
                   <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-sidebar-ink hover:bg-white/10 hover:text-white"
+              >
+                <Link to="/contratos">{t('home.summary.reviewContracts')}</Link>
               </Button>
             </div>
           </div>

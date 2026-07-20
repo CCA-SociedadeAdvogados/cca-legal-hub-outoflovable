@@ -2,7 +2,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSidebar } from '@/contexts/SidebarContext';
 import { useUserTheme } from '@/hooks/useUserTheme';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useHubPortalConfig, type PortalAba } from '@/hooks/useHub';
@@ -23,83 +22,73 @@ import {
   Sun,
   Settings,
   LogOut,
-  ChevronsLeft,
 } from 'lucide-react';
 
-interface NavItemProps {
+interface RailIconProps {
   to?: string;
   icon: React.ElementType;
   label: string;
   isActive?: boolean;
-  isCollapsed: boolean;
   onClick?: () => void;
-  variant?: 'primary' | 'secondary';
 }
 
-/** Single portal nav row — primary or secondary variant. */
-function NavItem({
-  to,
-  icon: Icon,
-  label,
-  isActive,
-  isCollapsed,
-  onClick,
-  variant = 'primary',
-}: NavItemProps) {
-  const stateClass = isActive
-    ? 'bg-sidebar-active text-sidebar-active-ink font-medium'
-    : variant === 'secondary'
-      ? 'text-sidebar-ink/70 hover:bg-sidebar-ink/10 hover:text-sidebar-ink'
-      : 'text-sidebar-ink/85 hover:bg-sidebar-ink/[0.08] hover:text-sidebar-ink';
-
+/** Botão único do rail do portal (só ícone) com tooltip à direita. */
+function RailIcon({ to, icon: Icon, label, isActive, onClick }: RailIconProps) {
   const className = cn(
-    'flex h-[34px] w-full min-w-0 items-center gap-3 rounded-control text-[13px] transition-colors duration-150',
-    isCollapsed ? 'justify-center px-0' : 'pl-3.5 pr-3.5',
-    stateClass,
+    'group relative flex h-11 w-11 items-center justify-center rounded-[13px] transition-colors duration-150',
+    isActive
+      ? 'bg-sidebar-ink/[0.14] text-sidebar-ink'
+      : 'text-sidebar-ink/60 hover:bg-sidebar-ink/[0.08] hover:text-sidebar-ink',
   );
 
   const inner = (
     <>
-      <Icon className="h-[15px] w-[15px] shrink-0" strokeWidth={1.5} />
-      {!isCollapsed && <span className="min-w-0 flex-1 truncate">{label}</span>}
+      {isActive && (
+        <span className="absolute -left-[13px] top-2.5 bottom-2.5 w-[3px] rounded-r-full bg-sidebar-active" />
+      )}
+      <Icon className="h-[19px] w-[19px]" strokeWidth={1.6} />
     </>
   );
 
-  const content = !to ? (
-    <button type="button" onClick={onClick} className={className}>
-      {inner}
-    </button>
-  ) : (
-    <Link to={to} className={className} onClick={onClick}>
-      {inner}
-    </Link>
-  );
-
-  if (isCollapsed) {
-    return (
-      <Tooltip delayDuration={0}>
-        <TooltipTrigger asChild>{content}</TooltipTrigger>
-        <TooltipContent side="right">{label}</TooltipContent>
-      </Tooltip>
+  const content =
+    to && !onClick ? (
+      <Link
+        to={to}
+        className={className}
+        aria-label={label}
+        aria-current={isActive ? 'page' : undefined}
+      >
+        {inner}
+      </Link>
+    ) : (
+      <button type="button" onClick={onClick} className={className} aria-label={label}>
+        {inner}
+      </button>
     );
-  }
-  return content;
+
+  return (
+    <Tooltip delayDuration={0}>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function RailDivider() {
+  return <div className="my-2 h-px w-6 self-center bg-sidebar-ink/12" />;
 }
 
 /**
- * PortalSidebar — navegação enxuta do Portal do Cliente.
- *
- * Deliberadamente NÃO contém conceitos internos da CCA (impersonação, platform admin,
- * org switcher, tiers bloqueados). O cliente é o protagonista.
+ * PortalSidebar — rail de navegação do Portal do Cliente (68px, só ícones).
+ * Sem conceitos internos da CCA. As abas visíveis respeitam a configuração da
+ * consola (nível 1 do modelo de permissões).
  */
 export function PortalSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { signOut } = useAuth();
-  const { isCollapsed, toggle } = useSidebar();
   const { resolvedTheme, toggleTheme } = useUserTheme();
-  // Nível 1 do modelo de permissões: abas geridas na consola por cliente.
   const { currentOrganization } = useOrganizations();
   const { data: config } = useHubPortalConfig(currentOrganization?.id);
   const aba = (nome: PortalAba) => config?.abas[nome] !== false;
@@ -115,166 +104,114 @@ export function PortalSidebar() {
   };
 
   return (
-    <aside
-      className={cn(
-        'fixed left-0 top-0 z-40 flex h-screen flex-col bg-sidebar text-sidebar-ink transition-[width] duration-[220ms]',
-        isCollapsed ? 'w-16' : 'w-[244px]',
-      )}
-    >
-      {/* Brand block */}
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-[68px] flex-col items-center gap-1 bg-sidebar py-3 text-sidebar-ink">
       <Link
         to="/portal"
-        className={cn(
-          'flex h-[60px] items-center gap-3 transition-colors duration-150 hover:bg-sidebar-ink/5',
-          isCollapsed ? 'justify-center px-0' : 'px-4',
-        )}
+        aria-label={t('portal.brand')}
+        className="mb-2 flex h-10 w-10 items-center justify-center overflow-hidden rounded-[13px] border border-sidebar-active/40 bg-sidebar-active-ink transition-transform hover:scale-105"
       >
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-control border border-sidebar-active bg-sidebar-active-ink">
-          <img src={ccaLogo} alt="CCA" className="h-6 w-6 object-contain" />
-        </div>
-        {!isCollapsed && (
-          <div className="min-w-0 leading-tight">
-            <div className="font-display text-[15px] font-medium tracking-[-0.005em] text-sidebar-ink">
-              {t('portal.brand')}
-            </div>
-            <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-sidebar-ink-mute">
-              by CCA
-            </div>
-          </div>
-        )}
+        <img src={ccaLogo} alt="CCA" className="h-6 w-6 object-contain" />
       </Link>
 
-      {/* Primary nav */}
-      <nav
-        className={cn(
-          'flex-1 space-y-0.5 overflow-y-auto py-3 scrollbar-hide',
-          isCollapsed ? 'px-2' : 'px-2.5',
-        )}
-      >
-        <NavItem
+      <nav className="flex flex-1 flex-col items-center gap-1 overflow-y-auto scrollbar-hide">
+        <RailIcon
           to="/portal"
           icon={Home}
           label={t('portal.nav.home')}
           isActive={isActive('/portal')}
-          isCollapsed={isCollapsed}
         />
         {aba('contratos') && (
-          <NavItem
+          <RailIcon
             to="/portal/contratos"
             icon={FileText}
             label={t('portal.nav.contracts')}
             isActive={isActive('/portal/contratos')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('assuntos') && (
-          <NavItem
+          <RailIcon
             to="/portal/assuntos"
             icon={Briefcase}
             label={t('portal.nav.matters')}
             isActive={isActive('/portal/assuntos')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('timelines') && (
-          <NavItem
+          <RailIcon
             to="/portal/timelines"
             icon={ListChecks}
             label={t('portal.nav.timelines')}
             isActive={isActive('/portal/timelines')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('documentos') && (
-          <NavItem
+          <RailIcon
             to="/portal/documentos"
             icon={FolderOpen}
             label={t('portal.nav.documents')}
             isActive={isActive('/portal/documentos')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('prazos') && (
-          <NavItem
+          <RailIcon
             to="/portal/prazos"
             icon={CalendarClock}
             label={t('portal.nav.deadlines')}
             isActive={isActive('/portal/prazos')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('politicas') && (
-          <NavItem
+          <RailIcon
             to="/portal/politicas"
             icon={ShieldCheck}
             label={t('portal.nav.policies')}
             isActive={isActive('/portal/politicas')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('financeiro') && (
-          <NavItem
+          <RailIcon
             to="/portal/financeiro"
             icon={Wallet}
             label={t('portal.nav.financial')}
             isActive={isActive('/portal/financeiro')}
-            isCollapsed={isCollapsed}
           />
         )}
         {aba('pedidos') && (
-          <NavItem
+          <RailIcon
             to="/portal/pedidos"
             icon={MessageSquarePlus}
             label={t('portal.nav.requests')}
             isActive={isActive('/portal/pedidos')}
-            isCollapsed={isCollapsed}
           />
         )}
 
-        <div className="my-2 border-t border-sidebar-ink/10" />
-
         {aba('novidades') && (
-          <NavItem
-            to="/portal/novidades"
-            icon={Newspaper}
-            label={t('portal.nav.news')}
-            isActive={isActive('/portal/novidades')}
-            isCollapsed={isCollapsed}
-          />
+          <>
+            <RailDivider />
+            <RailIcon
+              to="/portal/novidades"
+              icon={Newspaper}
+              label={t('portal.nav.news')}
+              isActive={isActive('/portal/novidades')}
+            />
+          </>
         )}
       </nav>
 
-      {/* Secondary block */}
-      <div className="space-y-0.5 border-t border-sidebar-ink/10 px-2.5 py-3">
-        <NavItem
+      <div className="flex flex-col items-center gap-1">
+        <RailDivider />
+        <RailIcon
           icon={resolvedTheme === 'dark' ? Sun : Moon}
           label={resolvedTheme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
-          isCollapsed={isCollapsed}
           onClick={toggleTheme}
-          variant="secondary"
         />
-        <NavItem
+        <RailIcon
           to="/portal/perfil"
           icon={Settings}
           label={t('portal.nav.profile')}
           isActive={isActive('/portal/perfil')}
-          isCollapsed={isCollapsed}
-          variant="secondary"
         />
-        <NavItem
-          icon={LogOut}
-          label={t('common.logout')}
-          isCollapsed={isCollapsed}
-          onClick={handleSignOut}
-          variant="secondary"
-        />
-        <NavItem
-          icon={ChevronsLeft}
-          label={isCollapsed ? t('common.expand') : t('common.collapse')}
-          isCollapsed={isCollapsed}
-          onClick={toggle}
-          variant="secondary"
-        />
+        <RailIcon icon={LogOut} label={t('common.logout')} onClick={handleSignOut} />
       </div>
     </aside>
   );

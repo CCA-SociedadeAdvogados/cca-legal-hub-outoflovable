@@ -947,7 +947,8 @@
       "allClearSub": "Sem contratos a expirar nos próximos 90 dias.",
       "reviewContracts": "Rever contratos",
       "viewDeadlines": "Ver prazos",
-      "sessionStarted": "Sessão iniciada"
+      "sessionStarted": "Sessão iniciada",
+      "inDays": "{{count}} dias"
     }
   },
   "legislation": {
