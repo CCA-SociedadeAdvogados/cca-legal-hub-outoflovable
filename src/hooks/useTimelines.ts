@@ -13,12 +13,7 @@ import { queryKeys } from '@/lib/queryKeys';
  *    tl_client_timeline / tl_client_instances, que por construção não
  *    devolvem nenhuma coluna de prazo/data.
  *
- * Nota: os objetos tl_* ainda não constam de src/integrations/supabase/types.ts
- * (correr `npm run gen:types` depois de aplicar a migração). Até lá, o cliente
- * é usado através de um cast local não tipado.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sb = supabase as any;
 
 export type TlEstado = 'pendente' | 'ativa' | 'concluida';
 export type TlTipo = 'gatilho' | 'prazo_parte' | 'prazo_tribunal' | 'marco';
@@ -82,7 +77,7 @@ export function useTlTemplates() {
     queryKey: queryKeys.timelines.templates(),
     staleTime: 5 * 60 * 1000,
     queryFn: async (): Promise<TlTemplate[]> => {
-      const { data, error } = await sb.from('tl_templates').select('*').order('title');
+      const { data, error } = await supabase.from('tl_templates').select('*').order('title');
       if (error) throw error;
       return data ?? [];
     },
@@ -95,7 +90,7 @@ export function useTlInstances(organizationId: string | null) {
     enabled: !!organizationId,
     staleTime: 30 * 1000,
     queryFn: async (): Promise<TlInstance[]> => {
-      const { data, error } = await sb
+      const { data, error } = await supabase
         .from('tl_instances')
         .select(
           'id, template_id, matter_ref, org_id, gatilho_data, urgente, created_at, tl_templates(key, title)',
@@ -121,7 +116,7 @@ export function useCreateTlInstance() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: NovaTlInstance): Promise<string> => {
-      const { data: instance, error } = await sb
+      const { data: instance, error } = await supabase
         .from('tl_instances')
         .insert({
           template_id: input.template_id,
@@ -134,14 +129,14 @@ export function useCreateTlInstance() {
         .single();
       if (error) throw error;
 
-      const { data: phases, error: phasesError } = await sb
+      const { data: phases, error: phasesError } = await supabase
         .from('tl_phases')
         .select('id')
         .eq('template_id', input.template_id);
       if (phasesError) throw phasesError;
 
       if (phases?.length) {
-        const { error: insertError } = await sb
+        const { error: insertError } = await supabase
           .from('tl_instance_phases')
           .insert(
             phases.map((p: { id: string }) => ({ instance_id: instance.id, phase_id: p.id })),
@@ -167,9 +162,9 @@ export function useLawyerTimeline(instanceId: string | null) {
     enabled: !!instanceId,
     staleTime: 15 * 1000,
     queryFn: async (): Promise<TlLawyerPhase[]> => {
-      const { data, error } = await sb.rpc('tl_lawyer_timeline', { p_instance: instanceId });
+      const { data, error } = await supabase.rpc('tl_lawyer_timeline', { p_instance: instanceId });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TlLawyerPhase[];
     },
   });
 }
@@ -184,7 +179,7 @@ export function useSetTlPhase(instanceId: string | null) {
       instancePhaseId: string;
       estado: TlEstado;
     }) => {
-      const { error } = await sb.rpc('tl_set_phase', {
+      const { error } = await supabase.rpc('tl_set_phase', {
         p_instance_phase: instancePhaseId,
         p_estado: estado,
       });
@@ -207,7 +202,7 @@ export function useTlClientInstances() {
     queryKey: queryKeys.timelines.clientInstances(),
     staleTime: 60 * 1000,
     queryFn: async (): Promise<TlClientInstance[]> => {
-      const { data, error } = await sb.rpc('tl_client_instances');
+      const { data, error } = await supabase.rpc('tl_client_instances');
       if (error) throw error;
       return data ?? [];
     },
@@ -220,9 +215,9 @@ export function useClientTimeline(instanceId: string | null) {
     enabled: !!instanceId,
     staleTime: 60 * 1000,
     queryFn: async (): Promise<TlClientPhase[]> => {
-      const { data, error } = await sb.rpc('tl_client_timeline', { p_instance: instanceId });
+      const { data, error } = await supabase.rpc('tl_client_timeline', { p_instance: instanceId });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as TlClientPhase[];
     },
   });
 }

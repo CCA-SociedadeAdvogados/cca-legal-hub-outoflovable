@@ -50,3 +50,22 @@ A simulação de utilizador autenticado usa `set role authenticated` +
 prazo/data por nenhum caminho (tabelas diretas, RPC de advogado ou mutação);
 `tl_client_timeline`/`tl_client_instances` não devolvem essas colunas por
 construção (garantido pela assinatura das funções, verificação 0/0b).
+
+## Validação na base remota (2026-07-20, projeto `scjxhhkutsiswsgsuiqo`)
+
+Depois de aplicada a migração em produção, as verificações-chave foram
+repetidas via Management API com **utilizadores reais** (JWT simulado com
+`set local role authenticated` + `request.jwt.claims`):
+
+| Verificação | Resultado |
+|---|---|
+| 4 tabelas `tl_*` criadas com `relrowsecurity = true` e política `*_lawyer` | ✅ |
+| Assinaturas de `tl_client_timeline`/`tl_client_instances` sem colunas de data | ✅ |
+| Utilizador org real (`auth_method='local'`): SELECT direto às tabelas + `tl_lawyer_timeline` | ✅ 0 linhas |
+| Utilizador org real: `tl_set_phase` | ✅ `ERROR: not authorized` |
+| Utilizador org real: INSERT direto | ✅ erro RLS |
+| Utilizador org real: `tl_is_lawyer()` / `tl_role()` | ✅ `false` / `org_manager` |
+| Utilizador CCA real (`sso_cca`): `tl_is_lawyer()` / `tl_role()` / SELECT direto | ✅ `true` / `cca_user` / acesso |
+
+A migração ficou registada em `supabase_migrations.schema_migrations`
+(versão `20260720120000`).
