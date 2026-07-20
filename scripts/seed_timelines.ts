@@ -72,14 +72,19 @@ const TIPO_MAP: Record<string, Tipo> = {
   prazo_de_parte: 'prazo_parte',
   prazo_do_requerente: 'prazo_parte',
   ato_do_requerente: 'prazo_parte',
+  ato_do_exequente: 'prazo_parte',
+  ato_do_autor: 'prazo_parte',
   prazo_tribunal: 'prazo_tribunal',
   prazo_do_tribunal: 'prazo_tribunal',
   decisao_aima: 'prazo_tribunal',
+  decisao: 'prazo_tribunal',
   marco: 'marco',
   marco_do_tribunal: 'marco',
   marco_aima: 'marco',
   obrigacao_continuada: 'marco',
   regra: 'marco',
+  despacho: 'marco',
+  recomendado: 'marco',
 };
 
 interface TemplateDoc {
@@ -250,10 +255,11 @@ function parsePhaseTables(md: string, file: string): PhaseRow[] {
         prazoTexto && prazo_dias === null ? `Prazo (por validar): ${prazoTexto}` : null,
       ].filter(Boolean);
 
-      const ordem = raw.ordem ? parseInt(raw.ordem, 10) : (rows.at(-1)?.ordem ?? 0) + 1;
-
       rows.push({
-        ordem,
+        // Ordem sequencial pela posição no documento — o `#` original não é
+        // fiável como chave (reinicia entre tabelas, ex.: "Via A"/"Via B",
+        // e admite valores como "5a"/"5b").
+        ordem: rows.length + 1,
         label,
         tipo,
         base_legal: cleanCell(raw.base_legal ?? '') || null,
@@ -270,11 +276,6 @@ function parsePhaseTables(md: string, file: string): PhaseRow[] {
 
   if (!rows.length) {
     throw new Error(`${file}: nenhuma tabela de fases encontrada (coluna Fase/Marco/Evento/Obrigação)`);
-  }
-  const ordens = new Set<number>();
-  for (const r of rows) {
-    if (ordens.has(r.ordem)) throw new Error(`${file}: ordem duplicada ${r.ordem} ("${r.label}")`);
-    ordens.add(r.ordem);
   }
   return rows;
 }
