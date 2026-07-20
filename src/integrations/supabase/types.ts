@@ -4118,6 +4118,202 @@ export type Database = {
           },
         ]
       }
+      tl_instance_phases: {
+        Row: {
+          data_conclusao: string | null
+          estado: string
+          id: string
+          instance_id: string
+          notas_internas: string | null
+          phase_id: string
+          prazo_calculado: string | null
+        }
+        Insert: {
+          data_conclusao?: string | null
+          estado?: string
+          id?: string
+          instance_id: string
+          notas_internas?: string | null
+          phase_id: string
+          prazo_calculado?: string | null
+        }
+        Update: {
+          data_conclusao?: string | null
+          estado?: string
+          id?: string
+          instance_id?: string
+          notas_internas?: string | null
+          phase_id?: string
+          prazo_calculado?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tl_instance_phases_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "tl_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tl_instance_phases_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "tl_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tl_instances: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          dilacao_dias: number | null
+          gatilho_data: string | null
+          id: string
+          matter_ref: string | null
+          org_id: string
+          template_id: string
+          urgente: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          dilacao_dias?: number | null
+          gatilho_data?: string | null
+          id?: string
+          matter_ref?: string | null
+          org_id: string
+          template_id: string
+          urgente?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          dilacao_dias?: number | null
+          gatilho_data?: string | null
+          id?: string
+          matter_ref?: string | null
+          org_id?: string
+          template_id?: string
+          urgente?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tl_instances_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tl_instances_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "tl_instances_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "tl_instances_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "tl_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tl_phases: {
+        Row: {
+          anchor: string | null
+          base_legal: string | null
+          confirmar: boolean | null
+          contagem: string | null
+          id: string
+          is_optional: boolean | null
+          label: string
+          notas: string | null
+          ordem: number
+          prazo_dias: number | null
+          template_id: string
+          tipo: string
+        }
+        Insert: {
+          anchor?: string | null
+          base_legal?: string | null
+          confirmar?: boolean | null
+          contagem?: string | null
+          id?: string
+          is_optional?: boolean | null
+          label: string
+          notas?: string | null
+          ordem: number
+          prazo_dias?: number | null
+          template_id: string
+          tipo: string
+        }
+        Update: {
+          anchor?: string | null
+          base_legal?: string | null
+          confirmar?: boolean | null
+          contagem?: string | null
+          id?: string
+          is_optional?: boolean | null
+          label?: string
+          notas?: string | null
+          ordem?: number
+          prazo_dias?: number | null
+          template_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tl_phases_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "tl_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tl_templates: {
+        Row: {
+          area: string | null
+          base_legal: string | null
+          created_at: string | null
+          id: string
+          jurisdicao: string | null
+          key: string
+          title: string
+          versao: string | null
+        }
+        Insert: {
+          area?: string | null
+          base_legal?: string | null
+          created_at?: string | null
+          id?: string
+          jurisdicao?: string | null
+          key: string
+          title: string
+          versao?: string | null
+        }
+        Update: {
+          area?: string | null
+          base_legal?: string | null
+          created_at?: string | null
+          id?: string
+          jurisdicao?: string | null
+          key?: string
+          title?: string
+          versao?: string | null
+        }
+        Relationships: []
+      }
       user_consents: {
         Row: {
           consent_type: string
@@ -5279,6 +5475,47 @@ export type Database = {
           storage_path: string
           title: string
         }[]
+      }
+      tl_client_instances: {
+        Args: never
+        Returns: {
+          instance_id: string
+          matter_ref: string
+          template_key: string
+          template_title: string
+        }[]
+      }
+      tl_client_timeline: {
+        Args: { p_instance: string }
+        Returns: {
+          estado: string
+          label: string
+          ordem: number
+          tipo: string
+        }[]
+      }
+      tl_is_lawyer: { Args: never; Returns: boolean }
+      tl_lawyer_timeline: {
+        Args: { p_instance: string }
+        Returns: {
+          base_legal: string
+          confirmar: boolean
+          data_conclusao: string
+          estado: string
+          instance_phase_id: string
+          is_optional: boolean
+          label: string
+          notas: string
+          ordem: number
+          prazo_calculado: string
+          tipo: string
+        }[]
+      }
+      tl_org: { Args: never; Returns: string }
+      tl_role: { Args: never; Returns: string }
+      tl_set_phase: {
+        Args: { p_estado: string; p_instance_phase: string }
+        Returns: undefined
       }
       update_legal_queue_error: {
         Args: { p_error: string; p_fail_count: number; p_url: string }

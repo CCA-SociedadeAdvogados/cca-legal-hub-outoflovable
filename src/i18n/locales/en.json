@@ -125,6 +125,7 @@
     "financial": "My CCA Current Account",
     "requests": "Client requests",
     "matters": "Matters",
+    "timelines": "Timelines",
     "legalbi": "LegalBI",
     "deadlines": "Deadlines"
   },
@@ -176,6 +177,42 @@
         "visibility": "Visibility"
       },
       "fromRequest": "Origin: client request"
+    }
+  },
+  "timelines": {
+    "cca": {
+      "title": "Case timelines",
+      "description": "Create timelines from validated templates and activate/complete phases — the client sees progress in the portal, without deadlines.",
+      "new": "New timeline",
+      "newTitle": "New case timeline",
+      "selectClient": "Select a client to manage timelines.",
+      "empty": "No timelines for this client yet.",
+      "template": "Template",
+      "templatePlaceholder": "Choose a template",
+      "matterRef": "Case reference",
+      "matterRefPlaceholder": "e.g. Proc. 123/26.4T8LSB",
+      "gatilhoData": "Trigger date",
+      "gatilhoHint": "Internal — never visible to the client.",
+      "create": "Create",
+      "noRef": "No reference"
+    },
+    "empty": "This timeline has no phases yet.",
+    "optional": "Optional",
+    "confirmar": "Confirm",
+    "confirmarHint": "Deadline/rule to validate before communicating.",
+    "deadline": "Deadline",
+    "completedOn": "Completed on",
+    "urgent": "Urgent",
+    "tipos": {
+      "gatilho": "Trigger",
+      "prazo_parte": "Party deadline",
+      "prazo_tribunal": "Court deadline",
+      "marco": "Milestone"
+    },
+    "toggleTo": {
+      "pendente": "Reset to pending",
+      "ativa": "Activate",
+      "concluida": "Complete"
     }
   },
   "dashboard": {
@@ -1997,6 +2034,7 @@
       "home": "Home",
       "contracts": "My contracts",
       "matters": "My matters",
+      "timelines": "Timelines",
       "documents": "Documents",
       "deadlines": "Deadlines",
       "financial": "Account statement",
@@ -2080,11 +2118,24 @@
         "outro": "Other"
       }
     },
+    "timelines": {
+      "empty": "No active phases yet.",
+      "emptyList": "No timelines available yet.",
+      "estados": {
+        "ativa": "In progress",
+        "concluida": "Completed"
+      }
+    },
     "pages": {
       "matters": {
         "eyebrow": "Matters",
         "title": "My matters",
         "description": "Track the status of the work CCA is handling for you."
+      },
+      "timelines": {
+        "eyebrow": "Cases",
+        "title": "My case timelines",
+        "description": "Follow the phases of your cases, updated by the CCA team."
       },
       "policies": {
         "eyebrow": "Policies",
