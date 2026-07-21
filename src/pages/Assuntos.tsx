@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,6 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { KPI } from '@/components/cca';
+import { ChevronDown, ChevronRight, ListChecks } from 'lucide-react';
+import { useTlInstances, useTlTemplates, useCreateTlInstance } from '@/hooks/useTimelines';
+import { LawyerTimeline } from '@/components/timelines/LawyerTimeline';
 import {
   Dialog,
   DialogContent,
@@ -88,7 +92,7 @@ export default function Assuntos() {
 
   return (
     <AppLayout>
-      <div className="mx-auto max-w-4xl space-y-7 animate-fade-in">
+      <div className="mx-auto max-w-5xl space-y-7 animate-fade-in">
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <header className="space-y-3">
             <Eyebrow>{t('nav.matters')}</Eyebrow>
@@ -127,17 +131,23 @@ export default function Assuntos() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {assuntos.map((a) => (
-              <CockpitAssuntoCard
-                key={a.id}
-                assunto={a}
-                organizationId={organizationId}
-                onEstado={(estado) => updateAssunto.mutate({ id: a.id, estado })}
-                onPatch={(patch) => updateAssunto.mutate({ id: a.id, ...patch })}
-                addEvento={addEvento}
-              />
-            ))}
+          <div className="space-y-6">
+            <MattersReport organizationId={organizationId} assuntos={assuntos} />
+            <div className="space-y-3">
+              <h2 className="text-[11px] font-medium uppercase tracking-eyebrow text-ink-mute">
+                {t('matters.report.list', 'Assuntos')}
+              </h2>
+              {assuntos.map((a) => (
+                <CockpitAssuntoCard
+                  key={a.id}
+                  assunto={a}
+                  organizationId={organizationId}
+                  onEstado={(estado) => updateAssunto.mutate({ id: a.id, estado })}
+                  onPatch={(patch) => updateAssunto.mutate({ id: a.id, ...patch })}
+                  addEvento={addEvento}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -192,6 +202,205 @@ export default function Assuntos() {
   );
 }
 
+const TIPOS_ALL: AssuntoTipo[] = [
+  'contencioso',
+  'consultoria',
+  'transacao',
+  'due_diligence',
+  'registo',
+  'outro',
+];
+
+/**
+ * MattersReport — vista de indicadores da carteira de assuntos, inspirada nos
+ * relatórios de atividade (KPIs, resumo por tipo, atividade mensal e trabalho
+ * executado). Usa dados reais: assuntos + eventos do hub. (As horas dependem do
+ * conector JVRIS, ainda não disponível; a métrica de volume é a atividade.)
+ */
+function MattersReport({
+  organizationId,
+  assuntos,
+}: {
+  organizationId: string;
+  assuntos: Assunto[];
+}) {
+  const { t, i18n } = useTranslation();
+  const { data: eventos = [] } = useHubEventos(organizationId);
+
+  const ATIVOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente'];
+  const total = assuntos.length;
+  const ativos = assuntos.filter((a) => ATIVOS.includes(a.estado as AssuntoEstado)).length;
+  const concluidos = assuntos.filter((a) => a.estado === 'concluido').length;
+
+  const assuntoTitulo = useMemo(() => {
+    const m = new Map<string, string>();
+    assuntos.forEach((a) => m.set(a.id, a.titulo));
+    return m;
+  }, [assuntos]);
+
+  // Resumo por tipo (à imagem de "Resumo por dossier/Projeto")
+  const porTipo = useMemo(() => {
+    const counts = new Map<string, number>();
+    assuntos.forEach((a) => counts.set(a.tipo, (counts.get(a.tipo) ?? 0) + 1));
+    return TIPOS_ALL.map((tp) => ({
+      tipo: tp,
+      count: counts.get(tp) ?? 0,
+      pct: total > 0 ? ((counts.get(tp) ?? 0) / total) * 100 : 0,
+    }))
+      .filter((r) => r.count > 0)
+      .sort((a, b) => b.count - a.count);
+  }, [assuntos, total]);
+
+  // Atividade mensal (à imagem de "Consumo mensal") — eventos por mês, 7 meses
+  const meses = useMemo(() => {
+    const now = new Date();
+    const buckets: { key: string; label: string; count: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      buckets.push({
+        key,
+        label: d.toLocaleDateString(i18n.language, { month: 'short' }),
+        count: 0,
+      });
+    }
+    const idx = new Map(buckets.map((b, i) => [b.key, i]));
+    eventos.forEach((e) => {
+      const d = new Date(e.data_evento);
+      const k = `${d.getFullYear()}-${d.getMonth()}`;
+      const i = idx.get(k);
+      if (i !== undefined) buckets[i].count++;
+    });
+    return buckets;
+  }, [eventos, i18n.language]);
+  const maxMes = Math.max(1, ...meses.map((m) => m.count));
+
+  // Trabalho executado (à imagem de "Trabalho executado") — eventos recentes
+  const trabalho = useMemo(() => eventos.slice(0, 12), [eventos]);
+
+  return (
+    <div className="space-y-5">
+      {/* A1 — KPIs */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KPI label={t('matters.report.total', 'Total de assuntos')} value={total} />
+        <KPI label={t('matters.report.active', 'Ativos')} value={ativos} />
+        <KPI label={t('matters.report.done', 'Concluídos')} value={concluidos} />
+        <KPI label={t('matters.report.activity', 'Atualizações')} value={eventos.length} />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Resumo por tipo */}
+        <Card className="rounded-card border-line bg-surface">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-sm text-ink">
+              {t('matters.report.byType', 'Resumo por tipo')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-line-soft text-[10.5px] uppercase tracking-wide text-ink-mute">
+                  <th className="pb-2 text-left font-medium">{t('matters.cca.fields.type')}</th>
+                  <th className="pb-2 text-right font-medium">{t('matters.report.count', 'Nº')}</th>
+                  <th className="pb-2 text-right font-medium">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {porTipo.map((r) => (
+                  <tr key={r.tipo} className="border-b border-line-soft last:border-0">
+                    <td className="py-2 text-[13px] text-ink">
+                      {t(`portal.matters.tipos.${r.tipo}`)}
+                    </td>
+                    <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                      {r.count}
+                    </td>
+                    <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                      {r.pct.toFixed(1).replace('.', ',')}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+
+        {/* Atividade mensal */}
+        <Card className="rounded-card border-line bg-surface">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-sm text-ink">
+              {t('matters.report.monthly', 'Atividade mensal')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex h-40 items-end justify-between gap-2">
+              {meses.map((m) => (
+                <div key={m.key} className="flex min-w-0 flex-1 flex-col items-center gap-1.5">
+                  <span className="font-mono text-[10px] text-ink-mute [font-variant-numeric:tabular-nums]">
+                    {m.count}
+                  </span>
+                  <div
+                    className="w-full rounded-t bg-brand/85 transition-[height]"
+                    style={{ height: `${(m.count / maxMes) * 120 + 2}px` }}
+                    title={`${m.label}: ${m.count}`}
+                  />
+                  <span className="text-[10px] capitalize text-ink-mute">{m.label}</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Trabalho executado */}
+      {trabalho.length > 0 && (
+        <Card className="rounded-card border-line bg-surface">
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-sm text-ink">
+              {t('matters.report.workLog', 'Trabalho executado')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[520px]">
+                <thead>
+                  <tr className="border-b border-line-soft text-[10.5px] uppercase tracking-wide text-ink-mute">
+                    <th className="pb-2 pr-3 text-left font-medium">
+                      {t('matters.report.day', 'Dia')}
+                    </th>
+                    <th className="pb-2 pr-3 text-left font-medium">{t('nav.matters')}</th>
+                    <th className="pb-2 text-left font-medium">
+                      {t('matters.cca.fields.description')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trabalho.map((e) => (
+                    <tr key={e.id} className="border-b border-line-soft last:border-0 align-top">
+                      <td className="py-2 pr-3 font-mono text-[12px] text-ink-mute [font-variant-numeric:tabular-nums]">
+                        {new Date(e.data_evento).toLocaleDateString(i18n.language, {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-2 pr-3 text-[12.5px] text-ink-soft">
+                        {e.assunto_id ? (assuntoTitulo.get(e.assunto_id) ?? '—') : '—'}
+                      </td>
+                      <td className="py-2 text-[13px] text-ink">
+                        {e.titulo_interno || e.titulo_cliente}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function CockpitAssuntoCard({
   assunto,
   organizationId,
@@ -209,6 +418,27 @@ function CockpitAssuntoCard({
   const { data: eventos = [] } = useHubEventos(organizationId, assunto.id);
   const updateEvento = useUpdateHubEvento(organizationId);
   const estado = (assunto.estado as AssuntoEstado) ?? 'aberto';
+
+  // Timeline do processo — dentro do assunto. Liga uma instância de timeline
+  // ao assunto por matter_ref === referência do assunto.
+  const { data: tlInstances = [] } = useTlInstances(organizationId);
+  const { data: tlTemplates = [] } = useTlTemplates();
+  const createTl = useCreateTlInstance();
+  const tlInstance = assunto.referencia
+    ? tlInstances.find((i) => i.matter_ref === assunto.referencia)
+    : undefined;
+  const [tlOpen, setTlOpen] = useState(false);
+  const [tlTemplateId, setTlTemplateId] = useState('');
+  const criarTimeline = async () => {
+    if (!tlTemplateId) return;
+    await createTl.mutateAsync({
+      template_id: tlTemplateId,
+      org_id: organizationId,
+      matter_ref: assunto.referencia ?? assunto.titulo,
+    });
+    setTlTemplateId('');
+    setTlOpen(true);
+  };
 
   const [open, setOpen] = useState(false);
   const [evTitulo, setEvTitulo] = useState('');
@@ -345,6 +575,68 @@ function CockpitAssuntoCard({
             })}
           </ol>
         )}
+
+        {/* Timeline do processo — dentro do assunto */}
+        <div className="border-t border-line pt-3">
+          {tlInstance ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setTlOpen((v) => !v)}
+                className="flex items-center gap-1.5 text-[12.5px] font-medium text-brand transition-colors hover:text-brand/80"
+              >
+                {tlOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+                <ListChecks className="h-3.5 w-3.5" />
+                {t('matters.cca.timeline', 'Timeline do processo')}
+              </button>
+              {tlOpen && (
+                <div className="mt-3">
+                  <LawyerTimeline instanceId={tlInstance.id} />
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-ink-mute">
+                {t('matters.cca.noTimeline', 'Sem timeline neste processo')}
+              </span>
+              <div className="w-56">
+                <Select value={tlTemplateId} onValueChange={setTlTemplateId}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue
+                      placeholder={t('matters.cca.chooseTemplate', 'Escolher modelo…')}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tlTemplates.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id}>
+                        {tpl.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5"
+                disabled={!tlTemplateId || createTl.isPending}
+                onClick={criarTimeline}
+              >
+                {createTl.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <ListChecks className="h-3.5 w-3.5" />
+                )}
+                {t('matters.cca.createTimeline', 'Criar timeline')}
+              </Button>
+            </div>
+          )}
+        </div>
       </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>

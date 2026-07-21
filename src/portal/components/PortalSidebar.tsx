@@ -13,9 +13,7 @@ import {
   FileText,
   FolderOpen,
   CalendarClock,
-  ListChecks,
   Wallet,
-  MessageSquarePlus,
   Newspaper,
   ShieldCheck,
   Moon,
@@ -136,14 +134,6 @@ export function PortalSidebar() {
             isActive={isActive('/portal/assuntos')}
           />
         )}
-        {aba('timelines') && (
-          <RailIcon
-            to="/portal/timelines"
-            icon={ListChecks}
-            label={t('portal.nav.timelines')}
-            isActive={isActive('/portal/timelines')}
-          />
-        )}
         {aba('documentos') && (
           <RailIcon
             to="/portal/documentos"
@@ -174,14 +164,6 @@ export function PortalSidebar() {
             icon={Wallet}
             label={t('portal.nav.financial')}
             isActive={isActive('/portal/financeiro')}
-          />
-        )}
-        {aba('pedidos') && (
-          <RailIcon
-            to="/portal/pedidos"
-            icon={MessageSquarePlus}
-            label={t('portal.nav.requests')}
-            isActive={isActive('/portal/pedidos')}
           />
         )}
 

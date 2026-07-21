@@ -185,7 +185,23 @@
         "description": "Description",
         "visibility": "Visibility"
       },
-      "fromRequest": "Origin: client request"
+      "fromRequest": "Origin: client request",
+      "timeline": "Case timeline",
+      "noTimeline": "No timeline in this matter",
+      "chooseTemplate": "Choose template…",
+      "createTimeline": "Create timeline"
+    },
+    "report": {
+      "list": "Matters",
+      "total": "Total matters",
+      "active": "Active",
+      "done": "Completed",
+      "activity": "Updates",
+      "byType": "Summary by type",
+      "count": "No.",
+      "monthly": "Monthly activity",
+      "workLog": "Work executed",
+      "day": "Day"
     }
   },
   "timelines": {
@@ -382,7 +398,9 @@
     "docsIssue": "missing or expired",
     "noExpiringContracts": "No expirations in the next 90 days",
     "portfolioByPhase": "Portfolio by phase",
-    "inDays": "in {{count}} days"
+    "inDays": "in {{count}} days",
+    "activeMatters": "Active matters",
+    "totalMatters": "Total matters"
   },
   "contractsOld": {},
   "events": {
@@ -2035,11 +2053,13 @@
       "viewAll": "View all",
       "kpi": {
         "activeContracts": "Active contracts",
-        "upcomingDeadlines": "Deadlines needing attention"
+        "upcomingDeadlines": "Deadlines needing attention",
+        "activeMatters": "Active matters"
       },
       "sections": {
         "deadlines": "Upcoming deadlines",
-        "recentContracts": "Recent contracts"
+        "recentContracts": "Recent contracts",
+        "recentMatters": "Recent matters"
       }
     },
     "news": {

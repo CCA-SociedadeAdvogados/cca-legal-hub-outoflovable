@@ -11,7 +11,6 @@ import {
   Home,
   Bell,
   Wallet,
-  MessageSquarePlus,
   Briefcase,
   BarChart3,
   FileText,
@@ -25,7 +24,6 @@ import {
   Settings,
   SlidersHorizontal,
   LogOut,
-  ListChecks,
   CalendarClock,
   Crown,
 } from 'lucide-react';
@@ -155,12 +153,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           isActive={at('/assuntos')}
         />
         <RailIcon
-          to="/timelines"
-          icon={ListChecks}
-          label={t('nav.timelines')}
-          isActive={at('/timelines')}
-        />
-        <RailIcon
           to="/prazos"
           icon={CalendarClock}
           label={t('nav.deadlines', 'Prazos')}
@@ -180,13 +172,6 @@ export function Sidebar({ clientName }: SidebarProps) {
           icon={Wallet}
           label={t('nav.financial')}
           isActive={at('/financeiro')}
-        />
-        <RailIcon
-          to="/pedidos"
-          icon={MessageSquarePlus}
-          label={t('nav.requests')}
-          isActive={at('/pedidos')}
-          badge={badges.pedidos}
         />
         <RailIcon
           to="/legalbi"
