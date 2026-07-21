@@ -296,6 +296,11 @@ export const queryKeys = {
     orgUrl: (orgId: string) => ['legalbi-org-url', orgId] as const,
   },
 
+  // ── JVRIS WIP (cache do fact_wip) ──────────────────────────
+  jvrisWip: {
+    byOrg: (orgId: string, months: number) => ['jvris-wip', orgId, months] as const,
+  },
+
   // ── Business Central ───────────────────────────────────────
   businessCentral: {
     config: (orgId: string | null | undefined) => ['bc-config', orgId] as const,

@@ -53,7 +53,7 @@ preparados do lado do hub:
 
 | Q | Tema | Estado nesta implementação |
 |---|---|---|
-| Q1 | Cobertura da API JVRIS | Pendente do fornecedor. `hub_ingest_evento` aceita eventos de qualquer origem quando a API estiver confirmada |
+| Q1 | Cobertura da API JVRIS | **Parcialmente resolvida**: conector I1 de WIP/timesheets implementado por acesso direto ao `CCA_WIP` (SQL Server, rede interna) via `scripts/jvris-wip-agent` → cache `jvris_wip_registos`. Agenda de prazos/fases continua pendente da API |
 | Q2 | PDF das faturas nos NAV | Pendente; F6 é Fase 2 |
 | Q3 | Etiqueta "cliente-visível" iManage | Pendente; F3 é Fase 2 |
 | Q4 | Identidade dos utilizadores | Mantidas contas locais atuais; migração para Entra External ID fica desenhada mas não executada |

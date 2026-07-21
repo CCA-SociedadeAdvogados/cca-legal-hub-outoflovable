@@ -3034,6 +3034,136 @@ export type Database = {
         }
         Relationships: []
       }
+      jvris_wip_registos: {
+        Row: {
+          cli_code: string
+          cliente_nome: string | null
+          colab_code: string
+          colab_nome: string | null
+          dia: string
+          dia_fac: string | null
+          dossier_code: string
+          dossier_dep: string | null
+          dossier_des: string | null
+          dossier_fec: string | null
+          dossier_res: string | null
+          dossier_sus: string | null
+          horas_reg: number | null
+          id: string
+          is_wip: boolean
+          organization_id: string
+          synced_at: string
+          valor_reg: number | null
+        }
+        Insert: {
+          cli_code: string
+          cliente_nome?: string | null
+          colab_code?: string
+          colab_nome?: string | null
+          dia: string
+          dia_fac?: string | null
+          dossier_code: string
+          dossier_dep?: string | null
+          dossier_des?: string | null
+          dossier_fec?: string | null
+          dossier_res?: string | null
+          dossier_sus?: string | null
+          horas_reg?: number | null
+          id?: string
+          is_wip?: boolean
+          organization_id: string
+          synced_at?: string
+          valor_reg?: number | null
+        }
+        Update: {
+          cli_code?: string
+          cliente_nome?: string | null
+          colab_code?: string
+          colab_nome?: string | null
+          dia?: string
+          dia_fac?: string | null
+          dossier_code?: string
+          dossier_dep?: string | null
+          dossier_des?: string | null
+          dossier_fec?: string | null
+          dossier_res?: string | null
+          dossier_sus?: string | null
+          horas_reg?: number | null
+          id?: string
+          is_wip?: boolean
+          organization_id?: string
+          synced_at?: string
+          valor_reg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jvris_wip_registos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jvris_wip_registos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home"
+            referencedColumns: ["organization_id"]
+          },
+          {
+            foreignKeyName: "jvris_wip_registos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "vw_client_finance_home_by_organization"
+            referencedColumns: ["organization_id"]
+          },
+        ]
+      }
+      jvris_wip_sync_logs: {
+        Row: {
+          details: Json | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          orgs_matched: number | null
+          rows_read: number | null
+          rows_skipped_no_org: number | null
+          rows_upserted: number | null
+          started_at: string
+          status: string
+          wip_dossiers: number | null
+          wip_total_eur: number | null
+        }
+        Insert: {
+          details?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          orgs_matched?: number | null
+          rows_read?: number | null
+          rows_skipped_no_org?: number | null
+          rows_upserted?: number | null
+          started_at?: string
+          status?: string
+          wip_dossiers?: number | null
+          wip_total_eur?: number | null
+        }
+        Update: {
+          details?: Json | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          orgs_matched?: number | null
+          rows_read?: number | null
+          rows_skipped_no_org?: number | null
+          rows_upserted?: number | null
+          started_at?: string
+          status?: string
+          wip_dossiers?: number | null
+          wip_total_eur?: number | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           channel_email: boolean | null
