@@ -38,6 +38,7 @@ import {
   type EventoTipo,
 } from '@/hooks/useAssuntos';
 import { useHubEventos, useUpdateHubEvento, hubEstadoEvento } from '@/hooks/useHub';
+import { useJvrisWip } from '@/hooks/useJvrisWip';
 import { Switch } from '@/components/ui/switch';
 
 const ESTADOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente', 'concluido', 'suspenso'];
@@ -226,11 +227,36 @@ function MattersReport({
 }) {
   const { t, i18n } = useTranslation();
   const { data: eventos = [] } = useHubEventos(organizationId);
+  // Horas reais do JVRIS (cache fact_wip); vazio enquanto o agente não correr.
+  const { data: wip = [] } = useJvrisWip(organizationId, 12);
+  const hasWip = wip.length > 0;
 
   const ATIVOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente'];
   const total = assuntos.length;
   const ativos = assuntos.filter((a) => ATIVOS.includes(a.estado as AssuntoEstado)).length;
   const concluidos = assuntos.filter((a) => a.estado === 'concluido').length;
+
+  const fmtHoras = (h: number) =>
+    h.toLocaleString(i18n.language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  // Horas: total 12m, média mensal e resumo por dossier (à imagem de A1.2/A1.5)
+  const horasTotal = useMemo(() => wip.reduce((s, r) => s + (r.horas_reg ?? 0), 0), [wip]);
+  const mesesComRegisto = useMemo(
+    () => new Set(wip.map((r) => r.dia.slice(0, 7))).size || 1,
+    [wip],
+  );
+  const porDossier = useMemo(() => {
+    const m = new Map<string, { des: string; horas: number }>();
+    wip.forEach((r) => {
+      const cur = m.get(r.dossier_code) ?? { des: r.dossier_des ?? r.dossier_code, horas: 0 };
+      cur.horas += r.horas_reg ?? 0;
+      m.set(r.dossier_code, cur);
+    });
+    return [...m.entries()]
+      .map(([code, v]) => ({ code, ...v, pct: horasTotal > 0 ? (v.horas / horasTotal) * 100 : 0 }))
+      .sort((a, b) => b.horas - a.horas)
+      .slice(0, 10);
+  }, [wip, horasTotal]);
 
   const assuntoTitulo = useMemo(() => {
     const m = new Map<string, string>();
@@ -251,7 +277,8 @@ function MattersReport({
       .sort((a, b) => b.count - a.count);
   }, [assuntos, total]);
 
-  // Atividade mensal (à imagem de "Consumo mensal") — eventos por mês, 7 meses
+  // Consumo mensal (à imagem de A1.1) — horas do WIP quando existem; senão
+  // nº de eventos como métrica de atividade.
   const meses = useMemo(() => {
     const now = new Date();
     const buckets: { key: string; label: string; count: number }[] = [];
@@ -265,60 +292,104 @@ function MattersReport({
       });
     }
     const idx = new Map(buckets.map((b, i) => [b.key, i]));
-    eventos.forEach((e) => {
-      const d = new Date(e.data_evento);
-      const k = `${d.getFullYear()}-${d.getMonth()}`;
-      const i = idx.get(k);
-      if (i !== undefined) buckets[i].count++;
-    });
+    if (hasWip) {
+      wip.forEach((r) => {
+        const d = new Date(r.dia);
+        const i = idx.get(`${d.getFullYear()}-${d.getMonth()}`);
+        if (i !== undefined) buckets[i].count += r.horas_reg ?? 0;
+      });
+      buckets.forEach((b) => (b.count = Math.round(b.count * 10) / 10));
+    } else {
+      eventos.forEach((e) => {
+        const d = new Date(e.data_evento);
+        const i = idx.get(`${d.getFullYear()}-${d.getMonth()}`);
+        if (i !== undefined) buckets[i].count++;
+      });
+    }
     return buckets;
-  }, [eventos, i18n.language]);
+  }, [eventos, wip, hasWip, i18n.language]);
   const maxMes = Math.max(1, ...meses.map((m) => m.count));
 
-  // Trabalho executado (à imagem de "Trabalho executado") — eventos recentes
+  // Trabalho executado (à imagem de A2.1) — registos WIP (Dia · Advogado ·
+  // Descrição · Horas) quando existem; senão eventos recentes.
   const trabalho = useMemo(() => eventos.slice(0, 12), [eventos]);
+  const trabalhoWip = useMemo(() => wip.slice(0, 15), [wip]);
 
   return (
     <div className="space-y-5">
-      {/* A1 — KPIs */}
+      {/* A1 — KPIs (com horas reais do JVRIS quando o agente já sincronizou) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KPI label={t('matters.report.total', 'Total de assuntos')} value={total} />
         <KPI label={t('matters.report.active', 'Ativos')} value={ativos} />
-        <KPI label={t('matters.report.done', 'Concluídos')} value={concluidos} />
-        <KPI label={t('matters.report.activity', 'Atualizações')} value={eventos.length} />
+        {hasWip ? (
+          <>
+            <KPI label={t('matters.report.hours', 'Horas (12 m)')} value={fmtHoras(horasTotal)} />
+            <KPI
+              label={t('matters.report.monthlyAvg', 'Média mensal (h)')}
+              value={fmtHoras(horasTotal / mesesComRegisto)}
+            />
+          </>
+        ) : (
+          <>
+            <KPI label={t('matters.report.done', 'Concluídos')} value={concluidos} />
+            <KPI label={t('matters.report.activity', 'Atualizações')} value={eventos.length} />
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Resumo por tipo */}
+        {/* Resumo por dossier (horas JVRIS, à imagem de A1.2) ou por tipo (fallback) */}
         <Card className="rounded-card border-line bg-surface">
           <CardHeader className="pb-2">
             <CardTitle className="font-display text-sm text-ink">
-              {t('matters.report.byType', 'Resumo por tipo')}
+              {hasWip
+                ? t('matters.report.byDossier', 'Resumo por dossier')
+                : t('matters.report.byType', 'Resumo por tipo')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-line-soft text-[10.5px] uppercase tracking-wide text-ink-mute">
-                  <th className="pb-2 text-left font-medium">{t('matters.cca.fields.type')}</th>
-                  <th className="pb-2 text-right font-medium">{t('matters.report.count', 'Nº')}</th>
+                  <th className="pb-2 text-left font-medium">
+                    {hasWip
+                      ? t('matters.report.dossier', 'Dossier/Projeto')
+                      : t('matters.cca.fields.type')}
+                  </th>
+                  <th className="pb-2 text-right font-medium">
+                    {hasWip
+                      ? t('matters.report.hoursCol', 'Horas')
+                      : t('matters.report.count', 'Nº')}
+                  </th>
                   <th className="pb-2 text-right font-medium">%</th>
                 </tr>
               </thead>
               <tbody>
-                {porTipo.map((r) => (
-                  <tr key={r.tipo} className="border-b border-line-soft last:border-0">
-                    <td className="py-2 text-[13px] text-ink">
-                      {t(`portal.matters.tipos.${r.tipo}`)}
-                    </td>
-                    <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
-                      {r.count}
-                    </td>
-                    <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
-                      {r.pct.toFixed(1).replace('.', ',')}%
-                    </td>
-                  </tr>
-                ))}
+                {hasWip
+                  ? porDossier.map((r) => (
+                      <tr key={r.code} className="border-b border-line-soft last:border-0">
+                        <td className="max-w-0 truncate py-2 pr-3 text-[13px] text-ink">{r.des}</td>
+                        <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                          {fmtHoras(r.horas)}
+                        </td>
+                        <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                          {r.pct.toFixed(2).replace('.', ',')}%
+                        </td>
+                      </tr>
+                    ))
+                  : porTipo.map((r) => (
+                      <tr key={r.tipo} className="border-b border-line-soft last:border-0">
+                        <td className="py-2 text-[13px] text-ink">
+                          {t(`portal.matters.tipos.${r.tipo}`)}
+                        </td>
+                        <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                          {r.count}
+                        </td>
+                        <td className="py-2 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                          {r.pct.toFixed(1).replace('.', ',')}%
+                        </td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </CardContent>
@@ -351,8 +422,9 @@ function MattersReport({
         </Card>
       </div>
 
-      {/* Trabalho executado */}
-      {trabalho.length > 0 && (
+      {/* Trabalho executado — registos JVRIS (Dia · Advogado · Descrição · Horas,
+          à imagem de A2.1) quando existem; senão eventos do hub */}
+      {(hasWip ? trabalhoWip.length : trabalho.length) > 0 && (
         <Card className="rounded-card border-line bg-surface">
           <CardHeader className="pb-2">
             <CardTitle className="font-display text-sm text-ink">
@@ -361,36 +433,74 @@ function MattersReport({
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px]">
+              <table className="w-full min-w-[560px]">
                 <thead>
                   <tr className="border-b border-line-soft text-[10.5px] uppercase tracking-wide text-ink-mute">
                     <th className="pb-2 pr-3 text-left font-medium">
                       {t('matters.report.day', 'Dia')}
                     </th>
-                    <th className="pb-2 pr-3 text-left font-medium">{t('nav.matters')}</th>
+                    {hasWip ? (
+                      <th className="pb-2 pr-3 text-left font-medium">
+                        {t('matters.report.lawyer', 'Advogado')}
+                      </th>
+                    ) : (
+                      <th className="pb-2 pr-3 text-left font-medium">{t('nav.matters')}</th>
+                    )}
                     <th className="pb-2 text-left font-medium">
                       {t('matters.cca.fields.description')}
                     </th>
+                    {hasWip && (
+                      <th className="pb-2 pl-3 text-right font-medium">
+                        {t('matters.report.hoursCol', 'Horas')}
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
-                  {trabalho.map((e) => (
-                    <tr key={e.id} className="border-b border-line-soft last:border-0 align-top">
-                      <td className="py-2 pr-3 font-mono text-[12px] text-ink-mute [font-variant-numeric:tabular-nums]">
-                        {new Date(e.data_evento).toLocaleDateString(i18n.language, {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: '2-digit',
-                        })}
-                      </td>
-                      <td className="py-2 pr-3 text-[12.5px] text-ink-soft">
-                        {e.assunto_id ? (assuntoTitulo.get(e.assunto_id) ?? '—') : '—'}
-                      </td>
-                      <td className="py-2 text-[13px] text-ink">
-                        {e.titulo_interno || e.titulo_cliente}
-                      </td>
-                    </tr>
-                  ))}
+                  {hasWip
+                    ? trabalhoWip.map((r) => (
+                        <tr
+                          key={r.id}
+                          className="border-b border-line-soft align-top last:border-0"
+                        >
+                          <td className="py-2 pr-3 font-mono text-[12px] text-ink-mute [font-variant-numeric:tabular-nums]">
+                            {new Date(r.dia).toLocaleDateString(i18n.language, {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: '2-digit',
+                            })}
+                          </td>
+                          <td className="whitespace-nowrap py-2 pr-3 text-[12.5px] text-ink-soft">
+                            {r.colab_nome ?? '—'}
+                          </td>
+                          <td className="py-2 text-[13px] text-ink">
+                            {r.dossier_des ?? r.dossier_code}
+                          </td>
+                          <td className="py-2 pl-3 text-right font-mono text-[12.5px] text-ink-soft [font-variant-numeric:tabular-nums]">
+                            {r.horas_reg != null ? fmtHoras(r.horas_reg) : '—'}
+                          </td>
+                        </tr>
+                      ))
+                    : trabalho.map((e) => (
+                        <tr
+                          key={e.id}
+                          className="border-b border-line-soft align-top last:border-0"
+                        >
+                          <td className="py-2 pr-3 font-mono text-[12px] text-ink-mute [font-variant-numeric:tabular-nums]">
+                            {new Date(e.data_evento).toLocaleDateString(i18n.language, {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: '2-digit',
+                            })}
+                          </td>
+                          <td className="py-2 pr-3 text-[12.5px] text-ink-soft">
+                            {e.assunto_id ? (assuntoTitulo.get(e.assunto_id) ?? '—') : '—'}
+                          </td>
+                          <td className="py-2 text-[13px] text-ink">
+                            {e.titulo_interno || e.titulo_cliente}
+                          </td>
+                        </tr>
+                      ))}
                 </tbody>
               </table>
             </div>
