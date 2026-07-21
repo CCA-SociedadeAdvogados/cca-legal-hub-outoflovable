@@ -72,8 +72,13 @@ $env:SUPABASE_SERVICE_ROLE_KEY = '<CHAVE>'
 powershell -NoProfile -Command "iex (Get-Content 'C:\agents\jvris-wip-agent\sync.ps1' -Raw)"
 ```
 
-Deve terminar com `Concluido: N upserted ... estado=success`. A execução é
-idempotente — pode repetir-se sem duplicar dados.
+Deve terminar com `Concluido: N enviados, N confirmados na cloud, ... estado=success`.
+O agente **lê os dados de volta** depois de escrever (`VERIFICACAO: N registos
+confirmados na cloud`): se o número confirmado for 0, o estado fica `error` e a
+mensagem indica o projeto onde a escrita foi tentada — assim distingue-se logo
+"escreveu no sítio certo" de "escreveu no projeto errado". No arranque, o agente
+também imprime o `SUPABASE_URL` efetivo e o `ref` da chave (devem coincidir). A
+execução é idempotente — pode repetir-se sem duplicar dados.
 
 ## 4. Agendar (Task Scheduler)
 

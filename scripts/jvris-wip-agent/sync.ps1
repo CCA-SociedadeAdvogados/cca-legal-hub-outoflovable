@@ -22,12 +22,14 @@
 #   - Mapeia Cli -> organizations.client_code -> organization_id; linhas sem
 #     org correspondente sao contadas e ignoradas (provisionar a org primeiro).
 #   - Upsert em lotes por (organization_id, dossier_code, colab_code, dia).
-#   - Sanity-check no fim: WIP vivo total normal ~= 2,0-2,2 M EUR e
-#     ~= 3100-3250 dossiers; abaixo disso o estado fica 'warning' (leitura a
-#     meio do ETL?).
+#   - VERIFICACAO no fim: le de volta da cloud (count=exact) os registos
+#     escritos nesta execucao; se 0, o estado fica 'error' e o script grita.
+#   - Sanity-check: WIP vivo total normal ~= 2,0-2,2 M EUR e ~= 3100-3250
+#     dossiers; abaixo disso o estado fica 'warning' (leitura a meio do ETL?).
 # ============================================================
 
 $ErrorActionPreference = 'Stop'
+$AgentVersion = 'v3-selfverify (2026-07-21)'
 
 # ── Config ───────────────────────────────────────────────────
 $ConnStr = if ($env:JVRIS_CONN_STR) { $env:JVRIS_CONN_STR } else {
@@ -38,9 +40,34 @@ $ServiceKey  = $env:SUPABASE_SERVICE_ROLE_KEY
 $WindowMonths = if ($env:JVRIS_WINDOW_MONTHS) { [int]$env:JVRIS_WINDOW_MONTHS } else { 24 }
 $DryRun = ($env:JVRIS_DRY_RUN -eq '1')
 
+Write-Host "===== jvris-wip-agent $AgentVersion ====="
+
 if (-not $DryRun -and (-not $SupabaseUrl -or -not $ServiceKey)) {
   Write-Error 'SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY sao obrigatorios (ou JVRIS_DRY_RUN=1).'
   exit 1
+}
+
+# Decodifica o "ref" do projeto a partir do JWT (service role) e confirma que
+# bate com o SUPABASE_URL — assim vemos SE a chave aponta para o projeto certo.
+function Get-JwtRef($jwt) {
+  try {
+    $p = ($jwt -split '\.')[1]
+    $p = $p.Replace('-', '+').Replace('_', '/')
+    switch ($p.Length % 4) { 2 { $p += '==' } 3 { $p += '=' } }
+    $json = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($p))
+    return ($json | ConvertFrom-Json).ref
+  } catch { return '(indecifravel)' }
+}
+
+if (-not $DryRun) {
+  $urlHost = ([Uri]$SupabaseUrl).Host           # ex.: scjxhhkutsiswsgsuiqo.supabase.co
+  $urlRef  = ($urlHost -split '\.')[0]
+  $keyRef  = Get-JwtRef $ServiceKey
+  Write-Host "SUPABASE_URL efetivo : $SupabaseUrl  (ref=$urlRef)"
+  Write-Host "Chave service role ref: $keyRef"
+  if ($keyRef -ne $urlRef -and $keyRef -ne '(indecifravel)') {
+    Write-Warning "A chave aponta para o projeto '$keyRef' mas o URL e '$urlRef' — os dados vao para o projeto errado!"
+  }
 }
 
 $Headers = @{
@@ -57,14 +84,24 @@ function Normalize-Date($v) {
   return $d.ToString('yyyy-MM-dd')
 }
 
-$log = @{ started_at = (Get-Date).ToUniversalTime().ToString('o'); status = 'running' }
+$startIso = (Get-Date).ToUniversalTime().ToString('o')
+$log = @{ started_at = $startIso; status = 'running' }
 $logId = $null
 if (-not $DryRun) {
   try {
     $resp = Invoke-RestMethod -Method Post -Uri "$SupabaseUrl/rest/v1/jvris_wip_sync_logs" `
       -Headers ($Headers + @{ 'Prefer' = 'return=representation' }) -Body (ConvertTo-Json $log)
     $logId = $resp[0].id
-  } catch { Write-Warning "Nao foi possivel criar o registo de log: $_" }
+    Write-Host "Registo de log criado: $logId"
+  } catch {
+    Write-Warning "Nao foi possivel criar o registo de log (a escrita na cloud pode estar a falhar!): $_"
+    if ($_.Exception.Response) {
+      try {
+        $sr = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        Write-Warning ("Resposta da cloud: " + $sr.ReadToEnd())
+      } catch {}
+    }
+  }
 }
 
 try {
@@ -150,18 +187,46 @@ WHERE Dia >= '$cutoff' OR IsWIP = 1
   for ($i = 0; $i -lt $payload.Count; $i += $batchSize) {
     $batch = $payload[$i..([math]::Min($i + $batchSize - 1, $payload.Count - 1))]
     $body = ConvertTo-Json @($batch) -Depth 4
-    Invoke-RestMethod -Method Post `
-      -Uri "$SupabaseUrl/rest/v1/jvris_wip_registos?on_conflict=organization_id,dossier_code,colab_code,dia" `
-      -Headers ($Headers + @{ 'Prefer' = 'resolution=merge-duplicates,return=minimal' }) `
-      -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) | Out-Null
+    try {
+      Invoke-RestMethod -Method Post `
+        -Uri "$SupabaseUrl/rest/v1/jvris_wip_registos?on_conflict=organization_id,dossier_code,colab_code,dia" `
+        -Headers ($Headers + @{ 'Prefer' = 'resolution=merge-duplicates,return=minimal' }) `
+        -Body ([System.Text.Encoding]::UTF8.GetBytes($body)) | Out-Null
+    } catch {
+      if ($_.Exception.Response) {
+        try {
+          $sr = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+          Write-Warning ("Lote $i rejeitado pela cloud: " + $sr.ReadToEnd())
+        } catch {}
+      }
+      throw
+    }
     $upserted += $batch.Count
     Write-Host "  upsert $upserted / $($payload.Count)"
   }
 
-  # ── 4. Sanity-check + fecho do log ──────────────────────────
+  # ── 4. VERIFICACAO: ler de volta o que ficou na cloud ───────
+  # Le a contagem exata de registos escritos nesta execucao (synced_at >= inicio).
+  $confirmed = -1
+  try {
+    $vr = Invoke-WebRequest -Method Get -UseBasicParsing `
+      -Uri "$SupabaseUrl/rest/v1/jvris_wip_registos?select=id&synced_at=gte.$startIso" `
+      -Headers ($Headers + @{ 'Prefer' = 'count=exact'; 'Range-Unit' = 'items'; 'Range' = '0-0' })
+    $cr = $vr.Headers['Content-Range']            # ex.: "0-0/52949" (ou "*/0")
+    if ($cr) { $confirmed = [int](($cr -split '/')[-1]) }
+  } catch {
+    Write-Warning "Falhou a verificacao de leitura: $_"
+  }
+  Write-Host "VERIFICACAO: $confirmed registos confirmados na cloud (lidos de volta apos escrita)"
+
+  # ── 5. Sanity-check + fecho do log ──────────────────────────
   $status = 'success'
   $warn = $null
-  if ($wipTotal -lt 1500000 -or $wipDossiers.Count -lt 2500) {
+  if ($confirmed -le 0) {
+    $status = 'error'
+    $warn = "A escrita reportou $upserted upserts mas a leitura de volta encontrou $confirmed registos — os dados NAO ficaram neste projeto ($($([Uri]$SupabaseUrl).Host))."
+    Write-Warning $warn
+  } elseif ($wipTotal -lt 1500000 -or $wipDossiers.Count -lt 2500) {
     $status = 'warning'
     $warn = "WIP abaixo do intervalo de referencia (2,0-2,2 M EUR / 3100-3250 dossiers) — leitura a meio do ETL?"
     Write-Warning $warn
@@ -173,12 +238,13 @@ WHERE Dia >= '$cutoff' OR IsWIP = 1
       rows_read = $rows.Count; rows_upserted = $upserted; rows_skipped_no_org = $skipped
       orgs_matched = $orgMap.Count
       wip_total_eur = [math]::Round($wipTotal, 2); wip_dossiers = $wipDossiers.Count
-      error = $warn
+      error = $warn; details = @{ confirmed_readback = $confirmed; agent_version = $AgentVersion }
     }
     Invoke-RestMethod -Method Patch -Uri "$SupabaseUrl/rest/v1/jvris_wip_sync_logs?id=eq.$logId" `
       -Headers $Headers -Body (ConvertTo-Json $patch) | Out-Null
   }
-  Write-Host "Concluido: $upserted upserted, $skipped ignoradas (sem org/data), estado=$status"
+  Write-Host "Concluido: $upserted enviados, $confirmed confirmados na cloud, $skipped ignoradas (sem org/data), estado=$status"
+  if ($status -eq 'error') { exit 2 }
 } catch {
   Write-Error "Sync falhou: $_"
   if ($logId) {
