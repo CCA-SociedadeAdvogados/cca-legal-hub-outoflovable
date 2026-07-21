@@ -9,6 +9,9 @@ import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useDocumentChecklist } from '@/hooks/useDocumentChecklist';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useCliente } from '@/contexts/ClienteContext';
+import { useAssuntos, type AssuntoEstado } from '@/hooks/useAssuntos';
 import { Eyebrow } from '@/components/cca';
 import { useTranslation } from 'react-i18next';
 import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
@@ -22,6 +25,7 @@ import {
   FileText,
   Clock,
   ArrowRight,
+  Briefcase,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TIPO_CONTRATO_LABELS, ESTADO_CONTRATO_LABELS } from '@/types/contracts';
@@ -67,6 +71,16 @@ export default function Dashboard() {
   const { profile } = useProfile();
   const { user } = useAuth();
   const { t, i18n } = useTranslation();
+  const { currentOrganization, isCCAInternalAuthorized } = useOrganizations();
+  const { viewingOrganizationId } = useCliente();
+  const mattersOrgId =
+    viewingOrganizationId || (isCCAInternalAuthorized ? null : currentOrganization?.id) || null;
+  const { assuntos } = useAssuntos(mattersOrgId);
+  const ATIVO_ESTADOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente'];
+  const totalMatters = assuntos.length;
+  const activeMatters = assuntos.filter((a) =>
+    ATIVO_ESTADOS.includes(a.estado as AssuntoEstado),
+  ).length;
 
   const firstName = (profile?.nome_completo ?? '').trim().split(' ')[0] || '';
 
@@ -275,16 +289,16 @@ export default function Dashboard() {
           {/* KPI Row */}
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <StatCard
-              title={t('dashboard.totalContracts')}
-              value={stats.totalContratos}
-              icon={FileText}
-              variant="primary"
+              title={t('dashboard.activeMatters', 'Assuntos ativos')}
+              value={activeMatters}
+              icon={Briefcase}
+              variant="accent"
             />
             <StatCard
-              title={t('dashboard.activeContracts')}
-              value={stats.contratosActivos}
-              icon={FileCheck}
-              variant="accent"
+              title={t('dashboard.totalMatters', 'Total de assuntos')}
+              value={totalMatters}
+              icon={Briefcase}
+              variant="primary"
             />
             {/* Compliance Documental KPI — só quando há checklist com dados */}
             {checklistAvailable && docStats.total > 0 && (

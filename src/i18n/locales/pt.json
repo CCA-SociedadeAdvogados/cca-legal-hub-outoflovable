@@ -185,7 +185,23 @@
         "description": "Descrição",
         "visibility": "Visibilidade"
       },
-      "fromRequest": "Origem: pedido do cliente"
+      "fromRequest": "Origem: pedido do cliente",
+      "timeline": "Timeline do processo",
+      "noTimeline": "Sem timeline neste processo",
+      "chooseTemplate": "Escolher modelo…",
+      "createTimeline": "Criar timeline"
+    },
+    "report": {
+      "list": "Assuntos",
+      "total": "Total de assuntos",
+      "active": "Ativos",
+      "done": "Concluídos",
+      "activity": "Atualizações",
+      "byType": "Resumo por tipo",
+      "count": "Nº",
+      "monthly": "Atividade mensal",
+      "workLog": "Trabalho executado",
+      "day": "Dia"
     }
   },
   "timelines": {
@@ -382,7 +398,9 @@
     "docsIssue": "em falta ou expirados",
     "noExpiringContracts": "Sem expirações nos próximos 90 dias",
     "portfolioByPhase": "Carteira por fase",
-    "inDays": "em {{count}} dias"
+    "inDays": "em {{count}} dias",
+    "activeMatters": "Assuntos ativos",
+    "totalMatters": "Total de assuntos"
   },
   "contractsOld": {},
   "events": {
@@ -2035,11 +2053,13 @@
       "viewAll": "Ver tudo",
       "kpi": {
         "activeContracts": "Contratos ativos",
-        "upcomingDeadlines": "Prazos a precisar de atenção"
+        "upcomingDeadlines": "Prazos a precisar de atenção",
+        "activeMatters": "Assuntos ativos"
       },
       "sections": {
         "deadlines": "Próximos prazos",
-        "recentContracts": "Contratos recentes"
+        "recentContracts": "Contratos recentes",
+        "recentMatters": "Assuntos recentes"
       }
     },
     "news": {

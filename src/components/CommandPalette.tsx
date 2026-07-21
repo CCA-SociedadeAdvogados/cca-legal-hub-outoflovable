@@ -19,7 +19,6 @@ import {
   FileText,
   FolderOpen,
   Home,
-  ListChecks,
   Moon,
   Newspaper,
   Settings,
@@ -61,7 +60,6 @@ const CCA_NAV: NavCommand[] = [
   { to: '/', labelKey: 'nav.home', fallback: 'Início', icon: Home },
   { to: '/contratos', labelKey: 'nav.contracts', fallback: 'Contratos', icon: FileText },
   { to: '/assuntos', labelKey: 'nav.matters', fallback: 'Assuntos', icon: Briefcase },
-  { to: '/timelines', labelKey: 'nav.timelines', fallback: 'Timelines', icon: ListChecks },
   { to: '/prazos', labelKey: 'nav.deadlines', fallback: 'Prazos', icon: CalendarClock },
   { to: '/documentos', labelKey: 'nav.documents', fallback: 'Documentos', icon: FolderOpen },
   { to: '/financeiro', labelKey: 'nav.financial', fallback: 'Financeiro', icon: Wallet },
@@ -92,12 +90,6 @@ const CLIENT_NAV: NavCommand[] = [
     icon: FileText,
   },
   { to: '/portal/assuntos', labelKey: 'portal.nav.matters', fallback: 'Assuntos', icon: Briefcase },
-  {
-    to: '/portal/timelines',
-    labelKey: 'portal.nav.timelines',
-    fallback: 'Timelines',
-    icon: ListChecks,
-  },
   {
     to: '/portal/documentos',
     labelKey: 'portal.nav.documents',

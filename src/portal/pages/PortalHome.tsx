@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowRight,
+  Briefcase,
   CalendarClock,
-  FileText,
   Wallet,
   RefreshCw,
   FileX,
@@ -16,7 +16,8 @@ import { cn } from '@/lib/utils';
 import { useContratos } from '@/hooks/useContratos';
 import { useFinanceiro } from '@/hooks/useFinanceiro';
 import { useProfile } from '@/hooks/useProfile';
-import { ContratoStatusBadge } from '@/portal/components/ContratoStatusBadge';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useAssuntos, type AssuntoEstado } from '@/hooks/useAssuntos';
 import {
   formatCurrency,
   formatDate,
@@ -64,14 +65,25 @@ export default function PortalHome() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language;
   const { profile } = useProfile();
+  const { currentOrganization } = useOrganizations();
   const { contratos, isLoading: isLoadingContratos } = useContratos();
   const { accountSummary, isLoading: isLoadingFin } = useFinanceiro();
+  const { assuntos, isLoading: isLoadingAssuntos } = useAssuntos(currentOrganization?.id);
 
   const firstName = (profile?.nome_completo ?? '').trim().split(' ')[0] || '';
 
-  const activeCount = useMemo(
-    () => (contratos ?? []).filter((c) => c.estado_contrato === 'activo').length,
-    [contratos],
+  const ATIVO_ESTADOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente'];
+  const activeMatters = useMemo(
+    () => assuntos.filter((a) => ATIVO_ESTADOS.includes(a.estado as AssuntoEstado)).length,
+    [assuntos],
+  );
+
+  const recentAssuntos = useMemo(
+    () =>
+      [...assuntos]
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        .slice(0, 5),
+    [assuntos],
   );
 
   // Mesma fonte da aba Prazos (getContratoDeadlines): inclui vencidos e futuros.
@@ -90,14 +102,6 @@ export default function PortalHome() {
         (acc, c) => acc + getContratoDeadlines(c).filter((d) => d.days <= 30).length,
         0,
       ),
-    [contratos],
-  );
-
-  const recentContratos = useMemo(
-    () =>
-      [...(contratos ?? [])]
-        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-        .slice(0, 5),
     [contratos],
   );
 
@@ -202,7 +206,10 @@ export default function PortalHome() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <KPI label={t('portal.home.kpi.activeContracts')} value={activeCount} />
+          <KPI
+            label={t('portal.home.kpi.activeMatters', 'Assuntos ativos')}
+            value={activeMatters}
+          />
           <KPI
             label={t('portal.home.kpi.upcomingDeadlines')}
             value={upcoming30}
@@ -263,31 +270,31 @@ export default function PortalHome() {
           )}
         </SectionCard>
 
-        {/* Contratos recentes */}
+        {/* Assuntos recentes */}
         <SectionCard
-          title={t('portal.home.sections.recentContracts')}
-          to="/portal/contratos"
+          title={t('portal.home.sections.recentMatters', 'Assuntos recentes')}
+          to="/portal/assuntos"
           linkLabel={t('portal.home.viewAll')}
         >
-          {isLoadingContratos ? (
+          {isLoadingAssuntos ? (
             <div className="space-y-2">
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full rounded-control" />
               ))}
             </div>
-          ) : recentContratos.length === 0 ? (
+          ) : recentAssuntos.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-6 text-center text-ink-mute">
-              <FileText className="h-6 w-6" strokeWidth={1.5} />
-              <span className="text-[12.5px]">{t('portal.contracts.empty')}</span>
+              <Briefcase className="h-6 w-6" strokeWidth={1.5} />
+              <span className="text-[12.5px]">{t('portal.matters.empty')}</span>
             </div>
           ) : (
             <ul className="space-y-2.5">
-              {recentContratos.map((c) => (
-                <li key={c.id} className="flex items-center gap-3">
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-ink">
-                    {c.titulo_contrato}
+              {recentAssuntos.map((a) => (
+                <li key={a.id} className="flex items-center gap-3">
+                  <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{a.titulo}</span>
+                  <span className="shrink-0 rounded-full border border-line bg-bg-alt px-2 py-0.5 text-[10.5px] font-medium text-ink-soft">
+                    {t(`portal.matters.estados.${(a.estado as AssuntoEstado) ?? 'aberto'}`)}
                   </span>
-                  <ContratoStatusBadge estado={c.estado_contrato} />
                 </li>
               ))}
             </ul>
