@@ -228,7 +228,8 @@ function MattersReport({
   const { t, i18n } = useTranslation();
   const { data: eventos = [] } = useHubEventos(organizationId);
   // Horas reais do JVRIS (cache fact_wip); vazio enquanto o agente não correr.
-  const { data: wip = [] } = useJvrisWip(organizationId, 12);
+  // 24 meses = janela completa da cache (não limitar a base de dados no ecrã).
+  const { data: wip = [] } = useJvrisWip(organizationId, 24);
   const hasWip = wip.length > 0;
 
   const ATIVOS: AssuntoEstado[] = ['aberto', 'em_curso', 'aguarda_cliente'];
@@ -282,7 +283,7 @@ function MattersReport({
   const meses = useMemo(() => {
     const now = new Date();
     const buckets: { key: string; label: string; count: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       buckets.push({
@@ -323,7 +324,7 @@ function MattersReport({
         <KPI label={t('matters.report.active', 'Ativos')} value={ativos} />
         {hasWip ? (
           <>
-            <KPI label={t('matters.report.hours', 'Horas (12 m)')} value={fmtHoras(horasTotal)} />
+            <KPI label={t('matters.report.hours', 'Horas (24 m)')} value={fmtHoras(horasTotal)} />
             <KPI
               label={t('matters.report.monthlyAvg', 'Média mensal (h)')}
               value={fmtHoras(horasTotal / mesesComRegisto)}

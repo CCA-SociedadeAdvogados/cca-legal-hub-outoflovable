@@ -202,7 +202,7 @@
       "monthly": "Atividade mensal",
       "workLog": "Trabalho executado",
       "day": "Dia",
-      "hours": "Horas (12 m)",
+      "hours": "Horas (24 m)",
       "monthlyAvg": "Média mensal (h)",
       "byDossier": "Resumo por dossier",
       "dossier": "Dossier/Projeto",

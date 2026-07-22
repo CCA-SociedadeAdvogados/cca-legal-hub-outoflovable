@@ -21,8 +21,11 @@ export interface WipRegisto {
   is_wip: boolean;
 }
 
-/** Registos dos últimos `months` meses da organização (mais recentes primeiro). */
-export function useJvrisWip(organizationId: string | null, months = 12) {
+/**
+ * Registos dos últimos `months` meses da organização (mais recentes primeiro).
+ * A cache guarda 24 meses + todo o WIP vivo; o default lê essa janela completa.
+ */
+export function useJvrisWip(organizationId: string | null, months = 24) {
   return useQuery({
     queryKey: queryKeys.jvrisWip.byOrg(organizationId ?? 'none', months),
     enabled: !!organizationId,
@@ -38,7 +41,7 @@ export function useJvrisWip(organizationId: string | null, months = 12) {
         .eq('organization_id', organizationId!)
         .gte('dia', cutoff.toISOString().slice(0, 10))
         .order('dia', { ascending: false })
-        .limit(5000);
+        .limit(20000);
       if (error) throw error;
       return data ?? [];
     },
